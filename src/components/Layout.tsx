@@ -6,7 +6,6 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', label: 'Dashboard' },
-  { path: '/upload', label: 'Upload' },
   { path: '/recommendations', label: 'Recommendations' },
 ];
 
