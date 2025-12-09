@@ -135,11 +135,11 @@ export function Dashboard() {
             Products by Stockout Status
           </h2>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-auto max-h-[500px]">
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-gray-50">
                   SKU
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -158,8 +158,8 @@ export function Dashboard() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {products.map((product) => (
-                <tr key={product.product_id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 whitespace-nowrap">
+                <tr key={product.product_id} className="hover:bg-gray-50 group">
+                  <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-white group-hover:bg-gray-50">
                     <div className="text-sm font-medium text-gray-900">
                       {product.sku}
                     </div>
