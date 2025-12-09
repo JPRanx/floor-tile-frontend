@@ -53,9 +53,9 @@ export function Dashboard() {
 
   const { products } = data;
 
-  // Calculate warehouse totals from products
-  const totalWarehouseM2 = products.reduce((sum, p) => sum + p.warehouse_qty, 0);
-  const totalInTransitM2 = products.reduce((sum, p) => sum + p.in_transit_qty, 0);
+  // Calculate warehouse totals from products (convert from string/Decimal to number)
+  const totalWarehouseM2 = products.reduce((sum, p) => sum + Number(p.warehouse_qty), 0);
+  const totalInTransitM2 = products.reduce((sum, p) => sum + Number(p.in_transit_qty), 0);
 
   return (
     <div className="space-y-6">
@@ -94,7 +94,7 @@ export function Dashboard() {
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
           Warehouse Status
         </h2>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
             <div className="flex justify-between text-sm mb-1">
               <span className="text-gray-600">Total Inventory</span>
@@ -189,7 +189,7 @@ export function Dashboard() {
                       : '—'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
-                    {product.warehouse_qty.toLocaleString()}
+                    {Number(product.warehouse_qty).toLocaleString()}
                   </td>
                 </tr>
               ))}
