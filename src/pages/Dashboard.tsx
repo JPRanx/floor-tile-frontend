@@ -97,7 +97,7 @@ export function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Total Inventory</span>
+              <span className="text-gray-600">Warehouse Stock</span>
               <span className="font-medium">
                 {totalWarehouseM2.toLocaleString()} m²
               </span>
@@ -106,17 +106,17 @@ export function Dashboard() {
               <div
                 className="bg-blue-600 h-3 rounded-full"
                 style={{
-                  width: `${Math.min((totalWarehouseM2 / 100000) * 100, 100)}%`,
+                  width: `${Math.min((totalWarehouseM2 / 99900) * 100, 100)}%`,
                 }}
               />
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              of 100,000 m² capacity
+              of 99,900 m² capacity (740 pallets)
             </div>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-gray-900">
-              {Math.round((totalWarehouseM2 / 100000) * 100)}%
+              {Math.round((totalWarehouseM2 / 99900) * 100)}%
             </div>
             <div className="text-xs text-gray-500">utilization</div>
           </div>

@@ -93,6 +93,11 @@ export function Recommendations() {
             </div>
           </div>
         </div>
+        {warehouse_status.total_in_transit_pallets > 0 && (
+          <div className="mt-3 text-sm text-gray-600">
+            + {Math.round(warehouse_status.total_in_transit_pallets)} pallets ({Math.round(warehouse_status.total_in_transit_m2).toLocaleString()} m²) in transit
+          </div>
+        )}
         {warehouse_status.allocation_scaled && (
           <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
             Allocations scaled to {Math.round((warehouse_status.scale_factor || 1) * 100)}% due to capacity constraints

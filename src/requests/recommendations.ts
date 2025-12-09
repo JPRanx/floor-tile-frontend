@@ -10,6 +10,8 @@ export interface WarehouseStatus {
   total_allocated_m2: number;
   total_current_pallets: number;
   total_current_m2: number;
+  total_in_transit_pallets: number;
+  total_in_transit_m2: number;
   utilization_percent: number;
   allocation_scaled: boolean;
   scale_factor: number | null;
