@@ -120,79 +120,85 @@ export function Recommendations() {
             No products need ordering at this time.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    SKU
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Action
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Gap
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Days Left
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Confidence
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Details
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {recommendations.map((rec) => (
-                  <tr key={rec.product_id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">{rec.sku}</div>
-                      <div className="text-xs text-gray-500">{rec.rotation || '—'}</div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                      <ActionBadge action={rec.action_type} />
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                        {Math.round(rec.gap_pallets)} pallets
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {Math.round(rec.gap_m2).toLocaleString()} m²
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap text-right">
-                      <span className={`text-sm font-medium ${
-                        rec.days_until_empty != null && rec.days_until_empty < 45
-                          ? 'text-red-600'
-                          : 'text-gray-900'
-                      }`}>
-                        {rec.days_until_empty != null
-                          ? `${Math.round(rec.days_until_empty)} days`
-                          : '—'}
-                      </span>
-                      {!rec.arrives_before_stockout && rec.days_until_empty != null && (
-                        <div className="text-xs text-red-500">Late arrival</div>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      <ConfidenceBadge level={rec.confidence} />
-                      <CustomerInfo
-                        uniqueCustomers={rec.unique_customers}
-                        recurringCustomers={rec.recurring_customers}
-                        topCustomerName={rec.top_customer_name}
-                        topCustomerShare={rec.top_customer_share}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm text-gray-900">{rec.action}</div>
-                      <div className="text-xs text-gray-500">{rec.reason}</div>
-                    </td>
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      SKU
+                    </th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Gap
+                    </th>
+                    <th className="px-3 py-2 sm:px-4 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Days
+                    </th>
+                    <th className="hidden sm:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Confidence
+                    </th>
+                    <th className="hidden md:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Details
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {recommendations.map((rec) => (
+                    <tr key={rec.product_id} className="hover:bg-gray-50">
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">{rec.sku}</div>
+                        <div className="text-xs text-gray-500">{rec.rotation || '—'}</div>
+                        {/* Show confidence on mobile under SKU */}
+                        <div className="sm:hidden mt-1">
+                          <ConfidenceBadge level={rec.confidence} />
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                        <ActionBadge action={rec.action_type} />
+                      </td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-right">
+                        <div className="text-sm font-medium text-gray-900">
+                          {Math.round(rec.gap_pallets)}p
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {Math.round(rec.gap_m2).toLocaleString()}m²
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-right">
+                        <span className={`text-sm font-medium ${
+                          rec.days_until_empty != null && rec.days_until_empty < 45
+                            ? 'text-red-600'
+                            : 'text-gray-900'
+                        }`}>
+                          {rec.days_until_empty != null
+                            ? `${Math.round(rec.days_until_empty)}d`
+                            : '—'}
+                        </span>
+                        {!rec.arrives_before_stockout && rec.days_until_empty != null && (
+                          <div className="text-xs text-red-500">Late</div>
+                        )}
+                      </td>
+                      <td className="hidden sm:table-cell px-3 py-2 sm:px-4 sm:py-3">
+                        <ConfidenceBadge level={rec.confidence} />
+                        <CustomerInfo
+                          uniqueCustomers={rec.unique_customers}
+                          recurringCustomers={rec.recurring_customers}
+                          topCustomerName={rec.top_customer_name}
+                          topCustomerShare={rec.top_customer_share}
+                        />
+                      </td>
+                      <td className="hidden md:table-cell px-3 py-2 sm:px-4 sm:py-3">
+                        <div className="text-sm text-gray-900">{rec.action}</div>
+                        <div className="text-xs text-gray-500">{rec.reason}</div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

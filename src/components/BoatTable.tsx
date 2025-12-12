@@ -68,97 +68,103 @@ export function BoatTable({ boats, onStatusChange }: BoatTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Vessel
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Departs
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Arrives
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Booking Deadline
-            </th>
-            <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Days Until
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Status
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {boats.map((boat) => (
-            <tr key={boat.id} className="hover:bg-gray-50">
-              <td className="px-4 py-3 whitespace-nowrap">
-                <div className="text-sm font-medium text-gray-900">
-                  {boat.vessel_name || '—'}
-                </div>
-                {boat.shipping_line && (
-                  <div className="text-xs text-gray-500">{boat.shipping_line}</div>
-                )}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                <div className="text-sm text-gray-900">
-                  {formatDate(boat.departure_date)}
-                </div>
-                <div className="text-xs text-gray-500">{boat.origin_port}</div>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                <div className="text-sm text-gray-900">
-                  {formatDate(boat.arrival_date)}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {boat.destination_port} ({boat.transit_days}d)
-                </div>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                <div className="text-sm text-gray-900">
-                  {formatDate(boat.booking_deadline)}
-                </div>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-center">
-                <span
-                  className={`text-sm font-medium ${
-                    boat.is_past_deadline
-                      ? 'text-red-600'
-                      : boat.days_until_deadline !== null && boat.days_until_deadline <= 3
-                      ? 'text-orange-600'
-                      : 'text-gray-900'
-                  }`}
-                >
-                  {getDaysUntilText(boat.days_until_deadline, boat.is_past_deadline)}
-                </span>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap">
-                {onStatusChange ? (
-                  <select
-                    value={boat.status}
-                    onChange={(e) => onStatusChange(boat.id, e.target.value as BoatStatus)}
-                    className={`text-xs font-medium px-2 py-1 rounded-full border ${statusStyles[boat.status]} cursor-pointer`}
-                  >
-                    <option value="available">Available</option>
-                    <option value="booked">Booked</option>
-                    <option value="departed">Departed</option>
-                    <option value="arrived">Arrived</option>
-                  </select>
-                ) : (
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyles[boat.status]}`}
-                  >
-                    {statusLabels[boat.status]}
-                  </span>
-                )}
-              </td>
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <div className="inline-block min-w-full align-middle">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Vessel
+              </th>
+              <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Departs
+              </th>
+              <th className="hidden sm:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Arrives
+              </th>
+              <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Deadline
+              </th>
+              <th className="px-3 py-2 sm:px-4 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Days
+              </th>
+              <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {boats.map((boat) => (
+              <tr key={boat.id} className="hover:bg-gray-50">
+                <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                  <div className="text-sm font-medium text-gray-900">
+                    {boat.vessel_name || '—'}
+                  </div>
+                  {boat.shipping_line && (
+                    <div className="text-xs text-gray-500">{boat.shipping_line}</div>
+                  )}
+                </td>
+                <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {formatDate(boat.departure_date)}
+                  </div>
+                  <div className="text-xs text-gray-500">{boat.origin_port}</div>
+                  {/* Show arrival on mobile under departure */}
+                  <div className="sm:hidden text-xs text-gray-400 mt-1">
+                    → {formatDate(boat.arrival_date)} ({boat.transit_days}d)
+                  </div>
+                </td>
+                <td className="hidden sm:table-cell px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {formatDate(boat.arrival_date)}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {boat.destination_port} ({boat.transit_days}d)
+                  </div>
+                </td>
+                <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                  <div className="text-sm text-gray-900">
+                    {formatDate(boat.booking_deadline)}
+                  </div>
+                </td>
+                <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center">
+                  <span
+                    className={`text-sm font-medium ${
+                      boat.is_past_deadline
+                        ? 'text-red-600'
+                        : boat.days_until_deadline !== null && boat.days_until_deadline <= 3
+                        ? 'text-orange-600'
+                        : 'text-gray-900'
+                    }`}
+                  >
+                    {getDaysUntilText(boat.days_until_deadline, boat.is_past_deadline)}
+                  </span>
+                </td>
+                <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
+                  {onStatusChange ? (
+                    <select
+                      value={boat.status}
+                      onChange={(e) => onStatusChange(boat.id, e.target.value as BoatStatus)}
+                      className={`text-xs font-medium px-2 py-1 rounded-full border ${statusStyles[boat.status]} cursor-pointer`}
+                    >
+                      <option value="available">Available</option>
+                      <option value="booked">Booked</option>
+                      <option value="departed">Departed</option>
+                      <option value="arrived">Arrived</option>
+                    </select>
+                  ) : (
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${statusStyles[boat.status]}`}
+                    >
+                      {statusLabels[boat.status]}
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

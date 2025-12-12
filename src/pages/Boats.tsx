@@ -85,7 +85,7 @@ export function Boats() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Boat Schedules</h1>
           <p className="text-gray-600">
-            Manage shipping schedules from Spain to Puerto Quetzal
+            Manage shipping schedules from Colombia to Puerto Quetzal
           </p>
         </div>
         <button
