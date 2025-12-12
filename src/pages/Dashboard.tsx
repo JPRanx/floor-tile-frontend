@@ -65,29 +65,52 @@ export function Dashboard() {
         <p className="text-gray-600">Stockout status overview</p>
       </div>
 
-      {/* Status Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Status Cards - Boat-based Priority */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatusCard
-          label="Critical"
-          count={data.critical_count}
-          color="red"
+          label="High Priority"
+          count={data.high_priority_count}
+          color="orange"
         />
         <StatusCard
-          label="Warning"
-          count={data.warning_count}
+          label="Consider"
+          count={data.consider_count}
           color="yellow"
         />
         <StatusCard
-          label="OK"
-          count={data.ok_count}
+          label="Well Covered"
+          count={data.well_covered_count}
           color="green"
         />
         <StatusCard
-          label="No Sales"
-          count={data.no_sales_count}
+          label="Your Call"
+          count={data.your_call_count}
           color="gray"
         />
       </div>
+
+      {/* Boat Arrival Info */}
+      {data.next_boat_arrival && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-blue-800 mb-2">Boat Arrivals</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <span className="text-blue-600">Next boat:</span>{' '}
+              <span className="font-medium text-blue-800">
+                {new Date(data.next_boat_arrival).toLocaleDateString()} ({data.days_to_next_boat} days)
+              </span>
+            </div>
+            {data.second_boat_arrival && (
+              <div>
+                <span className="text-blue-600">Second boat:</span>{' '}
+                <span className="font-medium text-blue-800">
+                  {new Date(data.second_boat_arrival).toLocaleDateString()} ({data.days_to_second_boat} days)
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Warehouse Utilization */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -173,19 +196,20 @@ export function Dashboard() {
                   <td className="px-4 py-3 whitespace-nowrap text-right">
                     <span
                       className={`text-sm font-medium ${
-                        product.days_until_empty != null && !isNaN(product.days_until_empty) && product.days_until_empty < 45
+                        product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout)) &&
+                        data.days_to_next_boat != null && Number(product.days_to_stockout) < data.days_to_next_boat
                           ? 'text-red-600'
                           : 'text-gray-900'
                       }`}
                     >
-                      {product.days_until_empty != null && !isNaN(product.days_until_empty)
-                        ? `${Math.round(product.days_until_empty)} days`
+                      {product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout))
+                        ? `${Math.round(Number(product.days_to_stockout))} days`
                         : '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-600">
-                    {product.daily_velocity > 0
-                      ? `${Math.round(product.daily_velocity)} m²/day`
+                    {Number(product.avg_daily_sales) > 0
+                      ? `${Math.round(Number(product.avg_daily_sales))} m²/day`
                       : '—'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
@@ -205,13 +229,16 @@ export function Dashboard() {
 interface StatusCardProps {
   label: string;
   count: number;
-  color: 'red' | 'yellow' | 'green' | 'gray';
+  color: 'red' | 'orange' | 'yellow' | 'green' | 'purple' | 'blue' | 'gray';
 }
 
 const colorClasses = {
   red: 'bg-red-50 border-red-200 text-red-800',
+  orange: 'bg-orange-50 border-orange-200 text-orange-800',
   yellow: 'bg-yellow-50 border-yellow-200 text-yellow-800',
   green: 'bg-green-50 border-green-200 text-green-800',
+  purple: 'bg-purple-50 border-purple-200 text-purple-800',
+  blue: 'bg-blue-50 border-blue-200 text-blue-800',
   gray: 'bg-gray-50 border-gray-200 text-gray-600',
 };
 

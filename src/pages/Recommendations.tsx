@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { recommendationsApi } from '../requests/recommendations';
-import type { OrderRecommendations, RecommendationPriority } from '../requests/recommendations';
+import type { OrderRecommendations, ActionType, ConfidenceLevel } from '../requests/recommendations';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { ActionBadge } from '../components/StatusBadge';
 
 export function Recommendations() {
   const [data, setData] = useState<OrderRecommendations | null>(null);
@@ -62,12 +63,13 @@ export function Recommendations() {
         </p>
       </div>
 
-      {/* Priority Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <PriorityCard priority="CRITICAL" count={data.critical_count} />
-        <PriorityCard priority="HIGH" count={data.high_count} />
-        <PriorityCard priority="MEDIUM" count={data.medium_count} />
-        <PriorityCard priority="LOW" count={data.low_count} />
+      {/* Action Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <ActionCard action="ORDER_NOW" count={data.order_now_count} />
+        <ActionCard action="ORDER_SOON" count={data.order_soon_count} />
+        <ActionCard action="WELL_STOCKED" count={data.well_stocked_count} />
+        <ActionCard action="SKIP_ORDER" count={data.skip_order_count} />
+        <ActionCard action="REVIEW" count={data.review_count} />
       </div>
 
       {/* Warehouse Status */}
@@ -126,7 +128,7 @@ export function Recommendations() {
                     SKU
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Priority
+                    Action
                   </th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Gap
@@ -135,7 +137,10 @@ export function Recommendations() {
                     Days Left
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Action
+                    Confidence
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Details
                   </th>
                 </tr>
               </thead>
@@ -147,7 +152,7 @@ export function Recommendations() {
                       <div className="text-xs text-gray-500">{rec.rotation || '—'}</div>
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap">
-                      <PriorityBadge priority={rec.priority} />
+                      <ActionBadge action={rec.action_type} />
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right">
                       <div className="text-sm font-medium text-gray-900">
@@ -172,6 +177,15 @@ export function Recommendations() {
                       )}
                     </td>
                     <td className="px-4 py-3">
+                      <ConfidenceBadge level={rec.confidence} />
+                      <CustomerInfo
+                        uniqueCustomers={rec.unique_customers}
+                        recurringCustomers={rec.recurring_customers}
+                        topCustomerName={rec.top_customer_name}
+                        topCustomerShare={rec.top_customer_share}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="text-sm text-gray-900">{rec.action}</div>
                       <div className="text-xs text-gray-500">{rec.reason}</div>
                     </td>
@@ -183,26 +197,27 @@ export function Recommendations() {
         )}
       </div>
 
-      {/* Warnings Section */}
+      {/* Skip This Cycle Section */}
       {warnings.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 border-b border-gray-200 bg-yellow-50">
-            <h2 className="text-lg font-semibold text-yellow-800">
-              Warnings ({warnings.length} products)
+          <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+            <h2 className="text-lg font-semibold text-gray-800">
+              Skip This Cycle ({warnings.length} products)
             </h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Products to skip or review — no action needed this cycle
+            </p>
           </div>
           <div className="divide-y divide-gray-200">
             {warnings.map((warning) => (
               <div key={warning.product_id} className="px-4 py-3 flex items-start gap-3">
                 <span className="flex-shrink-0 mt-0.5">
-                  <WarningIcon />
+                  <SkipIcon type={warning.type} />
                 </span>
                 <div>
                   <div className="text-sm font-medium text-gray-900">{warning.sku}</div>
                   <div className="text-sm text-gray-600">{warning.message}</div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {warning.type.replace(/_/g, ' ')}
-                  </div>
+                  <SkipBadge type={warning.type} />
                 </div>
               </div>
             ))}
@@ -213,65 +228,123 @@ export function Recommendations() {
   );
 }
 
-// Priority Card Component
-interface PriorityCardProps {
-  priority: RecommendationPriority;
+// Action Card Component
+interface ActionCardProps {
+  action: ActionType;
   count: number;
 }
 
-const priorityCardStyles = {
-  CRITICAL: 'bg-red-50 border-red-200 text-red-800',
-  HIGH: 'bg-orange-50 border-orange-200 text-orange-800',
-  MEDIUM: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-  LOW: 'bg-blue-50 border-blue-200 text-blue-800',
+const actionCardStyles: Record<ActionType, string> = {
+  ORDER_NOW: 'bg-red-50 border-red-200 text-red-800',
+  ORDER_SOON: 'bg-orange-50 border-orange-200 text-orange-800',
+  WELL_STOCKED: 'bg-green-50 border-green-200 text-green-800',
+  SKIP_ORDER: 'bg-blue-50 border-blue-200 text-blue-800',
+  REVIEW: 'bg-gray-50 border-gray-200 text-gray-800',
 };
 
-function PriorityCard({ priority, count }: PriorityCardProps) {
+const actionLabels: Record<ActionType, string> = {
+  ORDER_NOW: 'Order Now',
+  ORDER_SOON: 'Order Soon',
+  WELL_STOCKED: 'Well Stocked',
+  SKIP_ORDER: 'Skip Order',
+  REVIEW: 'Review',
+};
+
+function ActionCard({ action, count }: ActionCardProps) {
   return (
-    <div className={`rounded-lg border p-4 ${priorityCardStyles[priority]}`}>
+    <div className={`rounded-lg border p-4 ${actionCardStyles[action]}`}>
       <div className="text-3xl font-bold">{count}</div>
-      <div className="text-sm font-medium">{priority}</div>
+      <div className="text-sm font-medium">{actionLabels[action]}</div>
     </div>
   );
 }
 
-// Priority Badge Component
-interface PriorityBadgeProps {
-  priority: RecommendationPriority;
+// Skip Icon - color based on type
+function SkipIcon({ type }: { type: string }) {
+  const isGoodStock = type === 'WELL_STOCKED' || type === 'OVER_STOCKED';
+  const colorClass = isGoodStock ? 'text-green-500' : 'text-gray-400';
+
+  if (isGoodStock) {
+    // Checkmark icon for well-stocked/over-stocked
+    return (
+      <svg className={`h-5 w-5 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+  }
+
+  // Question mark icon for uncertain items
+  return (
+    <svg className={`h-5 w-5 ${colorClass}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
 }
 
-const priorityBadgeStyles = {
-  CRITICAL: 'bg-red-100 text-red-800 border-red-200',
-  HIGH: 'bg-orange-100 text-orange-800 border-orange-200',
-  MEDIUM: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  LOW: 'bg-blue-100 text-blue-800 border-blue-200',
+// Skip Badge - styled label based on type
+const skipBadgeStyles: Record<string, string> = {
+  WELL_STOCKED: 'bg-green-100 text-green-800',
+  OVER_STOCKED: 'bg-green-100 text-green-800',
+  NO_SALES_DATA: 'bg-gray-100 text-gray-600',
+  LOW_VELOCITY: 'bg-gray-100 text-gray-600',
 };
 
-function PriorityBadge({ priority }: PriorityBadgeProps) {
+const skipBadgeLabels: Record<string, string> = {
+  WELL_STOCKED: 'Well Stocked',
+  OVER_STOCKED: 'Over Stocked',
+  NO_SALES_DATA: 'No History',
+  LOW_VELOCITY: 'Low Demand',
+};
+
+function SkipBadge({ type }: { type: string }) {
+  const style = skipBadgeStyles[type] || 'bg-gray-100 text-gray-600';
+  const label = skipBadgeLabels[type] || type.replace(/_/g, ' ');
+
   return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${priorityBadgeStyles[priority]}`}
-    >
-      {priority}
+    <span className={`inline-block mt-1 px-2 py-0.5 text-xs font-medium rounded ${style}`}>
+      {label}
     </span>
   );
 }
 
-// Warning Icon
-function WarningIcon() {
+// Confidence Badge - color based on level
+const confidenceStyles: Record<ConfidenceLevel, string> = {
+  HIGH: 'bg-green-100 text-green-800',
+  MEDIUM: 'bg-yellow-100 text-yellow-800',
+  LOW: 'bg-gray-100 text-gray-600',
+};
+
+function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
   return (
-    <svg
-      className="h-5 w-5 text-yellow-500"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-      />
-    </svg>
+    <span className={`inline-block px-2 py-0.5 text-xs font-medium rounded ${confidenceStyles[level]}`}>
+      {level}
+    </span>
+  );
+}
+
+// Customer Info - shows customer breakdown under confidence badge
+interface CustomerInfoProps {
+  uniqueCustomers: number;
+  recurringCustomers: number;
+  topCustomerName: string | null;
+  topCustomerShare: number | null;
+}
+
+function CustomerInfo({ uniqueCustomers, recurringCustomers, topCustomerName, topCustomerShare }: CustomerInfoProps) {
+  if (uniqueCustomers === 0) {
+    return <div className="text-xs text-gray-400 mt-1">No customer data</div>;
+  }
+
+  const topPct = topCustomerShare != null ? Math.round(topCustomerShare * 100) : null;
+
+  return (
+    <div className="text-xs text-gray-500 mt-1">
+      <div>{uniqueCustomers} customers, {recurringCustomers} recurring</div>
+      {topCustomerName && topPct != null && topPct > 20 && (
+        <div className="text-gray-400">
+          Top: {topCustomerName} ({topPct}%)
+        </div>
+      )}
+    </div>
   );
 }
