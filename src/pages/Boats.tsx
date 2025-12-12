@@ -75,7 +75,7 @@ export function Boats() {
   const availableCount = boats.filter((b) => b.status === 'available').length;
   const bookedCount = boats.filter((b) => b.status === 'booked').length;
   const urgentCount = boats.filter(
-    (b) => b.status === 'available' && b.days_until_deadline !== null && b.days_until_deadline <= 3
+    (b) => b.status === 'available' && b.days_until_departure !== null && b.days_until_departure <= 7
   ).length;
 
   return (
@@ -127,7 +127,7 @@ export function Boats() {
           {urgentCount > 0 && (
             <div className="bg-orange-50 rounded-lg border border-orange-200 p-4">
               <div className="text-3xl font-bold text-orange-800">{urgentCount}</div>
-              <div className="text-sm text-orange-700">Book Soon (≤3 days)</div>
+              <div className="text-sm text-orange-700">Leaves Soon (≤7 days)</div>
             </div>
           )}
         </div>

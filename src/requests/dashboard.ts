@@ -40,6 +40,12 @@ export interface StockoutSummary {
   consider_count: number;
   well_covered_count: number;
   your_call_count: number;
+  // Departure info (for user-facing display)
+  next_boat_departure: string | null;
+  second_boat_departure: string | null;
+  days_to_next_boat_departure: number | null;
+  days_to_second_boat_departure: number | null;
+  // Arrival info (for internal use / backwards compatibility)
   next_boat_arrival: string | null;
   second_boat_arrival: string | null;
   days_to_next_boat: number | null;

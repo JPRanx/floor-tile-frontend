@@ -89,22 +89,22 @@ export function Dashboard() {
         />
       </div>
 
-      {/* Boat Arrival Info */}
-      {data.next_boat_arrival && (
+      {/* Boat Departure Info */}
+      {data.next_boat_departure && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-blue-800 mb-2">Boat Arrivals</h3>
+          <h3 className="text-sm font-semibold text-blue-800 mb-2">Boat Departures</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-blue-600">Next boat:</span>{' '}
               <span className="font-medium text-blue-800">
-                {new Date(data.next_boat_arrival).toLocaleDateString()} ({data.days_to_next_boat} days)
+                {new Date(data.next_boat_departure).toLocaleDateString()} ({data.days_to_next_boat_departure} days)
               </span>
             </div>
-            {data.second_boat_arrival && (
+            {data.second_boat_departure && (
               <div>
                 <span className="text-blue-600">Second boat:</span>{' '}
                 <span className="font-medium text-blue-800">
-                  {new Date(data.second_boat_arrival).toLocaleDateString()} ({data.days_to_second_boat} days)
+                  {new Date(data.second_boat_departure).toLocaleDateString()} ({data.days_to_second_boat_departure} days)
                 </span>
               </div>
             )}

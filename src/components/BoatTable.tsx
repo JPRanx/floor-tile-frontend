@@ -28,9 +28,9 @@ function formatDate(dateString: string): string {
   });
 }
 
-function getDaysUntilText(days: number | null, isPastDeadline: boolean): string {
+function getDaysUntilText(days: number | null): string {
   if (days === null) return '—';
-  if (isPastDeadline) return 'Past';
+  if (days < 0) return 'Departed';
   if (days === 0) return 'Today';
   if (days === 1) return '1 day';
   return `${days} days`;
@@ -86,7 +86,7 @@ export function BoatTable({ boats, onStatusChange }: BoatTableProps) {
                 Deadline
               </th>
               <th className="px-3 py-2 sm:px-4 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Days
+                Leaves In
               </th>
               <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -130,14 +130,14 @@ export function BoatTable({ boats, onStatusChange }: BoatTableProps) {
                 <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center">
                   <span
                     className={`text-sm font-medium ${
-                      boat.is_past_deadline
-                        ? 'text-red-600'
-                        : boat.days_until_deadline !== null && boat.days_until_deadline <= 3
+                      boat.days_until_departure !== null && boat.days_until_departure < 0
+                        ? 'text-gray-400'
+                        : boat.days_until_departure !== null && boat.days_until_departure <= 3
                         ? 'text-orange-600'
                         : 'text-gray-900'
                     }`}
                   >
-                    {getDaysUntilText(boat.days_until_deadline, boat.is_past_deadline)}
+                    {getDaysUntilText(boat.days_until_departure)}
                   </span>
                 </td>
                 <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">

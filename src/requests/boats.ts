@@ -20,6 +20,7 @@ export interface BoatSchedule {
   created_at: string;
   updated_at: string;
   // Computed fields from backend
+  days_until_departure: number | null;
   days_until_deadline: number | null;
   is_past_deadline: boolean;
 }
