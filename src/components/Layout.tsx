@@ -7,6 +7,7 @@ interface LayoutProps {
 const navItems = [
   { path: '/', label: 'Dashboard' },
   { path: '/recommendations', label: 'Recommendations' },
+  { path: '/boats', label: 'Boats' },
 ];
 
 export function Layout({ children }: LayoutProps) {
