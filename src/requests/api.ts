@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-// Use environment variable for production, fallback to localhost for development
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Use environment variable if set, otherwise use production URL
+// For local development, create .env.local with: VITE_API_URL=http://localhost:8000/api
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://floor-tile-backend.onrender.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
