@@ -68,7 +68,7 @@ export function BoatTable({ boats, onStatusChange }: BoatTableProps) {
   }
 
   return (
-    <div className="overflow-x-auto -mx-4 sm:mx-0">
+    <div className="overflow-x-auto">
       <div className="inline-block min-w-full align-middle">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
