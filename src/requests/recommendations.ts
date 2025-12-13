@@ -2,7 +2,7 @@ import api from './api';
 
 export type RecommendationPriority = 'HIGH_PRIORITY' | 'CONSIDER' | 'WELL_COVERED' | 'YOUR_CALL';
 export type ActionType = 'ORDER_NOW' | 'ORDER_SOON' | 'WELL_STOCKED' | 'SKIP_ORDER' | 'REVIEW';
-export type WarningType = 'OVER_STOCKED' | 'NO_SALES_DATA' | 'LOW_VELOCITY';
+export type WarningType = 'WELL_STOCKED' | 'OVER_STOCKED' | 'NO_SALES_DATA' | 'LOW_VELOCITY';
 export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
 
 export interface WarehouseStatus {
@@ -71,6 +71,9 @@ export interface RecommendationWarning {
   action_type: ActionType;
   message: string;
   details: Record<string, unknown> | null;
+  // In-transit info (for WELL_STOCKED/OVER_STOCKED warnings)
+  in_transit_m2: number | null;
+  in_transit_pallets: number | null;
 }
 
 export interface OrderRecommendations {

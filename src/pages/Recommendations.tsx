@@ -228,7 +228,14 @@ export function Recommendations() {
                 </span>
                 <div>
                   <div className="text-sm font-medium text-gray-900">{warning.sku}</div>
-                  <div className="text-sm text-gray-600">{warning.message}</div>
+                  <div className="text-sm text-gray-600">
+                    {warning.message}
+                    {warning.in_transit_m2 != null && warning.in_transit_m2 > 0 && (
+                      <span className="text-blue-600 ml-1">
+                        (📦 {Math.round(warning.in_transit_m2).toLocaleString()} m² in transit)
+                      </span>
+                    )}
+                  </div>
                   <SkipBadge type={warning.type} />
                 </div>
               </div>
