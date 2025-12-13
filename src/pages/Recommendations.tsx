@@ -151,6 +151,12 @@ export function Recommendations() {
                       <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">{rec.sku}</div>
                         <div className="text-xs text-gray-500">{rec.rotation || '—'}</div>
+                        {/* Show in-transit if > 0 */}
+                        {rec.in_transit_pallets > 0 && (
+                          <div className="text-xs text-blue-600 mt-0.5">
+                            📦 {Math.round(rec.in_transit_pallets)}p in transit
+                          </div>
+                        )}
                         {/* Show confidence on mobile under SKU */}
                         <div className="sm:hidden mt-1">
                           <ConfidenceBadge level={rec.confidence} />

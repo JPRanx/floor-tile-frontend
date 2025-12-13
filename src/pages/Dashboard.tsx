@@ -177,6 +177,9 @@ export function Dashboard() {
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Stock (m²)
                 </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  In Transit
+                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -214,6 +217,15 @@ export function Dashboard() {
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
                     {Number(product.warehouse_qty).toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                    {Number(product.in_transit_qty) > 0 ? (
+                      <span className="text-blue-600 font-medium">
+                        📦 {Number(product.in_transit_qty).toLocaleString()}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

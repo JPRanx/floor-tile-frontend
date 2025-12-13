@@ -84,8 +84,20 @@ export function OrderBuilderProductCard({
             </span>
           </div>
 
-          {/* Details Row */}
+          {/* Stock & In-Transit Row */}
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
+            <span>
+              Stock: <strong>{Math.round(product.current_stock_m2).toLocaleString()} m²</strong>
+              {product.in_transit_m2 > 0 && (
+                <span className="text-blue-600 ml-1">
+                  | 📦 {Math.round(product.in_transit_m2).toLocaleString()} m² in transit
+                </span>
+              )}
+            </span>
+          </div>
+
+          {/* Gap & Confidence Row */}
+          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
             <span>
               Gap: <strong>{Math.round(product.coverage_gap_m2).toLocaleString()} m²</strong>
               {' '}({product.coverage_gap_pallets}p)
