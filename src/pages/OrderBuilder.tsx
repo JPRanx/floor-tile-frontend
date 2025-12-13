@@ -7,6 +7,8 @@ import type {
   OrderBuilderSummary as SummaryType,
   OrderBuilderAlert,
 } from '../requests/orderBuilder';
+import { boatsApi } from '../requests/boats';
+import type { BoatSchedule } from '../requests/boats';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
 import { OrderBuilderProductCard } from '../components/OrderBuilderProductCard';
@@ -23,6 +25,10 @@ export function OrderBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [mode, setMode] = useState<OrderBuilderMode>('standard');
 
+  // Available boats for selector
+  const [availableBoats, setAvailableBoats] = useState<BoatSchedule[]>([]);
+  const [selectedBoatId, setSelectedBoatId] = useState<string | undefined>(undefined);
+
   // Local state for products (allows editing without refetching)
   const [products, setProducts] = useState<OrderBuilderProduct[]>([]);
 
@@ -34,11 +40,31 @@ export function OrderBuilder() {
     your_call: false,
   });
 
-  const loadData = useCallback(async (selectedMode: OrderBuilderMode) => {
+  // Fetch available boats on mount
+  useEffect(() => {
+    const fetchBoats = async () => {
+      try {
+        const response = await boatsApi.getAvailable();
+        // Backend returns array directly, boats.ts wraps so response IS the array
+        const boats = Array.isArray(response) ? response : (response.data || []);
+        setAvailableBoats(boats);
+        // Default to first boat if none selected
+        if (boats.length > 0 && !selectedBoatId) {
+          setSelectedBoatId(boats[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch boats:', err);
+        setAvailableBoats([]);
+      }
+    };
+    fetchBoats();
+  }, []);
+
+  const loadData = useCallback(async (selectedMode: OrderBuilderMode, boatId?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await orderBuilderApi.get({ mode: selectedMode });
+      const result = await orderBuilderApi.get({ mode: selectedMode, boat_id: boatId });
       setData(result);
       // Flatten all products into a single array for local state
       const allProducts = [
@@ -57,8 +83,14 @@ export function OrderBuilder() {
   }, []);
 
   useEffect(() => {
-    loadData(mode);
-  }, [mode, loadData]);
+    if (selectedBoatId) {
+      loadData(mode, selectedBoatId);
+    }
+  }, [mode, selectedBoatId, loadData]);
+
+  const handleBoatChange = (boatId: string) => {
+    setSelectedBoatId(boatId);
+  };
 
   const handleModeChange = (newMode: OrderBuilderMode) => {
     setMode(newMode);
@@ -96,7 +128,7 @@ export function OrderBuilder() {
   };
 
   const handleReset = () => {
-    loadData(mode);
+    loadData(mode, selectedBoatId);
   };
 
   const handleExport = () => {
@@ -328,6 +360,9 @@ export function OrderBuilder() {
         nextBoat={data.next_boat}
         mode={mode}
         onModeChange={handleModeChange}
+        availableBoats={availableBoats}
+        selectedBoatId={selectedBoatId}
+        onBoatChange={handleBoatChange}
       />
 
       {/* Main content: Products and Summary side by side on desktop */}
