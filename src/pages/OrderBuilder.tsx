@@ -131,46 +131,56 @@ export function OrderBuilder() {
     loadData(mode, selectedBoatId);
   };
 
-  const handleExport = () => {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async () => {
     const selected = products.filter((p) => p.is_selected && p.selected_pallets > 0);
     if (selected.length === 0) {
       alert('No products selected to export');
       return;
     }
 
-    // Generate CSV content
-    const headers = ['SKU', 'Pallets', 'm²', 'Priority', 'Confidence'];
-    const rows = selected.map((p) => [
-      p.sku,
-      p.selected_pallets.toString(),
-      (p.selected_pallets * M2_PER_PALLET).toString(),
-      p.priority,
-      p.confidence,
-    ]);
+    if (!data?.boat.departure_date) {
+      alert('No boat selected');
+      return;
+    }
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) => row.join(',')),
-      '',
-      `Total Pallets,${summary.total_pallets}`,
-      `Total m²,${summary.total_m2}`,
-      `Containers,${summary.total_containers}`,
-    ].join('\n');
+    setExporting(true);
+    try {
+      const blob = await orderBuilderApi.exportOrder({
+        products: selected.map((p) => ({
+          sku: p.sku,
+          pallets: p.selected_pallets,
+        })),
+        boat_departure: data.boat.departure_date,
+      });
 
-    // Copy to clipboard
-    navigator.clipboard.writeText(csvContent).then(
-      () => alert('Order copied to clipboard!'),
-      () => {
-        // Fallback: download as file
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `order-${data?.boat.departure_date || 'export'}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-    );
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+
+      // Generate filename with Spanish month name
+      const departureDate = new Date(data.boat.departure_date);
+      const productionMonth = departureDate.getMonth() + 2; // +1 for 0-index, +1 for next month
+      const productionYear = productionMonth > 12
+        ? departureDate.getFullYear() + 1
+        : departureDate.getFullYear();
+      const monthNames = [
+        'ENERO', 'FEBRERO', 'MARZO', 'ABRIL', 'MAYO', 'JUNIO',
+        'JULIO', 'AGOSTO', 'SEPTIEMBRE', 'OCTUBRE', 'NOVIEMBRE', 'DICIEMBRE'
+      ];
+      const monthName = monthNames[(productionMonth - 1) % 12];
+      a.download = `PEDIDO_FABRICA_${monthName}_${productionYear}.xlsx`;
+
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Failed to export order. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // Recalculate summary from local products state
@@ -436,9 +446,10 @@ export function OrderBuilder() {
             </button>
             <button
               onClick={handleExport}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={exporting}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Export Order
+              {exporting ? 'Exporting...' : 'Export Order'}
             </button>
           </div>
         </div>

@@ -101,6 +101,16 @@ export interface OrderBuilderParams {
   mode?: OrderBuilderMode;
 }
 
+export interface ExportProductItem {
+  sku: string;
+  pallets: number;
+}
+
+export interface ExportOrderRequest {
+  products: ExportProductItem[];
+  boat_departure: string;
+}
+
 export const orderBuilderApi = {
   get: async (params?: OrderBuilderParams): Promise<OrderBuilderResponse> => {
     const queryParams = new URLSearchParams();
@@ -113,6 +123,13 @@ export const orderBuilderApi = {
     const queryString = queryParams.toString();
     const url = `/order-builder${queryString ? `?${queryString}` : ''}`;
     const response = await api.get<OrderBuilderResponse>(url);
+    return response.data;
+  },
+
+  exportOrder: async (request: ExportOrderRequest): Promise<Blob> => {
+    const response = await api.post('/order-builder/export', request, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 };
