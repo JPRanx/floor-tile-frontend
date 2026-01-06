@@ -28,6 +28,7 @@ export interface BoatSchedule {
 export interface BoatUploadResult {
   imported: number;
   updated: number;
+  skipped: number;
   errors: Array<{
     row: number;
     field: string;

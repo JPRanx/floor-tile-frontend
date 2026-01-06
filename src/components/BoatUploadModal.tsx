@@ -71,7 +71,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
       const uploadResult = await boatsApi.upload(file);
       setResult(uploadResult);
 
-      if (uploadResult.imported > 0 || uploadResult.updated > 0) {
+      if (uploadResult.imported > 0 || uploadResult.updated > 0 || uploadResult.skipped > 0) {
         setUploadState('success');
       } else if (uploadResult.errors.length > 0) {
         setUploadState('error');
@@ -248,6 +248,9 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
               <div className="mt-2 text-sm text-gray-600">
                 <p><span className="font-medium">{result.imported}</span> boats imported</p>
                 <p><span className="font-medium">{result.updated}</span> boats updated</p>
+                {result.skipped > 0 && (
+                  <p><span className="font-medium">{result.skipped}</span> already up to date</p>
+                )}
               </div>
 
               {result.errors.length > 0 && (
