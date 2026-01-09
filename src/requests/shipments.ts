@@ -57,11 +57,60 @@ export interface Shipment {
   booking_number?: string;
   status: string;
   vessel_name?: string;
+  voyage_number?: string;
   etd?: string;
   eta?: string;
-  origin_port_id: string;
-  destination_port_id: string;
+  actual_departure?: string;
+  actual_arrival?: string;
+  origin_port_id?: string;
+  destination_port_id?: string;
+  bill_of_lading?: string;
+  free_days?: number;
+  free_days_expiry?: string;
+  freight_cost_usd?: number;
+  notes?: string;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface Container {
+  id: string;
+  shipment_id: string;
+  container_number?: string;
+  seal_number?: string;
+  total_pallets?: number;
+  total_weight_kg?: number;
+  total_m2?: number;
+  fill_percentage?: number;
+  created_at: string;
+}
+
+export interface ContainerListResponse {
+  data: Container[];
+  total: number;
+}
+
+export interface ShipmentEvent {
+  id: string;
+  shipment_id: string;
+  status: string;
+  occurred_at: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface ShipmentEventListResponse {
+  data: ShipmentEvent[];
+  total: number;
+}
+
+export interface Port {
+  id: string;
+  name: string;
+  country: string;
+  type: 'ORIGIN' | 'DESTINATION';
+  unlocode?: string;
+  avg_processing_days?: number;
 }
 
 export const shipmentsApi = {
@@ -86,5 +135,32 @@ export const shipmentsApi = {
   async list(): Promise<Shipment[]> {
     const response = await api.get('/shipments');
     return response.data.data || [];
+  },
+
+  async getById(id: string): Promise<Shipment> {
+    const response = await api.get(`/shipments/${id}`);
+    return response.data;
+  },
+
+  async getContainers(shipmentId: string): Promise<Container[]> {
+    const response = await api.get(`/shipments/${shipmentId}/containers`);
+    return response.data.data || [];
+  },
+
+  async getEvents(shipmentId: string): Promise<ShipmentEvent[]> {
+    const response = await api.get(`/shipments/${shipmentId}/events`);
+    return response.data.data || [];
+  },
+};
+
+export const portsApi = {
+  async list(): Promise<Port[]> {
+    const response = await api.get('/ports');
+    return response.data;
+  },
+
+  async getById(id: string): Promise<Port> {
+    const response = await api.get(`/ports/${id}`);
+    return response.data;
   },
 };

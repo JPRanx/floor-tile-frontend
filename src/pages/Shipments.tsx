@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { shipmentsApi } from '../requests/shipments';
 import type { Shipment } from '../requests/shipments';
 import { ShipmentUploadModal } from '../components/ShipmentUploadModal';
+import { ShipmentDetailPanel } from '../components/ShipmentDetailPanel';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function Shipments() {
@@ -9,6 +10,7 @@ export function Shipments() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
 
   const loadShipments = async () => {
     setLoading(true);
@@ -157,7 +159,11 @@ export function Shipments() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {shipments.map((shipment) => (
-                <tr key={shipment.id} className="hover:bg-gray-50">
+                <tr
+                  key={shipment.id}
+                  onClick={() => setSelectedShipmentId(shipment.id)}
+                  className="hover:bg-gray-50 cursor-pointer"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {shipment.shp_number}
@@ -204,6 +210,14 @@ export function Shipments() {
           loadShipments();
         }}
       />
+
+      {/* Detail Panel */}
+      {selectedShipmentId && (
+        <ShipmentDetailPanel
+          shipmentId={selectedShipmentId}
+          onClose={() => setSelectedShipmentId(null)}
+        />
+      )}
     </div>
   );
 }
