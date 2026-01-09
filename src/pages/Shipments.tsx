@@ -216,6 +216,7 @@ export function Shipments() {
         <ShipmentDetailPanel
           shipmentId={selectedShipmentId}
           onClose={() => setSelectedShipmentId(null)}
+          onStatusChange={loadShipments}
         />
       )}
     </div>

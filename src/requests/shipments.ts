@@ -151,6 +151,11 @@ export const shipmentsApi = {
     const response = await api.get(`/shipments/${shipmentId}/events`);
     return response.data.data || [];
   },
+
+  async updateStatus(shipmentId: string, status: string): Promise<Shipment> {
+    const response = await api.patch(`/shipments/${shipmentId}/status`, { status });
+    return response.data;
+  },
 };
 
 export const portsApi = {

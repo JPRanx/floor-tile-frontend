@@ -6,15 +6,27 @@ import { LoadingSpinner } from './LoadingSpinner';
 interface ShipmentDetailPanelProps {
   shipmentId: string | null;
   onClose: () => void;
+  onStatusChange?: () => void;
 }
 
-export function ShipmentDetailPanel({ shipmentId, onClose }: ShipmentDetailPanelProps) {
+// Status transition map: current status -> { nextStatus, buttonLabel }
+const STATUS_TRANSITIONS: Record<string, { nextStatus: string; buttonLabel: string }> = {
+  AT_FACTORY: { nextStatus: 'IN_TRANSIT', buttonLabel: 'Mark Departed' },
+  IN_TRANSIT: { nextStatus: 'AT_DESTINATION_PORT', buttonLabel: 'Mark Arrived' },
+  AT_DESTINATION_PORT: { nextStatus: 'IN_CUSTOMS', buttonLabel: 'Mark Cleared' },
+  IN_CUSTOMS: { nextStatus: 'DELIVERED', buttonLabel: 'Mark Delivered' },
+};
+
+export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: ShipmentDetailPanelProps) {
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [containers, setContainers] = useState<Container[]>([]);
   const [events, setEvents] = useState<ShipmentEvent[]>([]);
   const [ports, setPorts] = useState<Record<string, Port>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!shipmentId) {
@@ -114,6 +126,46 @@ export function ShipmentDetailPanel({ shipmentId, onClose }: ShipmentDetailPanel
     return port ? `${port.name}, ${port.country}` : portId;
   };
 
+  const reloadData = async () => {
+    if (!shipmentId) return;
+    try {
+      const [shipmentData, eventsData] = await Promise.all([
+        shipmentsApi.getById(shipmentId),
+        shipmentsApi.getEvents(shipmentId),
+      ]);
+      setShipment(shipmentData);
+      setEvents([...eventsData].sort((a, b) =>
+        new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime()
+      ));
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Failed to reload data');
+    }
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!shipment || !shipmentId) return;
+    const transition = STATUS_TRANSITIONS[shipment.status];
+    if (!transition) return;
+
+    setUpdating(true);
+    setError(null);
+    try {
+      await shipmentsApi.updateStatus(shipmentId, transition.nextStatus);
+      setSuccessMessage(`Status updated to ${formatStatus(transition.nextStatus)}`);
+      setShowConfirm(false);
+      await reloadData();
+      onStatusChange?.();
+      // Auto-hide success message after 3s
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || 'Failed to update status');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const currentTransition = shipment ? STATUS_TRANSITIONS[shipment.status] : null;
+
   if (!shipmentId) return null;
 
   return (
@@ -130,27 +182,53 @@ export function ShipmentDetailPanel({ shipmentId, onClose }: ShipmentDetailPanel
         style={{ boxShadow: '-8px 0 30px rgba(0, 0, 0, 0.15)' }}
       >
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-white">
-          <div>
-            {loading ? (
-              <div className="h-6 w-32 bg-gray-200 animate-pulse rounded" />
-            ) : shipment ? (
-              <>
-                <h2 className="text-lg font-semibold text-gray-900">{shipment.shp_number}</h2>
-                <span className={`inline-flex mt-1 px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(shipment.status)}`}>
-                  {formatStatus(shipment.status)}
-                </span>
-              </>
-            ) : null}
+        <div className="px-6 py-4 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between">
+            <div>
+              {loading ? (
+                <div className="h-6 w-32 bg-gray-200 animate-pulse rounded" />
+              ) : shipment ? (
+                <>
+                  <h2 className="text-lg font-semibold text-gray-900">{shipment.shp_number}</h2>
+                  <span className={`inline-flex mt-1 px-2 py-0.5 text-xs font-semibold rounded-full ${getStatusColor(shipment.status)}`}>
+                    {formatStatus(shipment.status)}
+                  </span>
+                </>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-2">
+              {/* Status Action Button */}
+              {currentTransition && !loading && (
+                <button
+                  onClick={() => setShowConfirm(true)}
+                  disabled={updating}
+                  className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {currentTransition.buttonLabel}
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-2">
+              <p className="text-sm text-green-800 flex items-center gap-2">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                {successMessage}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Content */}
@@ -336,6 +414,42 @@ export function ShipmentDetailPanel({ shipmentId, onClose }: ShipmentDetailPanel
           ) : null}
         </div>
       </div>
+
+      {/* Confirm Dialog */}
+      {showConfirm && currentTransition && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowConfirm(false)} />
+          <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Update Status</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Change status from <span className="font-medium">{formatStatus(shipment?.status || '')}</span> to{' '}
+              <span className="font-medium">{formatStatus(currentTransition.nextStatus)}</span>?
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowConfirm(false)}
+                disabled={updating}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleStatusUpdate}
+                disabled={updating}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+              >
+                {updating && (
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                )}
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Animation styles */}
       <style>{`
