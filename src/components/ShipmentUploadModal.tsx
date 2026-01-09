@@ -55,54 +55,24 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
     setDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-
-    const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && isValidFile(droppedFile)) {
-      setFile(droppedFile);
-      setErrorMessage(null);
-    } else {
-      setErrorMessage('Please upload a PDF file');
-    }
-  }, []);
-
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile && isValidFile(selectedFile)) {
-      setFile(selectedFile);
-      setErrorMessage(null);
-    } else if (selectedFile) {
-      setErrorMessage('Please upload a PDF file');
-    }
-  }, []);
-
   const isValidFile = (file: File): boolean => {
     return file.name.endsWith('.pdf') || file.type === 'application/pdf';
   };
 
-  const getConfidenceColor = (confidence: number): string => {
-    if (confidence >= 0.85) return 'text-green-600 bg-green-50';
-    if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-50';
-    return 'text-red-600 bg-red-50';
-  };
+  // Auto-upload file immediately after selection
+  const handleFileAndUpload = useCallback(async (selectedFile: File) => {
+    if (!isValidFile(selectedFile)) {
+      setErrorMessage('Please upload a PDF file');
+      return;
+    }
 
-  const getConfidenceBadge = (confidence: number): string => {
-    if (confidence >= 0.85) return '✓ High';
-    if (confidence >= 0.6) return '~ Medium';
-    return '⚠ Low';
-  };
-
-  const handleUpload = async () => {
-    if (!file) return;
-
-    setUploadState('uploading');
+    setFile(selectedFile);
     setErrorMessage(null);
+    setUploadState('uploading');
     setParseResult(null);
 
     try {
-      const result = await shipmentsApi.uploadPdf(file);
+      const result = await shipmentsApi.uploadPdf(selectedFile);
       setParseResult(result);
 
       if (result.action === 'parsed_pending_confirmation' && result.parsed_data) {
@@ -131,6 +101,35 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
         err.response?.data?.error?.message || 'Failed to parse PDF'
       );
     }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile) {
+      handleFileAndUpload(droppedFile);
+    }
+  }, [handleFileAndUpload]);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile) {
+      handleFileAndUpload(selectedFile);
+    }
+  }, [handleFileAndUpload]);
+
+  const getConfidenceColor = (confidence: number): string => {
+    if (confidence >= 0.85) return 'text-green-600 bg-green-50';
+    if (confidence >= 0.6) return 'text-yellow-600 bg-yellow-50';
+    return 'text-red-600 bg-red-50';
+  };
+
+  const getConfidenceBadge = (confidence: number): string => {
+    if (confidence >= 0.85) return '✓ High';
+    if (confidence >= 0.6) return '~ Medium';
+    return '⚠ Low';
   };
 
   const parseDate = (dateStr: string): string | undefined => {
@@ -277,66 +276,37 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
                 className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
                   dragOver
                     ? 'border-blue-500 bg-blue-50'
-                    : file
-                    ? 'border-green-500 bg-green-50'
                     : 'border-gray-300 hover:border-gray-400'
                 }`}
               >
-                {file ? (
-                  <div>
-                    <svg
-                      className="mx-auto h-10 w-10 text-green-500"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                    <p className="mt-2 text-sm font-medium text-gray-900">{file.name}</p>
-                    <button
-                      onClick={() => setFile(null)}
-                      className="mt-2 text-sm text-red-600 hover:text-red-800"
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div>
-                    <svg
-                      className="mx-auto h-10 w-10 text-gray-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                      />
-                    </svg>
-                    <p className="mt-2 text-sm text-gray-600">
-                      <label className="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
-                        Click to upload
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept=".pdf"
-                          onChange={handleFileSelect}
-                        />
-                      </label>{' '}
-                      or drag and drop
-                    </p>
-                    <p className="mt-1 text-xs text-gray-500">
-                      Booking, Departure, HBL, or MBL document (.pdf)
-                    </p>
-                  </div>
-                )}
+                <svg
+                  className="mx-auto h-10 w-10 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                <p className="mt-2 text-sm text-gray-600">
+                  <label className="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
+                    Click to upload
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pdf"
+                      onChange={handleFileSelect}
+                    />
+                  </label>{' '}
+                  or drag and drop
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Booking, Departure, HBL, or MBL document (.pdf)
+                </p>
               </div>
 
               {errorMessage && (
@@ -345,19 +315,12 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
                 </div>
               )}
 
-              <div className="mt-4 flex justify-end gap-3">
+              <div className="mt-4 flex justify-end">
                 <button
                   onClick={handleClose}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
                   Cancel
-                </button>
-                <button
-                  onClick={handleUpload}
-                  disabled={!file}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Parse Document
                 </button>
               </div>
             </>
