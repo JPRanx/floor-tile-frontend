@@ -10,6 +10,7 @@ const navItems = [
   { path: '/order-builder', label: 'Order Builder' },
   { path: '/recommendations', label: 'Recommendations' },
   { path: '/boats', label: 'Boats' },
+  { path: '/shipments', label: 'Shipments' },
 ];
 
 export function Layout({ children }: LayoutProps) {

@@ -5,6 +5,7 @@ import { Upload } from './pages/Upload';
 import { Recommendations } from './pages/Recommendations';
 import { Boats } from './pages/Boats';
 import { OrderBuilder } from './pages/OrderBuilder';
+import { Shipments } from './pages/Shipments';
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
           <Route path="/recommendations" element={<Recommendations />} />
           <Route path="/boats" element={<Boats />} />
           <Route path="/order-builder" element={<OrderBuilder />} />
+          <Route path="/shipments" element={<Shipments />} />
         </Routes>
       </Layout>
     </BrowserRouter>
