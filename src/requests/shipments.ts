@@ -6,6 +6,15 @@ export interface ParsedFieldConfidence {
   source_text?: string;
 }
 
+export interface ParsedContainerDetails {
+  container_number: string;
+  container_type: string | null;
+  weight_kg: number | null;
+  volume_m3: number | null;
+  pallets: number | null;
+  confidence: number;
+}
+
 export interface ParsedDocumentData {
   document_type: string;
   document_type_confidence: number;
@@ -14,6 +23,7 @@ export interface ParsedDocumentData {
   pv_number: ParsedFieldConfidence | null;
   containers: string[];
   containers_confidence: number;
+  container_details: ParsedContainerDetails[];
   etd: ParsedFieldConfidence | null;
   eta: ParsedFieldConfidence | null;
   atd: ParsedFieldConfidence | null;
@@ -21,8 +31,20 @@ export interface ParsedDocumentData {
   pol: ParsedFieldConfidence | null;
   pod: ParsedFieldConfidence | null;
   vessel: ParsedFieldConfidence | null;
+  voyage: ParsedFieldConfidence | null;
   raw_text: string;
   overall_confidence: number;
+}
+
+export interface CandidateShipment {
+  id: string;
+  shp_number: string | null;
+  booking_number: string | null;
+  vessel_name: string | null;
+  status: string;
+  etd: string | null;
+  eta: string | null;
+  created_at: string;
 }
 
 export interface IngestResponse {
@@ -30,8 +52,9 @@ export interface IngestResponse {
   message: string;
   shipment_id: string | null;
   shp_number: string | null;
-  action: 'parsed_pending_confirmation' | 'created' | 'updated';
+  action: 'parsed_pending_confirmation' | 'created' | 'updated' | 'needs_assignment';
   parsed_data?: ParsedDocumentData;
+  candidate_shipments?: CandidateShipment[];
 }
 
 export interface ConfirmIngestRequest {
@@ -47,8 +70,11 @@ export interface ConfirmIngestRequest {
   pol?: string;
   pod?: string;
   vessel?: string;
+  voyage?: string;
   source: string;
   notes?: string;
+  target_shipment_id?: string;
+  original_parsed_data?: ParsedDocumentData;
 }
 
 export interface Shipment {
@@ -77,6 +103,7 @@ export interface Container {
   id: string;
   shipment_id: string;
   container_number?: string;
+  container_type?: string;
   seal_number?: string;
   total_pallets?: number;
   total_weight_kg?: number;

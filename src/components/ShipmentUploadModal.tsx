@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { shipmentsApi } from '../requests/shipments';
-import type { IngestResponse } from '../requests/shipments';
+import type { IngestResponse, CandidateShipment } from '../requests/shipments';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface ShipmentUploadModalProps {
@@ -9,7 +9,7 @@ interface ShipmentUploadModalProps {
   onSuccess: () => void;
 }
 
-type UploadState = 'idle' | 'uploading' | 'reviewing' | 'confirming' | 'success' | 'error';
+type UploadState = 'idle' | 'uploading' | 'reviewing' | 'confirming' | 'selecting_shipment' | 'success' | 'error';
 
 export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
@@ -17,6 +17,10 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [parseResult, setParseResult] = useState<IngestResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Manual assignment state
+  const [candidateShipments, setCandidateShipments] = useState<CandidateShipment[]>([]);
+  const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
 
   // Editable fields
   const [editedData, setEditedData] = useState<{
@@ -31,6 +35,7 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
     pol: string;
     pod: string;
     vessel: string;
+    voyage: string;
   }>({
     shp_number: '',
     booking_number: '',
@@ -43,6 +48,7 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
     pol: '',
     pod: '',
     vessel: '',
+    voyage: '',
   });
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -89,6 +95,7 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
           pol: data.pol?.value || '',
           pod: data.pod?.value || '',
           vessel: data.vessel?.value || '',
+          voyage: data.voyage?.value || '',
         });
         setUploadState('reviewing');
       } else {
@@ -192,14 +199,23 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
         pol: editedData.pol || undefined,
         pod: editedData.pod || undefined,
         vessel: editedData.vessel || undefined,
+        voyage: editedData.voyage || undefined,
         source: 'manual' as const,
         notes: `Uploaded by Ashley via web interface. Original file: ${file?.name}`,
+        original_parsed_data: parseResult.parsed_data,
       };
 
       const result = await shipmentsApi.confirmIngest(confirmData);
 
       if (result.success) {
+        setParseResult(result);
         setUploadState('success');
+      } else if (result.action === 'needs_assignment' && result.candidate_shipments) {
+        // HBL/MBL couldn't auto-match - show shipment selection
+        setCandidateShipments(result.candidate_shipments);
+        setSelectedShipmentId(null);
+        setUploadState('selecting_shipment');
+        setErrorMessage(result.message);
       } else {
         setUploadState('error');
         setErrorMessage(result.message || 'Failed to create shipment');
@@ -208,6 +224,51 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
       setUploadState('error');
       setErrorMessage(
         err.response?.data?.error?.message || 'Failed to confirm shipment'
+      );
+    }
+  };
+
+  const handleAssignmentConfirm = async () => {
+    if (!parseResult?.parsed_data || !selectedShipmentId) return;
+
+    setUploadState('confirming');
+    setErrorMessage(null);
+
+    try {
+      const confirmData = {
+        document_type: parseResult.parsed_data.document_type,
+        shp_number: editedData.shp_number || undefined,
+        booking_number: editedData.booking_number || undefined,
+        containers: editedData.containers
+          ? editedData.containers.split(',').map(c => c.trim()).filter(Boolean)
+          : undefined,
+        etd: parseDate(editedData.etd),
+        eta: parseDate(editedData.eta),
+        atd: parseDate(editedData.atd),
+        ata: parseDate(editedData.ata),
+        pol: editedData.pol || undefined,
+        pod: editedData.pod || undefined,
+        vessel: editedData.vessel || undefined,
+        voyage: editedData.voyage || undefined,
+        source: 'manual' as const,
+        notes: `Uploaded by Ashley via web interface. Original file: ${file?.name}. Manually assigned.`,
+        target_shipment_id: selectedShipmentId,
+        original_parsed_data: parseResult.parsed_data,
+      };
+
+      const result = await shipmentsApi.confirmIngest(confirmData);
+
+      if (result.success) {
+        setParseResult(result);
+        setUploadState('success');
+      } else {
+        setUploadState('error');
+        setErrorMessage(result.message || 'Failed to update shipment');
+      }
+    } catch (err: any) {
+      setUploadState('error');
+      setErrorMessage(
+        err.response?.data?.error?.message || 'Failed to confirm assignment'
       );
     }
   };
@@ -221,6 +282,8 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
     setUploadState('idle');
     setParseResult(null);
     setErrorMessage(null);
+    setCandidateShipments([]);
+    setSelectedShipmentId(null);
     setEditedData({
       shp_number: '',
       booking_number: '',
@@ -233,6 +296,7 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
       pol: '',
       pod: '',
       vessel: '',
+      voyage: '',
     });
     onClose();
   };
@@ -555,6 +619,86 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
               >
                 Done
               </button>
+            </div>
+          )}
+
+          {uploadState === 'selecting_shipment' && (
+            <div className="space-y-4">
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                <p className="text-sm text-yellow-800">
+                  <strong>Manual Assignment Required</strong>
+                </p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  {errorMessage || 'No matching shipment found. Please select which shipment this document belongs to.'}
+                </p>
+              </div>
+
+              <p className="text-sm text-gray-600">
+                Select an existing shipment to update with this {parseResult?.parsed_data?.document_type?.toUpperCase()} document:
+              </p>
+
+              <div className="max-h-64 overflow-y-auto border border-gray-200 rounded">
+                {candidateShipments.length === 0 ? (
+                  <p className="p-4 text-sm text-gray-500 text-center">
+                    No shipments available. Please create a booking first.
+                  </p>
+                ) : (
+                  <div className="divide-y divide-gray-200">
+                    {candidateShipments.map((shipment) => (
+                      <label
+                        key={shipment.id}
+                        className={`flex items-start p-3 cursor-pointer hover:bg-gray-50 ${
+                          selectedShipmentId === shipment.id ? 'bg-blue-50' : ''
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="shipment_selection"
+                          value={shipment.id}
+                          checked={selectedShipmentId === shipment.id}
+                          onChange={() => setSelectedShipmentId(shipment.id)}
+                          className="mt-1 mr-3"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900">
+                            {shipment.shp_number || 'No SHP'}
+                            {shipment.booking_number && (
+                              <span className="ml-2 text-gray-500">
+                                (Booking: {shipment.booking_number})
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {shipment.vessel_name || 'No vessel'} | Status: {shipment.status}
+                            {shipment.etd && ` | ETD: ${shipment.etd}`}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
+                <button
+                  onClick={() => {
+                    setUploadState('reviewing');
+                    setCandidateShipments([]);
+                    setSelectedShipmentId(null);
+                    setErrorMessage(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                >
+                  Back to Edit
+                </button>
+                <button
+                  onClick={handleAssignmentConfirm}
+                  disabled={!selectedShipmentId}
+                  className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Assign to Selected Shipment
+                </button>
+              </div>
             </div>
           )}
 
