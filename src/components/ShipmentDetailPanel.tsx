@@ -24,6 +24,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
   const [ports, setPorts] = useState<Record<string, Port>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [containersError, setContainersError] = useState<string | null>(null);
   const [showConfirm, setShowConfirm] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -40,18 +41,17 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
     const loadData = async () => {
       setLoading(true);
       setError(null);
+      setContainersError(null);
 
       try {
-        // Fetch all data in parallel
-        const [shipmentData, containersData, eventsData, portsData] = await Promise.all([
+        // Fetch shipment, events, and ports first (critical data)
+        const [shipmentData, eventsData, portsData] = await Promise.all([
           shipmentsApi.getById(shipmentId),
-          shipmentsApi.getContainers(shipmentId),
           shipmentsApi.getEvents(shipmentId),
           portsApi.list(),
         ]);
 
         setShipment(shipmentData);
-        setContainers(containersData);
         // Sort events chronologically (oldest first to show journey progression)
         setEvents([...eventsData].sort((a, b) =>
           new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime()
@@ -63,6 +63,15 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
           portMap[port.id] = port;
         });
         setPorts(portMap);
+
+        // Fetch containers separately (non-critical, can fail gracefully)
+        try {
+          const containersData = await shipmentsApi.getContainers(shipmentId);
+          setContainers(containersData);
+        } catch (containerErr: any) {
+          setContainersError('Failed to load containers');
+          setContainers([]);
+        }
       } catch (err: any) {
         setError(err.response?.data?.error?.message || 'Failed to load shipment details');
       } finally {
@@ -318,9 +327,13 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                 <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
                   Containers ({containers.length})
                 </h3>
-                {containers.length === 0 ? (
+                {containersError ? (
+                  <div className="bg-red-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-red-600">{containersError}</p>
+                  </div>
+                ) : containers.length === 0 ? (
                   <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-sm text-gray-500">No containers assigned</p>
+                    <p className="text-sm text-gray-500">No containers linked to this shipment.</p>
                   </div>
                 ) : (
                   <div className="bg-gray-50 rounded-lg overflow-hidden">

@@ -77,8 +77,18 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
     setUploadState('uploading');
     setParseResult(null);
 
+    // Create timeout promise (30 seconds)
+    const timeoutMs = 30000;
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs);
+    });
+
     try {
-      const result = await shipmentsApi.uploadPdf(selectedFile);
+      // Race between API call and timeout
+      const result = await Promise.race([
+        shipmentsApi.uploadPdf(selectedFile),
+        timeoutPromise,
+      ]);
       setParseResult(result);
 
       if (result.action === 'parsed_pending_confirmation' && result.parsed_data) {
@@ -104,9 +114,17 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
       }
     } catch (err: any) {
       setUploadState('error');
-      setErrorMessage(
-        err.response?.data?.error?.message || 'Failed to parse PDF'
-      );
+      if (err.message === 'TIMEOUT') {
+        setErrorMessage('Request timed out. The server took too long to respond. Please try again.');
+      } else if (err.response?.data?.error?.message) {
+        setErrorMessage(err.response.data.error.message);
+      } else if (err.response?.status === 500) {
+        setErrorMessage('Server error while parsing document. The PDF may be too large or in an unsupported format.');
+      } else if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK') {
+        setErrorMessage('Network error. Please check your connection and try again.');
+      } else {
+        setErrorMessage('Failed to parse PDF. Please ensure the file is a valid shipping document.');
+      }
     }
   }, []);
 
@@ -308,7 +326,7 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={uploadState !== 'confirming' ? handleClose : undefined}
+        onClick={uploadState !== 'confirming' && uploadState !== 'uploading' ? handleClose : undefined}
       />
 
       {/* Modal */}
@@ -321,8 +339,8 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
             </h2>
             <button
               onClick={handleClose}
-              disabled={uploadState === 'confirming'}
-              className="text-gray-400 hover:text-gray-600 disabled:opacity-50"
+              disabled={uploadState === 'confirming' || uploadState === 'uploading'}
+              className="text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
