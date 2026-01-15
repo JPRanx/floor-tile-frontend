@@ -1,17 +1,28 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { shipmentsApi } from '../requests/shipments';
 import type { IngestResponse, CandidateShipment } from '../requests/shipments';
+import { pendingDocumentsApi } from '../requests/pendingDocuments';
+import type { PendingDocument } from '../requests/pendingDocuments';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface ShipmentUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  // Optional: For pending document resolution flow
+  pendingDocument?: PendingDocument | null;
+  onPendingResolved?: () => void;
 }
 
 type UploadState = 'idle' | 'uploading' | 'reviewing' | 'confirming' | 'selecting_shipment' | 'success' | 'error';
 
-export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUploadModalProps) {
+export function ShipmentUploadModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  pendingDocument,
+  onPendingResolved
+}: ShipmentUploadModalProps) {
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
@@ -21,6 +32,9 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
   // Manual assignment state
   const [candidateShipments, setCandidateShipments] = useState<CandidateShipment[]>([]);
   const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
+
+  // Track if we're resolving a pending document
+  const isPendingResolution = !!pendingDocument;
 
   // Editable fields
   const [editedData, setEditedData] = useState<{
@@ -50,6 +64,56 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
     vessel: '',
     voyage: '',
   });
+
+  // Initialize from pending document when provided
+  useEffect(() => {
+    if (pendingDocument && isOpen) {
+      const data = pendingDocument.parsed_data;
+
+      // Set up parsed result for display
+      setParseResult({
+        success: false,
+        message: 'Pending document',
+        shipment_id: null,
+        shp_number: null,
+        action: 'parsed_pending_confirmation',
+        parsed_data: data,
+      });
+
+      // Populate editable fields
+      setEditedData({
+        shp_number: data.shp_number?.value || '',
+        booking_number: data.booking_number?.value || '',
+        pv_number: data.pv_number?.value || '',
+        containers: data.containers?.join(', ') || '',
+        etd: data.etd?.value || '',
+        eta: data.eta?.value || '',
+        atd: data.atd?.value || '',
+        ata: data.ata?.value || '',
+        pol: data.pol?.value || '',
+        pod: data.pod?.value || '',
+        vessel: data.vessel?.value || '',
+        voyage: data.voyage?.value || '',
+      });
+
+      // Fetch candidates and go directly to selection
+      const loadCandidates = async () => {
+        setUploadState('uploading');
+        try {
+          const candidates = await pendingDocumentsApi.getCandidates(pendingDocument.id, 50);
+          // Convert to CandidateShipment format (they should be compatible)
+          setCandidateShipments(candidates as CandidateShipment[]);
+          setUploadState('selecting_shipment');
+          setErrorMessage('Select which shipment this document belongs to.');
+        } catch (err: any) {
+          setUploadState('error');
+          setErrorMessage(err.response?.data?.error?.message || 'Failed to load candidate shipments');
+        }
+      };
+
+      loadCandidates();
+    }
+  }, [pendingDocument, isOpen]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -253,6 +317,20 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
     setErrorMessage(null);
 
     try {
+      // If resolving a pending document, use the pending documents API
+      if (isPendingResolution && pendingDocument) {
+        await pendingDocumentsApi.resolve(pendingDocument.id, {
+          action: 'assign',
+          target_shipment_id: selectedShipmentId,
+          shp_number: editedData.shp_number || undefined,
+          booking_number: editedData.booking_number || undefined,
+        });
+
+        setUploadState('success');
+        return;
+      }
+
+      // Normal flow: use shipments API
       const confirmData = {
         document_type: parseResult.parsed_data.document_type,
         shp_number: editedData.shp_number || undefined,
@@ -293,7 +371,12 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
 
   const handleClose = () => {
     if (uploadState === 'success') {
-      onSuccess();
+      // Call appropriate success callback
+      if (isPendingResolution && onPendingResolved) {
+        onPendingResolved();
+      } else {
+        onSuccess();
+      }
     }
     // Reset state
     setFile(null);
@@ -335,7 +418,7 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Upload Shipment Document
+              {isPendingResolution ? 'Assign Pending Document' : 'Upload Shipment Document'}
             </h2>
             <button
               onClick={handleClose}
@@ -606,11 +689,13 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
           {uploadState === 'confirming' && (
             <div className="py-8 text-center">
               <LoadingSpinner size="lg" />
-              <p className="mt-4 text-gray-600">Creating shipment...</p>
+              <p className="mt-4 text-gray-600">
+                {isPendingResolution ? 'Assigning document...' : 'Creating shipment...'}
+              </p>
             </div>
           )}
 
-          {uploadState === 'success' && parseResult && (
+          {uploadState === 'success' && (
             <div className="py-4 text-center">
               <svg
                 className="mx-auto h-12 w-12 text-green-500"
@@ -625,12 +710,18 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="mt-3 text-lg font-medium text-gray-900">Shipment Created</h3>
-              {parseResult.shp_number && (
+              <h3 className="mt-3 text-lg font-medium text-gray-900">
+                {isPendingResolution ? 'Document Assigned' : 'Shipment Created'}
+              </h3>
+              {isPendingResolution ? (
+                <p className="mt-2 text-sm text-gray-600">
+                  The pending document has been assigned to the selected shipment.
+                </p>
+              ) : parseResult?.shp_number ? (
                 <p className="mt-2 text-sm text-gray-600">
                   <strong>SHP Number:</strong> {parseResult.shp_number}
                 </p>
-              )}
+              ) : null}
               <button
                 onClick={handleClose}
                 className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
@@ -698,17 +789,26 @@ export function ShipmentUploadModal({ isOpen, onClose, onSuccess }: ShipmentUplo
               </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <button
-                  onClick={() => {
-                    setUploadState('reviewing');
-                    setCandidateShipments([]);
-                    setSelectedShipmentId(null);
-                    setErrorMessage(null);
-                  }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
-                >
-                  Back to Edit
-                </button>
+                {isPendingResolution ? (
+                  <button
+                    onClick={handleClose}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Cancel
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setUploadState('reviewing');
+                      setCandidateShipments([]);
+                      setSelectedShipmentId(null);
+                      setErrorMessage(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                  >
+                    Back to Edit
+                  </button>
+                )}
                 <button
                   onClick={handleAssignmentConfirm}
                   disabled={!selectedShipmentId}

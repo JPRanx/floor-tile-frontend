@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { shipmentsApi } from '../requests/shipments';
 import type { Shipment } from '../requests/shipments';
+import type { PendingDocument } from '../requests/pendingDocuments';
 import { ShipmentUploadModal } from '../components/ShipmentUploadModal';
 import { ShipmentDetailPanel } from '../components/ShipmentDetailPanel';
+import { PendingDocumentsBadge } from '../components/PendingDocumentsBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 type SortField = 'shp_number' | 'etd' | 'eta' | 'status';
@@ -23,6 +25,10 @@ export function Shipments() {
   const [error, setError] = useState<string | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [selectedShipmentId, setSelectedShipmentId] = useState<string | null>(null);
+
+  // Pending document resolution state
+  const [pendingDocument, setPendingDocument] = useState<PendingDocument | null>(null);
+  const [pendingRefreshTrigger, setPendingRefreshTrigger] = useState(0);
 
   // Search, filter, sort state
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,17 +210,28 @@ export function Shipments() {
             Track your shipments from factory to warehouse
           </p>
         </div>
-        <button
-          onClick={() => setUploadModalOpen(true)}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-        >
-          <span className="flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            Upload Document
-          </span>
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Pending Documents Badge */}
+          <PendingDocumentsBadge
+            onSelectDocument={(doc) => {
+              setPendingDocument(doc);
+              setUploadModalOpen(true);
+            }}
+            refreshTrigger={pendingRefreshTrigger}
+          />
+
+          <button
+            onClick={() => setUploadModalOpen(true)}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          >
+            <span className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Upload Document
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Search and Filter Bar */}
@@ -441,9 +458,20 @@ export function Shipments() {
       {/* Upload Modal */}
       <ShipmentUploadModal
         isOpen={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
+        onClose={() => {
+          setUploadModalOpen(false);
+          setPendingDocument(null);
+        }}
         onSuccess={() => {
           setUploadModalOpen(false);
+          setPendingDocument(null);
+          loadShipments();
+        }}
+        pendingDocument={pendingDocument}
+        onPendingResolved={() => {
+          setUploadModalOpen(false);
+          setPendingDocument(null);
+          setPendingRefreshTrigger(prev => prev + 1);
           loadShipments();
         }}
       />
