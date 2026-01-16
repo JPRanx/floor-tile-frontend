@@ -32,6 +32,8 @@ export interface ParsedDocumentData {
   pod: ParsedFieldConfidence | null;
   vessel: ParsedFieldConfidence | null;
   voyage: ParsedFieldConfidence | null;
+  freight_amount_usd: ParsedFieldConfidence | null;
+  freight_terms: ParsedFieldConfidence | null;
   raw_text: string;
   overall_confidence: number;
 }
@@ -94,9 +96,24 @@ export interface Shipment {
   free_days?: number;
   free_days_expiry?: string;
   freight_cost_usd?: number;
+  customs_cost_usd?: number;
+  duties_cost_usd?: number;
+  insurance_cost_usd?: number;
+  demurrage_cost_usd?: number;
+  other_costs_usd?: number;
+  total_cost_usd?: number;
   notes?: string;
   created_at: string;
   updated_at?: string;
+}
+
+export interface ShipmentCostsUpdate {
+  freight_cost_usd?: number;
+  customs_cost_usd?: number;
+  duties_cost_usd?: number;
+  insurance_cost_usd?: number;
+  demurrage_cost_usd?: number;
+  other_costs_usd?: number;
 }
 
 export interface Container {
@@ -149,6 +166,7 @@ export const shipmentsApi = {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 120000,  // 2 minutes for Claude Vision PDF parsing
     });
 
     return response.data;
@@ -181,6 +199,11 @@ export const shipmentsApi = {
 
   async updateStatus(shipmentId: string, status: string): Promise<Shipment> {
     const response = await api.patch(`/shipments/${shipmentId}/status`, { status });
+    return response.data;
+  },
+
+  async updateCosts(shipmentId: string, costs: ShipmentCostsUpdate): Promise<Shipment> {
+    const response = await api.patch(`/shipments/${shipmentId}/costs`, costs);
     return response.data;
   },
 };

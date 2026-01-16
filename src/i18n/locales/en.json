@@ -325,5 +325,36 @@
     "customers": "customers",
     "fromTopCustomer": "{{percent}}% from {{name}}",
     "verifyFactory": "Verify factory availability"
+  },
+  "inventory": {
+    "uploadTitle": "Update Inventory",
+    "lastUpdated": "Last updated",
+    "neverUpdated": "Never updated",
+    "dataStale": "Data may be outdated",
+    "dragDropExcel": "Drag Excel file here",
+    "or": "or",
+    "selectFile": "Select File",
+    "formatHint": "Format: .xlsx with INVENTARIO sheet",
+    "uploading": "Uploading and processing...",
+    "recordsUpdated": "{{count}} records updated",
+    "uploadError": "Error uploading file",
+    "tryAgain": "Try again",
+    "close": "Close"
+  },
+  "costs": {
+    "title": "Cost Breakdown",
+    "freight": "Freight",
+    "customs": "Customs",
+    "duties": "Duties/Tariffs",
+    "insurance": "Insurance",
+    "demurrage": "Demurrage",
+    "other": "Other Costs",
+    "total": "Total Landed Cost",
+    "noData": "No cost data entered",
+    "edit": "Edit Costs",
+    "save": "Save Costs",
+    "saving": "Saving...",
+    "saved": "Costs saved",
+    "error": "Error saving costs"
   }
 }

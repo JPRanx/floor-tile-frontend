@@ -325,5 +325,36 @@
     "customers": "clientes",
     "fromTopCustomer": "{{percent}}% de {{name}}",
     "verifyFactory": "Verificar disponibilidad en fábrica"
+  },
+  "inventory": {
+    "uploadTitle": "Actualizar Inventario",
+    "lastUpdated": "Última actualización",
+    "neverUpdated": "Nunca actualizado",
+    "dataStale": "Datos pueden estar desactualizados",
+    "dragDropExcel": "Arrastra archivo Excel aquí",
+    "or": "o",
+    "selectFile": "Seleccionar Archivo",
+    "formatHint": "Formato: .xlsx con hoja INVENTARIO",
+    "uploading": "Subiendo y procesando...",
+    "recordsUpdated": "{{count}} registros actualizados",
+    "uploadError": "Error al subir archivo",
+    "tryAgain": "Intentar de nuevo",
+    "close": "Cerrar"
+  },
+  "costs": {
+    "title": "Desglose de Costos",
+    "freight": "Flete",
+    "customs": "Aduana",
+    "duties": "Aranceles/Impuestos",
+    "insurance": "Seguro",
+    "demurrage": "Demora",
+    "other": "Otros Costos",
+    "total": "Costo Total Desembarcado",
+    "noData": "Sin datos de costos",
+    "edit": "Editar Costos",
+    "save": "Guardar Costos",
+    "saving": "Guardando...",
+    "saved": "Costos guardados",
+    "error": "Error al guardar costos"
   }
 }

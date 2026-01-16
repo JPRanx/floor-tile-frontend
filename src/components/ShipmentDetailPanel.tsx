@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shipmentsApi, portsApi } from '../requests/shipments';
-import type { Shipment, Container, ShipmentEvent, Port } from '../requests/shipments';
+import type { Shipment, Container, ShipmentEvent, Port, ShipmentCostsUpdate } from '../requests/shipments';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface ShipmentDetailPanelProps {
@@ -30,6 +30,9 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
   const [showConfirm, setShowConfirm] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [editingCosts, setEditingCosts] = useState(false);
+  const [savingCosts, setSavingCosts] = useState(false);
+  const [costsForm, setCostsForm] = useState<ShipmentCostsUpdate>({});
 
   useEffect(() => {
     if (!shipmentId) {
@@ -181,6 +184,60 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
 
   const currentTransition = shipment ? STATUS_TRANSITIONS[shipment.status] : null;
 
+  const handleEditCosts = () => {
+    if (!shipment) return;
+    setCostsForm({
+      freight_cost_usd: shipment.freight_cost_usd,
+      customs_cost_usd: shipment.customs_cost_usd,
+      duties_cost_usd: shipment.duties_cost_usd,
+      insurance_cost_usd: shipment.insurance_cost_usd,
+      demurrage_cost_usd: shipment.demurrage_cost_usd,
+      other_costs_usd: shipment.other_costs_usd,
+    });
+    setEditingCosts(true);
+  };
+
+  const handleCancelEditCosts = () => {
+    setEditingCosts(false);
+    setCostsForm({});
+  };
+
+  const handleSaveCosts = async () => {
+    if (!shipmentId) return;
+    setSavingCosts(true);
+    setError(null);
+    try {
+      await shipmentsApi.updateCosts(shipmentId, costsForm);
+      setSuccessMessage(t('costs.saved'));
+      setEditingCosts(false);
+      await reloadData();
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.error?.message || t('costs.error'));
+    } finally {
+      setSavingCosts(false);
+    }
+  };
+
+  const handleCostChange = (field: keyof ShipmentCostsUpdate, value: string) => {
+    const numValue = value === '' ? undefined : parseFloat(value);
+    setCostsForm(prev => ({ ...prev, [field]: numValue }));
+  };
+
+  const formatCurrency = (value?: number): string => {
+    if (value === undefined || value === null) return '-';
+    return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const hasCostData = shipment && (
+    shipment.freight_cost_usd ||
+    shipment.customs_cost_usd ||
+    shipment.duties_cost_usd ||
+    shipment.insurance_cost_usd ||
+    shipment.demurrage_cost_usd ||
+    shipment.other_costs_usd
+  );
+
   if (!shipmentId) return null;
 
   return (
@@ -326,6 +383,161 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                     <p className="text-sm font-medium text-gray-900">{formatDate(shipment.actual_arrival)}</p>
                   </div>
                 </div>
+              </section>
+
+              {/* Cost Breakdown */}
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">{t('costs.title')}</h3>
+                  {!editingCosts ? (
+                    <button
+                      onClick={handleEditCosts}
+                      className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      {t('costs.edit')}
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={handleCancelEditCosts}
+                        disabled={savingCosts}
+                        className="text-xs text-gray-600 hover:text-gray-800 font-medium"
+                      >
+                        {t('common.cancel')}
+                      </button>
+                      <button
+                        onClick={handleSaveCosts}
+                        disabled={savingCosts}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1"
+                      >
+                        {savingCosts && (
+                          <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        )}
+                        {savingCosts ? t('costs.saving') : t('costs.save')}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                {editingCosts ? (
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{t('costs.freight')}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={costsForm.freight_cost_usd ?? ''}
+                          onChange={(e) => handleCostChange('freight_cost_usd', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{t('costs.customs')}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={costsForm.customs_cost_usd ?? ''}
+                          onChange={(e) => handleCostChange('customs_cost_usd', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{t('costs.duties')}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={costsForm.duties_cost_usd ?? ''}
+                          onChange={(e) => handleCostChange('duties_cost_usd', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{t('costs.insurance')}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={costsForm.insurance_cost_usd ?? ''}
+                          onChange={(e) => handleCostChange('insurance_cost_usd', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{t('costs.demurrage')}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={costsForm.demurrage_cost_usd ?? ''}
+                          onChange={(e) => handleCostChange('demurrage_cost_usd', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">{t('costs.other')}</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={costsForm.other_costs_usd ?? ''}
+                          onChange={(e) => handleCostChange('other_costs_usd', e.target.value)}
+                          className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : hasCostData ? (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('costs.freight')}</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(shipment.freight_cost_usd)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('costs.customs')}</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(shipment.customs_cost_usd)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('costs.duties')}</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(shipment.duties_cost_usd)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('costs.insurance')}</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(shipment.insurance_cost_usd)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('costs.demurrage')}</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(shipment.demurrage_cost_usd)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">{t('costs.other')}</span>
+                        <span className="font-medium text-gray-900">{formatCurrency(shipment.other_costs_usd)}</span>
+                      </div>
+                    </div>
+                    {shipment.total_cost_usd !== undefined && shipment.total_cost_usd !== null && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between text-sm">
+                        <span className="font-semibold text-gray-700">{t('costs.total')}</span>
+                        <span className="font-bold text-green-700">{formatCurrency(shipment.total_cost_usd)}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-500">{t('costs.noData')}</p>
+                  </div>
+                )}
               </section>
 
               {/* Containers */}

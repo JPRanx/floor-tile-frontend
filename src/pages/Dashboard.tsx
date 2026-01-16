@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../requests/dashboard';
 import type { StockoutSummary } from '../requests/dashboard';
+import { inventoryApi } from '../requests/inventory';
 import { StatusBadge } from '../components/StatusBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { InventoryUploadModal } from '../components/InventoryUploadModal';
 
 export function Dashboard() {
   const { t } = useTranslation();
   const [data, setData] = useState<StockoutSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
+  const [lastInventoryUpdate, setLastInventoryUpdate] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -21,6 +25,13 @@ export function Dashboard() {
       setError(null);
       const stockoutData = await dashboardApi.getStockoutList();
       setData(stockoutData);
+      // Also fetch last inventory update timestamp
+      try {
+        const inventoryData = await inventoryApi.getLatest();
+        setLastInventoryUpdate(inventoryData.as_of);
+      } catch {
+        // Non-critical - just don't show timestamp
+      }
     } catch (err) {
       setError(t('dashboard.loadError'));
       console.error(err);
@@ -116,9 +127,17 @@ export function Dashboard() {
 
       {/* Warehouse Utilization */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          {t('dashboard.warehouseStatus')}
-        </h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-lg font-semibold text-gray-900">
+            {t('dashboard.warehouseStatus')}
+          </h2>
+          <button
+            onClick={() => setInventoryModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            📦 {t('inventory.uploadTitle')}
+          </button>
+        </div>
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
             <div className="flex justify-between text-sm mb-1">
@@ -151,6 +170,27 @@ export function Dashboard() {
             {t('dashboard.inTransit', { amount: totalInTransitM2.toLocaleString() })}
           </div>
         )}
+        {/* Last Updated Timestamp */}
+        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+          <span className="text-gray-500">
+            {t('inventory.lastUpdated')}: {' '}
+            {lastInventoryUpdate ? (
+              <span className="font-medium text-gray-700">{lastInventoryUpdate}</span>
+            ) : (
+              <span className="text-orange-500">{t('inventory.neverUpdated')}</span>
+            )}
+          </span>
+          {lastInventoryUpdate && (() => {
+            const updateDate = new Date(lastInventoryUpdate);
+            const now = new Date();
+            const hoursDiff = (now.getTime() - updateDate.getTime()) / (1000 * 60 * 60);
+            return hoursDiff > 24 ? (
+              <span className="inline-flex items-center gap-1 text-orange-500" title={t('inventory.dataStale')}>
+                ⚠️ {t('inventory.dataStale')}
+              </span>
+            ) : null;
+          })()}
+        </div>
       </div>
 
       {/* Product Table */}
@@ -235,6 +275,15 @@ export function Dashboard() {
           </table>
         </div>
       </div>
+
+      {/* Inventory Upload Modal */}
+      <InventoryUploadModal
+        isOpen={inventoryModalOpen}
+        onClose={() => setInventoryModalOpen(false)}
+        onSuccess={() => {
+          loadData(); // Refresh dashboard data after inventory upload
+        }}
+      />
     </div>
   );
 }

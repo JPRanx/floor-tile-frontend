@@ -143,8 +143,8 @@ export function ShipmentUploadModal({
     setUploadState('uploading');
     setParseResult(null);
 
-    // Create timeout promise (30 seconds)
-    const timeoutMs = 30000;
+    // Create timeout promise (2 minutes for Claude Vision PDF parsing)
+    const timeoutMs = 120000;
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs);
     });
