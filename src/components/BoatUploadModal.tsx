@@ -20,6 +20,15 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
   const [result, setResult] = useState<BoatUploadResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const isValidFile = (file: File): boolean => {
+    return (
+      file.name.endsWith('.xlsx') ||
+      file.name.endsWith('.xls') ||
+      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel'
+    );
+  };
+
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(true);
@@ -52,15 +61,6 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
       setErrorMessage(t('boatUpload.pleaseUploadExcel'));
     }
   }, [t]);
-
-  const isValidFile = (file: File): boolean => {
-    return (
-      file.name.endsWith('.xlsx') ||
-      file.name.endsWith('.xls') ||
-      file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-      file.type === 'application/vnd.ms-excel'
-    );
-  };
 
   const handleUpload = async () => {
     if (!file) return;
