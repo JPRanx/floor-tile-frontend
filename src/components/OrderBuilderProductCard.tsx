@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { OrderBuilderProduct, ConfidenceLevel } from '../requests/orderBuilder';
 
 interface OrderBuilderProductCardProps {
@@ -11,6 +12,7 @@ export function OrderBuilderProductCard({
   onToggleSelect,
   onQuantityChange,
 }: OrderBuilderProductCardProps) {
+  const { t } = useTranslation();
   // Generate pallet options (0-50 in increments of 1)
   const palletOptions = Array.from({ length: 51 }, (_, i) => i);
 
@@ -70,7 +72,7 @@ export function OrderBuilderProductCard({
                   </option>
                 ))}
               </select>
-              <span className="text-sm text-gray-500">pallets</span>
+              <span className="text-sm text-gray-500">{t('orderBuilderProduct.pallets')}</span>
             </div>
 
             {/* Confidence Badge */}
@@ -87,10 +89,10 @@ export function OrderBuilderProductCard({
           {/* Stock & In-Transit Row */}
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
             <span>
-              Stock: <strong>{Math.round(product.current_stock_m2).toLocaleString()} m²</strong>
+              {t('orderBuilderProduct.stock')}: <strong>{Math.round(product.current_stock_m2).toLocaleString()} m²</strong>
               {product.in_transit_m2 > 0 && (
                 <span className="text-blue-600 ml-1">
-                  | 📦 {Math.round(product.in_transit_m2).toLocaleString()} m² in transit
+                  | 📦 {Math.round(product.in_transit_m2).toLocaleString()} m² {t('orderBuilderProduct.inTransit')}
                 </span>
               )}
             </span>
@@ -99,17 +101,20 @@ export function OrderBuilderProductCard({
           {/* Gap & Confidence Row */}
           <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
             <span>
-              Gap: <strong>{Math.round(product.coverage_gap_m2).toLocaleString()} m²</strong>
+              {t('orderBuilderProduct.gap')}: <strong>{Math.round(product.coverage_gap_m2).toLocaleString()} m²</strong>
               {' '}({product.coverage_gap_pallets}p)
             </span>
             {product.unique_customers > 0 && (
               <span>
-                {product.unique_customers} customers
+                {product.unique_customers} {t('orderBuilderProduct.customers')}
               </span>
             )}
             {product.top_customer_share != null && product.top_customer_share > 0.3 && (
               <span className="text-orange-600">
-                {Math.round(product.top_customer_share * 100)}% from {product.top_customer_name || 'top customer'}
+                {t('orderBuilderProduct.fromTopCustomer', {
+                  percent: Math.round(product.top_customer_share * 100),
+                  name: product.top_customer_name || 'top customer'
+                })}
               </span>
             )}
           </div>
@@ -124,7 +129,7 @@ export function OrderBuilderProductCard({
           {/* Factory Status (MVP placeholder) */}
           {product.factory_status === 'unknown' && product.is_selected && (
             <div className="mt-1 text-xs text-orange-600">
-              ⚠️ Verify factory availability
+              ⚠️ {t('orderBuilderProduct.verifyFactory')}
             </div>
           )}
         </div>

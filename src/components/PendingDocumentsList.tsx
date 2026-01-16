@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { pendingDocumentsApi } from '../requests/pendingDocuments';
 import type { PendingDocument } from '../requests/pendingDocuments';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -10,6 +11,7 @@ interface PendingDocumentsListProps {
 }
 
 export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: PendingDocumentsListProps) {
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState<PendingDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,7 +91,7 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
 
   const handleDiscard = async (e: React.MouseEvent, docId: string) => {
     e.stopPropagation();
-    if (!confirm('Discard this document? This cannot be undone.')) {
+    if (!confirm(t('pending.discardConfirm'))) {
       return;
     }
 
@@ -106,7 +108,7 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
     <div className="w-80 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-900">Pending Documents</h3>
+        <h3 className="text-sm font-medium text-gray-900">{t('pending.title')}</h3>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600"
@@ -127,7 +129,7 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
           <div className="p-4 text-sm text-red-600">{error}</div>
         ) : documents.length === 0 ? (
           <div className="p-4 text-sm text-gray-500 text-center">
-            No pending documents
+            {t('pending.noPending')}
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
@@ -152,7 +154,7 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
                   </p>
                   {doc.source === 'email' && doc.email_from && (
                     <p className="text-xs text-gray-400 truncate mt-0.5">
-                      From: {doc.email_from}
+                      {t('pending.from')}: {doc.email_from}
                     </p>
                   )}
                 </div>
@@ -161,7 +163,7 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
                 <button
                   onClick={(e) => handleDiscard(e, doc.id)}
                   className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Discard"
+                  title={t('pending.discard')}
                 >
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -177,7 +179,7 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
       {documents.length > 0 && (
         <div className="px-4 py-2 bg-gray-50 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-            Click a document to assign it to a shipment
+            {t('pending.clickToAssign')}
           </p>
         </div>
       )}

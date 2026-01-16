@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { shipmentsApi } from '../requests/shipments';
 import type { Shipment } from '../requests/shipments';
 import type { PendingDocument } from '../requests/pendingDocuments';
@@ -10,16 +11,17 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 type SortField = 'shp_number' | 'etd' | 'eta' | 'status';
 type SortDirection = 'asc' | 'desc';
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All Statuses' },
-  { value: 'AT_FACTORY', label: 'At Factory' },
-  { value: 'IN_TRANSIT', label: 'In Transit' },
-  { value: 'AT_DESTINATION_PORT', label: 'At Port' },
-  { value: 'IN_CUSTOMS', label: 'In Customs' },
-  { value: 'DELIVERED', label: 'Delivered' },
+const STATUS_VALUES = [
+  '',
+  'AT_FACTORY',
+  'IN_TRANSIT',
+  'AT_DESTINATION_PORT',
+  'IN_CUSTOMS',
+  'DELIVERED',
 ];
 
 export function Shipments() {
+  const { t } = useTranslation();
   const [shipments, setShipments] = useState<Shipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export function Shipments() {
 
   const getDaysUntilArrival = (eta?: string, status?: string): { text: string; color: string } => {
     if (status === 'DELIVERED') {
-      return { text: 'Delivered', color: 'text-green-600' };
+      return { text: t('shipments.arrival.delivered'), color: 'text-green-600' };
     }
     if (!eta) {
       return { text: '-', color: 'text-gray-400' };
@@ -152,15 +154,15 @@ export function Shipments() {
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) {
-      return { text: 'Today', color: 'text-blue-600 font-medium' };
+      return { text: t('shipments.arrival.today'), color: 'text-blue-600 font-medium' };
     } else if (diffDays === 1) {
-      return { text: 'Tomorrow', color: 'text-blue-600' };
+      return { text: t('shipments.arrival.tomorrow'), color: 'text-blue-600' };
     } else if (diffDays > 1) {
-      return { text: `${diffDays} days`, color: 'text-gray-600' };
+      return { text: t('shipments.arrival.days', { count: diffDays }), color: 'text-gray-600' };
     } else if (diffDays === -1) {
-      return { text: '1 day ago', color: 'text-orange-600' };
+      return { text: t('shipments.arrival.dayAgo'), color: 'text-orange-600' };
     } else {
-      return { text: `${Math.abs(diffDays)} days ago`, color: 'text-red-600' };
+      return { text: t('shipments.arrival.daysAgo', { count: Math.abs(diffDays) }), color: 'text-red-600' };
     }
   };
 
@@ -178,7 +180,7 @@ export function Shipments() {
   };
 
   const formatStatus = (status: string): string => {
-    return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+    return t(`status.${status}`) || status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
   const SortIcon = ({ field }: { field: SortField }) => {
@@ -205,9 +207,9 @@ export function Shipments() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Shipments</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('shipments.title')}</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Track your shipments from factory to warehouse
+            {t('shipments.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -228,7 +230,7 @@ export function Shipments() {
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              Upload Document
+              {t('common.uploadDocument')}
             </span>
           </button>
         </div>
@@ -245,7 +247,7 @@ export function Shipments() {
           </div>
           <input
             type="text"
-            placeholder="Search by SHP, booking, or vessel..."
+            placeholder={t('shipments.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -268,8 +270,10 @@ export function Shipments() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
-          {STATUS_OPTIONS.map(opt => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          {STATUS_VALUES.map(value => (
+            <option key={value} value={value}>
+              {value === '' ? t('status.allStatuses') : t(`status.${value}`)}
+            </option>
           ))}
         </select>
       </div>
@@ -277,13 +281,13 @@ export function Shipments() {
       {/* Results Count */}
       {!loading && shipments.length > 0 && (
         <div className="text-sm text-gray-500">
-          Showing {filteredShipments.length} of {shipments.length} shipments
+          {t('shipments.showingCount', { count: filteredShipments.length, total: shipments.length })}
           {(searchQuery || statusFilter) && (
             <button
               onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
               className="ml-2 text-blue-600 hover:text-blue-800"
             >
-              Clear filters
+              {t('common.clearFilters')}
             </button>
           )}
         </div>
@@ -324,16 +328,16 @@ export function Shipments() {
               d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No shipments yet</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('shipments.emptyTitle')}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Upload a booking confirmation to get started.
+            {t('shipments.emptyDescription')}
           </p>
           <div className="mt-6">
             <button
               onClick={() => setUploadModalOpen(true)}
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
-              Upload Document
+              {t('common.uploadDocument')}
             </button>
           </div>
         </div>
@@ -353,15 +357,15 @@ export function Shipments() {
               d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No matching shipments</h3>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">{t('shipments.noMatchTitle')}</h3>
           <p className="mt-1 text-sm text-gray-500">
-            Try adjusting your search or filter criteria.
+            {t('shipments.noMatchDescription')}
           </p>
           <button
             onClick={() => { setSearchQuery(''); setStatusFilter(''); }}
             className="mt-4 text-sm text-blue-600 hover:text-blue-800"
           >
-            Clear all filters
+            {t('common.clearAllFilters')}
           </button>
         </div>
       ) : (
@@ -375,34 +379,34 @@ export function Shipments() {
                   onClick={() => handleSort('shp_number')}
                 >
                   <div className="flex items-center gap-1">
-                    SHP Number
+                    {t('shipments.columns.shpNumber')}
                     <SortIcon field="shp_number" />
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Booking
+                  {t('shipments.columns.booking')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vessel
+                  {t('shipments.columns.vessel')}
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                   onClick={() => handleSort('eta')}
                 >
                   <div className="flex items-center gap-1">
-                    ETA
+                    {t('shipments.columns.eta')}
                     <SortIcon field="eta" />
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Arrives
+                  {t('shipments.columns.arrives')}
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                   onClick={() => handleSort('status')}
                 >
                   <div className="flex items-center gap-1">
-                    Status
+                    {t('shipments.columns.status')}
                     <SortIcon field="status" />
                   </div>
                 </th>

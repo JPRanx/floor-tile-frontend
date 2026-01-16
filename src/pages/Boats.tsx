@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { boatsApi } from '../requests/boats';
 import type { BoatSchedule, BoatStatus } from '../requests/boats';
 import { BoatTable } from '../components/BoatTable';
@@ -6,6 +7,7 @@ import { BoatUploadModal } from '../components/BoatUploadModal';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function Boats() {
+  const { t } = useTranslation();
   const [boats, setBoats] = useState<BoatSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export function Boats() {
       const result = await boatsApi.getAll();
       setBoats(result.data);
     } catch (err) {
-      setError('Failed to load boat schedules. Is the backend running?');
+      setError(t('boats.loadError'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -65,7 +67,7 @@ export function Boats() {
           onClick={loadBoats}
           className="mt-2 text-red-600 hover:text-red-800 underline"
         >
-          Try again
+          {t('common.tryAgain')}
         </button>
       </div>
     );
@@ -83,9 +85,9 @@ export function Boats() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Boat Schedules</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t('boats.title')}</h1>
           <p className="text-gray-600">
-            Manage shipping schedules from Colombia to Puerto Quetzal
+            {t('boats.subtitle')}
           </p>
         </div>
         <button
@@ -105,7 +107,7 @@ export function Boats() {
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
             />
           </svg>
-          Upload TIBA Excel
+          {t('boats.uploadTiba')}
         </button>
       </div>
 
@@ -114,20 +116,20 @@ export function Boats() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-white rounded-lg border border-gray-200 p-4">
             <div className="text-3xl font-bold text-gray-900">{boats.length}</div>
-            <div className="text-sm text-gray-600">Total Boats</div>
+            <div className="text-sm text-gray-600">{t('boats.totalBoats')}</div>
           </div>
           <div className="bg-green-50 rounded-lg border border-green-200 p-4">
             <div className="text-3xl font-bold text-green-800">{availableCount}</div>
-            <div className="text-sm text-green-700">Available</div>
+            <div className="text-sm text-green-700">{t('boats.available')}</div>
           </div>
           <div className="bg-blue-50 rounded-lg border border-blue-200 p-4">
             <div className="text-3xl font-bold text-blue-800">{bookedCount}</div>
-            <div className="text-sm text-blue-700">Booked</div>
+            <div className="text-sm text-blue-700">{t('boats.booked')}</div>
           </div>
           {urgentCount > 0 && (
             <div className="bg-orange-50 rounded-lg border border-orange-200 p-4">
               <div className="text-3xl font-bold text-orange-800">{urgentCount}</div>
-              <div className="text-sm text-orange-700">Leaves Soon (≤7 days)</div>
+              <div className="text-sm text-orange-700">{t('boats.leavesSoon')}</div>
             </div>
           )}
         </div>

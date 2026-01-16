@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { boatsApi } from '../requests/boats';
 import type { BoatUploadResult } from '../requests/boats';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -12,6 +13,7 @@ interface BoatUploadModalProps {
 type UploadState = 'idle' | 'uploading' | 'success' | 'error';
 
 export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalProps) {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
@@ -37,9 +39,9 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
       setFile(droppedFile);
       setErrorMessage(null);
     } else {
-      setErrorMessage('Please upload an Excel file (.xlsx or .xls)');
+      setErrorMessage(t('boatUpload.pleaseUploadExcel'));
     }
-  }, []);
+  }, [t]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -47,9 +49,9 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
       setFile(selectedFile);
       setErrorMessage(null);
     } else if (selectedFile) {
-      setErrorMessage('Please upload an Excel file (.xlsx or .xls)');
+      setErrorMessage(t('boatUpload.pleaseUploadExcel'));
     }
-  }, []);
+  }, [t]);
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -75,15 +77,15 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
         setUploadState('success');
       } else if (uploadResult.errors.length > 0) {
         setUploadState('error');
-        setErrorMessage('No boats were imported due to errors');
+        setErrorMessage(t('boatUpload.noBoatsImported'));
       } else {
         setUploadState('error');
-        setErrorMessage('No boat schedules found in file');
+        setErrorMessage(t('boatUpload.noBoatsFound'));
       }
     } catch (err: any) {
       setUploadState('error');
       setErrorMessage(
-        err.response?.data?.error?.message || 'Failed to upload file'
+        err.response?.data?.error?.message || t('boatUpload.uploadFailed')
       );
     }
   };
@@ -116,7 +118,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              Upload TIBA Schedule
+              {t('boatUpload.title')}
             </h2>
             <button
               onClick={handleClose}
@@ -163,7 +165,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                       onClick={() => setFile(null)}
                       className="mt-2 text-sm text-red-600 hover:text-red-800"
                     >
-                      Remove
+                      {t('boatUpload.remove')}
                     </button>
                   </div>
                 ) : (
@@ -183,7 +185,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                     </svg>
                     <p className="mt-2 text-sm text-gray-600">
                       <label className="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
-                        Click to upload
+                        {t('boatUpload.clickToUpload')}
                         <input
                           type="file"
                           className="hidden"
@@ -191,9 +193,9 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                           onChange={handleFileSelect}
                         />
                       </label>{' '}
-                      or drag and drop
+                      {t('boatUpload.orDragDrop')}
                     </p>
-                    <p className="mt-1 text-xs text-gray-500">TIBA Excel file (.xlsx or .xls)</p>
+                    <p className="mt-1 text-xs text-gray-500">{t('boatUpload.fileTypes')}</p>
                   </div>
                 )}
               </div>
@@ -209,14 +211,14 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                   onClick={handleClose}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   onClick={handleUpload}
                   disabled={!file}
                   className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Upload
+                  {t('boatUpload.upload')}
                 </button>
               </div>
             </>
@@ -225,7 +227,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
           {uploadState === 'uploading' && (
             <div className="py-8 text-center">
               <LoadingSpinner size="lg" />
-              <p className="mt-4 text-gray-600">Uploading and processing...</p>
+              <p className="mt-4 text-gray-600">{t('boatUpload.uploading')}</p>
             </div>
           )}
 
@@ -244,24 +246,24 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                   d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="mt-3 text-lg font-medium text-gray-900">Upload Successful</h3>
+              <h3 className="mt-3 text-lg font-medium text-gray-900">{t('boatUpload.uploadSuccessful')}</h3>
               <div className="mt-2 text-sm text-gray-600">
-                <p><span className="font-medium">{result.imported}</span> boats imported</p>
-                <p><span className="font-medium">{result.updated}</span> boats updated</p>
+                <p>{t('boatUpload.boatsImported', { count: result.imported })}</p>
+                <p>{t('boatUpload.boatsUpdated', { count: result.updated })}</p>
                 {result.skipped > 0 && (
-                  <p><span className="font-medium">{result.skipped}</span> already up to date</p>
+                  <p>{t('boatUpload.boatsUpToDate', { count: result.skipped })}</p>
                 )}
               </div>
 
               {result.errors.length > 0 && (
                 <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-left text-sm">
-                  <p className="font-medium text-yellow-800">{result.errors.length} row(s) skipped:</p>
+                  <p className="font-medium text-yellow-800">{t('boatUpload.rowsSkipped', { count: result.errors.length })}</p>
                   <ul className="mt-1 text-yellow-700 text-xs">
                     {result.errors.slice(0, 3).map((err, i) => (
                       <li key={i}>Row {err.row}: {err.error}</li>
                     ))}
                     {result.errors.length > 3 && (
-                      <li>...and {result.errors.length - 3} more</li>
+                      <li>{t('boatUpload.andMore', { count: result.errors.length - 3 })}</li>
                     )}
                   </ul>
                 </div>
@@ -271,7 +273,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                 onClick={handleClose}
                 className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
               >
-                Done
+                {t('shipmentUpload.done')}
               </button>
             </div>
           )}
@@ -291,7 +293,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="mt-3 text-lg font-medium text-gray-900">Upload Failed</h3>
+              <h3 className="mt-3 text-lg font-medium text-gray-900">{t('boatUpload.uploadFailed')}</h3>
               <p className="mt-2 text-sm text-gray-600">{errorMessage}</p>
 
               {result && result.errors.length > 0 && (
@@ -312,7 +314,7 @@ export function BoatUploadModal({ isOpen, onClose, onSuccess }: BoatUploadModalP
                 }}
                 className="mt-4 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700"
               >
-                Try Again
+                {t('common.tryAgain')}
               </button>
             </div>
           )}

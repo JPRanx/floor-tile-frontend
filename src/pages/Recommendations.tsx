@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { recommendationsApi } from '../requests/recommendations';
 import type { OrderRecommendations, ActionType, ConfidenceLevel } from '../requests/recommendations';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ActionBadge } from '../components/StatusBadge';
 
 export function Recommendations() {
+  const { t } = useTranslation();
   const [data, setData] = useState<OrderRecommendations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function Recommendations() {
       const result = await recommendationsApi.getOrders();
       setData(result);
     } catch (err) {
-      setError('Failed to load recommendations. Is the backend running?');
+      setError(t('recommendations.loadError'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -43,7 +45,7 @@ export function Recommendations() {
           onClick={loadData}
           className="mt-2 text-red-600 hover:text-red-800 underline"
         >
-          Try again
+          {t('common.tryAgain')}
         </button>
       </div>
     );
@@ -57,52 +59,52 @@ export function Recommendations() {
     <div className="space-y-6">
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Order Recommendations</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('recommendations.title')}</h1>
         <p className="text-gray-600">
-          What to order based on warehouse allocation (Lead time: {data.lead_time_days} days)
+          {t('recommendations.subtitle', { days: data.lead_time_days })}
         </p>
       </div>
 
       {/* Action Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <ActionCard action="ORDER_NOW" count={data.order_now_count} />
-        <ActionCard action="ORDER_SOON" count={data.order_soon_count} />
-        <ActionCard action="WELL_STOCKED" count={data.well_stocked_count} />
-        <ActionCard action="SKIP_ORDER" count={data.skip_order_count} />
-        <ActionCard action="REVIEW" count={data.review_count} />
+        <ActionCard action="ORDER_NOW" count={data.order_now_count} label={t('recommendations.orderNow')} />
+        <ActionCard action="ORDER_SOON" count={data.order_soon_count} label={t('recommendations.orderSoon')} />
+        <ActionCard action="WELL_STOCKED" count={data.well_stocked_count} label={t('recommendations.wellStocked')} />
+        <ActionCard action="SKIP_ORDER" count={data.skip_order_count} label={t('recommendations.skipOrder')} />
+        <ActionCard action="REVIEW" count={data.review_count} label={t('recommendations.review')} />
       </div>
 
       {/* Warehouse Status */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">Warehouse Status</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">{t('recommendations.warehouseStatus')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <div className="text-sm text-gray-500">Capacity</div>
-            <div className="text-xl font-semibold">{warehouse_status.total_capacity_pallets} pallets</div>
+            <div className="text-sm text-gray-500">{t('recommendations.capacity')}</div>
+            <div className="text-xl font-semibold">{warehouse_status.total_capacity_pallets} {t('common.pallets')}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">Current Stock</div>
-            <div className="text-xl font-semibold">{Math.round(warehouse_status.total_current_pallets)} pallets</div>
+            <div className="text-sm text-gray-500">{t('recommendations.currentStock')}</div>
+            <div className="text-xl font-semibold">{Math.round(warehouse_status.total_current_pallets)} {t('common.pallets')}</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">Utilization</div>
+            <div className="text-sm text-gray-500">{t('recommendations.utilization')}</div>
             <div className="text-xl font-semibold">{Math.round(warehouse_status.utilization_percent)}%</div>
           </div>
           <div>
-            <div className="text-sm text-gray-500">To Order</div>
+            <div className="text-sm text-gray-500">{t('recommendations.toOrder')}</div>
             <div className="text-xl font-semibold text-blue-600">
-              {Math.round(data.total_recommended_pallets)} pallets
+              {Math.round(data.total_recommended_pallets)} {t('common.pallets')}
             </div>
           </div>
         </div>
         {warehouse_status.total_in_transit_pallets > 0 && (
           <div className="mt-3 text-sm text-gray-600">
-            + {Math.round(warehouse_status.total_in_transit_pallets)} pallets ({Math.round(warehouse_status.total_in_transit_m2).toLocaleString()} m²) in transit
+            {t('recommendations.inTransitNote', { pallets: Math.round(warehouse_status.total_in_transit_pallets), m2: Math.round(warehouse_status.total_in_transit_m2).toLocaleString() })}
           </div>
         )}
         {warehouse_status.allocation_scaled && (
           <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-            Allocations scaled to {Math.round((warehouse_status.scale_factor || 1) * 100)}% due to capacity constraints
+            {t('recommendations.allocationScaled', { percent: Math.round((warehouse_status.scale_factor || 1) * 100) })}
           </div>
         )}
       </div>
@@ -111,13 +113,13 @@ export function Recommendations() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
-            Order Recommendations ({recommendations.length} products)
+            {t('recommendations.tableTitle', { count: recommendations.length })}
           </h2>
         </div>
 
         {recommendations.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            No products need ordering at this time.
+            {t('recommendations.noProductsNeed')}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -126,22 +128,22 @@ export function Recommendations() {
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      SKU
+                      {t('recommendations.columns.sku')}
                     </th>
                     <th className="px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
+                      {t('recommendations.columns.action')}
                     </th>
                     <th className="px-3 py-2 sm:px-4 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Gap
+                      {t('recommendations.columns.gap')}
                     </th>
                     <th className="px-3 py-2 sm:px-4 sm:py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Days
+                      {t('recommendations.columns.days')}
                     </th>
                     <th className="hidden sm:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Confidence
+                      {t('recommendations.columns.confidence')}
                     </th>
                     <th className="hidden md:table-cell px-3 py-2 sm:px-4 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Details
+                      {t('recommendations.columns.details')}
                     </th>
                   </tr>
                 </thead>
@@ -184,7 +186,7 @@ export function Recommendations() {
                             : '—'}
                         </span>
                         {!rec.arrives_before_stockout && rec.days_until_empty != null && (
-                          <div className="text-xs text-red-500">Late</div>
+                          <div className="text-xs text-red-500">{t('recommendations.late')}</div>
                         )}
                       </td>
                       <td className="hidden sm:table-cell px-3 py-2 sm:px-4 sm:py-3">
@@ -214,15 +216,15 @@ export function Recommendations() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
             <h2 className="text-lg font-semibold text-gray-800">
-              Skip This Cycle ({warnings.length} products)
+              {t('recommendations.skipCycle', { count: warnings.length })}
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Products to skip or review — no action needed this cycle
+              {t('recommendations.skipCycleDesc')}
             </p>
           </div>
           <div className="divide-y divide-gray-200">
-            {warnings.map((warning) => (
-              <div key={warning.product_id} className="px-4 py-3 flex items-start gap-3">
+            {warnings.map((warning, index) => (
+              <div key={`warning-${warning.product_id}-${index}`} className="px-4 py-3 flex items-start gap-3">
                 <span className="flex-shrink-0 mt-0.5">
                   <SkipIcon type={warning.type} />
                 </span>
@@ -251,6 +253,7 @@ export function Recommendations() {
 interface ActionCardProps {
   action: ActionType;
   count: number;
+  label: string;
 }
 
 const actionCardStyles: Record<ActionType, string> = {
@@ -261,19 +264,11 @@ const actionCardStyles: Record<ActionType, string> = {
   REVIEW: 'bg-gray-50 border-gray-200 text-gray-800',
 };
 
-const actionLabels: Record<ActionType, string> = {
-  ORDER_NOW: 'Order Now',
-  ORDER_SOON: 'Order Soon',
-  WELL_STOCKED: 'Well Stocked',
-  SKIP_ORDER: 'Skip Order',
-  REVIEW: 'Review',
-};
-
-function ActionCard({ action, count }: ActionCardProps) {
+function ActionCard({ action, count, label }: ActionCardProps) {
   return (
     <div className={`rounded-lg border p-4 ${actionCardStyles[action]}`}>
       <div className="text-3xl font-bold">{count}</div>
-      <div className="text-sm font-medium">{actionLabels[action]}</div>
+      <div className="text-sm font-medium">{label}</div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { OrderBuilderSummary as SummaryType } from '../requests/orderBuilder';
 
 interface OrderBuilderSummaryProps {
@@ -5,6 +6,7 @@ interface OrderBuilderSummaryProps {
 }
 
 export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
+  const { t } = useTranslation();
   const maxPallets = summary.boat_max_containers * 14; // 14 pallets per container
 
   // Calculate percentages for progress bars
@@ -35,14 +37,14 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        <span>📊</span> ORDER SUMMARY
+        <span>📊</span> {t('orderBuilderSummary.title')}
       </h3>
 
       <div className="space-y-4">
         {/* Pallets Bar */}
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Pallets</span>
+            <span className="text-gray-600">{t('orderBuilderSummary.pallets')}</span>
             <span className="font-medium">
               {summary.total_pallets} / {maxPallets}
             </span>
@@ -58,7 +60,7 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
         {/* Containers Bar */}
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Containers</span>
+            <span className="text-gray-600">{t('orderBuilderSummary.containers')}</span>
             <span className="font-medium">
               {summary.total_containers} / {summary.boat_max_containers}
             </span>
@@ -74,7 +76,7 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
         {/* Warehouse Bar */}
         <div>
           <div className="flex justify-between text-sm mb-1">
-            <span className="text-gray-600">Warehouse (after delivery)</span>
+            <span className="text-gray-600">{t('orderBuilderSummary.warehouseAfter')}</span>
             <span className="font-medium">
               {summary.warehouse_after_delivery} / {summary.warehouse_capacity}
             </span>
@@ -86,14 +88,14 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
             />
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Current: {summary.warehouse_current_pallets} pallets | After: {Math.round(summary.warehouse_utilization_after)}%
+            {t('orderBuilderSummary.current')}: {summary.warehouse_current_pallets} {t('common.pallets')} | {t('orderBuilderSummary.after')}: {Math.round(summary.warehouse_utilization_after)}%
           </div>
         </div>
 
         {/* Total m² */}
         <div className="pt-2 border-t border-gray-200">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Total Order</span>
+            <span className="text-gray-600">{t('orderBuilderSummary.totalOrder')}</span>
             <span className="font-semibold text-gray-900">
               {Math.round(summary.total_m2).toLocaleString()} m²
             </span>

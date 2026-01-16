@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './i18n';
 import { Layout } from './components/Layout';
 import { Dashboard } from './pages/Dashboard';
 import { Upload } from './pages/Upload';

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../requests/dashboard';
 import type { StockoutSummary } from '../requests/dashboard';
 import { StatusBadge } from '../components/StatusBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function Dashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<StockoutSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function Dashboard() {
       const stockoutData = await dashboardApi.getStockoutList();
       setData(stockoutData);
     } catch (err) {
-      setError('Failed to load dashboard data. Is the backend running?');
+      setError(t('dashboard.loadError'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -43,7 +45,7 @@ export function Dashboard() {
           onClick={loadData}
           className="mt-2 text-red-600 hover:text-red-800 underline"
         >
-          Try again
+          {t('common.tryAgain')}
         </button>
       </div>
     );
@@ -61,29 +63,29 @@ export function Dashboard() {
     <div className="space-y-6">
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600">Stockout status overview</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
+        <p className="text-gray-600">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Status Cards - Boat-based Priority */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatusCard
-          label="High Priority"
+          label={t('dashboard.highPriority')}
           count={data.high_priority_count}
           color="orange"
         />
         <StatusCard
-          label="Consider"
+          label={t('dashboard.consider')}
           count={data.consider_count}
           color="yellow"
         />
         <StatusCard
-          label="Well Covered"
+          label={t('dashboard.wellCovered')}
           count={data.well_covered_count}
           color="green"
         />
         <StatusCard
-          label="Your Call"
+          label={t('dashboard.yourCall')}
           count={data.your_call_count}
           color="gray"
         />
@@ -92,19 +94,19 @@ export function Dashboard() {
       {/* Boat Departure Info */}
       {data.next_boat_departure && (
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-blue-800 mb-2">Boat Departures</h3>
+          <h3 className="text-sm font-semibold text-blue-800 mb-2">{t('dashboard.boatDepartures')}</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-blue-600">Next boat:</span>{' '}
+              <span className="text-blue-600">{t('dashboard.nextBoat')}</span>{' '}
               <span className="font-medium text-blue-800">
-                {new Date(data.next_boat_departure).toLocaleDateString()} ({data.days_to_next_boat_departure} days)
+                {new Date(data.next_boat_departure).toLocaleDateString()} ({t('dashboard.daysLabel', { days: data.days_to_next_boat_departure })})
               </span>
             </div>
             {data.second_boat_departure && (
               <div>
-                <span className="text-blue-600">Second boat:</span>{' '}
+                <span className="text-blue-600">{t('dashboard.secondBoat')}</span>{' '}
                 <span className="font-medium text-blue-800">
-                  {new Date(data.second_boat_departure).toLocaleDateString()} ({data.days_to_second_boat_departure} days)
+                  {new Date(data.second_boat_departure).toLocaleDateString()} ({t('dashboard.daysLabel', { days: data.days_to_second_boat_departure })})
                 </span>
               </div>
             )}
@@ -115,12 +117,12 @@ export function Dashboard() {
       {/* Warehouse Utilization */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Warehouse Status
+          {t('dashboard.warehouseStatus')}
         </h2>
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
             <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">Warehouse Stock</span>
+              <span className="text-gray-600">{t('dashboard.warehouseStock')}</span>
               <span className="font-medium">
                 {totalWarehouseM2.toLocaleString()} m²
               </span>
@@ -134,19 +136,19 @@ export function Dashboard() {
               />
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              of 99,900 m² capacity (740 pallets)
+              {t('dashboard.ofCapacity')}
             </div>
           </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-gray-900">
               {Math.round((totalWarehouseM2 / 99900) * 100)}%
             </div>
-            <div className="text-xs text-gray-500">utilization</div>
+            <div className="text-xs text-gray-500">{t('dashboard.utilization')}</div>
           </div>
         </div>
         {totalInTransitM2 > 0 && (
           <div className="mt-2 text-sm text-gray-600">
-            + {totalInTransitM2.toLocaleString()} m² in transit
+            {t('dashboard.inTransit', { amount: totalInTransitM2.toLocaleString() })}
           </div>
         )}
       </div>
@@ -155,7 +157,7 @@ export function Dashboard() {
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200">
           <h2 className="text-lg font-semibold text-gray-900">
-            Products by Stockout Status
+            {t('dashboard.productsByStatus')}
           </h2>
         </div>
         <div className="overflow-auto max-h-[500px]">
@@ -163,22 +165,22 @@ export function Dashboard() {
             <thead className="bg-gray-50 sticky top-0 z-10">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-gray-50">
-                  SKU
+                  {t('dashboard.columns.sku')}
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  {t('dashboard.columns.status')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Days Left
+                  {t('dashboard.columns.daysLeft')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Velocity
+                  {t('dashboard.columns.velocity')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stock (m²)
+                  {t('dashboard.columns.stock')}
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  In Transit
+                  {t('dashboard.columns.inTransit')}
                 </th>
               </tr>
             </thead>
@@ -206,13 +208,13 @@ export function Dashboard() {
                       }`}
                     >
                       {product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout))
-                        ? `${Math.round(Number(product.days_to_stockout))} days`
+                        ? t('dashboard.daysText', { count: Math.round(Number(product.days_to_stockout)) })
                         : '—'}
                     </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-600">
                     {Number(product.avg_daily_sales) > 0
-                      ? `${Math.round(Number(product.avg_daily_sales))} m²/day`
+                      ? t('dashboard.velocityText', { count: Math.round(Number(product.avg_daily_sales)) })
                       : '—'}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">

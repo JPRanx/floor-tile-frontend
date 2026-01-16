@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { shipmentsApi, portsApi } from '../requests/shipments';
 import type { Shipment, Container, ShipmentEvent, Port } from '../requests/shipments';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -18,6 +19,7 @@ const STATUS_TRANSITIONS: Record<string, { nextStatus: string; buttonLabel: stri
 };
 
 export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: ShipmentDetailPanelProps) {
+  const { t, i18n } = useTranslation();
   const [shipment, setShipment] = useState<Shipment | null>(null);
   const [containers, setContainers] = useState<Container[]>([]);
   const [events, setEvents] = useState<ShipmentEvent[]>([]);
@@ -69,11 +71,11 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
           const containersData = await shipmentsApi.getContainers(shipmentId);
           setContainers(containersData);
         } catch (containerErr: any) {
-          setContainersError('Failed to load containers');
+          setContainersError(t('shipmentDetail.failedLoadContainers'));
           setContainers([]);
         }
       } catch (err: any) {
-        setError(err.response?.data?.error?.message || 'Failed to load shipment details');
+        setError(err.response?.data?.error?.message || t('shipmentDetail.failedLoadDetails'));
       } finally {
         setLoading(false);
       }
@@ -86,7 +88,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
     if (!dateString) return '-';
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString(i18n.language === 'es' ? 'es-ES' : 'en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -100,7 +102,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
     if (!dateString) return '-';
     try {
       const date = new Date(dateString);
-      return date.toLocaleString('en-US', {
+      return date.toLocaleString(i18n.language === 'es' ? 'es-ES' : 'en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -126,6 +128,10 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
   };
 
   const formatStatus = (status: string): string => {
+    // Use translation key if available
+    const translatedStatus = t(`status.${status}`, { defaultValue: '' });
+    if (translatedStatus) return translatedStatus;
+    // Fallback: format the status string
     return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
   };
 
@@ -160,14 +166,14 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
     setError(null);
     try {
       await shipmentsApi.updateStatus(shipmentId, transition.nextStatus);
-      setSuccessMessage(`Status updated to ${formatStatus(transition.nextStatus)}`);
+      setSuccessMessage(t('shipmentDetail.statusUpdated', { status: formatStatus(transition.nextStatus) }));
       setShowConfirm(false);
       await reloadData();
       onStatusChange?.();
       // Auto-hide success message after 3s
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: any) {
-      setError(err.response?.data?.error?.message || 'Failed to update status');
+      setError(err.response?.data?.error?.message || t('shipmentDetail.failedUpdateStatus'));
     } finally {
       setUpdating(false);
     }
@@ -256,22 +262,22 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
             <div className="p-6 space-y-6">
               {/* Basic Info */}
               <section>
-                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Shipment Info</h3>
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">{t('shipmentDetail.shipmentInfo')}</h3>
                 <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500">Booking Number</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.bookingNumber')}</p>
                     <p className="text-sm font-medium text-gray-900">{shipment.booking_number || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Bill of Lading</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.billOfLading')}</p>
                     <p className="text-sm font-medium text-gray-900">{shipment.bill_of_lading || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Vessel</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.vessel')}</p>
                     <p className="text-sm font-medium text-gray-900">{shipment.vessel_name || '-'}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">Voyage</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.voyage')}</p>
                     <p className="text-sm font-medium text-gray-900">{shipment.voyage_number || '-'}</p>
                   </div>
                 </div>
@@ -279,11 +285,11 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
 
               {/* Ports */}
               <section>
-                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Route</h3>
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">{t('shipmentDetail.route')}</h3>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center gap-4">
                     <div className="flex-1">
-                      <p className="text-xs text-gray-500">Origin</p>
+                      <p className="text-xs text-gray-500">{t('shipmentDetail.origin')}</p>
                       <p className="text-sm font-medium text-gray-900">{getPortName(shipment.origin_port_id)}</p>
                     </div>
                     <div className="flex-shrink-0">
@@ -292,7 +298,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                       </svg>
                     </div>
                     <div className="flex-1 text-right">
-                      <p className="text-xs text-gray-500">Destination</p>
+                      <p className="text-xs text-gray-500">{t('shipmentDetail.destination')}</p>
                       <p className="text-sm font-medium text-gray-900">{getPortName(shipment.destination_port_id)}</p>
                     </div>
                   </div>
@@ -301,22 +307,22 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
 
               {/* Dates */}
               <section>
-                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Schedule</h3>
+                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">{t('shipmentDetail.schedule')}</h3>
                 <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-xs text-gray-500">ETD (Estimated)</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.etdEstimated')}</p>
                     <p className="text-sm font-medium text-gray-900">{formatDate(shipment.etd)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">ETA (Estimated)</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.etaEstimated')}</p>
                     <p className="text-sm font-medium text-gray-900">{formatDate(shipment.eta)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">ATD (Actual Departure)</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.atdActual')}</p>
                     <p className="text-sm font-medium text-gray-900">{formatDate(shipment.actual_departure)}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500">ATA (Actual Arrival)</p>
+                    <p className="text-xs text-gray-500">{t('shipmentDetail.ataActual')}</p>
                     <p className="text-sm font-medium text-gray-900">{formatDate(shipment.actual_arrival)}</p>
                   </div>
                 </div>
@@ -325,7 +331,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
               {/* Containers */}
               <section>
                 <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
-                  Containers ({containers.length})
+                  {t('shipmentDetail.containers')} ({containers.length})
                 </h3>
                 {containersError ? (
                   <div className="bg-red-50 rounded-lg p-4 text-center">
@@ -333,17 +339,17 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                   </div>
                 ) : containers.length === 0 ? (
                   <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-sm text-gray-500">No containers linked to this shipment.</p>
+                    <p className="text-sm text-gray-500">{t('shipmentDetail.noContainers')}</p>
                   </div>
                 ) : (
                   <div className="bg-gray-50 rounded-lg overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-100">
                         <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Container</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Pallets</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Weight</th>
-                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">m2</th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">{t('shipmentDetail.containerNumber')}</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{t('shipmentDetail.pallets')}</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">{t('shipmentDetail.weight')}</th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">m²</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
@@ -352,7 +358,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                             <td className="px-4 py-2 text-sm font-medium text-gray-900">
                               {container.container_number || '-'}
                               {container.seal_number && (
-                                <span className="block text-xs text-gray-500">Seal: {container.seal_number}</span>
+                                <span className="block text-xs text-gray-500">{t('shipmentDetail.seal')}: {container.seal_number}</span>
                               )}
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900 text-right">
@@ -362,7 +368,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                               {container.total_weight_kg ? `${Number(container.total_weight_kg).toLocaleString()} kg` : '-'}
                             </td>
                             <td className="px-4 py-2 text-sm text-gray-900 text-right">
-                              {container.total_m2 ? `${Number(container.total_m2).toLocaleString()} m2` : '-'}
+                              {container.total_m2 ? `${Number(container.total_m2).toLocaleString()} m²` : '-'}
                             </td>
                           </tr>
                         ))}
@@ -375,11 +381,11 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
               {/* Timeline */}
               <section>
                 <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
-                  Timeline ({events.length})
+                  {t('shipmentDetail.timeline')} ({events.length})
                 </h3>
                 {events.length === 0 ? (
                   <div className="bg-gray-50 rounded-lg p-4 text-center">
-                    <p className="text-sm text-gray-500">No events recorded</p>
+                    <p className="text-sm text-gray-500">{t('shipmentDetail.noEvents')}</p>
                   </div>
                 ) : (
                   <div className="relative">
@@ -417,7 +423,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
               {/* Notes */}
               {shipment.notes && (
                 <section>
-                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">Notes</h3>
+                  <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">{t('shipmentDetail.notes')}</h3>
                   <div className="bg-gray-50 rounded-lg p-4">
                     <p className="text-sm text-gray-700 whitespace-pre-wrap">{shipment.notes}</p>
                   </div>
@@ -433,10 +439,12 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
         <div className="fixed inset-0 z-[60] flex items-center justify-center">
           <div className="absolute inset-0 bg-black bg-opacity-50" onClick={() => setShowConfirm(false)} />
           <div className="relative bg-white rounded-lg shadow-xl p-6 max-w-sm mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Update Status</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('shipmentDetail.updateStatus')}</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Change status from <span className="font-medium">{formatStatus(shipment?.status || '')}</span> to{' '}
-              <span className="font-medium">{formatStatus(currentTransition.nextStatus)}</span>?
+              {t('shipmentDetail.changeStatus', {
+                from: formatStatus(shipment?.status || ''),
+                to: formatStatus(currentTransition.nextStatus)
+              })}
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -444,7 +452,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                 disabled={updating}
                 className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 disabled:opacity-50"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleStatusUpdate}
@@ -457,7 +465,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                 )}
-                Confirm
+                {t('common.confirm')}
               </button>
             </div>
           </div>

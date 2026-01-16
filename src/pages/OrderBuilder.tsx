@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { orderBuilderApi } from '../requests/orderBuilder';
 import type {
   OrderBuilderResponse,
@@ -20,6 +22,8 @@ const PALLETS_PER_CONTAINER = 14;
 const WAREHOUSE_CAPACITY = 740;
 
 export function OrderBuilder() {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const [data, setData] = useState<OrderBuilderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +44,9 @@ export function OrderBuilder() {
     your_call: false,
   });
 
+  // Track if boats have been loaded
+  const [boatsLoaded, setBoatsLoaded] = useState(false);
+
   // Fetch available boats on mount
   useEffect(() => {
     const fetchBoats = async () => {
@@ -55,6 +62,9 @@ export function OrderBuilder() {
       } catch (err) {
         console.error('Failed to fetch boats:', err);
         setAvailableBoats([]);
+      } finally {
+        setBoatsLoaded(true);
+        setLoading(false);
       }
     };
     fetchBoats();
@@ -75,7 +85,7 @@ export function OrderBuilder() {
       ];
       setProducts(allProducts);
     } catch (err) {
-      setError('Failed to load Order Builder. Is the backend running?');
+      setError('Failed to load order builder data');
       console.error(err);
     } finally {
       setLoading(false);
@@ -136,12 +146,12 @@ export function OrderBuilder() {
   const handleExport = async () => {
     const selected = products.filter((p) => p.is_selected && p.selected_pallets > 0);
     if (selected.length === 0) {
-      alert('No products selected to export');
+      alert(t('orderBuilder.noProductsSelected'));
       return;
     }
 
     if (!data?.boat.departure_date) {
-      alert('No boat selected');
+      alert(t('orderBuilder.noBoatSelected'));
       return;
     }
 
@@ -315,8 +325,46 @@ export function OrderBuilder() {
           onClick={() => loadData(mode)}
           className="mt-2 text-red-600 hover:text-red-800 underline"
         >
-          Try again
+          {t('common.tryAgain')}
         </button>
+      </div>
+    );
+  }
+
+  // Show empty state if no boats available
+  if (boatsLoaded && availableBoats.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{t('orderBuilder.title')}</h1>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            />
+          </svg>
+          <h3 className="mt-4 text-lg font-medium text-gray-900">
+            {t('orderBuilder.noBoatsAvailable')}
+          </h3>
+          <p className="mt-2 text-sm text-gray-500">
+            {t('orderBuilder.noBoatsDescription')}
+          </p>
+          <button
+            onClick={() => navigate('/boats')}
+            className="mt-6 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            {t('orderBuilder.goToBoats')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -332,32 +380,32 @@ export function OrderBuilder() {
 
   const sectionConfig: {
     key: keyof typeof productsByPriority;
-    title: string;
-    subtitle: string;
+    titleKey: string;
+    subtitleKey: string;
     bgColor: string;
   }[] = [
     {
       key: 'high_priority',
-      title: 'HIGH PRIORITY',
-      subtitle: 'must order — stockout before next boat',
+      titleKey: 'orderBuilder.highPriority',
+      subtitleKey: 'orderBuilder.highPriorityDesc',
       bgColor: 'bg-red-50 border-red-200',
     },
     {
       key: 'consider',
-      title: 'CONSIDER',
-      subtitle: 'worth adding — stockout before second boat',
+      titleKey: 'orderBuilder.consider',
+      subtitleKey: 'orderBuilder.considerDesc',
       bgColor: 'bg-orange-50 border-orange-200',
     },
     {
       key: 'well_covered',
-      title: 'WELL COVERED',
-      subtitle: 'skip this cycle — sufficient stock',
+      titleKey: 'orderBuilder.wellCovered',
+      subtitleKey: 'orderBuilder.wellCoveredDesc',
       bgColor: 'bg-green-50 border-green-200',
     },
     {
       key: 'your_call',
-      title: 'YOUR CALL',
-      subtitle: 'needs review — limited data',
+      titleKey: 'orderBuilder.yourCall',
+      subtitleKey: 'orderBuilder.yourCallDesc',
       bgColor: 'bg-gray-50 border-gray-200',
     },
   ];
@@ -379,7 +427,7 @@ export function OrderBuilder() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Products Column (2/3 width on desktop) */}
         <div className="lg:col-span-2 space-y-4">
-          {sectionConfig.map(({ key, title, subtitle, bgColor }) => {
+          {sectionConfig.map(({ key, titleKey, subtitleKey, bgColor }) => {
             const sectionProducts = productsByPriority[key];
             const selectedCount = sectionProducts.filter((p) => p.is_selected).length;
             const isExpanded = expandedSections[key];
@@ -393,14 +441,14 @@ export function OrderBuilder() {
                 >
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">
-                      {title} ({sectionProducts.length})
+                      {t(titleKey)} ({sectionProducts.length})
                       {selectedCount > 0 && (
                         <span className="ml-2 text-sm font-normal text-blue-600">
-                          {selectedCount} selected
+                          {selectedCount} {t('common.selected')}
                         </span>
                       )}
                     </h2>
-                    <p className="text-sm text-gray-600">{subtitle}</p>
+                    <p className="text-sm text-gray-600">{t(subtitleKey)}</p>
                   </div>
                   <span className="text-gray-400 text-lg">
                     {isExpanded ? '▼' : '▶'}
@@ -412,7 +460,7 @@ export function OrderBuilder() {
                   <div className="px-4 pb-4 space-y-2">
                     {sectionProducts.map((product) => (
                       <OrderBuilderProductCard
-                        key={product.product_id}
+                        key={`${key}-${product.product_id}`}
                         product={product}
                         onToggleSelect={handleToggleSelect}
                         onQuantityChange={handleQuantityChange}
@@ -423,7 +471,7 @@ export function OrderBuilder() {
 
                 {isExpanded && sectionProducts.length === 0 && (
                   <div className="px-4 pb-4 text-sm text-gray-500">
-                    No products in this category
+                    {t('common.noProductsCategory')}
                   </div>
                 )}
               </div>
@@ -442,14 +490,14 @@ export function OrderBuilder() {
               onClick={handleReset}
               className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
             >
-              Reset to Suggested
+              {t('orderBuilder.resetToSuggested')}
             </button>
             <button
               onClick={handleExport}
               disabled={exporting}
               className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {exporting ? 'Exporting...' : 'Export Order'}
+              {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
             </button>
           </div>
         </div>

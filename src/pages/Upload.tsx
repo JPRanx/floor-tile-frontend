@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { uploadApi } from '../requests/upload';
 import type { UploadError } from '../requests/upload';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -13,6 +14,7 @@ interface UploadResult {
 }
 
 export function Upload() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -54,9 +56,9 @@ export function Upload() {
       setFile(droppedFile);
       setErrorMessage(null);
     } else {
-      setErrorMessage('Please upload an Excel file (.xlsx)');
+      setErrorMessage(t('upload.pleaseUploadExcel'));
     }
-  }, []);
+  }, [t]);
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -64,9 +66,9 @@ export function Upload() {
       setFile(selectedFile);
       setErrorMessage(null);
     } else if (selectedFile) {
-      setErrorMessage('Please upload an Excel file (.xlsx)');
+      setErrorMessage(t('upload.pleaseUploadExcel'));
     }
-  }, []);
+  }, [t]);
 
   const isValidFile = (file: File): boolean => {
     return file.name.endsWith('.xlsx') ||
@@ -146,7 +148,7 @@ export function Upload() {
         setUploadState('error');
       } else {
         setUploadState('error');
-        setErrorMessage('No records were created. Check your Excel file format.');
+        setErrorMessage(t('upload.noRecordsCreated'));
       }
 
     } catch (err: any) {
@@ -166,9 +168,9 @@ export function Upload() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Upload Data</h1>
+        <h1 className="text-2xl font-bold text-gray-900">{t('upload.title')}</h1>
         <p className="text-gray-600">
-          Upload the owner Excel template with inventory and sales data
+          {t('upload.subtitle')}
         </p>
       </div>
 
@@ -210,7 +212,7 @@ export function Upload() {
                   onClick={() => setFile(null)}
                   className="mt-3 text-sm text-red-600 hover:text-red-800"
                 >
-                  Remove file
+                  {t('upload.removeFile')}
                 </button>
               </div>
             ) : (
@@ -230,7 +232,7 @@ export function Upload() {
                 </svg>
                 <p className="mt-2 text-sm text-gray-600">
                   <label className="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
-                    Click to upload
+                    {t('upload.clickToUpload')}
                     <input
                       type="file"
                       className="hidden"
@@ -238,9 +240,9 @@ export function Upload() {
                       onChange={handleFileSelect}
                     />
                   </label>{' '}
-                  or drag and drop
+                  {t('upload.orDragDrop')}
                 </p>
-                <p className="mt-1 text-xs text-gray-500">Excel files only (.xlsx)</p>
+                <p className="mt-1 text-xs text-gray-500">{t('upload.excelOnly')}</p>
               </div>
             )}
           </div>
@@ -257,7 +259,7 @@ export function Upload() {
                 onClick={handleUpload}
                 className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Upload File
+                {t('upload.uploadFile')}
               </button>
             </div>
           )}
@@ -269,9 +271,9 @@ export function Upload() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
           <div className="text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">Uploading and processing...</p>
+            <p className="mt-4 text-gray-600">{t('upload.uploadingProcessing')}</p>
             <p className="mt-1 text-sm text-gray-500">
-              This may take a moment for large files
+              {t('upload.mayTakeMoment')}
             </p>
           </div>
         </div>
@@ -295,21 +297,21 @@ export function Upload() {
               />
             </svg>
             <h2 className="mt-4 text-xl font-semibold text-gray-900">
-              Upload Successful
+              {t('upload.uploadSuccessful')}
             </h2>
             <div className="mt-4 space-y-2">
               <p className="text-gray-600">
-                <span className="font-medium">{result.inventoryCreated}</span> inventory records created
+                {t('upload.inventoryCreated', { count: result.inventoryCreated })}
               </p>
               <p className="text-gray-600">
-                <span className="font-medium">{result.salesCreated}</span> sales records created
+                {t('upload.salesCreated', { count: result.salesCreated })}
               </p>
             </div>
 
             {result.errors.length > 0 && (
               <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-left">
                 <p className="text-sm font-medium text-yellow-800">
-                  {result.errors.length} row(s) had warnings:
+                  {t('upload.rowsWarnings', { count: result.errors.length })}
                 </p>
                 <ul className="mt-2 text-sm text-yellow-700 space-y-1">
                   {result.errors.slice(0, 5).map((err, i) => (
@@ -318,20 +320,20 @@ export function Upload() {
                     </li>
                   ))}
                   {result.errors.length > 5 && (
-                    <li>...and {result.errors.length - 5} more</li>
+                    <li>{t('upload.andMore', { count: result.errors.length - 5 })}</li>
                   )}
                 </ul>
               </div>
             )}
 
             <p className="mt-6 text-sm text-gray-500">
-              Redirecting to Dashboard in {redirectCountdown} seconds...
+              {t('upload.redirecting', { seconds: redirectCountdown })}
             </p>
             <button
               onClick={() => navigate('/')}
               className="mt-2 text-blue-600 hover:text-blue-800 font-medium"
             >
-              Go now
+              {t('upload.goNow')}
             </button>
           </div>
         </div>
@@ -355,7 +357,7 @@ export function Upload() {
               />
             </svg>
             <h2 className="mt-4 text-xl font-semibold text-gray-900">
-              Upload Failed
+              {t('upload.uploadFailed')}
             </h2>
 
             {errorMessage && (
@@ -365,7 +367,7 @@ export function Upload() {
             {result && result.errors.length > 0 && (
               <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg text-left max-h-64 overflow-y-auto">
                 <p className="text-sm font-medium text-red-800 mb-2">
-                  Validation errors:
+                  {t('upload.validationErrors')}
                 </p>
                 <ul className="text-sm text-red-700 space-y-1">
                   {result.errors.map((err, i) => (
@@ -384,7 +386,7 @@ export function Upload() {
               onClick={handleReset}
               className="mt-6 px-6 py-2 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors"
             >
-              Try Again
+              {t('common.tryAgain')}
             </button>
           </div>
         </div>
@@ -392,13 +394,13 @@ export function Upload() {
 
       {/* Help Section */}
       <div className="bg-gray-50 rounded-lg border border-gray-200 p-6">
-        <h3 className="font-medium text-gray-900">Expected File Format</h3>
+        <h3 className="font-medium text-gray-900">{t('upload.expectedFormat')}</h3>
         <p className="mt-2 text-sm text-gray-600">
-          Upload the <span className="font-medium">Plantilla_Input_Pisos.xlsx</span> template with:
+          {t('upload.uploadTemplate')}
         </p>
         <ul className="mt-2 text-sm text-gray-600 list-disc list-inside space-y-1">
-          <li><span className="font-medium">INVENTARIO</span> sheet: Fecha Conteo, SKU, Bodega (m²), En Tránsito (m²)</li>
-          <li><span className="font-medium">VENTAS</span> sheet: Fecha, SKU, Cantidad (m²)</li>
+          <li>{t('upload.inventarioSheet')}</li>
+          <li>{t('upload.ventasSheet')}</li>
         </ul>
       </div>
     </div>

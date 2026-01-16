@@ -1,19 +1,22 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { LanguageToggle } from './LanguageToggle';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const navItems = [
-  { path: '/', label: 'Dashboard' },
-  { path: '/order-builder', label: 'Order Builder' },
-  { path: '/recommendations', label: 'Recommendations' },
-  { path: '/boats', label: 'Boats' },
-  { path: '/shipments', label: 'Shipments' },
+  { path: '/', labelKey: 'nav.dashboard' },
+  { path: '/order-builder', labelKey: 'nav.orderBuilder' },
+  { path: '/recommendations', labelKey: 'nav.recommendations' },
+  { path: '/boats', labelKey: 'nav.boats' },
+  { path: '/shipments', labelKey: 'nav.shipments' },
 ];
 
 export function Layout({ children }: LayoutProps) {
+  const { t } = useTranslation();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -30,7 +33,7 @@ export function Layout({ children }: LayoutProps) {
             {/* Logo */}
             <div className="flex items-center">
               <span className="text-xl font-bold text-gray-900">
-                Floor Tile Manager
+                {t('nav.appName')}
               </span>
             </div>
 
@@ -48,11 +51,16 @@ export function Layout({ children }: LayoutProps) {
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </Link>
                 );
               })}
             </nav>
+
+            {/* Language Toggle (Desktop) */}
+            <div className="hidden md:flex items-center">
+              <LanguageToggle />
+            </div>
 
             {/* Mobile Hamburger Button */}
             <button
@@ -94,10 +102,14 @@ export function Layout({ children }: LayoutProps) {
                         : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
-                    {item.label}
+                    {t(item.labelKey)}
                   </Link>
                 );
               })}
+              {/* Language Toggle (Mobile) */}
+              <div className="px-3 py-2">
+                <LanguageToggle />
+              </div>
             </nav>
           </div>
         )}

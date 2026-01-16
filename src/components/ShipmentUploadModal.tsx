@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { shipmentsApi } from '../requests/shipments';
 import type { IngestResponse, CandidateShipment } from '../requests/shipments';
 import { pendingDocumentsApi } from '../requests/pendingDocuments';
@@ -23,6 +24,7 @@ export function ShipmentUploadModal({
   pendingDocument,
   onPendingResolved
 }: ShipmentUploadModalProps) {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
@@ -132,7 +134,7 @@ export function ShipmentUploadModal({
   // Auto-upload file immediately after selection
   const handleFileAndUpload = useCallback(async (selectedFile: File) => {
     if (!isValidFile(selectedFile)) {
-      setErrorMessage('Please upload a PDF file');
+      setErrorMessage(t('shipmentUpload.pleaseUploadPdf'));
       return;
     }
 
@@ -179,18 +181,18 @@ export function ShipmentUploadModal({
     } catch (err: any) {
       setUploadState('error');
       if (err.message === 'TIMEOUT') {
-        setErrorMessage('Request timed out. The server took too long to respond. Please try again.');
+        setErrorMessage(t('shipmentUpload.timeout'));
       } else if (err.response?.data?.error?.message) {
         setErrorMessage(err.response.data.error.message);
       } else if (err.response?.status === 500) {
-        setErrorMessage('Server error while parsing document. The PDF may be too large or in an unsupported format.');
+        setErrorMessage(t('shipmentUpload.serverError'));
       } else if (err.code === 'ECONNABORTED' || err.code === 'ERR_NETWORK') {
-        setErrorMessage('Network error. Please check your connection and try again.');
+        setErrorMessage(t('shipmentUpload.networkError'));
       } else {
-        setErrorMessage('Failed to parse PDF. Please ensure the file is a valid shipping document.');
+        setErrorMessage(t('shipmentUpload.parseFailed'));
       }
     }
-  }, []);
+  }, [t]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -216,9 +218,9 @@ export function ShipmentUploadModal({
   };
 
   const getConfidenceBadge = (confidence: number): string => {
-    if (confidence >= 0.85) return '✓ High';
-    if (confidence >= 0.6) return '~ Medium';
-    return '⚠ Low';
+    if (confidence >= 0.85) return t('shipmentUpload.confidenceHigh');
+    if (confidence >= 0.6) return t('shipmentUpload.confidenceMedium');
+    return t('shipmentUpload.confidenceLow');
   };
 
   const parseDate = (dateStr: string): string | undefined => {
@@ -418,7 +420,7 @@ export function ShipmentUploadModal({
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              {isPendingResolution ? 'Assign Pending Document' : 'Upload Shipment Document'}
+              {isPendingResolution ? t('shipmentUpload.titlePending') : t('shipmentUpload.title')}
             </h2>
             <button
               onClick={handleClose}
@@ -459,7 +461,7 @@ export function ShipmentUploadModal({
                 </svg>
                 <p className="mt-2 text-sm text-gray-600">
                   <label className="cursor-pointer text-blue-600 hover:text-blue-800 font-medium">
-                    Click to upload
+                    {t('shipmentUpload.clickToUpload')}
                     <input
                       type="file"
                       className="hidden"
@@ -467,10 +469,10 @@ export function ShipmentUploadModal({
                       onChange={handleFileSelect}
                     />
                   </label>{' '}
-                  or drag and drop
+                  {t('shipmentUpload.orDragDrop')}
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  Booking, Departure, HBL, or MBL document (.pdf)
+                  {t('shipmentUpload.fileTypes')}
                 </p>
               </div>
 
@@ -485,7 +487,7 @@ export function ShipmentUploadModal({
                   onClick={handleClose}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             </>
@@ -494,7 +496,7 @@ export function ShipmentUploadModal({
           {uploadState === 'uploading' && (
             <div className="py-8 text-center">
               <LoadingSpinner size="lg" />
-              <p className="mt-4 text-gray-600">Parsing document...</p>
+              <p className="mt-4 text-gray-600">{t('shipmentUpload.parsing')}</p>
             </div>
           )}
 
@@ -502,18 +504,18 @@ export function ShipmentUploadModal({
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded p-3">
                 <p className="text-sm text-blue-800">
-                  <strong>Document Type:</strong> {parseResult.parsed_data.document_type}
+                  <strong>{t('shipmentUpload.documentType')}:</strong> {parseResult.parsed_data.document_type}
                   <span className="ml-2 text-xs">
-                    ({Math.round(parseResult.parsed_data.document_type_confidence * 100)}% confidence)
+                    ({Math.round(parseResult.parsed_data.document_type_confidence * 100)}% {t('shipmentUpload.confidence')})
                   </span>
                 </p>
                 <p className="text-sm text-blue-800 mt-1">
-                  <strong>Overall Confidence:</strong> {Math.round(parseResult.parsed_data.overall_confidence * 100)}%
+                  <strong>{t('shipmentUpload.overallConfidence')}:</strong> {Math.round(parseResult.parsed_data.overall_confidence * 100)}%
                 </p>
               </div>
 
               <p className="text-sm text-gray-600">
-                Review the extracted data below. Edit any incorrect fields before confirming.
+                {t('shipmentUpload.reviewInstructions')}
               </p>
 
               <div className="grid grid-cols-2 gap-3">
@@ -521,7 +523,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.shp_number && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      SHP Number
+                      {t('shipmentUpload.shpNumber')}
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.shp_number.confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.shp_number.confidence)}
                       </span>
@@ -539,7 +541,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.booking_number && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Booking Number
+                      {t('shipmentUpload.bookingNumber')}
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.booking_number.confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.booking_number.confidence)}
                       </span>
@@ -557,7 +559,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.pol && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Port of Loading
+                      {t('shipmentUpload.portOfLoading')}
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.pol.confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.pol.confidence)}
                       </span>
@@ -575,7 +577,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.pod && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Port of Discharge
+                      {t('shipmentUpload.portOfDischarge')}
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.pod.confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.pod.confidence)}
                       </span>
@@ -593,7 +595,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.etd && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      ETD
+                      {t('shipmentUpload.etd')}
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.etd.confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.etd.confidence)}
                       </span>
@@ -611,7 +613,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.eta && (
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      ETA
+                      {t('shipmentUpload.eta')}
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.eta.confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.eta.confidence)}
                       </span>
@@ -629,7 +631,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.vessel && (
                   <div className="col-span-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Vessel Name
+                      {t('shipmentUpload.vesselName')}
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.vessel.confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.vessel.confidence)}
                       </span>
@@ -647,7 +649,7 @@ export function ShipmentUploadModal({
                 {parseResult.parsed_data.containers.length > 0 && (
                   <div className="col-span-2">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Containers ({parseResult.parsed_data.containers.length})
+                      {t('shipmentUpload.containers')} ({parseResult.parsed_data.containers.length})
                       <span className={`ml-2 text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.containers_confidence)}`}>
                         {getConfidenceBadge(parseResult.parsed_data.containers_confidence)}
                       </span>
@@ -656,7 +658,7 @@ export function ShipmentUploadModal({
                       type="text"
                       value={editedData.containers}
                       onChange={(e) => setEditedData({ ...editedData, containers: e.target.value })}
-                      placeholder="Comma-separated container numbers"
+                      placeholder={t('shipmentUpload.containerPlaceholder')}
                       className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
                     />
                   </div>
@@ -674,13 +676,13 @@ export function ShipmentUploadModal({
                   onClick={() => setUploadState('idle')}
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                 >
-                  Back
+                  {t('common.back')}
                 </button>
                 <button
                   onClick={handleConfirm}
                   className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
                 >
-                  Confirm & Create Shipment
+                  {t('shipmentUpload.confirmCreate')}
                 </button>
               </div>
             </div>
@@ -690,7 +692,7 @@ export function ShipmentUploadModal({
             <div className="py-8 text-center">
               <LoadingSpinner size="lg" />
               <p className="mt-4 text-gray-600">
-                {isPendingResolution ? 'Assigning document...' : 'Creating shipment...'}
+                {isPendingResolution ? t('shipmentUpload.assigning') : t('shipmentUpload.creating')}
               </p>
             </div>
           )}
@@ -711,22 +713,22 @@ export function ShipmentUploadModal({
                 />
               </svg>
               <h3 className="mt-3 text-lg font-medium text-gray-900">
-                {isPendingResolution ? 'Document Assigned' : 'Shipment Created'}
+                {isPendingResolution ? t('shipmentUpload.documentAssigned') : t('shipmentUpload.shipmentCreated')}
               </h3>
               {isPendingResolution ? (
                 <p className="mt-2 text-sm text-gray-600">
-                  The pending document has been assigned to the selected shipment.
+                  {t('shipmentUpload.documentAssignedDesc')}
                 </p>
               ) : parseResult?.shp_number ? (
                 <p className="mt-2 text-sm text-gray-600">
-                  <strong>SHP Number:</strong> {parseResult.shp_number}
+                  <strong>{t('shipmentUpload.shpNumber')}:</strong> {parseResult.shp_number}
                 </p>
               ) : null}
               <button
                 onClick={handleClose}
                 className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
               >
-                Done
+                {t('shipmentUpload.done')}
               </button>
             </div>
           )}
@@ -735,21 +737,21 @@ export function ShipmentUploadModal({
             <div className="space-y-4">
               <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                 <p className="text-sm text-yellow-800">
-                  <strong>Manual Assignment Required</strong>
+                  <strong>{t('shipmentUpload.manualAssignment')}</strong>
                 </p>
                 <p className="text-sm text-yellow-700 mt-1">
-                  {errorMessage || 'No matching shipment found. Please select which shipment this document belongs to.'}
+                  {errorMessage || t('shipmentUpload.noMatchingShipment')}
                 </p>
               </div>
 
               <p className="text-sm text-gray-600">
-                Select an existing shipment to update with this {parseResult?.parsed_data?.document_type?.toUpperCase()} document:
+                {t('shipmentUpload.selectShipment', { docType: parseResult?.parsed_data?.document_type?.toUpperCase() || '' })}
               </p>
 
               <div className="max-h-64 overflow-y-auto border border-gray-200 rounded">
                 {candidateShipments.length === 0 ? (
                   <p className="p-4 text-sm text-gray-500 text-center">
-                    No shipments available. Please create a booking first.
+                    {t('shipmentUpload.noShipmentsAvailable')}
                   </p>
                 ) : (
                   <div className="divide-y divide-gray-200">
@@ -770,10 +772,10 @@ export function ShipmentUploadModal({
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-900">
-                            {shipment.shp_number || 'No SHP'}
+                            {shipment.shp_number || t('shipmentUpload.noSHP')}
                             {shipment.booking_number && (
                               <span className="ml-2 text-gray-500">
-                                (Booking: {shipment.booking_number})
+                                ({t('shipmentUpload.booking')}: {shipment.booking_number})
                               </span>
                             )}
                           </p>
@@ -794,7 +796,7 @@ export function ShipmentUploadModal({
                     onClick={handleClose}
                     className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 ) : (
                   <button
@@ -806,7 +808,7 @@ export function ShipmentUploadModal({
                     }}
                     className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
                   >
-                    Back to Edit
+                    {t('shipmentUpload.backToEdit')}
                   </button>
                 )}
                 <button
@@ -814,7 +816,7 @@ export function ShipmentUploadModal({
                   disabled={!selectedShipmentId}
                   className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Assign to Selected Shipment
+                  {t('shipmentUpload.assignToSelected')}
                 </button>
               </div>
             </div>
@@ -835,7 +837,7 @@ export function ShipmentUploadModal({
                   d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <h3 className="mt-3 text-lg font-medium text-gray-900">Upload Failed</h3>
+              <h3 className="mt-3 text-lg font-medium text-gray-900">{t('shipmentUpload.uploadFailed')}</h3>
               <p className="mt-2 text-sm text-gray-600">{errorMessage}</p>
 
               <button
@@ -846,7 +848,7 @@ export function ShipmentUploadModal({
                 }}
                 className="mt-4 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700"
               >
-                Try Again
+                {t('common.tryAgain')}
               </button>
             </div>
           )}
