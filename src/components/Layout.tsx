@@ -13,6 +13,7 @@ const navItems = [
   { path: '/recommendations', labelKey: 'nav.recommendations' },
   { path: '/boats', labelKey: 'nav.boats' },
   { path: '/shipments', labelKey: 'nav.shipments' },
+  { path: '/analytics', labelKey: 'nav.analytics' },
 ];
 
 export function Layout({ children }: LayoutProps) {
@@ -20,19 +21,38 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Dark theme for Analytics page
+  const isAnalytics = location.pathname === '/analytics';
+
   const handleNavClick = () => {
     setMobileMenuOpen(false);
   };
 
+  // Get nav link classes based on theme and active state
+  const getNavLinkClasses = (isActive: boolean) => {
+    if (isAnalytics) {
+      return isActive
+        ? 'bg-slate-800 text-white'
+        : 'text-slate-300 hover:bg-slate-800 hover:text-white';
+    }
+    return isActive
+      ? 'bg-blue-100 text-blue-700'
+      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={`min-h-screen ${isAnalytics ? 'bg-slate-900' : 'bg-gray-50'}`}>
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className={`shadow-sm border-b ${
+        isAnalytics
+          ? 'bg-slate-900 border-slate-700'
+          : 'bg-white border-gray-200'
+      }`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <span className="text-xl font-bold text-gray-900">
+              <span className={`text-xl font-bold ${isAnalytics ? 'text-white' : 'text-gray-900'}`}>
                 {t('nav.appName')}
               </span>
             </div>
@@ -45,11 +65,7 @@ export function Layout({ children }: LayoutProps) {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${getNavLinkClasses(isActive)}`}
                   >
                     {t(item.labelKey)}
                   </Link>
@@ -65,7 +81,11 @@ export function Layout({ children }: LayoutProps) {
             {/* Mobile Hamburger Button */}
             <button
               type="button"
-              className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className={`md:hidden inline-flex items-center justify-center p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 ${
+                isAnalytics
+                  ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+              }`}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
               aria-label="Toggle navigation menu"
@@ -87,7 +107,7 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200">
+          <div className={`md:hidden border-t ${isAnalytics ? 'border-slate-700' : 'border-gray-200'}`}>
             <nav className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
@@ -96,11 +116,7 @@ export function Layout({ children }: LayoutProps) {
                     key={item.path}
                     to={item.path}
                     onClick={handleNavClick}
-                    className={`block px-3 py-2 rounded-md text-base font-medium ${
-                      isActive
-                        ? 'bg-blue-100 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                    }`}
+                    className={`block px-3 py-2 rounded-md text-base font-medium ${getNavLinkClasses(isActive)}`}
                   >
                     {t(item.labelKey)}
                   </Link>
@@ -116,7 +132,7 @@ export function Layout({ children }: LayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className={isAnalytics ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}>
         {children}
       </main>
     </div>

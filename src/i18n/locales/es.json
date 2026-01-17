@@ -21,12 +21,13 @@
     "noProductsCategory": "No hay productos en esta categoría"
   },
   "nav": {
-    "appName": "Floor Tile Manager",
+    "appName": "CM Tarragona S.A.",
     "dashboard": "Panel",
     "orderBuilder": "Crear Pedido",
     "recommendations": "Recomendaciones",
     "boats": "Barcos",
-    "shipments": "Embarques"
+    "shipments": "Embarques",
+    "analytics": "Inteligencia"
   },
   "dashboard": {
     "title": "Panel",
@@ -356,5 +357,26 @@
     "saving": "Guardando...",
     "saved": "Costos guardados",
     "error": "Error al guardar costos"
+  },
+  "analytics": {
+    "title": "Inteligencia de Negocio",
+    "revenue": "Ingresos",
+    "costs": "Costos",
+    "margin": "Margen",
+    "loss": "Pérdida",
+    "topCustomers": "Top Clientes",
+    "shipmentCosts": "Costos por Embarque",
+    "comingSoon": "Visualización próximamente",
+    "loadError": "Error al cargar datos de análisis",
+    "moneyFlow": "Flujo de Dinero",
+    "noData": "Sin datos disponibles",
+    "noRevenueData": "Sin datos de ingresos. Agrega precios de venta para ver el flujo completo.",
+    "orders": "órdenes",
+    "viewAllShipments": "Ver todos los embarques",
+    "noShipmentCosts": "Sin costos de embarque registrados",
+    "viewBy": "Ver por",
+    "customers": "Clientes",
+    "products": "Productos",
+    "topProducts": "Top Productos"
   }
 }

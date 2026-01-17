@@ -21,12 +21,13 @@
     "noProductsCategory": "No products in this category"
   },
   "nav": {
-    "appName": "Floor Tile Manager",
+    "appName": "CM Tarragona S.A.",
     "dashboard": "Dashboard",
     "orderBuilder": "Order Builder",
     "recommendations": "Recommendations",
     "boats": "Boats",
-    "shipments": "Shipments"
+    "shipments": "Shipments",
+    "analytics": "Intelligence"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -356,5 +357,26 @@
     "saving": "Saving...",
     "saved": "Costs saved",
     "error": "Error saving costs"
+  },
+  "analytics": {
+    "title": "Business Intelligence",
+    "revenue": "Revenue",
+    "costs": "Costs",
+    "margin": "Margin",
+    "loss": "Loss",
+    "topCustomers": "Top Customers",
+    "shipmentCosts": "Shipment Costs",
+    "comingSoon": "Visualization coming soon",
+    "loadError": "Failed to load analytics data",
+    "moneyFlow": "Money Flow",
+    "noData": "No data available",
+    "noRevenueData": "No revenue data. Add sale prices to see the complete flow.",
+    "orders": "orders",
+    "viewAllShipments": "View all shipments",
+    "noShipmentCosts": "No shipment costs recorded",
+    "viewBy": "View by",
+    "customers": "Customers",
+    "products": "Products",
+    "topProducts": "Top Products"
   }
 }

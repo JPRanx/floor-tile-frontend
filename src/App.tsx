@@ -7,6 +7,7 @@ import { Recommendations } from './pages/Recommendations';
 import { Boats } from './pages/Boats';
 import { OrderBuilder } from './pages/OrderBuilder';
 import { Shipments } from './pages/Shipments';
+import { Analytics } from './pages/Analytics';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <Route path="/boats" element={<Boats />} />
           <Route path="/order-builder" element={<OrderBuilder />} />
           <Route path="/shipments" element={<Shipments />} />
+          <Route path="/analytics" element={<Analytics />} />
         </Routes>
       </Layout>
     </BrowserRouter>
