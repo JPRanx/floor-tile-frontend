@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { orderBuilderApi } from '../requests/orderBuilder';
 import type {
@@ -24,7 +23,6 @@ const WAREHOUSE_CAPACITY = 740;
 
 export function OrderBuilder() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [data, setData] = useState<OrderBuilderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
