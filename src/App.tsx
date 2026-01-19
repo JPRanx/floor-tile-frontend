@@ -8,6 +8,7 @@ import { Boats } from './pages/Boats';
 import { OrderBuilder } from './pages/OrderBuilder';
 import { Shipments } from './pages/Shipments';
 import { Analytics } from './pages/Analytics';
+import { Pipeline } from './pages/Pipeline';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/order-builder" element={<OrderBuilder />} />
           <Route path="/shipments" element={<Shipments />} />
           <Route path="/analytics" element={<Analytics />} />
+          <Route path="/pipeline" element={<Pipeline />} />
         </Routes>
       </Layout>
     </BrowserRouter>

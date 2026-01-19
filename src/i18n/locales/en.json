@@ -27,6 +27,7 @@
     "recommendations": "Recommendations",
     "boats": "Boats",
     "shipments": "Shipments",
+    "pipeline": "Pipeline",
     "analytics": "Intelligence"
   },
   "dashboard": {
@@ -389,5 +390,17 @@
     "customers": "Customers",
     "products": "Products",
     "topProducts": "Top Products"
+  },
+  "pipeline": {
+    "title": "Order Pipeline",
+    "ordered": "Ordered",
+    "shipped": "Shipped",
+    "inTransit": "In Transit",
+    "delivered": "Delivered",
+    "noOrders": "No orders",
+    "noPV": "No PV#",
+    "items": "items",
+    "totalOrders": "{{count}} orders total",
+    "loadError": "Failed to load pipeline. Is the backend running?"
   }
 }

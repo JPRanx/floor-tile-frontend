@@ -159,6 +159,15 @@ export function Recommendations() {
                             📦 {Math.round(rec.in_transit_pallets)}p in transit
                           </div>
                         )}
+                        {/* Show production schedule if available */}
+                        {rec.upcoming_production_m2 != null && rec.upcoming_production_m2 > 0 && (
+                          <ProductionIndicator
+                            m2={rec.upcoming_production_m2}
+                            date={rec.next_production_date}
+                            beforeStockout={rec.production_before_stockout}
+                            coversGap={rec.production_covers_gap}
+                          />
+                        )}
                         {/* Show confidence on mobile under SKU */}
                         <div className="sm:hidden mt-1">
                           <ConfidenceBadge level={rec.confidence} />
@@ -359,6 +368,46 @@ function CustomerInfo({ uniqueCustomers, recurringCustomers, topCustomerName, to
           Top: {topCustomerName} ({topPct}%)
         </div>
       )}
+    </div>
+  );
+}
+
+// Production Indicator - shows upcoming production info
+interface ProductionIndicatorProps {
+  m2: number;
+  date: string | null;
+  beforeStockout: boolean | null;
+  coversGap: boolean | null;
+}
+
+function ProductionIndicator({ m2, date, beforeStockout, coversGap }: ProductionIndicatorProps) {
+  // Determine color based on production timing and coverage
+  let colorClass = 'text-purple-600';
+  let icon = '🏭';
+
+  if (beforeStockout === true && coversGap === true) {
+    colorClass = 'text-green-600';
+    icon = '✅';
+  } else if (beforeStockout === false) {
+    colorClass = 'text-orange-600';
+    icon = '⚠️';
+  }
+
+  // Format date if available
+  let dateText = '';
+  if (date) {
+    try {
+      const d = new Date(date);
+      dateText = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    } catch {
+      dateText = date;
+    }
+  }
+
+  return (
+    <div className={`text-xs mt-0.5 ${colorClass}`}>
+      {icon} {Math.round(m2).toLocaleString()} m² prod
+      {dateText && <span className="text-gray-500"> ({dateText})</span>}
     </div>
   );
 }

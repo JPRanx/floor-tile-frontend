@@ -27,6 +27,7 @@
     "recommendations": "Recomendaciones",
     "boats": "Barcos",
     "shipments": "Embarques",
+    "pipeline": "Pipeline",
     "analytics": "Inteligencia"
   },
   "dashboard": {
@@ -389,5 +390,17 @@
     "customers": "Clientes",
     "products": "Productos",
     "topProducts": "Top Productos"
+  },
+  "pipeline": {
+    "title": "Pipeline de Órdenes",
+    "ordered": "Ordenado",
+    "shipped": "Enviado",
+    "inTransit": "En Tránsito",
+    "delivered": "Entregado",
+    "noOrders": "Sin órdenes",
+    "noPV": "Sin PV#",
+    "items": "artículos",
+    "totalOrders": "{{count}} órdenes en total",
+    "loadError": "Error al cargar pipeline. ¿Está corriendo el backend?"
   }
 }

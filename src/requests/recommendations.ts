@@ -57,6 +57,11 @@ export interface ProductRecommendation {
   top_customer_share: number | null;
   recurring_customers: number;
   recurring_share: number | null;
+  // Production schedule integration
+  upcoming_production_m2: number | null;
+  next_production_date: string | null;
+  production_before_stockout: boolean | null;
+  production_covers_gap: boolean | null;
   // Priority and action
   priority: RecommendationPriority;
   action_type: ActionType;
