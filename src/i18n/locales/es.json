@@ -108,7 +108,12 @@
     "noBoatSelected": "No hay barco seleccionado",
     "noBoatsAvailable": "No hay horarios de barcos disponibles",
     "noBoatsDescription": "Por favor suba un horario TIBA en la página de Barcos primero.",
-    "goToBoats": "Ir a Barcos"
+    "goToBoats": "Ir a Barcos",
+    "noBoatMode": "Sin Barco",
+    "using45DayLeadTime": "Usando tiempo de entrega de 45 días",
+    "noTimelineAvailable": "Sin línea de tiempo — suba un horario de barco para ver los hitos de envío",
+    "exportSuccess": "Orden {{pvNumber}} creada y exportada",
+    "exportError": "Error al crear la orden. Por favor intenta de nuevo."
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",
@@ -258,7 +263,13 @@
     "timeout": "Tiempo de espera agotado. El servidor tardó demasiado en responder. Por favor intenta de nuevo.",
     "serverError": "Error del servidor al analizar el documento. El PDF puede ser muy grande o en un formato no soportado.",
     "networkError": "Error de red. Por favor verifica tu conexión e intenta de nuevo.",
-    "parseFailed": "Error al analizar el PDF. Asegúrate de que el archivo es un documento de envío válido."
+    "parseFailed": "Error al analizar el PDF. Asegúrate de que el archivo es un documento de envío válido.",
+    "factoryOrder": "Pedido de Fábrica",
+    "optional": "opcional",
+    "searchFactoryOrder": "Buscar por número PV...",
+    "items": "artículos",
+    "typeToSearch": "Escribe al menos 2 caracteres para buscar",
+    "noFactoryOrdersFound": "No se encontraron pedidos de fábrica"
   },
   "shipmentDetail": {
     "shipmentInfo": "Información del Embarque",

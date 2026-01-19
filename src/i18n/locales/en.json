@@ -108,7 +108,12 @@
     "noBoatSelected": "No boat selected",
     "noBoatsAvailable": "No boat schedules available",
     "noBoatsDescription": "Please upload a TIBA schedule on the Boats page first.",
-    "goToBoats": "Go to Boats"
+    "goToBoats": "Go to Boats",
+    "noBoatMode": "No Boat",
+    "using45DayLeadTime": "Using 45-day lead time",
+    "noTimelineAvailable": "No timeline available — upload a boat schedule to see shipping milestones",
+    "exportSuccess": "Order {{pvNumber}} created and exported",
+    "exportError": "Failed to create order. Please try again."
   },
   "recommendations": {
     "title": "Order Recommendations",
@@ -258,7 +263,13 @@
     "timeout": "Request timed out. The server took too long to respond. Please try again.",
     "serverError": "Server error while parsing document. The PDF may be too large or in an unsupported format.",
     "networkError": "Network error. Please check your connection and try again.",
-    "parseFailed": "Failed to parse PDF. Please ensure the file is a valid shipping document."
+    "parseFailed": "Failed to parse PDF. Please ensure the file is a valid shipping document.",
+    "factoryOrder": "Factory Order",
+    "optional": "optional",
+    "searchFactoryOrder": "Search by PV number...",
+    "items": "items",
+    "typeToSearch": "Type at least 2 characters to search",
+    "noFactoryOrdersFound": "No factory orders found"
   },
   "shipmentDetail": {
     "shipmentInfo": "Shipment Info",

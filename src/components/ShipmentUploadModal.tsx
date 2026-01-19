@@ -5,6 +5,7 @@ import type { IngestResponse, CandidateShipment } from '../requests/shipments';
 import { pendingDocumentsApi } from '../requests/pendingDocuments';
 import type { PendingDocument } from '../requests/pendingDocuments';
 import { LoadingSpinner } from './LoadingSpinner';
+import { FactoryOrderSelector } from './FactoryOrderSelector';
 
 interface ShipmentUploadModalProps {
   isOpen: boolean;
@@ -52,6 +53,7 @@ export function ShipmentUploadModal({
     pod: string;
     vessel: string;
     voyage: string;
+    factory_order_id: string | null;
   }>({
     shp_number: '',
     booking_number: '',
@@ -65,6 +67,7 @@ export function ShipmentUploadModal({
     pod: '',
     vessel: '',
     voyage: '',
+    factory_order_id: null,
   });
 
   // Initialize from pending document when provided
@@ -96,6 +99,7 @@ export function ShipmentUploadModal({
         pod: data.pod?.value || '',
         vessel: data.vessel?.value || '',
         voyage: data.voyage?.value || '',
+        factory_order_id: null,
       });
 
       // Fetch candidates and go directly to selection
@@ -172,6 +176,7 @@ export function ShipmentUploadModal({
           pod: data.pod?.value || '',
           vessel: data.vessel?.value || '',
           voyage: data.voyage?.value || '',
+          factory_order_id: null,
         });
         setUploadState('reviewing');
       } else {
@@ -287,6 +292,7 @@ export function ShipmentUploadModal({
         source: 'manual' as const,
         notes: `Uploaded by Ashley via web interface. Original file: ${file?.name}`,
         original_parsed_data: parseResult.parsed_data,
+        factory_order_id: editedData.factory_order_id || undefined,
       };
 
       const result = await shipmentsApi.confirmIngest(confirmData);
@@ -400,6 +406,7 @@ export function ShipmentUploadModal({
       pod: '',
       vessel: '',
       voyage: '',
+      factory_order_id: null,
     });
     onClose();
   };
@@ -660,6 +667,16 @@ export function ShipmentUploadModal({
                       onChange={(e) => setEditedData({ ...editedData, containers: e.target.value })}
                       placeholder={t('shipmentUpload.containerPlaceholder')}
                       className="w-full px-3 py-2 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                )}
+
+                {/* Factory Order Link - Only show for booking documents */}
+                {parseResult.parsed_data.document_type === 'booking' && (
+                  <div className="col-span-2">
+                    <FactoryOrderSelector
+                      value={editedData.factory_order_id}
+                      onChange={(factoryOrderId) => setEditedData({ ...editedData, factory_order_id: factoryOrderId })}
                     />
                   </div>
                 )}

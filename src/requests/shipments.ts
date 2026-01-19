@@ -76,6 +76,7 @@ export interface ConfirmIngestRequest {
   source: string;
   notes?: string;
   target_shipment_id?: string;
+  factory_order_id?: string;
   original_parsed_data?: ParsedDocumentData;
 }
 
@@ -216,6 +217,86 @@ export const portsApi = {
 
   async getById(id: string): Promise<Port> {
     const response = await api.get(`/ports/${id}`);
+    return response.data;
+  },
+};
+
+// ===================
+// PACKING LIST TYPES
+// ===================
+
+export interface PackingListLineItem {
+  product_code: string | null;
+  product_name: string | null;
+  pallets: number;
+  cartons: number;
+  m2_total: string;
+  net_weight_kg: string;
+  gross_weight_kg: string;
+  volume_m3: string;
+  container_number: string | null;
+  seal_number: string | null;
+}
+
+export interface PackingListTotals {
+  total_pallets: number;
+  total_cartons: number;
+  total_m2: string;
+  total_net_weight_kg: string;
+  total_gross_weight_kg: string;
+  total_volume_m3: string;
+}
+
+export interface ParsedPackingListResponse {
+  pv_number: string | null;
+  pv_number_confidence: number;
+  customer_name: string | null;
+  line_items: PackingListLineItem[];
+  totals: PackingListTotals;
+  containers: string[];
+  overall_confidence: number;
+  parsing_errors: string[];
+}
+
+export interface PackingListIngestResponse {
+  success: boolean;
+  message: string;
+  action: 'parsed_pending_confirmation' | 'linked_to_factory_order' | 'needs_factory_order' | 'error';
+  parsed_data?: ParsedPackingListResponse;
+  factory_order_id: string | null;
+  factory_order_pv: string | null;
+  confidence: number;
+}
+
+export interface ConfirmPackingListRequest {
+  pv_number: string;
+  containers?: string[];
+  totals?: PackingListTotals;
+  notes?: string;
+  original_parsed_data?: ParsedPackingListResponse;
+}
+
+// ===================
+// PACKING LIST API
+// ===================
+
+export const packingListApi = {
+  async uploadXlsx(file: File): Promise<PackingListIngestResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/shipments/ingest/packing-list', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 60000, // 1 minute for Excel parsing
+    });
+
+    return response.data;
+  },
+
+  async confirm(data: ConfirmPackingListRequest): Promise<PackingListIngestResponse> {
+    const response = await api.post('/shipments/ingest/packing-list/confirm', data);
     return response.data;
   },
 };

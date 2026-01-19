@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { OrderBuilderBoat, OrderBuilderMode } from '../requests/orderBuilder';
 import type { BoatSchedule } from '../requests/boats';
 
@@ -20,7 +21,13 @@ export function OrderBuilderHeader({
   selectedBoatId,
   onBoatChange,
 }: OrderBuilderHeaderProps) {
+  const { t } = useTranslation();
+
+  // Check if we have a real boat or are in no-boat mode
+  const hasBoat = availableBoats.length > 0 && boat.departure_date;
+
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
@@ -85,102 +92,128 @@ export function OrderBuilderHeader({
           )}
 
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-            ORDER BUILDER — {formatDate(boat.departure_date)} Boat
+            {hasBoat
+              ? `ORDER BUILDER — ${formatDate(boat.departure_date)} Boat`
+              : t('orderBuilder.title')
+            }
           </h1>
-          <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
-            <span>
-              Departs in <strong>{boat.days_until_departure}</strong> days
-            </span>
-            <span className="hidden sm:inline">|</span>
-            <span>
-              Arrives {formatDate(boat.arrival_date)}
-            </span>
-            {boat.days_until_deadline <= 7 && (
-              <>
-                <span className="hidden sm:inline">|</span>
-                <span className="text-orange-600 font-medium">
-                  Booking deadline in {boat.days_until_deadline} days
+          {hasBoat ? (
+            <>
+              <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
+                <span>
+                  Departs in <strong>{boat.days_until_departure}</strong> days
                 </span>
-              </>
-            )}
-          </div>
-          {nextBoat && (
-            <div className="text-xs text-gray-500 mt-1">
-              Next boat: {formatDate(nextBoat.departure_date)} ({nextBoat.days_until_departure} days)
+                <span className="hidden sm:inline">|</span>
+                <span>
+                  Arrives {formatDate(boat.arrival_date)}
+                </span>
+                {boat.days_until_deadline <= 7 && (
+                  <>
+                    <span className="hidden sm:inline">|</span>
+                    <span className="text-orange-600 font-medium">
+                      Booking deadline in {boat.days_until_deadline} days
+                    </span>
+                  </>
+                )}
+              </div>
+              {nextBoat && (
+                <div className="text-xs text-gray-500 mt-1">
+                  Next boat: {formatDate(nextBoat.departure_date)} ({nextBoat.days_until_departure} days)
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex items-center gap-2 mt-1">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800">
+                {t('orderBuilder.noBoatMode')}
+              </span>
+              <span className="text-sm text-gray-500">
+                {t('orderBuilder.using45DayLeadTime')}
+              </span>
             </div>
           )}
         </div>
 
         {/* Vessel Name Badge */}
-        <div className="flex-shrink-0">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-            {boat.name}
-          </span>
-        </div>
+        {hasBoat && (
+          <div className="flex-shrink-0">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+              {boat.name}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Order Timeline */}
-      <div className="mb-4 py-3 border-t border-b border-gray-100">
-        <div className="text-xs font-medium text-gray-500 mb-2">ORDER TIMELINE</div>
+      {/* Order Timeline - only show when boat is available */}
+      {hasBoat ? (
+        <div className="mb-4 py-3 border-t border-b border-gray-100">
+          <div className="text-xs font-medium text-gray-500 mb-2">ORDER TIMELINE</div>
 
-        {/* Desktop: Horizontal timeline */}
-        <div className="hidden sm:block">
-          <div className="relative flex items-center justify-between">
-            {/* Connecting line */}
-            <div className="absolute top-3 left-4 right-4 h-0.5 bg-gray-200" />
+          {/* Desktop: Horizontal timeline */}
+          <div className="hidden sm:block">
+            <div className="relative flex items-center justify-between">
+              {/* Connecting line */}
+              <div className="absolute top-3 left-4 right-4 h-0.5 bg-gray-200" />
 
+              {milestones.map((m, idx) => (
+                <div key={idx} className="relative flex flex-col items-center z-10">
+                  {/* Dot */}
+                  <div
+                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${
+                      m.color === 'orange'
+                        ? 'bg-orange-100 border-orange-400 text-orange-600'
+                        : m.color === 'green'
+                        ? 'bg-green-100 border-green-400 text-green-600'
+                        : 'bg-blue-100 border-blue-400 text-blue-600'
+                    }`}
+                  >
+                    {idx + 1}
+                  </div>
+                  {/* Date */}
+                  <div className="mt-1 text-sm font-medium text-gray-900">
+                    {formatDate(m.date)}
+                  </div>
+                  {/* Label */}
+                  <div className="text-xs text-gray-500">{m.label}</div>
+                  {/* Days */}
+                  <div className={`text-xs font-medium ${
+                    m.days <= 7 && m.color === 'orange' ? 'text-orange-600' : 'text-gray-400'
+                  }`}>
+                    ({m.days}d)
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile: Compact vertical list */}
+          <div className="sm:hidden flex flex-wrap gap-3">
             {milestones.map((m, idx) => (
-              <div key={idx} className="relative flex flex-col items-center z-10">
-                {/* Dot */}
-                <div
-                  className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${
+              <div key={idx} className="flex items-center gap-1.5">
+                <span
+                  className={`w-2 h-2 rounded-full ${
                     m.color === 'orange'
-                      ? 'bg-orange-100 border-orange-400 text-orange-600'
+                      ? 'bg-orange-400'
                       : m.color === 'green'
-                      ? 'bg-green-100 border-green-400 text-green-600'
-                      : 'bg-blue-100 border-blue-400 text-blue-600'
+                      ? 'bg-green-400'
+                      : 'bg-blue-400'
                   }`}
-                >
-                  {idx + 1}
-                </div>
-                {/* Date */}
-                <div className="mt-1 text-sm font-medium text-gray-900">
-                  {formatDate(m.date)}
-                </div>
-                {/* Label */}
-                <div className="text-xs text-gray-500">{m.label}</div>
-                {/* Days */}
-                <div className={`text-xs font-medium ${
-                  m.days <= 7 && m.color === 'orange' ? 'text-orange-600' : 'text-gray-400'
-                }`}>
-                  ({m.days}d)
-                </div>
+                />
+                <span className="text-xs text-gray-600">
+                  {m.label}: <span className="font-medium">{formatDate(m.date)}</span>
+                  <span className="text-gray-400 ml-1">({m.days}d)</span>
+                </span>
               </div>
             ))}
           </div>
         </div>
-
-        {/* Mobile: Compact vertical list */}
-        <div className="sm:hidden flex flex-wrap gap-3">
-          {milestones.map((m, idx) => (
-            <div key={idx} className="flex items-center gap-1.5">
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  m.color === 'orange'
-                    ? 'bg-orange-400'
-                    : m.color === 'green'
-                    ? 'bg-green-400'
-                    : 'bg-blue-400'
-                }`}
-              />
-              <span className="text-xs text-gray-600">
-                {m.label}: <span className="font-medium">{formatDate(m.date)}</span>
-                <span className="text-gray-400 ml-1">({m.days}d)</span>
-              </span>
-            </div>
-          ))}
+      ) : (
+        <div className="mb-4 py-3 border-t border-b border-gray-100">
+          <div className="text-sm text-gray-500 italic">
+            {t('orderBuilder.noTimelineAvailable')}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Mode Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
