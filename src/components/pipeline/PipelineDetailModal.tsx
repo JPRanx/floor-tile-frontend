@@ -57,7 +57,7 @@ const shipmentStatusColors: Record<string, string> = {
   DELIVERED: 'bg-emerald-900/70 text-emerald-300',
 };
 
-export function PipelineDetailModal({ item, type, onClose, onStatusChange }: PipelineDetailModalProps) {
+export function PipelineDetailModal({ item, type: _type, onClose, onStatusChange }: PipelineDetailModalProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language === 'es' ? es : enUS;
 
