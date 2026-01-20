@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { pipelineApi } from '../requests/pipeline';
-import type { PipelineData } from '../requests/pipeline';
+import type { PipelineData, PipelineOrderItem, PipelineShipmentItem } from '../requests/pipeline';
 import { StageSummaryCard } from '../components/pipeline/StageSummaryCard';
 import { PipelineFlow } from '../components/pipeline/PipelineFlow';
 import { PipelineColumn } from '../components/pipeline/PipelineColumn';
+import { PipelineDetailModal } from '../components/pipeline/PipelineDetailModal';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function Pipeline() {
@@ -12,21 +13,38 @@ export function Pipeline() {
   const [data, setData] = useState<PipelineData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<PipelineOrderItem | PipelineShipmentItem | null>(null);
+  const [selectedType, setSelectedType] = useState<'ordered' | 'shipped' | 'in_transit' | 'delivered'>('ordered');
+
+  const fetchData = async () => {
+    try {
+      const result = await pipelineApi.getOverview();
+      setData(result);
+    } catch (err) {
+      setError(t('pipeline.loadError'));
+      console.error('Failed to load pipeline:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const result = await pipelineApi.getOverview();
-        setData(result);
-      } catch (err) {
-        setError(t('pipeline.loadError'));
-        console.error('Failed to load pipeline:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchData();
   }, [t]);
+
+  const handleCardClick = (item: PipelineOrderItem | PipelineShipmentItem, type: 'ordered' | 'shipped' | 'in_transit' | 'delivered') => {
+    setSelectedItem(item);
+    setSelectedType(type);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedItem(null);
+  };
+
+  const handleStatusChange = () => {
+    // Refresh the pipeline data when a status changes
+    fetchData();
+  };
 
   if (loading) {
     return (
@@ -103,6 +121,7 @@ export function Pipeline() {
               color={stage.color}
               items={data.stages[stage.key]}
               type={stage.key}
+              onCardClick={(item) => handleCardClick(item, stage.key)}
             />
           ))}
         </div>
@@ -114,6 +133,16 @@ export function Pipeline() {
           </p>
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {selectedItem && (
+        <PipelineDetailModal
+          item={selectedItem}
+          type={selectedType}
+          onClose={handleCloseModal}
+          onStatusChange={handleStatusChange}
+        />
+      )}
     </div>
   );
 }

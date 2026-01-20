@@ -9,6 +9,7 @@ interface PipelineCardProps {
   type: 'ordered' | 'shipped' | 'in_transit' | 'delivered';
   color: 'slate' | 'emerald' | 'indigo' | 'amber';
   delay: number;
+  onClick?: () => void;
 }
 
 // Design tokens - hover glow effects
@@ -32,7 +33,7 @@ function isShipmentItem(item: PipelineOrderItem | PipelineShipmentItem): item is
   return 'shipment_id' in item;
 }
 
-export function PipelineCard({ item, type, color, delay }: PipelineCardProps) {
+export function PipelineCard({ item, type, color, delay, onClick }: PipelineCardProps) {
   const { t, i18n } = useTranslation();
   const [visible, setVisible] = useState(false);
   const locale = i18n.language === 'es' ? es : enUS;
@@ -176,6 +177,7 @@ export function PipelineCard({ item, type, color, delay }: PipelineCardProps) {
         ${hoverGlows[color]}
         ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
       `}
+      onClick={onClick}
     >
       {renderContent()}
     </div>

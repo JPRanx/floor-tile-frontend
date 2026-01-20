@@ -8,6 +8,7 @@ interface PipelineColumnProps {
   color: 'slate' | 'emerald' | 'indigo' | 'amber';
   items: PipelineOrderItem[] | PipelineShipmentItem[];
   type: 'ordered' | 'shipped' | 'in_transit' | 'delivered';
+  onCardClick?: (item: PipelineOrderItem | PipelineShipmentItem) => void;
 }
 
 // Design tokens - border colors for column headers
@@ -26,7 +27,7 @@ const badgeColors: Record<string, string> = {
   amber: 'bg-amber-900/50 text-amber-400',
 };
 
-export function PipelineColumn({ title, icon, color, items, type }: PipelineColumnProps) {
+export function PipelineColumn({ title, icon, color, items, type, onCardClick }: PipelineColumnProps) {
   const { t } = useTranslation();
 
   return (
@@ -63,6 +64,7 @@ export function PipelineColumn({ title, icon, color, items, type }: PipelineColu
               type={type}
               color={color}
               delay={index * 100}
+              onClick={() => onCardClick?.(item)}
             />
           ))
         )}

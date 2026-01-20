@@ -90,4 +90,9 @@ export const factoryOrdersApi = {
     const response = await api.get(`/factory-orders/search?${params.toString()}`);
     return response.data;
   },
+
+  updateStatus: async (orderId: string, status: string): Promise<FactoryOrder> => {
+    const response = await api.patch(`/factory-orders/${orderId}/status`, { status });
+    return response.data;
+  },
 };
