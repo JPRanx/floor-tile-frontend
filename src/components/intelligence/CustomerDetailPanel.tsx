@@ -124,7 +124,7 @@ export function CustomerDetailPanel({ customer, isOpen, onClose }: CustomerDetai
         <div className="sticky top-0 bg-slate-900/95 backdrop-blur-xl border-b border-slate-700/50 p-4 z-10">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <StatusDot status={customer.status} size="lg" />
+              <StatusDot status={customer.status} size="md" />
               <div>
                 <h2 className="text-xl font-bold text-white">{customer.customer_normalized}</h2>
                 <p className="text-slate-400 text-sm flex items-center gap-2">
