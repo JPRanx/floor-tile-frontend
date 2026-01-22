@@ -15,6 +15,7 @@
     "showing": "Mostrando {{count}} de {{total}}",
     "uploadDocument": "Subir Documento",
     "tryAgain": "Intentar de nuevo",
+    "retry": "Reintentar",
     "pallets": "paletas",
     "days": "días",
     "selected": "seleccionados",
@@ -30,7 +31,8 @@
     "boats": "Barcos",
     "shipments": "Embarques",
     "pipeline": "Pipeline",
-    "analytics": "Inteligencia"
+    "analytics": "Financiero",
+    "intelligence": "Inteligencia"
   },
   "dashboard": {
     "title": "Panel",
@@ -507,5 +509,21 @@
       "sacDescription": "Exporta las ventas semanales desde SAC como CSV. El archivo debe tener columnas para fecha, SKU, cliente, cantidad y precio.",
       "siesaDescription": "Exporta el inventario desde SIESA como XLS. El archivo debe tener columnas Item, Lote, y Cant. disponible."
     }
+  },
+  "intelligence": {
+    "title": "Inteligencia",
+    "subtitle": "Tendencias de ventas y análisis de clientes",
+    "loadError": "Error al cargar datos de inteligencia",
+    "noData": "No hay datos disponibles",
+    "regionView": "Región",
+    "productsView": "Productos",
+    "customersView": "Clientes",
+    "byCountry": "Por País",
+    "byProduct": "Por Producto",
+    "byCustomer": "Por Cliente",
+    "totalRevenue": "Ingresos Totales",
+    "totalVolume": "Volumen Total",
+    "uniqueCustomers": "Clientes Únicos",
+    "uniqueProducts": "Productos Únicos"
   }
 }
