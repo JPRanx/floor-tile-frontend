@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   intelligenceApi,
@@ -11,21 +12,72 @@ import { MetricBox } from '../components/intelligence/MetricBox';
 import { CountryCard } from '../components/intelligence/CountryCard';
 import { ProductCard } from '../components/intelligence/ProductCard';
 import { CustomerCard } from '../components/intelligence/CustomerCard';
+import { ProductDetailPanel } from '../components/intelligence/ProductDetailPanel';
+import { CustomerDetailPanel } from '../components/intelligence/CustomerDetailPanel';
+import { Breadcrumb } from '../components/intelligence/Breadcrumb';
 
 type ViewType = 'region' | 'products' | 'customers';
 
 export function Intelligence() {
   const { t } = useTranslation();
-  const [view, setView] = useState<ViewType>('region');
-  const [periodDays, setPeriodDays] = useState(365); // Default to 365 for more data
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Parse URL parameters
+  const urlView = searchParams.get('view') as ViewType | null;
+  const urlCountry = searchParams.get('country');
+  const urlStatus = searchParams.get('status');
+  const urlProduct = searchParams.get('product');
+  const urlCustomer = searchParams.get('customer');
+
+  // State
+  const [view, setView] = useState<ViewType>(urlView || 'region');
+  const [periodDays, setPeriodDays] = useState(365);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Filter states
+  const [countryFilter, setCountryFilter] = useState<string | null>(urlCountry);
+  const [statusFilter, setStatusFilter] = useState<string | null>(urlStatus);
 
   // Data states
   const [dashboard, setDashboard] = useState<IntelligenceDashboard | null>(null);
   const [products, setProducts] = useState<ProductTrend[]>([]);
   const [countries, setCountries] = useState<CountryTrend[]>([]);
   const [customers, setCustomers] = useState<CustomerTrend[]>([]);
+
+  // Panel states
+  const [selectedProduct, setSelectedProduct] = useState<ProductTrend | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerTrend | null>(null);
+  const [productPanelOpen, setProductPanelOpen] = useState(false);
+  const [customerPanelOpen, setCustomerPanelOpen] = useState(false);
+
+  // Update URL when state changes
+  const updateUrl = useCallback((newParams: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams);
+
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+    });
+
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  // Sync URL params on initial load
+  useEffect(() => {
+    if (urlView && urlView !== view) {
+      setView(urlView);
+    }
+    if (urlCountry !== countryFilter) {
+      setCountryFilter(urlCountry);
+    }
+    if (urlStatus !== statusFilter) {
+      setStatusFilter(urlStatus);
+    }
+  }, []);
 
   // Fetch data based on view
   useEffect(() => {
@@ -45,9 +97,27 @@ export function Intelligence() {
         } else if (view === 'products') {
           const productData = await intelligenceApi.getProducts(periodDays, periodDays);
           setProducts(productData);
+
+          // If URL has product param, find and open panel
+          if (urlProduct) {
+            const product = productData.find(p => p.product_id === urlProduct);
+            if (product) {
+              setSelectedProduct(product);
+              setProductPanelOpen(true);
+            }
+          }
         } else if (view === 'customers') {
           const customerData = await intelligenceApi.getCustomers(periodDays, periodDays);
           setCustomers(customerData);
+
+          // If URL has customer param, find and open panel
+          if (urlCustomer) {
+            const customer = customerData.find(c => c.customer_normalized === urlCustomer);
+            if (customer) {
+              setSelectedCustomer(customer);
+              setCustomerPanelOpen(true);
+            }
+          }
         }
       } catch (err) {
         console.error('Failed to fetch intelligence data:', err);
@@ -58,7 +128,61 @@ export function Intelligence() {
     }
 
     fetchData();
-  }, [view, periodDays, t]);
+  }, [view, periodDays, t, urlProduct, urlCustomer]);
+
+  // Filter customers based on country/status filters
+  const filteredCustomers = customers.filter(c => {
+    if (countryFilter && c.country_code !== countryFilter) return false;
+    if (statusFilter && c.status.toLowerCase() !== statusFilter.toLowerCase()) return false;
+    return true;
+  });
+
+  // Handlers
+  const handleViewChange = (newView: ViewType) => {
+    setView(newView);
+    // Clear filters when changing view
+    setCountryFilter(null);
+    setStatusFilter(null);
+    updateUrl({ view: newView, country: null, status: null, product: null, customer: null });
+  };
+
+  const handleCountryClick = (countryCode: string) => {
+    setView('customers');
+    setCountryFilter(countryCode);
+    setStatusFilter(null);
+    updateUrl({ view: 'customers', country: countryCode, status: null });
+  };
+
+  const handleProductClick = (product: ProductTrend) => {
+    setSelectedProduct(product);
+    setProductPanelOpen(true);
+    updateUrl({ product: product.product_id });
+  };
+
+  const handleCustomerClick = (customer: CustomerTrend) => {
+    setSelectedCustomer(customer);
+    setCustomerPanelOpen(true);
+    updateUrl({ customer: customer.customer_normalized });
+  };
+
+  const handleProductPanelClose = () => {
+    setProductPanelOpen(false);
+    setSelectedProduct(null);
+    updateUrl({ product: null });
+  };
+
+  const handleCustomerPanelClose = () => {
+    setCustomerPanelOpen(false);
+    setSelectedCustomer(null);
+    updateUrl({ customer: null });
+  };
+
+  const handleBreadcrumbBack = () => {
+    setView('region');
+    setCountryFilter(null);
+    setStatusFilter(null);
+    updateUrl({ view: 'region', country: null, status: null });
+  };
 
   // View toggle buttons
   const viewOptions: { key: ViewType; label: string; icon: string }[] = [
@@ -73,6 +197,9 @@ export function Intelligence() {
     { days: 180, label: '6 meses' },
     { days: 365, label: '1 año' },
   ];
+
+  // Show breadcrumb when viewing filtered customers
+  const showBreadcrumb = view === 'customers' && (countryFilter || statusFilter);
 
   return (
     <div className="min-h-screen bg-slate-950 py-8">
@@ -141,7 +268,7 @@ export function Intelligence() {
           {viewOptions.map((opt) => (
             <button
               key={opt.key}
-              onClick={() => setView(opt.key)}
+              onClick={() => handleViewChange(opt.key)}
               className={`
                 flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all
                 ${view === opt.key
@@ -155,6 +282,15 @@ export function Intelligence() {
             </button>
           ))}
         </div>
+
+        {/* Breadcrumb for filtered views */}
+        {showBreadcrumb && (
+          <Breadcrumb
+            currentView={view}
+            filterLabel={countryFilter || statusFilter || undefined}
+            onBack={handleBreadcrumbBack}
+          />
+        )}
 
         {/* Loading State */}
         {loading && (
@@ -171,7 +307,7 @@ export function Intelligence() {
           <div className="flex flex-col items-center justify-center py-20">
             <p className="text-rose-400 mb-4">{error}</p>
             <button
-              onClick={() => setView(view)} // Re-trigger fetch
+              onClick={() => handleViewChange(view)}
               className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors"
             >
               {t('common.retry')}
@@ -191,7 +327,12 @@ export function Intelligence() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {countries.map((country, index) => (
-                  <CountryCard key={country.country_code} country={country} index={index} />
+                  <CountryCard
+                    key={country.country_code}
+                    country={country}
+                    index={index}
+                    onClick={handleCountryClick}
+                  />
                 ))}
               </div>
             )}
@@ -215,6 +356,7 @@ export function Intelligence() {
                     product={product}
                     index={index}
                     rank={index + 1}
+                    onClick={handleProductClick}
                   />
                 ))}
               </div>
@@ -225,19 +367,94 @@ export function Intelligence() {
         {/* Customers View */}
         {!loading && !error && view === 'customers' && (
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-              <span>👥</span>
-              <span>{t('intelligence.byCustomer')}</span>
-            </h2>
-            {customers.length === 0 ? (
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                <span>👥</span>
+                <span>{t('intelligence.byCustomer')}</span>
+                {(countryFilter || statusFilter) && (
+                  <span className="text-slate-400 text-sm font-normal">
+                    ({filteredCustomers.length} de {customers.length})
+                  </span>
+                )}
+              </h2>
+
+              {/* Status filter pills (when not filtered by country) */}
+              {!countryFilter && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      setStatusFilter(null);
+                      updateUrl({ status: null });
+                    }}
+                    className={`
+                      px-3 py-1 rounded-full text-xs font-medium transition-all
+                      ${!statusFilter
+                        ? 'bg-slate-700 text-white'
+                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50'
+                      }
+                    `}
+                  >
+                    {t('intelligence.filters.allStatuses')}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setStatusFilter('active');
+                      updateUrl({ status: 'active' });
+                    }}
+                    className={`
+                      px-3 py-1 rounded-full text-xs font-medium transition-all
+                      ${statusFilter === 'active'
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-slate-800/50 text-slate-400 hover:bg-emerald-500/10'
+                      }
+                    `}
+                  >
+                    Activos
+                  </button>
+                  <button
+                    onClick={() => {
+                      setStatusFilter('cooling');
+                      updateUrl({ status: 'cooling' });
+                    }}
+                    className={`
+                      px-3 py-1 rounded-full text-xs font-medium transition-all
+                      ${statusFilter === 'cooling'
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'bg-slate-800/50 text-slate-400 hover:bg-amber-500/10'
+                      }
+                    `}
+                  >
+                    Enfriándose
+                  </button>
+                  <button
+                    onClick={() => {
+                      setStatusFilter('dormant');
+                      updateUrl({ status: 'dormant' });
+                    }}
+                    className={`
+                      px-3 py-1 rounded-full text-xs font-medium transition-all
+                      ${statusFilter === 'dormant'
+                        ? 'bg-rose-500/20 text-rose-400'
+                        : 'bg-slate-800/50 text-slate-400 hover:bg-rose-500/10'
+                      }
+                    `}
+                  >
+                    Dormidos
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {filteredCustomers.length === 0 ? (
               <p className="text-slate-500 text-center py-10">{t('intelligence.noData')}</p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {customers.map((customer, index) => (
+                {filteredCustomers.map((customer, index) => (
                   <CustomerCard
                     key={customer.customer_normalized}
                     customer={customer}
                     index={index}
+                    onClick={handleCustomerClick}
                   />
                 ))}
               </div>
@@ -245,6 +462,20 @@ export function Intelligence() {
           </div>
         )}
       </div>
+
+      {/* Product Detail Panel */}
+      <ProductDetailPanel
+        product={selectedProduct}
+        isOpen={productPanelOpen}
+        onClose={handleProductPanelClose}
+      />
+
+      {/* Customer Detail Panel */}
+      <CustomerDetailPanel
+        customer={selectedCustomer}
+        isOpen={customerPanelOpen}
+        onClose={handleCustomerPanelClose}
+      />
     </div>
   );
 }

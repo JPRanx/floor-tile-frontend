@@ -7,6 +7,7 @@ interface ProductCardProps {
   product: ProductTrend;
   index: number;
   rank: number;
+  onClick?: (product: ProductTrend) => void;
 }
 
 // Rotation badge colors
@@ -46,11 +47,17 @@ function getSparklineColor(direction: ProductTrend['trend_direction']): 'emerald
   }
 }
 
-export function ProductCard({ product, index, rank }: ProductCardProps) {
+export function ProductCard({ product, index, rank, onClick }: ProductCardProps) {
   const glowClass = getGlowClass(product.trend_direction);
   const sparklineColor = getSparklineColor(product.trend_direction);
   const rotationStyle = rotationColors[product.rotation || 'C'] || rotationColors.C;
   const categoryIcon = categoryIcons[product.category?.toLowerCase()] || categoryIcons.default;
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick(product);
+    }
+  };
 
   // Format revenue
   const formatRevenue = (value: number) => {
@@ -67,10 +74,12 @@ export function ProductCard({ product, index, rank }: ProductCardProps) {
 
   return (
     <div
+      onClick={handleClick}
       className={`
         bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5
         transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1
         ${glowClass}
+        ${onClick ? 'cursor-pointer' : ''}
       `}
       style={{
         animationDelay: `${index * 100}ms`,

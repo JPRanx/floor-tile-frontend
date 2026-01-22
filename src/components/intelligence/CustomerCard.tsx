@@ -7,6 +7,7 @@ import { TrendArrow } from './TrendArrow';
 interface CustomerCardProps {
   customer: CustomerTrend;
   index: number;
+  onClick?: (customer: CustomerTrend) => void;
 }
 
 // Tier badge colors
@@ -56,11 +57,17 @@ function truncateName(name: string, maxLength = 25): string {
   return name.substring(0, maxLength - 3) + '...';
 }
 
-export function CustomerCard({ customer, index }: CustomerCardProps) {
+export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
   const glowClass = getGlowClass(customer.trend_direction);
   const sparklineColor = getSparklineColor(customer.trend_direction);
   const tierStyle = tierColors[customer.tier];
   const flag = countryFlags[customer.country_code] || countryFlags.OTHER;
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick(customer);
+    }
+  };
 
   // Format revenue
   const formatRevenue = (value: number) => {
@@ -87,10 +94,12 @@ export function CustomerCard({ customer, index }: CustomerCardProps) {
 
   return (
     <div
+      onClick={handleClick}
       className={`
         bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5
         transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1
         ${glowClass}
+        ${onClick ? 'cursor-pointer' : ''}
       `}
       style={{
         animationDelay: `${index * 100}ms`,

@@ -6,6 +6,7 @@ import { TrendArrow } from './TrendArrow';
 interface CountryCardProps {
   country: CountryTrend;
   index: number;
+  onClick?: (countryCode: string) => void;
 }
 
 // Country flag emojis
@@ -44,10 +45,16 @@ function getSparklineColor(direction: CountryTrend['trend_direction']): 'emerald
   }
 }
 
-export function CountryCard({ country, index }: CountryCardProps) {
+export function CountryCard({ country, index, onClick }: CountryCardProps) {
   const flag = countryFlags[country.country_code] || countryFlags.OTHER;
   const glowClass = getGlowClass(country.trend_direction);
   const sparklineColor = getSparklineColor(country.trend_direction);
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick(country.country_code);
+    }
+  };
 
   // Format revenue
   const formatRevenue = (value: number) => {
@@ -64,10 +71,12 @@ export function CountryCard({ country, index }: CountryCardProps) {
 
   return (
     <div
+      onClick={handleClick}
       className={`
         bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5
         transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1
         ${glowClass}
+        ${onClick ? 'cursor-pointer' : ''}
       `}
       style={{
         animationDelay: `${index * 100}ms`,
