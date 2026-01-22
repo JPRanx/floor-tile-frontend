@@ -23,6 +23,7 @@
   "nav": {
     "appName": "CM Tarragona S.A.",
     "dashboard": "Panel",
+    "dataHub": "Centro de Datos",
     "upload": "Subir Datos",
     "orderBuilder": "Crear Pedido",
     "recommendations": "Recomendaciones",
@@ -445,5 +446,66 @@
     "IN_PRODUCTION": "En Producción",
     "READY": "Listo",
     "SHIPPED": "Enviado"
+  },
+  "dataHub": {
+    "title": "Centro de Datos",
+    "subtitle": "Sube los datos diarios de ventas e inventario",
+    "systemHealth": "Estado del Sistema",
+    "fresh": "Actualizado",
+    "stale": "Necesita actualización",
+    "veryStale": "Desactualizado",
+    "never": "Nunca",
+    "today": "Hoy",
+    "yesterday": "Ayer",
+    "daysAgo": "hace {{count}} días",
+    "lastUpdatedAgo": "Último: {{time}}",
+    "uploading": "Subiendo...",
+    "uploadFailed": "Error al subir",
+    "uploadAnother": "Subir otro archivo",
+    "viewErrors": "Ver {{count}} errores",
+    "salesLabel": "Ventas",
+    "inventoryLabel": "Inventario",
+    "boatsLabel": "Barcos",
+    "sales": {
+      "title": "Ventas (SAC)",
+      "dropzone": "Arrastra el archivo CSV aquí o haz clic para seleccionar",
+      "lastUpload": "Último",
+      "salesCount": "ventas",
+      "pleaseUploadCSV": "Por favor sube un archivo CSV",
+      "successTitle": "Ventas cargadas exitosamente",
+      "dateRange": "Rango de fechas",
+      "totalM2": "m² total",
+      "customers": "clientes",
+      "topProduct": "Producto principal",
+      "nonTileFiltered": "productos no-cerámicos filtrados"
+    },
+    "inventory": {
+      "title": "Inventario (SIESA)",
+      "dropzone": "Arrastra el archivo XLS aquí o haz clic para seleccionar",
+      "lastUpload": "Último",
+      "lotsCount": "lotes",
+      "pleaseUploadXLS": "Por favor sube un archivo XLS o XLSX",
+      "successTitle": "Inventario cargado exitosamente",
+      "snapshotDate": "Fecha",
+      "availableM2": "m² disponibles",
+      "totalWeight": "kg peso total",
+      "containers": "contenedores",
+      "allMatched": "Todos los productos coincidieron",
+      "matchRate": "{{rate}}% tasa de coincidencia",
+      "unmatchedProducts": "{{count}} productos sin coincidencia"
+    },
+    "otherSources": {
+      "title": "Otras Fuentes de Datos",
+      "boats": "Horario de Barcos (TIBA)",
+      "boatsLink": "Ir a Barcos",
+      "shippingDocs": "Documentos de Envío",
+      "manageShipments": "Gestionar embarques y documentos",
+      "viewShipments": "Ver Embarques"
+    },
+    "help": {
+      "title": "Ayuda con los archivos",
+      "sacDescription": "Exporta las ventas semanales desde SAC como CSV. El archivo debe tener columnas para fecha, SKU, cliente, cantidad y precio.",
+      "siesaDescription": "Exporta el inventario desde SIESA como XLS. El archivo debe tener columnas Item, Lote, y Cant. disponible."
+    }
   }
 }

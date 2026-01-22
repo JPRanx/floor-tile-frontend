@@ -23,6 +23,7 @@
   "nav": {
     "appName": "CM Tarragona S.A.",
     "dashboard": "Dashboard",
+    "dataHub": "Data Hub",
     "upload": "Upload",
     "orderBuilder": "Order Builder",
     "recommendations": "Recommendations",
@@ -445,5 +446,66 @@
     "IN_PRODUCTION": "In Production",
     "READY": "Ready",
     "SHIPPED": "Shipped"
+  },
+  "dataHub": {
+    "title": "Data Hub",
+    "subtitle": "Upload daily sales and inventory data",
+    "systemHealth": "System Health",
+    "fresh": "Fresh",
+    "stale": "Needs update",
+    "veryStale": "Outdated",
+    "never": "Never",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "lastUpdatedAgo": "Last: {{time}}",
+    "uploading": "Uploading...",
+    "uploadFailed": "Upload failed",
+    "uploadAnother": "Upload another file",
+    "viewErrors": "View {{count}} errors",
+    "salesLabel": "Sales",
+    "inventoryLabel": "Inventory",
+    "boatsLabel": "Boats",
+    "sales": {
+      "title": "Sales (SAC)",
+      "dropzone": "Drag CSV file here or click to select",
+      "lastUpload": "Last",
+      "salesCount": "sales",
+      "pleaseUploadCSV": "Please upload a CSV file",
+      "successTitle": "Sales uploaded successfully",
+      "dateRange": "Date range",
+      "totalM2": "m² total",
+      "customers": "customers",
+      "topProduct": "Top product",
+      "nonTileFiltered": "non-tile products filtered"
+    },
+    "inventory": {
+      "title": "Inventory (SIESA)",
+      "dropzone": "Drag XLS file here or click to select",
+      "lastUpload": "Last",
+      "lotsCount": "lots",
+      "pleaseUploadXLS": "Please upload an XLS or XLSX file",
+      "successTitle": "Inventory uploaded successfully",
+      "snapshotDate": "Date",
+      "availableM2": "m² available",
+      "totalWeight": "kg total weight",
+      "containers": "containers",
+      "allMatched": "All products matched",
+      "matchRate": "{{rate}}% match rate",
+      "unmatchedProducts": "{{count}} unmatched products"
+    },
+    "otherSources": {
+      "title": "Other Data Sources",
+      "boats": "Boat Schedule (TIBA)",
+      "boatsLink": "Go to Boats",
+      "shippingDocs": "Shipping Documents",
+      "manageShipments": "Manage shipments and documents",
+      "viewShipments": "View Shipments"
+    },
+    "help": {
+      "title": "File help",
+      "sacDescription": "Export weekly sales from SAC as CSV. The file should have columns for date, SKU, customer, quantity, and price.",
+      "siesaDescription": "Export inventory from SIESA as XLS. The file should have columns Item, Lote, and Cant. disponible."
+    }
   }
 }

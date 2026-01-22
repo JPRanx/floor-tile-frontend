@@ -9,7 +9,7 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', labelKey: 'nav.dashboard' },
-  { path: '/upload', labelKey: 'nav.upload' },
+  { path: '/data-hub', labelKey: 'nav.dataHub' },
   { path: '/order-builder', labelKey: 'nav.orderBuilder' },
   { path: '/recommendations', labelKey: 'nav.recommendations' },
   { path: '/boats', labelKey: 'nav.boats' },
