@@ -23,6 +23,7 @@
   "nav": {
     "appName": "CM Tarragona S.A.",
     "dashboard": "Panel",
+    "upload": "Subir Datos",
     "orderBuilder": "Crear Pedido",
     "recommendations": "Recomendaciones",
     "boats": "Barcos",
@@ -37,6 +38,8 @@
     "consider": "Considerar",
     "wellCovered": "Bien Cubierto",
     "yourCall": "Tu Decisión",
+    "noBoatWarning": "Sin horario de barcos — las recomendaciones pueden ser inexactas",
+    "uploadTiba": "Subir TIBA →",
     "boatDepartures": "Salidas de Barcos",
     "nextBoat": "Próximo barco:",
     "secondBoat": "Segundo barco:",

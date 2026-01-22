@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../requests/dashboard';
 import type { StockoutSummary } from '../requests/dashboard';
@@ -101,6 +102,22 @@ export function Dashboard() {
           color="gray"
         />
       </div>
+
+      {/* No Boat Schedule Warning */}
+      {!data.next_boat_departure && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-amber-600 text-lg">⚠️</span>
+            <span className="text-amber-800 font-medium">{t('dashboard.noBoatWarning')}</span>
+          </div>
+          <Link
+            to="/boats"
+            className="text-amber-700 hover:text-amber-900 font-medium underline text-sm"
+          >
+            {t('dashboard.uploadTiba')}
+          </Link>
+        </div>
+      )}
 
       {/* Boat Departure Info */}
       {data.next_boat_departure && (

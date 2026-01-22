@@ -23,6 +23,7 @@
   "nav": {
     "appName": "CM Tarragona S.A.",
     "dashboard": "Dashboard",
+    "upload": "Upload",
     "orderBuilder": "Order Builder",
     "recommendations": "Recommendations",
     "boats": "Boats",
@@ -37,6 +38,8 @@
     "consider": "Consider",
     "wellCovered": "Well Covered",
     "yourCall": "Your Call",
+    "noBoatWarning": "No boat schedule — recommendations may be inaccurate",
+    "uploadTiba": "Upload TIBA →",
     "boatDepartures": "Boat Departures",
     "nextBoat": "Next boat:",
     "secondBoat": "Second boat:",
