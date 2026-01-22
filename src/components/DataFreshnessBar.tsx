@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { dataHubApi, DataFreshnessResponse } from '../requests/dataHub';
+import { dataHubApi } from '../requests/dataHub';
+import type { DataFreshnessResponse } from '../requests/dataHub';
 
 interface FreshnessItemProps {
   icon: string;

@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { dataHubApi, SIESAUploadResponse } from '../requests/dataHub';
+import { dataHubApi } from '../requests/dataHub';
+import type { SIESAUploadResponse } from '../requests/dataHub';
 import { UploadResultPanel } from './UploadResultPanel';
 import { LoadingSpinner } from './LoadingSpinner';
 

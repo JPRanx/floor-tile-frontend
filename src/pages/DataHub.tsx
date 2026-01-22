@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { DataFreshnessBar } from '../components/DataFreshnessBar';
 import { SACUploadCard } from '../components/SACUploadCard';
 import { SIESAUploadCard } from '../components/SIESAUploadCard';
-import { dataHubApi, DataFreshnessResponse } from '../requests/dataHub';
+import { dataHubApi } from '../requests/dataHub';
+import type { DataFreshnessResponse } from '../requests/dataHub';
 
 export function DataHub() {
   const { t } = useTranslation();
