@@ -10,9 +10,9 @@ export function OrderBuilderAlerts({ alerts }: OrderBuilderAlertsProps) {
   }
 
   const alertStyles: Record<OrderBuilderAlertType, string> = {
-    blocked: 'bg-red-50 border-red-200 text-red-800',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-    suggestion: 'bg-blue-50 border-blue-200 text-blue-800',
+    blocked: 'bg-red-900/30 border-red-500/50 text-red-300',
+    warning: 'bg-amber-900/30 border-amber-500/50 text-amber-300',
+    suggestion: 'bg-indigo-900/30 border-indigo-500/50 text-indigo-300',
   };
 
   // Sort alerts: blocked first, then warning, then suggestion
@@ -26,8 +26,8 @@ export function OrderBuilderAlerts({ alerts }: OrderBuilderAlertsProps) {
   });
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-      <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4">
+      <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
         <span>⚠️</span> ALERTS
       </h3>
 
@@ -38,7 +38,7 @@ export function OrderBuilderAlerts({ alerts }: OrderBuilderAlertsProps) {
             className={`flex items-start gap-2 p-2 rounded-lg border ${alertStyles[alert.type]}`}
           >
             <span className="flex-shrink-0 text-lg">{alert.icon}</span>
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 text-sm">
               {alert.product_sku && (
                 <span className="font-medium">{alert.product_sku}: </span>
               )}

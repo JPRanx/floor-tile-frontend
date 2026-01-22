@@ -53,9 +53,9 @@ export function OrderBuilderHeader({
   // Timeline milestones
   const milestones = [
     { label: 'Book by', date: boat.booking_deadline, days: boat.days_until_deadline, color: 'orange' },
-    { label: 'Departs', date: boat.departure_date, days: boat.days_until_departure, color: 'blue' },
-    { label: 'Arrives', date: boat.arrival_date, days: daysFromToday(boat.arrival_date), color: 'blue' },
-    { label: 'In Warehouse', date: inWarehouseDate, days: daysFromToday(inWarehouseDate), color: 'green' },
+    { label: 'Departs', date: boat.departure_date, days: boat.days_until_departure, color: 'indigo' },
+    { label: 'Arrives', date: boat.arrival_date, days: daysFromToday(boat.arrival_date), color: 'indigo' },
+    { label: 'In Warehouse', date: inWarehouseDate, days: daysFromToday(inWarehouseDate), color: 'emerald' },
   ];
 
   const modeButtons: { value: OrderBuilderMode; label: string; containers: number }[] = [
@@ -65,21 +65,21 @@ export function OrderBuilderHeader({
   ];
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4">
       {/* Boat Selector + Title Row */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
         <div className="flex-1">
           {/* Boat Selector Dropdown */}
           {availableBoats.length > 0 && (
             <div className="mb-3">
-              <label htmlFor="boat-selector" className="block text-xs font-medium text-gray-500 mb-1">
+              <label htmlFor="boat-selector" className="block text-xs font-medium text-slate-500 mb-1">
                 SELECT BOAT
               </label>
               <select
                 id="boat-selector"
                 value={selectedBoatId || ''}
                 onChange={(e) => onBoatChange(e.target.value)}
-                className="w-full sm:w-auto min-w-[280px] px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-900 bg-white hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                className="w-full sm:w-auto min-w-[280px] px-3 py-2 border border-slate-600 rounded-lg text-sm font-medium text-white bg-slate-700 hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
               >
                 {availableBoats.map((b, idx) => (
                   <option key={b.id} value={b.id}>
@@ -91,7 +91,7 @@ export function OrderBuilderHeader({
             </div>
           )}
 
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">
             {hasBoat
               ? `ORDER BUILDER — ${formatDate(boat.departure_date)} Boat`
               : t('orderBuilder.title')
@@ -99,35 +99,35 @@ export function OrderBuilderHeader({
           </h1>
           {hasBoat ? (
             <>
-              <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-gray-600 mt-1">
+              <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-slate-400 mt-1">
                 <span>
-                  Departs in <strong>{boat.days_until_departure}</strong> days
+                  Departs in <strong className="text-slate-200">{boat.days_until_departure}</strong> days
                 </span>
-                <span className="hidden sm:inline">|</span>
+                <span className="hidden sm:inline text-slate-600">|</span>
                 <span>
                   Arrives {formatDate(boat.arrival_date)}
                 </span>
                 {boat.days_until_deadline <= 7 && (
                   <>
-                    <span className="hidden sm:inline">|</span>
-                    <span className="text-orange-600 font-medium">
+                    <span className="hidden sm:inline text-slate-600">|</span>
+                    <span className="text-orange-400 font-medium">
                       Booking deadline in {boat.days_until_deadline} days
                     </span>
                   </>
                 )}
               </div>
               {nextBoat && (
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-slate-500 mt-1">
                   Next boat: {formatDate(nextBoat.departure_date)} ({nextBoat.days_until_departure} days)
                 </div>
               )}
             </>
           ) : (
             <div className="flex items-center gap-2 mt-1">
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-100 text-amber-800">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300">
                 {t('orderBuilder.noBoatMode')}
               </span>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-slate-500">
                 {t('orderBuilder.using45DayLeadTime')}
               </span>
             </div>
@@ -137,7 +137,7 @@ export function OrderBuilderHeader({
         {/* Vessel Name Badge */}
         {hasBoat && (
           <div className="flex-shrink-0">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
               {boat.name}
             </span>
           </div>
@@ -146,14 +146,14 @@ export function OrderBuilderHeader({
 
       {/* Order Timeline - only show when boat is available */}
       {hasBoat ? (
-        <div className="mb-4 py-3 border-t border-b border-gray-100">
-          <div className="text-xs font-medium text-gray-500 mb-2">ORDER TIMELINE</div>
+        <div className="mb-4 py-3 border-t border-b border-slate-700/50">
+          <div className="text-xs font-medium text-slate-500 mb-2">ORDER TIMELINE</div>
 
           {/* Desktop: Horizontal timeline */}
           <div className="hidden sm:block">
             <div className="relative flex items-center justify-between">
               {/* Connecting line */}
-              <div className="absolute top-3 left-4 right-4 h-0.5 bg-gray-200" />
+              <div className="absolute top-3 left-4 right-4 h-0.5 bg-slate-700" />
 
               {milestones.map((m, idx) => (
                 <div key={idx} className="relative flex flex-col items-center z-10">
@@ -161,23 +161,23 @@ export function OrderBuilderHeader({
                   <div
                     className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${
                       m.color === 'orange'
-                        ? 'bg-orange-100 border-orange-400 text-orange-600'
-                        : m.color === 'green'
-                        ? 'bg-green-100 border-green-400 text-green-600'
-                        : 'bg-blue-100 border-blue-400 text-blue-600'
+                        ? 'bg-orange-900/50 border-orange-500 text-orange-400'
+                        : m.color === 'emerald'
+                        ? 'bg-emerald-900/50 border-emerald-500 text-emerald-400'
+                        : 'bg-indigo-900/50 border-indigo-500 text-indigo-400'
                     }`}
                   >
                     {idx + 1}
                   </div>
                   {/* Date */}
-                  <div className="mt-1 text-sm font-medium text-gray-900">
+                  <div className="mt-1 text-sm font-medium text-slate-200">
                     {formatDate(m.date)}
                   </div>
                   {/* Label */}
-                  <div className="text-xs text-gray-500">{m.label}</div>
+                  <div className="text-xs text-slate-500">{m.label}</div>
                   {/* Days */}
                   <div className={`text-xs font-medium ${
-                    m.days <= 7 && m.color === 'orange' ? 'text-orange-600' : 'text-gray-400'
+                    m.days <= 7 && m.color === 'orange' ? 'text-orange-400' : 'text-slate-500'
                   }`}>
                     ({m.days}d)
                   </div>
@@ -193,23 +193,23 @@ export function OrderBuilderHeader({
                 <span
                   className={`w-2 h-2 rounded-full ${
                     m.color === 'orange'
-                      ? 'bg-orange-400'
-                      : m.color === 'green'
-                      ? 'bg-green-400'
-                      : 'bg-blue-400'
+                      ? 'bg-orange-500'
+                      : m.color === 'emerald'
+                      ? 'bg-emerald-500'
+                      : 'bg-indigo-500'
                   }`}
                 />
-                <span className="text-xs text-gray-600">
-                  {m.label}: <span className="font-medium">{formatDate(m.date)}</span>
-                  <span className="text-gray-400 ml-1">({m.days}d)</span>
+                <span className="text-xs text-slate-400">
+                  {m.label}: <span className="font-medium text-slate-300">{formatDate(m.date)}</span>
+                  <span className="text-slate-500 ml-1">({m.days}d)</span>
                 </span>
               </div>
             ))}
           </div>
         </div>
       ) : (
-        <div className="mb-4 py-3 border-t border-b border-gray-100">
-          <div className="text-sm text-gray-500 italic">
+        <div className="mb-4 py-3 border-t border-b border-slate-700/50">
+          <div className="text-sm text-slate-500 italic">
             {t('orderBuilder.noTimelineAvailable')}
           </div>
         </div>
@@ -217,7 +217,7 @@ export function OrderBuilderHeader({
 
       {/* Mode Selector */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-        <span className="text-sm font-medium text-gray-700">MODE:</span>
+        <span className="text-sm font-medium text-slate-400">MODE:</span>
         <div className="flex gap-2">
           {modeButtons.map((btn) => (
             <button
@@ -225,8 +225,8 @@ export function OrderBuilderHeader({
               onClick={() => onModeChange(btn.value)}
               className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 mode === btn.value
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
               }`}
             >
               <span className="block">{btn.label}</span>

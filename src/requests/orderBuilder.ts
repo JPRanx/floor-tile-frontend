@@ -4,6 +4,22 @@ export type OrderBuilderMode = 'minimal' | 'standard' | 'optimal';
 export type OrderBuilderAlertType = 'warning' | 'blocked' | 'suggestion';
 export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
 export type Priority = 'HIGH_PRIORITY' | 'CONSIDER' | 'WELL_COVERED' | 'YOUR_CALL';
+export type Urgency = 'critical' | 'urgent' | 'soon' | 'ok';
+export type TrendDirection = 'up' | 'down' | 'stable';
+export type TrendStrength = 'strong' | 'moderate' | 'weak';
+
+export interface CalculationBreakdown {
+  lead_time_days: number;
+  safety_stock_days: number;
+  daily_velocity_m2: number;
+  base_quantity_m2: number;
+  trend_adjustment_m2: number;
+  trend_adjustment_pct: number;
+  minus_current_stock_m2: number;
+  minus_incoming_m2: number;
+  final_suggestion_m2: number;
+  final_suggestion_pallets: number;
+}
 
 export interface OrderBuilderProduct {
   // Product info
@@ -34,6 +50,15 @@ export interface OrderBuilderProduct {
   // Factory (MVP: placeholder)
   factory_available: number | null;
   factory_status: string;
+
+  // Trend data (from Intelligence system)
+  urgency: Urgency;
+  days_of_stock: number | null;
+  trend_direction: TrendDirection;
+  trend_strength: TrendStrength;
+  velocity_change_pct: number;
+  daily_velocity_m2: number;
+  calculation_breakdown: CalculationBreakdown | null;
 
   // Selection state
   is_selected: boolean;

@@ -63,7 +63,30 @@
     },
     "daysText": "{{count}} días",
     "velocityText": "{{count}} m²/día",
-    "loadError": "Error al cargar datos del panel. ¿Está corriendo el backend?"
+    "loadError": "Error al cargar datos del panel. ¿Está corriendo el backend?",
+    "widgets": {
+      "loadError": "Error al cargar datos",
+      "topMovers": {
+        "title": "Top Movers",
+        "rising": "Subiendo",
+        "falling": "Bajando",
+        "viewMore": "Ver más",
+        "noData": "Sin datos de tendencia"
+      },
+      "alerts": {
+        "title": "Alertas",
+        "dormantCustomers": "clientes dormidos",
+        "dormantSubtitle": "Sin pedidos en 90+ días",
+        "lowStock": "productos bajo stock",
+        "lowStockSubtitle": "Menos de 30 días de inventario",
+        "activeCustomers": "clientes activos",
+        "activeSubtitle": "Pedidos en últimos 30 días",
+        "viewCustomers": "Ver clientes",
+        "viewProducts": "Ver productos",
+        "viewActive": "Ver activos",
+        "noAlerts": "Sin alertas"
+      }
+    }
   },
   "boats": {
     "title": "Horarios de Barcos",
@@ -343,7 +366,18 @@
     "gap": "Brecha",
     "customers": "clientes",
     "fromTopCustomer": "{{percent}}% de {{name}}",
-    "verifyFactory": "Verificar disponibilidad en fábrica"
+    "verifyFactory": "Verificar disponibilidad en fábrica",
+    "daysOfStock": "Días de stock",
+    "velocity": "Velocidad",
+    "showCalculation": "Ver cálculo",
+    "leadTime": "Tiempo de entrega",
+    "safetyStock": "Stock de seguridad",
+    "dailyVelocity": "Velocidad diaria",
+    "baseQuantity": "Cantidad base",
+    "trendAdjustment": "Ajuste por tendencia",
+    "minusStock": "Menos stock actual",
+    "minusIncoming": "Menos entrante",
+    "suggestion": "Sugerencia"
   },
   "inventory": {
     "uploadTitle": "Actualizar Inventario",
@@ -524,6 +558,53 @@
     "totalRevenue": "Ingresos Totales",
     "totalVolume": "Volumen Total",
     "uniqueCustomers": "Clientes Únicos",
-    "uniqueProducts": "Productos Únicos"
+    "uniqueProducts": "Productos Únicos",
+    "breadcrumb": {
+      "backToRegion": "Volver a Región",
+      "backToProducts": "Volver a Productos",
+      "backToCustomers": "Volver a Clientes"
+    },
+    "productDetail": {
+      "title": "Detalle del Producto",
+      "statistics": "Estadísticas",
+      "velocity": "Velocidad",
+      "vsLastMonth": "vs mes anterior",
+      "confidence": "Confianza",
+      "inventory": "Inventario",
+      "stock": "Stock",
+      "daysOfStock": "días de stock",
+      "lots": "lotes",
+      "byCountry": "Por País",
+      "topCustomers": "Top Clientes",
+      "close": "Cerrar",
+      "sampleWeeks": "semanas de datos",
+      "weeklyAvg": "prom. semanal",
+      "totalRevenue": "Ingresos Totales",
+      "totalVolume": "Volumen Total"
+    },
+    "customerDetail": {
+      "title": "Detalle del Cliente",
+      "summary": "Resumen",
+      "revenue": "Ingresos",
+      "volume": "Volumen",
+      "orders": "Órdenes",
+      "lastOrder": "Última Orden",
+      "buyingPattern": "Patrón de Compra",
+      "avgOrder": "Orden Promedio",
+      "avgOrderValue": "Valor Promedio",
+      "trend": "Tendencia",
+      "productMix": "Mezcla de Productos",
+      "firstOrder": "Primera Orden",
+      "lastOrderDate": "Última Orden",
+      "noOrders": "Sin órdenes",
+      "close": "Cerrar",
+      "daysAgo": "hace {{count}} días",
+      "today": "Hoy",
+      "topProducts": "Top Productos"
+    },
+    "filters": {
+      "allStatuses": "Todos",
+      "allCountries": "Todos los países"
+    }
   }
 }

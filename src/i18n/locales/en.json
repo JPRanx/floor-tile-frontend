@@ -63,7 +63,30 @@
     },
     "daysText": "{{count}} days",
     "velocityText": "{{count}} m²/day",
-    "loadError": "Failed to load dashboard data. Is the backend running?"
+    "loadError": "Failed to load dashboard data. Is the backend running?",
+    "widgets": {
+      "loadError": "Failed to load data",
+      "topMovers": {
+        "title": "Top Movers",
+        "rising": "Rising",
+        "falling": "Falling",
+        "viewMore": "View more",
+        "noData": "No trend data"
+      },
+      "alerts": {
+        "title": "Alerts",
+        "dormantCustomers": "dormant customers",
+        "dormantSubtitle": "No orders in 90+ days",
+        "lowStock": "low stock products",
+        "lowStockSubtitle": "Less than 30 days of inventory",
+        "activeCustomers": "active customers",
+        "activeSubtitle": "Orders in last 30 days",
+        "viewCustomers": "View customers",
+        "viewProducts": "View products",
+        "viewActive": "View active",
+        "noAlerts": "No alerts"
+      }
+    }
   },
   "boats": {
     "title": "Boat Schedules",
@@ -343,7 +366,18 @@
     "gap": "Gap",
     "customers": "customers",
     "fromTopCustomer": "{{percent}}% from {{name}}",
-    "verifyFactory": "Verify factory availability"
+    "verifyFactory": "Verify factory availability",
+    "daysOfStock": "Days of stock",
+    "velocity": "Velocity",
+    "showCalculation": "Show calculation",
+    "leadTime": "Lead time",
+    "safetyStock": "Safety stock",
+    "dailyVelocity": "Daily velocity",
+    "baseQuantity": "Base quantity",
+    "trendAdjustment": "Trend adjustment",
+    "minusStock": "Minus current stock",
+    "minusIncoming": "Minus incoming",
+    "suggestion": "Suggestion"
   },
   "inventory": {
     "uploadTitle": "Update Inventory",
@@ -524,6 +558,53 @@
     "totalRevenue": "Total Revenue",
     "totalVolume": "Total Volume",
     "uniqueCustomers": "Unique Customers",
-    "uniqueProducts": "Unique Products"
+    "uniqueProducts": "Unique Products",
+    "breadcrumb": {
+      "backToRegion": "Back to Region",
+      "backToProducts": "Back to Products",
+      "backToCustomers": "Back to Customers"
+    },
+    "productDetail": {
+      "title": "Product Detail",
+      "statistics": "Statistics",
+      "velocity": "Velocity",
+      "vsLastMonth": "vs last month",
+      "confidence": "Confidence",
+      "inventory": "Inventory",
+      "stock": "Stock",
+      "daysOfStock": "days of stock",
+      "lots": "lots",
+      "byCountry": "By Country",
+      "topCustomers": "Top Customers",
+      "close": "Close",
+      "sampleWeeks": "weeks of data",
+      "weeklyAvg": "weekly avg",
+      "totalRevenue": "Total Revenue",
+      "totalVolume": "Total Volume"
+    },
+    "customerDetail": {
+      "title": "Customer Detail",
+      "summary": "Summary",
+      "revenue": "Revenue",
+      "volume": "Volume",
+      "orders": "Orders",
+      "lastOrder": "Last Order",
+      "buyingPattern": "Buying Pattern",
+      "avgOrder": "Avg Order",
+      "avgOrderValue": "Avg Order Value",
+      "trend": "Trend",
+      "productMix": "Product Mix",
+      "firstOrder": "First Order",
+      "lastOrderDate": "Last Order",
+      "noOrders": "No orders",
+      "close": "Close",
+      "daysAgo": "{{count}} days ago",
+      "today": "Today",
+      "topProducts": "Top Products"
+    },
+    "filters": {
+      "allStatuses": "All",
+      "allCountries": "All countries"
+    }
   }
 }

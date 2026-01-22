@@ -323,7 +323,7 @@ export function OrderBuilder() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -331,14 +331,16 @@ export function OrderBuilder() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error}</p>
-        <button
-          onClick={() => loadData(mode)}
-          className="mt-2 text-red-600 hover:text-red-800 underline"
-        >
-          {t('common.tryAgain')}
-        </button>
+      <div className="min-h-screen bg-slate-900 p-4">
+        <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4">
+          <p className="text-red-300">{error}</p>
+          <button
+            onClick={() => loadData(mode)}
+            className="mt-2 text-red-400 hover:text-red-300 underline"
+          >
+            {t('common.tryAgain')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -357,130 +359,137 @@ export function OrderBuilder() {
     titleKey: string;
     subtitleKey: string;
     bgColor: string;
+    accentColor: string;
   }[] = [
     {
       key: 'high_priority',
       titleKey: 'orderBuilder.highPriority',
       subtitleKey: 'orderBuilder.highPriorityDesc',
-      bgColor: 'bg-red-50 border-red-200',
+      bgColor: 'bg-red-900/30 border-red-500/50',
+      accentColor: 'text-red-400',
     },
     {
       key: 'consider',
       titleKey: 'orderBuilder.consider',
       subtitleKey: 'orderBuilder.considerDesc',
-      bgColor: 'bg-orange-50 border-orange-200',
+      bgColor: 'bg-orange-900/30 border-orange-500/50',
+      accentColor: 'text-orange-400',
     },
     {
       key: 'well_covered',
       titleKey: 'orderBuilder.wellCovered',
       subtitleKey: 'orderBuilder.wellCoveredDesc',
-      bgColor: 'bg-green-50 border-green-200',
+      bgColor: 'bg-green-900/30 border-green-500/50',
+      accentColor: 'text-green-400',
     },
     {
       key: 'your_call',
       titleKey: 'orderBuilder.yourCall',
       subtitleKey: 'orderBuilder.yourCallDesc',
-      bgColor: 'bg-gray-50 border-gray-200',
+      bgColor: 'bg-slate-800/50 border-slate-600/50',
+      accentColor: 'text-slate-400',
     },
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      {/* Header with boat info and mode selector */}
-      <OrderBuilderHeader
-        boat={data.boat}
-        nextBoat={data.next_boat}
-        mode={mode}
-        onModeChange={handleModeChange}
-        availableBoats={availableBoats}
-        selectedBoatId={selectedBoatId}
-        onBoatChange={handleBoatChange}
-      />
+    <div className="min-h-screen bg-slate-900 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+        {/* Header with boat info and mode selector */}
+        <OrderBuilderHeader
+          boat={data.boat}
+          nextBoat={data.next_boat}
+          mode={mode}
+          onModeChange={handleModeChange}
+          availableBoats={availableBoats}
+          selectedBoatId={selectedBoatId}
+          onBoatChange={handleBoatChange}
+        />
 
-      {/* Main content: Products and Summary side by side on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        {/* Products Column (2/3 width on desktop) */}
-        <div className="lg:col-span-2 space-y-4">
-          {sectionConfig.map(({ key, titleKey, subtitleKey, bgColor }) => {
-            const sectionProducts = productsByPriority[key];
-            const selectedCount = sectionProducts.filter((p) => p.is_selected).length;
-            const isExpanded = expandedSections[key];
+        {/* Main content: Products and Summary side by side on desktop */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Products Column (2/3 width on desktop) */}
+          <div className="lg:col-span-2 space-y-4">
+            {sectionConfig.map(({ key, titleKey, subtitleKey, bgColor, accentColor }) => {
+              const sectionProducts = productsByPriority[key];
+              const selectedCount = sectionProducts.filter((p) => p.is_selected).length;
+              const isExpanded = expandedSections[key];
 
-            return (
-              <div key={key} className={`rounded-lg border ${bgColor}`}>
-                {/* Section Header */}
-                <button
-                  onClick={() => toggleSection(key)}
-                  className="w-full px-4 py-3 flex items-center justify-between text-left"
-                >
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                      {t(titleKey)} ({sectionProducts.length})
-                      {selectedCount > 0 && (
-                        <span className="ml-2 text-sm font-normal text-blue-600">
-                          {selectedCount} {t('common.selected')}
-                        </span>
-                      )}
-                    </h2>
-                    <p className="text-sm text-gray-600">{t(subtitleKey)}</p>
-                  </div>
-                  <span className="text-gray-400 text-lg">
-                    {isExpanded ? '▼' : '▶'}
-                  </span>
-                </button>
+              return (
+                <div key={key} className={`rounded-xl border backdrop-blur-sm ${bgColor}`}>
+                  {/* Section Header */}
+                  <button
+                    onClick={() => toggleSection(key)}
+                    className="w-full px-4 py-3 flex items-center justify-between text-left"
+                  >
+                    <div>
+                      <h2 className={`text-lg font-semibold text-white`}>
+                        {t(titleKey)} ({sectionProducts.length})
+                        {selectedCount > 0 && (
+                          <span className={`ml-2 text-sm font-normal ${accentColor}`}>
+                            {selectedCount} {t('common.selected')}
+                          </span>
+                        )}
+                      </h2>
+                      <p className="text-sm text-slate-400">{t(subtitleKey)}</p>
+                    </div>
+                    <span className="text-slate-400 text-lg">
+                      {isExpanded ? '▼' : '▶'}
+                    </span>
+                  </button>
 
-                {/* Section Content */}
-                {isExpanded && sectionProducts.length > 0 && (
-                  <div className="px-4 pb-4 space-y-2">
-                    {sectionProducts.map((product) => (
-                      <OrderBuilderProductCard
-                        key={`${key}-${product.product_id}`}
-                        product={product}
-                        onToggleSelect={handleToggleSelect}
-                        onQuantityChange={handleQuantityChange}
-                      />
-                    ))}
-                  </div>
-                )}
+                  {/* Section Content */}
+                  {isExpanded && sectionProducts.length > 0 && (
+                    <div className="px-4 pb-4 space-y-2">
+                      {sectionProducts.map((product) => (
+                        <OrderBuilderProductCard
+                          key={`${key}-${product.product_id}`}
+                          product={product}
+                          onToggleSelect={handleToggleSelect}
+                          onQuantityChange={handleQuantityChange}
+                        />
+                      ))}
+                    </div>
+                  )}
 
-                {isExpanded && sectionProducts.length === 0 && (
-                  <div className="px-4 pb-4 text-sm text-gray-500">
-                    {t('common.noProductsCategory')}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Summary Column (1/3 width on desktop) */}
-        <div className="space-y-4">
-          <OrderBuilderSummary summary={summary} />
-          <OrderBuilderAlerts alerts={alerts} />
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={handleReset}
-              className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
-            >
-              {t('orderBuilder.resetToSuggested')}
-            </button>
-            <button
-              onClick={handleExport}
-              disabled={exporting}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
-            </button>
+                  {isExpanded && sectionProducts.length === 0 && (
+                    <div className="px-4 pb-4 text-sm text-slate-500">
+                      {t('common.noProductsCategory')}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
-          {/* Success Message */}
-          {exportSuccess && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <p className="text-green-800 text-sm font-medium">{exportSuccess}</p>
+          {/* Summary Column (1/3 width on desktop) */}
+          <div className="space-y-4">
+            <OrderBuilderSummary summary={summary} />
+            <OrderBuilderAlerts alerts={alerts} />
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={handleReset}
+                className="flex-1 px-4 py-2 bg-slate-700 text-slate-200 font-medium rounded-lg hover:bg-slate-600 transition-colors"
+              >
+                {t('orderBuilder.resetToSuggested')}
+              </button>
+              <button
+                onClick={handleExport}
+                disabled={exporting}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
+              </button>
             </div>
-          )}
+
+            {/* Success Message */}
+            {exportSuccess && (
+              <div className="bg-emerald-900/50 border border-emerald-500/50 rounded-lg p-3">
+                <p className="text-emerald-300 text-sm font-medium">{exportSuccess}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
