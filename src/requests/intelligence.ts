@@ -192,6 +192,13 @@ interface ApiCountryBreakdown {
   customer_count: number;
   order_count: number;
   revenue_share_pct: string;
+  // New fields from enhanced backend
+  velocity_change_pct: string;
+  direction: string;
+  strength: string;
+  confidence: string;
+  top_customers: string[];
+  sparkline: { period: string; value: string }[];
 }
 
 interface ApiCustomerTrend {
@@ -246,15 +253,15 @@ function transformCountry(c: ApiCountryBreakdown, _totalRevenue: number): Countr
     country_name: c.country_name,
     total_m2: parseFloat(c.total_volume_m2),
     avg_weekly_m2: parseFloat(c.total_volume_m2) / 52,
-    velocity_change_pct: 0,
+    velocity_change_pct: parseFloat(c.velocity_change_pct),
     total_revenue_usd: parseFloat(c.total_revenue_usd),
     pct_of_total_revenue: parseFloat(c.revenue_share_pct),
-    trend_direction: 'STABLE' as TrendDirection,
-    trend_strength: 'MODERATE' as TrendStrength,
-    confidence: 'MEDIUM' as ConfidenceLevel,
+    trend_direction: c.direction.toUpperCase() as TrendDirection,
+    trend_strength: c.strength.toUpperCase() as TrendStrength,
+    confidence: c.confidence.toUpperCase() as ConfidenceLevel,
     customer_count: c.customer_count,
-    top_customers: [],
-    sparkline: [],
+    top_customers: c.top_customers,
+    sparkline: c.sparkline.map(s => ({ period: s.period, value: parseFloat(s.value) })),
   };
 }
 
