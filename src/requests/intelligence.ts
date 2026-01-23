@@ -24,7 +24,12 @@ export interface ProductTrend {
   // Volume metrics
   total_m2: number;
   avg_weekly_m2: number;
+  daily_velocity_m2: number;
   velocity_change_pct: number;
+
+  // Stock metrics
+  days_of_stock: number | null;
+  current_stock_m2: number | null;
 
   // Revenue metrics
   total_revenue_usd: number;
@@ -228,14 +233,18 @@ interface ApiCustomerTrend {
 // Transform functions
 function transformProduct(p: ApiProductTrend): ProductTrend {
   const velocityChange = parseFloat(p.velocity_change_pct);
+  const dailyVelocity = parseFloat(p.current_velocity_m2_day);
   return {
     product_id: p.product_id,
     sku: p.sku,
     category: p.category,
     rotation: null,
     total_m2: parseFloat(p.total_volume_m2),
-    avg_weekly_m2: parseFloat(p.current_velocity_m2_day) * 7,
+    avg_weekly_m2: dailyVelocity * 7,
+    daily_velocity_m2: dailyVelocity,
     velocity_change_pct: velocityChange,
+    days_of_stock: p.days_of_stock != null && isFinite(p.days_of_stock) ? p.days_of_stock : null,
+    current_stock_m2: p.current_stock_m2 ? parseFloat(p.current_stock_m2) : null,
     total_revenue_usd: parseFloat(p.total_revenue_usd),
     avg_weekly_revenue_usd: parseFloat(p.total_revenue_usd) / (p.sample_count || 1),
     trend_direction: p.direction.toUpperCase() as TrendDirection,

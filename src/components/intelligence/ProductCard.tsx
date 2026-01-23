@@ -110,10 +110,10 @@ export function ProductCard({ product, index, rank, onClick }: ProductCardProps)
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-3 gap-3 mb-4">
         <div>
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Ingresos</p>
-          <p className="text-emerald-400 font-bold text-xl">
+          <p className="text-emerald-400 font-bold text-lg">
             {formatRevenue(product.total_revenue_usd)}
           </p>
           <p className="text-slate-500 text-xs">
@@ -121,12 +121,25 @@ export function ProductCard({ product, index, rank, onClick }: ProductCardProps)
           </p>
         </div>
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Volumen</p>
-          <p className="text-indigo-400 font-bold text-xl">
-            {formatM2(product.total_m2)} m²
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Velocidad</p>
+          <p className="text-indigo-400 font-bold text-lg">
+            {formatM2(product.daily_velocity_m2)} m²
           </p>
           <p className="text-slate-500 text-xs">
-            ~{formatM2(product.avg_weekly_m2)} m²/sem
+            /día
+          </p>
+        </div>
+        <div>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Días Stock</p>
+          <p className={`font-bold text-lg ${
+            product.days_of_stock == null ? 'text-slate-500' :
+            product.days_of_stock < 14 ? 'text-red-400' :
+            product.days_of_stock < 30 ? 'text-amber-400' : 'text-slate-200'
+          }`}>
+            {product.days_of_stock != null ? `${Math.round(product.days_of_stock)}d` : '—'}
+          </p>
+          <p className="text-slate-500 text-xs">
+            {product.current_stock_m2 != null ? `${formatM2(product.current_stock_m2)} m²` : '—'}
           </p>
         </div>
       </div>
