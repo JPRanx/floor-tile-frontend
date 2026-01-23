@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ProductTrend } from '../../requests/intelligence';
 import { Sparkline } from './Sparkline';
 import { TrendArrow } from './TrendArrow';
 import { ConfidenceBadge } from './ConfidenceBadge';
+import { InsightBrief } from './InsightBrief';
+import { generateProductBrief } from '../../utils/briefGenerator';
 
 interface ProductDetailPanelProps {
   product: ProductTrend | null;
@@ -37,6 +39,11 @@ export function ProductDetailPanel({ product, isOpen, onClose }: ProductDetailPa
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  // Generate the insight brief
+  const brief = useMemo(() => {
+    return product ? generateProductBrief(product) : null;
+  }, [product]);
 
   if (!product) return null;
 
@@ -100,6 +107,9 @@ export function ProductDetailPanel({ product, isOpen, onClose }: ProductDetailPa
 
         {/* Content */}
         <div className="p-4 space-y-6">
+          {/* Insight Brief */}
+          {brief && <InsightBrief brief={brief} />}
+
           {/* Large Sparkline */}
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
             <Sparkline

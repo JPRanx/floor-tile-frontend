@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import type { CountryTrend } from '../../requests/intelligence';
 import { Sparkline } from './Sparkline';
 import { ConfidenceBadge } from './ConfidenceBadge';
 import { TrendArrow } from './TrendArrow';
+import { generateCountryBrief } from '../../utils/briefGenerator';
 
 interface CountryCardProps {
   country: CountryTrend;
@@ -45,10 +47,21 @@ function getSparklineColor(direction: CountryTrend['trend_direction']): 'emerald
   }
 }
 
+// Recommendation badge colors (compact)
+const recommendationColors: Record<string, string> = {
+  urgent: 'bg-red-500/20 text-red-300',
+  action: 'bg-amber-500/20 text-amber-300',
+  monitor: 'bg-blue-500/20 text-blue-300',
+  maintain: 'bg-emerald-500/20 text-emerald-300',
+};
+
 export function CountryCard({ country, index, onClick }: CountryCardProps) {
   const flag = countryFlags[country.country_code] || countryFlags.OTHER;
   const glowClass = getGlowClass(country.trend_direction);
   const sparklineColor = getSparklineColor(country.trend_direction);
+
+  // Generate brief
+  const brief = useMemo(() => generateCountryBrief(country), [country]);
 
   const handleClick = () => {
     if (onClick) {
@@ -125,6 +138,11 @@ export function CountryCard({ country, index, onClick }: CountryCardProps) {
       {/* Sparkline */}
       <div className="mb-4">
         <Sparkline data={country.sparkline} color={sparklineColor} height={50} />
+      </div>
+
+      {/* Brief Recommendation */}
+      <div className={`mb-4 px-3 py-2 rounded-lg text-xs font-medium ${recommendationColors[brief.recommendationType]}`}>
+        {brief.recommendation}
       </div>
 
       {/* Footer: Top Customers + Confidence */}

@@ -1,10 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { CustomerTrend } from '../../requests/intelligence';
 import { Sparkline } from './Sparkline';
 import { TrendArrow } from './TrendArrow';
 import { StatusDot } from './StatusDot';
 import { ProductMixBar } from './ProductMixBar';
+import { InsightBrief } from './InsightBrief';
+import { generateCustomerBrief } from '../../utils/briefGenerator';
 
 interface CustomerDetailPanelProps {
   customer: CustomerTrend | null;
@@ -57,6 +59,11 @@ export function CustomerDetailPanel({ customer, isOpen, onClose }: CustomerDetai
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  // Generate the insight brief
+  const brief = useMemo(() => {
+    return customer ? generateCustomerBrief(customer) : null;
+  }, [customer]);
 
   if (!customer) return null;
 
@@ -149,6 +156,9 @@ export function CustomerDetailPanel({ customer, isOpen, onClose }: CustomerDetai
 
         {/* Content */}
         <div className="p-4 space-y-6">
+          {/* Insight Brief */}
+          {brief && <InsightBrief brief={brief} />}
+
           {/* Large Sparkline */}
           <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
             <Sparkline
