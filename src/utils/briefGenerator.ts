@@ -52,6 +52,44 @@ export function generateProductBrief(product: ProductTrend): Brief {
 }
 
 // ============================================================
+// HELPERS
+// ============================================================
+
+/**
+ * Format volume context for extreme changes (>100%)
+ * Shows: "(X → Y m²)" where X is previous and Y is current
+ */
+function formatVolumeContext(currentVelocity: number, changePct: number): string {
+  if (Math.abs(changePct) <= 100 || !currentVelocity) return '';
+
+  // Calculate previous: current = previous * (1 + change/100)
+  // So: previous = current / (1 + change/100)
+  const multiplier = 1 + (changePct / 100);
+  const previous = multiplier !== 0 ? currentVelocity / multiplier : 0;
+
+  // Use weekly volumes for more meaningful numbers
+  const prevWeekly = Math.round(previous * 7);
+  const currWeekly = Math.round(currentVelocity * 7);
+
+  return ` (${prevWeekly} → ${currWeekly} m²/sem)`;
+}
+
+/**
+ * Format revenue context for extreme customer changes (>100%)
+ * Shows: "($XK → $YK)" where X is previous and Y is current revenue
+ */
+function formatRevenueContext(currentRevenue: number, changePct: number): string {
+  if (Math.abs(changePct) <= 100 || !currentRevenue) return '';
+
+  const multiplier = 1 + (changePct / 100);
+  const previous = multiplier !== 0 ? currentRevenue / multiplier : 0;
+
+  const formatK = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${Math.round(v)}`;
+
+  return ` (${formatK(previous)} → ${formatK(currentRevenue)})`;
+}
+
+// ============================================================
 // PRODUCT OPENING LINES
 // ============================================================
 
@@ -60,11 +98,12 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   const change = Math.abs(p.velocity_change_pct);
   const hasHistory = p.sample_weeks >= 4;
   const velocity = p.daily_velocity_m2;
+  const volumeCtx = formatVolumeContext(velocity, p.velocity_change_pct);
 
   // Extreme percentage from low baseline
   if (p.velocity_change_pct > 500 && !hasHistory) {
     return {
-      text: `${name} muestra +${change.toFixed(0)}% — pero viene de base casi cero. No es crecimiento real, el producto "despertó".`,
+      text: `${name} muestra +${change.toFixed(0)}% — pero viene de base casi cero${volumeCtx}. No es crecimiento real, el producto "despertó".`,
       type: 'normal'
     };
   }
@@ -88,7 +127,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Strong real growth
   if (p.velocity_change_pct > 25 && hasHistory && p.confidence !== 'LOW') {
     return {
-      text: `${name} está creciendo fuerte (+${change.toFixed(0)}%) con demanda real.`,
+      text: `${name} está creciendo fuerte (+${change.toFixed(0)}%)${volumeCtx} con demanda real.`,
       type: 'positive'
     };
   }
@@ -104,7 +143,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Severe decline
   if (p.velocity_change_pct < -50 && hasHistory) {
     return {
-      text: `${name} cayó fuerte (-${change.toFixed(0)}%). Revisar qué pasó.`,
+      text: `${name} cayó fuerte (-${change.toFixed(0)}%)${volumeCtx}. Revisar qué pasó.`,
       type: 'warning'
     };
   }
@@ -112,7 +151,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Strong decline
   if (p.velocity_change_pct < -25) {
     return {
-      text: `${name} está bajando significativamente (-${change.toFixed(0)}%).`,
+      text: `${name} está bajando significativamente (-${change.toFixed(0)}%)${volumeCtx}.`,
       type: 'warning'
     };
   }
@@ -436,8 +475,9 @@ function getCustomerOpeningLine(c: CustomerTrend): BriefPart {
 
   // Tier C combinations
   if (tier === 'C' && status === 'ACTIVE' && change && change > 25) {
+    const revenueCtx = formatRevenueContext(c.total_revenue_usd, change);
     return {
-      text: `${name} — Cliente pequeño pero **creciendo** (+${change.toFixed(0)}%). Potencial de desarrollo.`,
+      text: `${name} — Cliente pequeño pero **creciendo** (+${change.toFixed(0)}%)${revenueCtx}. Potencial de desarrollo.`,
       type: 'positive'
     };
   }
