@@ -58,140 +58,123 @@ export function OrderBuilderHeader({
     { label: 'In Warehouse', date: inWarehouseDate, days: daysFromToday(inWarehouseDate), color: 'emerald' },
   ];
 
-  const modeButtons: { value: OrderBuilderMode; label: string; containers: number }[] = [
-    { value: 'minimal', label: 'Minimal', containers: 3 },
-    { value: 'standard', label: 'Standard', containers: 4 },
-    { value: 'optimal', label: 'Optimal', containers: 5 },
+  const modeButtons: { value: OrderBuilderMode; label: string; containers: number; icon: string }[] = [
+    { value: 'minimal', label: 'Minimal', containers: 3, icon: '📦' },
+    { value: 'standard', label: 'Standard', containers: 4, icon: '📦📦' },
+    { value: 'optimal', label: 'Optimal', containers: 5, icon: '🚢' },
   ];
 
   return (
-    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4">
-      {/* Boat Selector + Title Row */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-        <div className="flex-1">
-          {/* Boat Selector Dropdown */}
+    <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl border border-slate-700/50 overflow-hidden">
+      {/* Top Section: Title + Boat Info */}
+      <div className="p-6 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+          <div className="flex-1">
+            {/* Title */}
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+              {t('orderBuilder.title')}
+            </h1>
+
+            {hasBoat ? (
+              <div className="space-y-2">
+                <p className="text-slate-400">
+                  {formatDate(boat.departure_date)} departure • Arrives {formatDate(boat.arrival_date)}
+                </p>
+                {boat.days_until_deadline <= 7 && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                    <span className="text-orange-400">⏰</span>
+                    <span className="text-orange-300 text-sm font-medium">
+                      Booking deadline in {boat.days_until_deadline} days
+                    </span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-sm font-medium bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                  {t('orderBuilder.noBoatMode')}
+                </span>
+                <span className="text-sm text-slate-500">
+                  {t('orderBuilder.using45DayLeadTime')}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Boat Selector */}
           {availableBoats.length > 0 && (
-            <div className="mb-3">
-              <label htmlFor="boat-selector" className="block text-xs font-medium text-slate-500 mb-1">
-                SELECT BOAT
+            <div className="flex-shrink-0">
+              <label htmlFor="boat-selector" className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wide">
+                Select Boat
               </label>
               <select
                 id="boat-selector"
                 value={selectedBoatId || ''}
                 onChange={(e) => onBoatChange(e.target.value)}
-                className="w-full sm:w-auto min-w-[280px] px-3 py-2 border border-slate-600 rounded-lg text-sm font-medium text-white bg-slate-700 hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer"
+                className="w-full sm:w-auto min-w-[260px] px-4 py-2.5 border border-slate-600/50 rounded-xl text-sm font-medium text-white bg-slate-800/50 hover:border-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 cursor-pointer transition-all backdrop-blur-sm"
               >
                 {availableBoats.map((b, idx) => (
                   <option key={b.id} value={b.id}>
-                    {formatDate(b.departure_date)} — Departs in {b.days_until_departure ?? '?'} days
+                    {formatDate(b.departure_date)} — {b.days_until_departure ?? '?'}d to departure
                     {idx === 0 ? ' (next)' : ''}
                   </option>
                 ))}
               </select>
             </div>
           )}
-
-          <h1 className="text-xl sm:text-2xl font-bold text-white">
-            {hasBoat
-              ? `ORDER BUILDER — ${formatDate(boat.departure_date)} Boat`
-              : t('orderBuilder.title')
-            }
-          </h1>
-          {hasBoat ? (
-            <>
-              <div className="flex flex-wrap gap-2 sm:gap-4 text-sm text-slate-400 mt-1">
-                <span>
-                  Departs in <strong className="text-slate-200">{boat.days_until_departure}</strong> days
-                </span>
-                <span className="hidden sm:inline text-slate-600">|</span>
-                <span>
-                  Arrives {formatDate(boat.arrival_date)}
-                </span>
-                {boat.days_until_deadline <= 7 && (
-                  <>
-                    <span className="hidden sm:inline text-slate-600">|</span>
-                    <span className="text-orange-400 font-medium">
-                      Booking deadline in {boat.days_until_deadline} days
-                    </span>
-                  </>
-                )}
-              </div>
-              {nextBoat && (
-                <div className="text-xs text-slate-500 mt-1">
-                  Next boat: {formatDate(nextBoat.departure_date)} ({nextBoat.days_until_departure} days)
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center gap-2 mt-1">
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-amber-500/20 text-amber-300">
-                {t('orderBuilder.noBoatMode')}
-              </span>
-              <span className="text-sm text-slate-500">
-                {t('orderBuilder.using45DayLeadTime')}
-              </span>
-            </div>
-          )}
         </div>
-
-        {/* Vessel Name Badge */}
-        {hasBoat && (
-          <div className="flex-shrink-0">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              {boat.name}
-            </span>
-          </div>
-        )}
       </div>
 
-      {/* Order Timeline - only show when boat is available */}
-      {hasBoat ? (
-        <div className="mb-4 py-3 border-t border-b border-slate-700/50">
-          <div className="text-xs font-medium text-slate-500 mb-2">ORDER TIMELINE</div>
+      {/* Timeline Section */}
+      {hasBoat && (
+        <div className="px-6 py-4 bg-slate-900/30 border-t border-slate-700/30">
+          <div className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">Order Timeline</div>
 
           {/* Desktop: Horizontal timeline */}
           <div className="hidden sm:block">
             <div className="relative flex items-center justify-between">
               {/* Connecting line */}
-              <div className="absolute top-3 left-4 right-4 h-0.5 bg-slate-700" />
+              <div className="absolute top-4 left-8 right-8 h-0.5 bg-gradient-to-r from-orange-500/30 via-indigo-500/30 to-emerald-500/30" />
 
               {milestones.map((m, idx) => (
                 <div key={idx} className="relative flex flex-col items-center z-10">
-                  {/* Dot */}
+                  {/* Dot with glow */}
                   <div
-                    className={`w-6 h-6 rounded-full border-2 flex items-center justify-center text-xs font-bold ${
+                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold shadow-lg ${
                       m.color === 'orange'
-                        ? 'bg-orange-900/50 border-orange-500 text-orange-400'
+                        ? 'bg-orange-500/20 border-orange-500 text-orange-400 shadow-orange-500/20'
                         : m.color === 'emerald'
-                        ? 'bg-emerald-900/50 border-emerald-500 text-emerald-400'
-                        : 'bg-indigo-900/50 border-indigo-500 text-indigo-400'
+                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-emerald-500/20'
+                        : 'bg-indigo-500/20 border-indigo-500 text-indigo-400 shadow-indigo-500/20'
                     }`}
                   >
                     {idx + 1}
                   </div>
                   {/* Date */}
-                  <div className="mt-1 text-sm font-medium text-slate-200">
+                  <div className="mt-2 text-sm font-semibold text-white">
                     {formatDate(m.date)}
                   </div>
                   {/* Label */}
-                  <div className="text-xs text-slate-500">{m.label}</div>
-                  {/* Days */}
-                  <div className={`text-xs font-medium ${
-                    m.days <= 7 && m.color === 'orange' ? 'text-orange-400' : 'text-slate-500'
+                  <div className="text-xs text-slate-400">{m.label}</div>
+                  {/* Days badge */}
+                  <div className={`mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                    m.days <= 7 && m.color === 'orange'
+                      ? 'bg-orange-500/20 text-orange-300'
+                      : 'bg-slate-700/50 text-slate-400'
                   }`}>
-                    ({m.days}d)
+                    {m.days}d
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Mobile: Compact vertical list */}
-          <div className="sm:hidden flex flex-wrap gap-3">
+          {/* Mobile: Compact list */}
+          <div className="sm:hidden grid grid-cols-2 gap-2">
             {milestones.map((m, idx) => (
-              <div key={idx} className="flex items-center gap-1.5">
+              <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/30">
                 <span
-                  className={`w-2 h-2 rounded-full ${
+                  className={`w-2.5 h-2.5 rounded-full ${
                     m.color === 'orange'
                       ? 'bg-orange-500'
                       : m.color === 'emerald'
@@ -199,40 +182,45 @@ export function OrderBuilderHeader({
                       : 'bg-indigo-500'
                   }`}
                 />
-                <span className="text-xs text-slate-400">
-                  {m.label}: <span className="font-medium text-slate-300">{formatDate(m.date)}</span>
-                  <span className="text-slate-500 ml-1">({m.days}d)</span>
-                </span>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-slate-500">{m.label}</div>
+                  <div className="text-sm font-medium text-white truncate">{formatDate(m.date)}</div>
+                </div>
+                <span className="text-xs text-slate-500">{m.days}d</span>
               </div>
             ))}
           </div>
-        </div>
-      ) : (
-        <div className="mb-4 py-3 border-t border-b border-slate-700/50">
-          <div className="text-sm text-slate-500 italic">
-            {t('orderBuilder.noTimelineAvailable')}
-          </div>
+
+          {nextBoat && (
+            <div className="mt-3 pt-3 border-t border-slate-700/30 text-xs text-slate-500">
+              Next boat: <span className="text-slate-400">{formatDate(nextBoat.departure_date)}</span> ({nextBoat.days_until_departure} days)
+            </div>
+          )}
         </div>
       )}
 
-      {/* Mode Selector */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-        <span className="text-sm font-medium text-slate-400">MODE:</span>
-        <div className="flex gap-2">
-          {modeButtons.map((btn) => (
-            <button
-              key={btn.value}
-              onClick={() => onModeChange(btn.value)}
-              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                mode === btn.value
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              <span className="block">{btn.label}</span>
-              <span className="block text-xs opacity-75">{btn.containers} cnt</span>
-            </button>
-          ))}
+      {/* Mode Selector Section */}
+      <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700/30">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mode</span>
+          <div className="flex gap-2">
+            {modeButtons.map((btn) => (
+              <button
+                key={btn.value}
+                onClick={() => onModeChange(btn.value)}
+                className={`
+                  px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                  ${mode === btn.value
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
+                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
+                  }
+                `}
+              >
+                <span className="block font-semibold">{btn.label}</span>
+                <span className="block text-xs opacity-75 mt-0.5">{btn.containers} containers</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

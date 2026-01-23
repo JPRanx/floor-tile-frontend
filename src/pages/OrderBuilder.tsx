@@ -323,7 +323,7 @@ export function OrderBuilder() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -331,12 +331,16 @@ export function OrderBuilder() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-900 p-4">
-        <div className="bg-red-900/50 border border-red-500/50 rounded-lg p-4">
-          <p className="text-red-300">{error}</p>
+      <div className="min-h-screen bg-slate-950 p-8 -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
+        <div className="max-w-md mx-auto bg-rose-500/10 border border-rose-500/30 rounded-xl p-6 backdrop-blur-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-2xl">⚠️</span>
+            <h2 className="text-lg font-semibold text-rose-300">Error</h2>
+          </div>
+          <p className="text-rose-200/80 mb-4">{error}</p>
           <button
             onClick={() => loadData(mode)}
-            className="mt-2 text-red-400 hover:text-red-300 underline"
+            className="px-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg hover:bg-rose-500/30 transition-colors font-medium"
           >
             {t('common.tryAgain')}
           </button>
@@ -392,8 +396,8 @@ export function OrderBuilder() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-6">
-      <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+    <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header with boat info and mode selector */}
         <OrderBuilderHeader
           boat={data.boat}
@@ -406,7 +410,7 @@ export function OrderBuilder() {
         />
 
         {/* Main content: Products and Summary side by side on desktop */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Products Column (2/3 width on desktop) */}
           <div className="lg:col-span-2 space-y-4">
             {sectionConfig.map(({ key, titleKey, subtitleKey, bgColor, accentColor }) => {
@@ -415,44 +419,53 @@ export function OrderBuilder() {
               const isExpanded = expandedSections[key];
 
               return (
-                <div key={key} className={`rounded-xl border backdrop-blur-sm ${bgColor}`}>
+                <div
+                  key={key}
+                  className={`rounded-xl border backdrop-blur-xl transition-all duration-300 ${bgColor}`}
+                >
                   {/* Section Header */}
                   <button
                     onClick={() => toggleSection(key)}
-                    className="w-full px-4 py-3 flex items-center justify-between text-left"
+                    className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors rounded-t-xl"
                   >
-                    <div>
-                      <h2 className={`text-lg font-semibold text-white`}>
-                        {t(titleKey)} ({sectionProducts.length})
-                        {selectedCount > 0 && (
-                          <span className={`ml-2 text-sm font-normal ${accentColor}`}>
-                            {selectedCount} {t('common.selected')}
-                          </span>
-                        )}
-                      </h2>
-                      <p className="text-sm text-slate-400">{t(subtitleKey)}</p>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-2 h-8 rounded-full ${accentColor.replace('text-', 'bg-')}`} />
+                      <div>
+                        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                          {t(titleKey)}
+                          <span className="text-slate-500 font-normal">({sectionProducts.length})</span>
+                          {selectedCount > 0 && (
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${accentColor} bg-white/10`}>
+                              {selectedCount} {t('common.selected')}
+                            </span>
+                          )}
+                        </h2>
+                        <p className="text-sm text-slate-400 mt-0.5">{t(subtitleKey)}</p>
+                      </div>
                     </div>
-                    <span className="text-slate-400 text-lg">
-                      {isExpanded ? '▼' : '▶'}
+                    <span className={`text-slate-400 text-sm transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
+                      ▼
                     </span>
                   </button>
 
                   {/* Section Content */}
                   {isExpanded && sectionProducts.length > 0 && (
-                    <div className="px-4 pb-4 space-y-2">
-                      {sectionProducts.map((product) => (
-                        <OrderBuilderProductCard
-                          key={`${key}-${product.product_id}`}
-                          product={product}
-                          onToggleSelect={handleToggleSelect}
-                          onQuantityChange={handleQuantityChange}
-                        />
-                      ))}
+                    <div className="px-5 pb-5 space-y-3 border-t border-slate-700/30">
+                      <div className="pt-4 space-y-3">
+                        {sectionProducts.map((product) => (
+                          <OrderBuilderProductCard
+                            key={`${key}-${product.product_id}`}
+                            product={product}
+                            onToggleSelect={handleToggleSelect}
+                            onQuantityChange={handleQuantityChange}
+                          />
+                        ))}
+                      </div>
                     </div>
                   )}
 
                   {isExpanded && sectionProducts.length === 0 && (
-                    <div className="px-4 pb-4 text-sm text-slate-500">
+                    <div className="px-5 pb-5 text-sm text-slate-500 border-t border-slate-700/30 pt-4">
                       {t('common.noProductsCategory')}
                     </div>
                   )}
@@ -462,31 +475,34 @@ export function OrderBuilder() {
           </div>
 
           {/* Summary Column (1/3 width on desktop) */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             <OrderBuilderSummary summary={summary} />
             <OrderBuilderAlerts alerts={alerts} />
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-2">
-              <button
-                onClick={handleReset}
-                className="flex-1 px-4 py-2 bg-slate-700 text-slate-200 font-medium rounded-lg hover:bg-slate-600 transition-colors"
-              >
-                {t('orderBuilder.resetToSuggested')}
-              </button>
+            <div className="flex flex-col gap-3">
               <button
                 onClick={handleExport}
                 disabled={exporting}
-                className="flex-1 px-4 py-2 bg-emerald-600 text-white font-medium rounded-lg hover:bg-emerald-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
+              </button>
+              <button
+                onClick={handleReset}
+                className="w-full px-4 py-2.5 bg-slate-800/50 text-slate-300 font-medium rounded-xl border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-all duration-300"
+              >
+                {t('orderBuilder.resetToSuggested')}
               </button>
             </div>
 
             {/* Success Message */}
             {exportSuccess && (
-              <div className="bg-emerald-900/50 border border-emerald-500/50 rounded-lg p-3">
-                <p className="text-emerald-300 text-sm font-medium">{exportSuccess}</p>
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 backdrop-blur-xl">
+                <div className="flex items-center gap-2">
+                  <span className="text-emerald-400">✓</span>
+                  <p className="text-emerald-300 text-sm font-medium">{exportSuccess}</p>
+                </div>
               </div>
             )}
           </div>
