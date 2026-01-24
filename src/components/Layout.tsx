@@ -24,8 +24,8 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Dark theme for Analytics, Pipeline, Intelligence, and Order Builder pages
-  const isDarkPage = ['/analytics', '/pipeline', '/intelligence', '/order-builder'].includes(location.pathname);
+  // Dark theme for Dashboard, Analytics, Pipeline, Intelligence, and Order Builder pages
+  const isDarkPage = ['/', '/analytics', '/pipeline', '/intelligence', '/order-builder'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);

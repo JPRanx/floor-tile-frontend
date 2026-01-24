@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../requests/dashboard';
 import type { StockoutSummary } from '../requests/dashboard';
 import { inventoryApi } from '../requests/inventory';
-import { StatusBadge } from '../components/StatusBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { InventoryUploadModal } from '../components/InventoryUploadModal';
 import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
@@ -52,11 +51,11 @@ export function Dashboard() {
 
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">{error}</p>
+      <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
+        <p className="text-rose-400">{error}</p>
         <button
           onClick={loadData}
-          className="mt-2 text-red-600 hover:text-red-800 underline"
+          className="mt-2 text-rose-400 hover:text-rose-300 underline"
         >
           {t('common.tryAgain')}
         </button>
@@ -71,13 +70,14 @@ export function Dashboard() {
   // Calculate warehouse totals from products (convert from string/Decimal to number)
   const totalWarehouseM2 = products.reduce((sum, p) => sum + Number(p.warehouse_qty), 0);
   const totalInTransitM2 = products.reduce((sum, p) => sum + Number(p.in_transit_qty), 0);
+  const utilizationPct = Math.round((totalWarehouseM2 / 99900) * 100);
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Page Title */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('dashboard.title')}</h1>
-        <p className="text-gray-600">{t('dashboard.subtitle')}</p>
+        <h1 className="text-2xl font-bold text-white">{t('dashboard.title')}</h1>
+        <p className="text-slate-400">{t('dashboard.subtitle')}</p>
       </div>
 
       {/* Status Cards - Boat-based Priority */}
@@ -90,30 +90,30 @@ export function Dashboard() {
         <StatusCard
           label={t('dashboard.consider')}
           count={data.consider_count}
-          color="yellow"
+          color="amber"
         />
         <StatusCard
           label={t('dashboard.wellCovered')}
           count={data.well_covered_count}
-          color="green"
+          color="emerald"
         />
         <StatusCard
           label={t('dashboard.yourCall')}
           count={data.your_call_count}
-          color="gray"
+          color="slate"
         />
       </div>
 
       {/* No Boat Schedule Warning */}
       {!data.next_boat_departure && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-amber-600 text-lg">⚠️</span>
-            <span className="text-amber-800 font-medium">{t('dashboard.noBoatWarning')}</span>
+            <span className="text-amber-400 text-lg">⚠️</span>
+            <span className="text-amber-300 font-medium">{t('dashboard.noBoatWarning')}</span>
           </div>
           <Link
             to="/boats"
-            className="text-amber-700 hover:text-amber-900 font-medium underline text-sm"
+            className="text-amber-400 hover:text-amber-300 font-medium underline text-sm"
           >
             {t('dashboard.uploadTiba')}
           </Link>
@@ -122,19 +122,19 @@ export function Dashboard() {
 
       {/* Boat Departure Info */}
       {data.next_boat_departure && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h3 className="text-sm font-semibold text-blue-800 mb-2">{t('dashboard.boatDepartures')}</h3>
+        <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-sky-400 mb-2">{t('dashboard.boatDepartures')}</h3>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-blue-600">{t('dashboard.nextBoat')}</span>{' '}
-              <span className="font-medium text-blue-800">
+              <span className="text-slate-400">{t('dashboard.nextBoat')}</span>{' '}
+              <span className="font-medium text-white">
                 {new Date(data.next_boat_departure).toLocaleDateString()} ({t('dashboard.daysLabel', { days: data.days_to_next_boat_departure })})
               </span>
             </div>
             {data.second_boat_departure && (
               <div>
-                <span className="text-blue-600">{t('dashboard.secondBoat')}</span>{' '}
-                <span className="font-medium text-blue-800">
+                <span className="text-slate-400">{t('dashboard.secondBoat')}</span>{' '}
+                <span className="font-medium text-white">
                   {new Date(data.second_boat_departure).toLocaleDateString()} ({t('dashboard.daysLabel', { days: data.days_to_second_boat_departure })})
                 </span>
               </div>
@@ -144,58 +144,62 @@ export function Dashboard() {
       )}
 
       {/* Warehouse Utilization */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5 shadow-[0_0_30px_rgba(99,102,241,0.1)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-white font-semibold flex items-center gap-2">
+            <span className="text-lg">📦</span>
             {t('dashboard.warehouseStatus')}
           </h2>
           <button
             onClick={() => setInventoryModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/20 transition-colors"
           >
-            📦 {t('inventory.uploadTitle')}
+            {t('inventory.uploadTitle')}
           </button>
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-600">{t('dashboard.warehouseStock')}</span>
-              <span className="font-medium">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-slate-400">{t('dashboard.warehouseStock')}</span>
+              <span className="font-medium text-white">
                 {totalWarehouseM2.toLocaleString()} m²
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3">
+            <div className="w-full bg-slate-700/50 rounded-full h-3 overflow-hidden">
               <div
-                className="bg-blue-600 h-3 rounded-full"
+                className="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
                 style={{
-                  width: `${Math.min((totalWarehouseM2 / 99900) * 100, 100)}%`,
+                  width: `${Math.min(utilizationPct, 100)}%`,
                 }}
               />
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className="text-xs text-slate-500 mt-1">
               {t('dashboard.ofCapacity')}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-gray-900">
-              {Math.round((totalWarehouseM2 / 99900) * 100)}%
+            <div className="text-3xl font-bold text-white">
+              {utilizationPct}%
             </div>
-            <div className="text-xs text-gray-500">{t('dashboard.utilization')}</div>
+            <div className="text-xs text-slate-500">{t('dashboard.utilization')}</div>
           </div>
         </div>
         {totalInTransitM2 > 0 && (
-          <div className="mt-2 text-sm text-gray-600">
-            {t('dashboard.inTransit', { amount: totalInTransitM2.toLocaleString() })}
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="text-sky-400">🚢</span>
+            <span className="text-slate-400">
+              {t('dashboard.inTransit', { amount: totalInTransitM2.toLocaleString() })}
+            </span>
           </div>
         )}
         {/* Last Updated Timestamp */}
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
-          <span className="text-gray-500">
+        <div className="mt-4 pt-4 border-t border-slate-700/50 flex items-center justify-between text-xs">
+          <span className="text-slate-500">
             {t('inventory.lastUpdated')}: {' '}
             {lastInventoryUpdate ? (
-              <span className="font-medium text-gray-700">{lastInventoryUpdate}</span>
+              <span className="font-medium text-slate-300">{lastInventoryUpdate}</span>
             ) : (
-              <span className="text-orange-500">{t('inventory.neverUpdated')}</span>
+              <span className="text-amber-500">{t('inventory.neverUpdated')}</span>
             )}
           </span>
           {lastInventoryUpdate && (() => {
@@ -203,7 +207,7 @@ export function Dashboard() {
             const now = new Date();
             const hoursDiff = (now.getTime() - updateDate.getTime()) / (1000 * 60 * 60);
             return hoursDiff > 24 ? (
-              <span className="inline-flex items-center gap-1 text-orange-500" title={t('inventory.dataStale')}>
+              <span className="inline-flex items-center gap-1 text-amber-500" title={t('inventory.dataStale')}>
                 ⚠️ {t('inventory.dataStale')}
               </span>
             ) : null;
@@ -219,57 +223,58 @@ export function Dashboard() {
       </div>
 
       {/* Product Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+      <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-700/50 overflow-hidden shadow-[0_0_30px_rgba(99,102,241,0.1)]">
+        <div className="px-5 py-4 border-b border-slate-700/50">
+          <h2 className="text-white font-semibold flex items-center gap-2">
+            <span className="text-lg">📊</span>
             {t('dashboard.productsByStatus')}
           </h2>
         </div>
         <div className="overflow-auto max-h-[500px]">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50 sticky top-0 z-10">
+          <table className="min-w-full">
+            <thead className="bg-slate-800/50 sticky top-0 z-10">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 z-20 bg-gray-50">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sticky left-0 z-20 bg-slate-800/50">
                   {t('dashboard.columns.sku')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {t('dashboard.columns.status')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {t('dashboard.columns.daysLeft')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {t('dashboard.columns.velocity')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {t('dashboard.columns.stock')}
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {t('dashboard.columns.inTransit')}
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="divide-y divide-slate-700/30">
               {products.map((product) => (
-                <tr key={product.product_id} className="hover:bg-gray-50 group">
-                  <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-white group-hover:bg-gray-50">
-                    <div className="text-sm font-medium text-gray-900">
+                <tr key={product.product_id} className="hover:bg-slate-800/30 group transition-colors">
+                  <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-slate-900/95 group-hover:bg-slate-800/30 transition-colors">
+                    <div className="text-sm font-medium text-white">
                       {product.sku}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-slate-500">
                       {product.rotation}
                     </div>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <StatusBadge status={product.status} />
+                    <StatusBadgeDark status={product.status} />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
                     <span
                       className={`text-sm font-medium ${
                         product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout)) &&
                         data.days_to_next_boat != null && Number(product.days_to_stockout) < data.days_to_next_boat
-                          ? 'text-red-600'
-                          : 'text-gray-900'
+                          ? 'text-rose-400'
+                          : 'text-white'
                       }`}
                     >
                       {product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout))
@@ -277,21 +282,21 @@ export function Dashboard() {
                         : '—'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-600">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-slate-400">
                     {Number(product.avg_daily_sales) > 0
                       ? t('dashboard.velocityText', { count: Math.round(Number(product.avg_daily_sales)) })
                       : '—'}
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900">
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-white">
                     {Number(product.warehouse_qty).toLocaleString()}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
                     {Number(product.in_transit_qty) > 0 ? (
-                      <span className="text-blue-600 font-medium">
-                        📦 {Number(product.in_transit_qty).toLocaleString()}
+                      <span className="text-sky-400 font-medium">
+                        🚢 {Number(product.in_transit_qty).toLocaleString()}
                       </span>
                     ) : (
-                      <span className="text-gray-400">—</span>
+                      <span className="text-slate-600">—</span>
                     )}
                   </td>
                 </tr>
@@ -313,28 +318,59 @@ export function Dashboard() {
   );
 }
 
-// Status Card Component
+// Status Card Component - Dark Theme
 interface StatusCardProps {
   label: string;
   count: number;
-  color: 'red' | 'orange' | 'yellow' | 'green' | 'purple' | 'blue' | 'gray';
+  color: 'orange' | 'amber' | 'emerald' | 'slate' | 'rose' | 'sky';
 }
 
-const colorClasses = {
-  red: 'bg-red-50 border-red-200 text-red-800',
-  orange: 'bg-orange-50 border-orange-200 text-orange-800',
-  yellow: 'bg-yellow-50 border-yellow-200 text-yellow-800',
-  green: 'bg-green-50 border-green-200 text-green-800',
-  purple: 'bg-purple-50 border-purple-200 text-purple-800',
-  blue: 'bg-blue-50 border-blue-200 text-blue-800',
-  gray: 'bg-gray-50 border-gray-200 text-gray-600',
+const cardColorClasses = {
+  orange: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
+  amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+  emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+  slate: 'bg-slate-700/30 border-slate-600/30 text-slate-300',
+  rose: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
+  sky: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
 };
 
 function StatusCard({ label, count, color }: StatusCardProps) {
   return (
-    <div className={`rounded-lg border p-4 ${colorClasses[color]}`}>
+    <div className={`rounded-xl border p-4 ${cardColorClasses[color]} transition-all hover:scale-[1.02]`}>
       <div className="text-3xl font-bold">{count}</div>
-      <div className="text-sm font-medium">{label}</div>
+      <div className="text-sm font-medium opacity-80">{label}</div>
     </div>
+  );
+}
+
+// Status Badge Component - Dark Theme
+interface StatusBadgeDarkProps {
+  status: string;
+}
+
+function StatusBadgeDark({ status }: StatusBadgeDarkProps) {
+  const statusStyles: Record<string, string> = {
+    HIGH_PRIORITY: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
+    CONSIDER: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+    WELL_COVERED: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
+    YOUR_CALL: 'bg-slate-600/30 text-slate-400 border-slate-500/30',
+    OUT_OF_STOCK: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
+  };
+
+  const statusLabels: Record<string, string> = {
+    HIGH_PRIORITY: 'High Priority',
+    CONSIDER: 'Consider',
+    WELL_COVERED: 'Well Covered',
+    YOUR_CALL: 'Your Call',
+    OUT_OF_STOCK: 'Out of Stock',
+  };
+
+  const style = statusStyles[status] || statusStyles.YOUR_CALL;
+  const label = statusLabels[status] || status;
+
+  return (
+    <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium border ${style}`}>
+      {label}
+    </span>
   );
 }
