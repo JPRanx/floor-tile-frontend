@@ -64,6 +64,14 @@
     "daysText": "{{count}} días",
     "velocityText": "{{count}} m²/día",
     "loadError": "Error al cargar datos del panel. ¿Está corriendo el backend?",
+    "overdueCustomers": "Clientes Vencidos",
+    "viewAll": "Ver todos",
+    "overdueCount": "clientes vencidos",
+    "valueAtRisk": "valor en riesgo",
+    "topOverdue": "Más vencidos",
+    "noOverdueCustomers": "Todos los clientes al día",
+    "noOverdueData": "Sin datos de vencidos",
+    "overdueLoadError": "Error al cargar clientes vencidos",
     "widgets": {
       "loadError": "Error al cargar datos",
       "topMovers": {
@@ -354,6 +362,12 @@
     "title": "RESUMEN DEL PEDIDO",
     "pallets": "Paletas",
     "containers": "Contenedores",
+    "weight": "Peso",
+    "byPallets": "Por paletas",
+    "byWeight": "Por peso",
+    "limiting": "limitante",
+    "utilization": "Utilización",
+    "remaining": "Disponible",
     "warehouseAfter": "Almacén (después de entrega)",
     "current": "Actual",
     "after": "Después",
@@ -378,6 +392,37 @@
     "minusStock": "Menos stock actual",
     "minusIncoming": "Menos entrante",
     "suggestion": "Sugerencia"
+  },
+  "demandForecast": {
+    "title": "Demanda Esperada",
+    "velocityBased": "Por Velocidad",
+    "patternBased": "Por Patrones",
+    "velocityDescription": "Basado en velocidad actual × tiempo de entrega",
+    "patternDescription": "Basado en clientes que deberían ordenar pronto",
+    "patternHigherWarning": "Los patrones sugieren {{percent}}% más demanda ({{customers}} clientes esperados)",
+    "velocityHigherInfo": "La velocidad actual supera los patrones de clientes",
+    "recommendation": "Demanda recomendada: {{recommended}}",
+    "customersDueSoon": "Clientes por ordenar",
+    "leadTime": "Tiempo de entrega"
+  },
+  "customersDue": {
+    "title": "Clientes por Ordenar",
+    "customers": "clientes",
+    "noCustomers": "No hay clientes esperados próximamente",
+    "topProducts": "Productos típicos",
+    "dueIn": "En {{days}} días",
+    "dueToday": "Esperado hoy",
+    "overdue": "{{days}}d vencido",
+    "showMore": "Ver {{count}} más",
+    "showLess": "Ver menos"
+  },
+  "callAlert": {
+    "criticalTitle": "Llamar Antes de Ordenar",
+    "warningTitle": "Verificar Disponibilidad",
+    "criticalDescription": "Estos clientes llevan mucho tiempo sin ordenar. Confirmar si siguen activos antes de incluir su demanda.",
+    "warningDescription": "Estos clientes están atrasados. Verificar disponibilidad antes de incluir en el pedido.",
+    "dismiss": "Ignorar",
+    "moreCustomers": "clientes más"
   },
   "inventory": {
     "uploadTitle": "Actualizar Inventario",
@@ -605,6 +650,26 @@
     "filters": {
       "allStatuses": "Todos",
       "allCountries": "Todos los países"
+    },
+    "customerPattern": {
+      "title": "Patrón de Compra",
+      "frequency": "Frecuencia",
+      "ordersEvery": "Cada {{days}} días",
+      "predictability": "Predictibilidad",
+      "totalOrders": "Total de Órdenes",
+      "avgOrder": "Orden Promedio",
+      "firstOrder": "Primera Orden",
+      "lastOrder": "Última Orden",
+      "expectedNext": "Próxima Esperada",
+      "daysOverdue": "{{days}} días de atraso",
+      "daysUntil": "{{days}} días hasta próxima",
+      "possiblyLost": "Posiblemente perdido - sin actividad en mucho tiempo",
+      "readyToBuy": "Listo para comprar",
+      "clockwork": "Muy Regular",
+      "predictable": "Predecible",
+      "moderate": "Moderado",
+      "erratic": "Errático",
+      "expected": "esperado"
     }
   }
 }

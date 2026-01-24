@@ -1,4 +1,5 @@
-import type { CustomerTrend } from '../../requests/intelligence';
+import { useTranslation } from 'react-i18next';
+import type { CustomerTrend, Predictability } from '../../requests/intelligence';
 import { Sparkline } from './Sparkline';
 import { ConfidenceBadge } from './ConfidenceBadge';
 import { StatusDot } from './StatusDot';
@@ -15,6 +16,33 @@ const tierColors: Record<CustomerTrend['tier'], { bg: string; text: string; labe
   A: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Cliente A' },
   B: { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'Cliente B' },
   C: { bg: 'bg-slate-500/20', text: 'text-slate-400', label: 'Cliente C' },
+};
+
+// Predictability labels
+const predictabilityLabels: Record<Predictability, { label: string; color: string }> = {
+  CLOCKWORK: { label: 'Muy Regular', color: 'text-emerald-400' },
+  PREDICTABLE: { label: 'Predecible', color: 'text-green-400' },
+  MODERATE: { label: 'Moderado', color: 'text-yellow-400' },
+  ERRATIC: { label: 'Errático', color: 'text-orange-400' },
+};
+
+// Overdue severity
+type OverdueSeverity = 'critical' | 'warning' | 'attention' | 'minor' | null;
+
+function getOverdueSeverity(customer: CustomerTrend): OverdueSeverity {
+  if (!customer.days_overdue || customer.days_overdue <= 0) return null;
+  if (customer.days_overdue > 180) return 'critical';   // 6+ months
+  if (customer.days_overdue > 60) return 'warning';     // 2+ months
+  if (customer.days_overdue > 14) return 'attention';   // 2+ weeks
+  return 'minor';
+}
+
+// Border ring styles for overdue
+const overdueBorderStyles: Record<Exclude<OverdueSeverity, null>, string> = {
+  critical: 'ring-2 ring-red-500/50',
+  warning: 'ring-2 ring-amber-500/50',
+  attention: 'ring-1 ring-yellow-500/30',
+  minor: '',
 };
 
 // Country flags
@@ -58,10 +86,13 @@ function truncateName(name: string, maxLength = 25): string {
 }
 
 export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
+  const { t } = useTranslation();
   const glowClass = getGlowClass(customer.trend_direction);
   const sparklineColor = getSparklineColor(customer.trend_direction);
   const tierStyle = tierColors[customer.tier];
   const flag = countryFlags[customer.country_code] || countryFlags.OTHER;
+  const overdueSeverity = getOverdueSeverity(customer);
+  const overdueRingClass = overdueSeverity ? overdueBorderStyles[overdueSeverity] : '';
 
   const handleClick = () => {
     if (onClick) {
@@ -92,6 +123,17 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
     return `Hace ${Math.floor(customer.days_since_last_order / 30)}m`;
   };
 
+  // Format expected date
+  const formatExpectedDate = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-GT', { month: 'short', day: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  };
+
   return (
     <div
       onClick={handleClick}
@@ -99,6 +141,7 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
         bg-slate-800/50 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5
         transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1
         ${glowClass}
+        ${overdueRingClass}
         ${onClick ? 'cursor-pointer' : ''}
       `}
       style={{
@@ -151,6 +194,38 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
           </p>
         </div>
       </div>
+
+      {/* Pattern Info */}
+      {(customer.avg_gap_days || customer.days_overdue > 0) && (
+        <div className="mb-4 space-y-1">
+          {customer.avg_gap_days && customer.order_count >= 2 && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-slate-500">📅</span>
+              <span className="text-slate-400">
+                {t('intelligence.customerPattern.ordersEvery', { days: Math.round(customer.avg_gap_days) })}
+              </span>
+              {customer.predictability && predictabilityLabels[customer.predictability] && (
+                <span className={`${predictabilityLabels[customer.predictability].color} text-xs`}>
+                  ({predictabilityLabels[customer.predictability].label})
+                </span>
+              )}
+            </div>
+          )}
+          {customer.days_overdue > 0 && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className={overdueSeverity === 'critical' ? 'text-red-400' : 'text-amber-400'}>⚠️</span>
+              <span className={overdueSeverity === 'critical' ? 'text-red-400' : 'text-amber-400'}>
+                {t('intelligence.customerPattern.daysOverdue', { days: customer.days_overdue })}
+                {customer.expected_next_date && (
+                  <span className="text-slate-500 ml-1">
+                    ({t('intelligence.customerPattern.expected')}: {formatExpectedDate(customer.expected_next_date)})
+                  </span>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Sparkline */}
       <div className="mb-4">

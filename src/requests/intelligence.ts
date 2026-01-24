@@ -9,6 +9,7 @@ export type TrendStrength = 'STRONG' | 'MODERATE' | 'WEAK';
 export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
 export type CustomerTier = 'A' | 'B' | 'C';
 export type CustomerStatus = 'ACTIVE' | 'COOLING' | 'DORMANT';
+export type Predictability = 'CLOCKWORK' | 'PREDICTABLE' | 'MODERATE' | 'ERRATIC';
 
 export interface SparklinePoint {
   period: string;
@@ -132,6 +133,15 @@ export interface CustomerTrend {
 
   // Visualization
   sparkline: SparklinePoint[];
+
+  // Pattern data (from customer_patterns table)
+  avg_gap_days: number | null;
+  gap_std_days: number | null;
+  coefficient_of_variation: number | null;
+  predictability: Predictability | null;
+  expected_next_date: string | null;
+  days_overdue: number;
+  avg_order_usd: number | null;
 }
 
 export interface IntelligenceDashboard {
@@ -148,6 +158,41 @@ export interface IntelligenceDashboard {
   countries: CountryBreakdown[];
   top_products: ProductTrend[];
   top_customers: CustomerTrend[];
+}
+
+// ===================
+// OVERDUE CUSTOMER TYPES
+// ===================
+
+export interface OverdueCustomer {
+  customer_normalized: string;
+  order_count: number;
+  avg_gap_days: number | null;
+  gap_std_days: number | null;
+  coefficient_of_variation: number | null;
+  first_order_date: string | null;
+  last_order_date: string | null;
+  expected_next_date: string | null;
+  days_since_last: number;
+  days_overdue: number;
+  total_volume_m2: number;
+  total_revenue_usd: number;
+  avg_order_m2: number;
+  avg_order_usd: number;
+  tier: CustomerTier;
+  predictability: Predictability;
+}
+
+export interface OverdueSummary {
+  total_overdue: number;
+  total_value_at_risk: number;
+  tier_a_overdue: number;
+  tier_b_overdue: number;
+  tier_c_overdue: number;
+  most_overdue: {
+    customer: string;
+    days_overdue: number;
+  } | null;
 }
 
 // ===================
@@ -228,6 +273,14 @@ interface ApiCustomerTrend {
   direction: string;
   confidence: string;
   sparkline: { period: string; value: string }[];
+  // Pattern data (from customer_patterns join)
+  avg_gap_days?: string | null;
+  gap_std_days?: string | null;
+  coefficient_of_variation?: string | null;
+  predictability?: string | null;
+  expected_next_date?: string | null;
+  days_overdue?: number;
+  avg_order_usd?: string | null;
 }
 
 // Transform functions
@@ -309,6 +362,14 @@ function transformCustomer(c: ApiCustomerTrend, index: number): CustomerTrend {
       change_pct: parseFloat(m.change_pct),
     })),
     sparkline: c.sparkline.map(s => ({ period: s.period, value: parseFloat(s.value) })),
+    // Pattern data
+    avg_gap_days: c.avg_gap_days ? parseFloat(c.avg_gap_days) : null,
+    gap_std_days: c.gap_std_days ? parseFloat(c.gap_std_days) : null,
+    coefficient_of_variation: c.coefficient_of_variation ? parseFloat(c.coefficient_of_variation) : null,
+    predictability: c.predictability?.toUpperCase() as Predictability || null,
+    expected_next_date: c.expected_next_date || null,
+    days_overdue: c.days_overdue ?? 0,
+    avg_order_usd: c.avg_order_usd ? parseFloat(c.avg_order_usd) : null,
   };
 }
 
@@ -358,5 +419,26 @@ export const intelligenceApi = {
       params: { period_days: periodDays, comparison_days: comparisonDays }
     });
     return response.data.map(transformCustomer);
+  },
+
+  // ===================
+  // OVERDUE CUSTOMERS
+  // ===================
+
+  getOverdueSummary: async (): Promise<OverdueSummary> => {
+    const response = await api.get<OverdueSummary>('/intelligence/patterns/overdue/summary');
+    return response.data;
+  },
+
+  getOverdueCustomers: async (minDays = 1, tier?: string, limit = 50): Promise<OverdueCustomer[]> => {
+    const response = await api.get<OverdueCustomer[]>('/intelligence/patterns/overdue', {
+      params: { min_days: minDays, tier, limit }
+    });
+    return response.data;
+  },
+
+  refreshPatterns: async (): Promise<{ success: boolean; patterns_updated: number }> => {
+    const response = await api.post<{ success: boolean; patterns_updated: number }>('/intelligence/patterns/refresh');
+    return response.data;
   },
 };

@@ -399,8 +399,8 @@ function getProductRecommendation(p: ProductTrend): { recommendation: string; re
 export function generateCustomerBrief(customer: CustomerTrend): Brief {
   const parts: BriefPart[] = [];
 
-  // 1. OPENING LINE — Tier + Status combo
-  parts.push(getCustomerOpeningLine(customer));
+  // 1. OPENING LINE — Pattern-aware if data exists, else tier+status
+  parts.push(getPatternOpeningLine(customer));
 
   // 2. VOLUME CONTEXT
   parts.push(getCustomerVolumeLine(customer));
@@ -412,8 +412,12 @@ export function generateCustomerBrief(customer: CustomerTrend): Brief {
   const mixLine = getProductMixLine(customer);
   if (mixLine) parts.push(mixLine);
 
-  // 5. RECOMMENDATION
-  const recommendation = getCustomerRecommendation(customer);
+  // 5. PATTERN WARNING (if overdue)
+  const patternWarning = getPatternWarningLine(customer);
+  if (patternWarning) parts.push(patternWarning);
+
+  // 6. RECOMMENDATION — Pattern-aware
+  const recommendation = getPatternRecommendation(customer);
 
   return { parts, ...recommendation };
 }
@@ -645,6 +649,185 @@ function getCustomerRecommendation(c: CustomerTrend): { recommendation: string; 
 
   // Default
   return { recommendation: 'Seguimiento normal.', recommendationType: 'maintain' };
+}
+
+// ============================================================
+// PATTERN-AWARE OPENING LINE
+// ============================================================
+
+function getPatternOpeningLine(c: CustomerTrend): BriefPart {
+  // Fall back to tier/status opening if no pattern data
+  if (!c.avg_gap_days || c.order_count < 2) {
+    return getCustomerOpeningLine(c);
+  }
+
+  const name = `**${c.customer_normalized}**`;
+  const gapDays = Math.round(c.avg_gap_days);
+  const predictability = c.predictability;
+  const daysOverdue = c.days_overdue || 0;
+
+  // CLOCKWORK customer that's overdue
+  if (predictability === 'CLOCKWORK' && daysOverdue > 14) {
+    return {
+      text: `${name} — Cliente muy regular (cada ${gapDays} días) pero **${daysOverdue} días atrasado**. Inusual.`,
+      type: 'critical'
+    };
+  }
+
+  // CLOCKWORK customer on time
+  if (predictability === 'CLOCKWORK') {
+    return {
+      text: `${name} — Compra como reloj cada ${gapDays} días. Cliente predecible y valioso.`,
+      type: 'positive'
+    };
+  }
+
+  // PREDICTABLE customer that's overdue
+  if (predictability === 'PREDICTABLE' && daysOverdue > 30) {
+    return {
+      text: `${name} — Normalmente compra cada ${gapDays} días. Ya van ${daysOverdue} días de atraso.`,
+      type: 'warning'
+    };
+  }
+
+  // PREDICTABLE customer
+  if (predictability === 'PREDICTABLE') {
+    return {
+      text: `${name} — Cliente predecible, compra aproximadamente cada ${gapDays} días.`,
+      type: 'positive'
+    };
+  }
+
+  // MODERATE predictability with severe overdue
+  if (predictability === 'MODERATE' && daysOverdue > 60) {
+    return {
+      text: `${name} — Patrón moderado (cada ~${gapDays} días). **${daysOverdue} días sin comprar**.`,
+      type: 'warning'
+    };
+  }
+
+  // ERRATIC customer with severe overdue
+  if (predictability === 'ERRATIC' && daysOverdue > 90) {
+    return {
+      text: `${name} — Patrón errático pero ${daysOverdue} días es mucho tiempo sin comprar.`,
+      type: 'warning'
+    };
+  }
+
+  // ERRATIC customer (don't worry too much about overdue)
+  if (predictability === 'ERRATIC') {
+    return {
+      text: `${name} — Compras muy irregulares (promedio ${gapDays} días pero con mucha variación).`,
+      type: 'normal'
+    };
+  }
+
+  // Fall back to tier/status opening
+  return getCustomerOpeningLine(c);
+}
+
+// ============================================================
+// PATTERN WARNING LINE
+// ============================================================
+
+function getPatternWarningLine(c: CustomerTrend): BriefPart | null {
+  const daysOverdue = c.days_overdue || 0;
+  const predictability = c.predictability;
+
+  // No overdue
+  if (daysOverdue <= 0) {
+    return null;
+  }
+
+  // Critical: CLOCKWORK or PREDICTABLE customer severely overdue
+  if ((predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE') && daysOverdue > 60) {
+    return {
+      text: `**ALERTA:** Este cliente es muy regular pero lleva ${daysOverdue} días sin comprar. Posible pérdida.`,
+      type: 'critical'
+    };
+  }
+
+  // Warning: Any customer 180+ days overdue
+  if (daysOverdue > 180) {
+    return {
+      text: `Sin compras hace ${daysOverdue} días. Posiblemente perdido.`,
+      type: 'critical'
+    };
+  }
+
+  // Warning: Good predictability but moderately overdue
+  if ((predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE') && daysOverdue > 14) {
+    return {
+      text: `Debería haber comprado hace ${daysOverdue} días según su patrón.`,
+      type: 'warning'
+    };
+  }
+
+  // Moderate warning for moderate predictability
+  if (predictability === 'MODERATE' && daysOverdue > 30) {
+    return {
+      text: `${daysOverdue} días desde última compra, más de lo usual.`,
+      type: 'warning'
+    };
+  }
+
+  // No warning for erratic customers unless very overdue
+  return null;
+}
+
+// ============================================================
+// PATTERN-AWARE RECOMMENDATIONS
+// ============================================================
+
+function getPatternRecommendation(c: CustomerTrend): { recommendation: string; recommendationType: 'urgent' | 'action' | 'monitor' | 'maintain' } {
+  const daysOverdue = c.days_overdue || 0;
+  const predictability = c.predictability;
+  const tier = c.tier;
+  const expectedDate = c.expected_next_date;
+
+  // CRITICAL: High-value + highly predictable + severely overdue
+  if (tier === 'A' && (predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE') && daysOverdue > 30) {
+    return { recommendation: 'Llamar HOY. Cliente valioso con patrón roto.', recommendationType: 'urgent' };
+  }
+
+  // URGENT: Any CLOCKWORK customer overdue
+  if (predictability === 'CLOCKWORK' && daysOverdue > 14) {
+    return { recommendation: 'Contactar pronto. Cliente muy regular atrasado.', recommendationType: 'urgent' };
+  }
+
+  // URGENT: Tier A severely overdue
+  if (tier === 'A' && daysOverdue > 60) {
+    return { recommendation: 'Contactar URGENTE. Cliente VIP muy atrasado.', recommendationType: 'urgent' };
+  }
+
+  // ACTION: Predictable customer moderately overdue
+  if (predictability === 'PREDICTABLE' && daysOverdue > 14) {
+    return { recommendation: 'Enviar recordatorio, se pasó de su fecha esperada.', recommendationType: 'action' };
+  }
+
+  // ACTION: Expected date coming soon
+  if (expectedDate) {
+    const expected = new Date(expectedDate);
+    const today = new Date();
+    const daysUntil = Math.floor((expected.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntil >= 0 && daysUntil <= 7 && (predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE')) {
+      return { recommendation: 'Contactar esta semana, debería comprar pronto.', recommendationType: 'action' };
+    }
+  }
+
+  // Tier B moderately overdue
+  if (tier === 'B' && daysOverdue > 45) {
+    return { recommendation: 'Campaña de reactivación.', recommendationType: 'action' };
+  }
+
+  // Possibly lost customer
+  if (daysOverdue > 180) {
+    return { recommendation: 'Posiblemente perdido. Último intento de contacto.', recommendationType: 'action' };
+  }
+
+  // Fall back to existing recommendation logic
+  return getCustomerRecommendation(c);
 }
 
 

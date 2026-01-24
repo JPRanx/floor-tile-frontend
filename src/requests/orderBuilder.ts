@@ -60,6 +60,10 @@ export interface OrderBuilderProduct {
   daily_velocity_m2: number;
   calculation_breakdown: CalculationBreakdown | null;
 
+  // Weight data (for container optimization)
+  weight_per_m2_kg: number;
+  total_weight_kg: number;
+
   // Selection state
   is_selected: boolean;
   selected_pallets: number;
@@ -88,6 +92,12 @@ export interface OrderBuilderSummary {
   total_pallets: number;
   total_containers: number;
   total_m2: number;
+
+  // Weight-based container calculation
+  total_weight_kg: number;
+  containers_by_pallets: number;
+  containers_by_weight: number;
+  weight_is_limiting: boolean;
 
   // Boat capacity
   boat_max_containers: number;
@@ -136,6 +146,62 @@ export interface ExportOrderRequest {
   boat_departure: string;
 }
 
+// ===================
+// DEMAND FORECAST TYPES
+// ===================
+
+export type OverdueSeverity = 'critical' | 'warning' | 'attention' | 'minor';
+export type Predictability = 'CLOCKWORK' | 'PREDICTABLE' | 'MODERATE' | 'ERRATIC';
+
+export interface CustomerProduct {
+  sku: string;
+  avg_m2_per_order: number;
+  purchase_count: number;
+  share_pct: number;
+}
+
+export interface CustomerDue {
+  customer_normalized: string;
+  tier: string;
+  days_overdue: number;
+  expected_date: string | null;
+  predictability: Predictability | null;
+  avg_order_m2: number;
+  avg_order_usd: number;
+  last_order_date: string | null;
+  trend_direction: TrendDirection;
+  top_products: CustomerProduct[];
+}
+
+export interface OverdueAlert {
+  customer_normalized: string;
+  tier: string;
+  days_overdue: number;
+  severity: OverdueSeverity;
+  avg_order_usd: number;
+  last_order_date: string | null;
+  message: string;
+}
+
+export interface ProductDemand {
+  sku: string;
+  velocity_demand_m2: number;
+  pattern_demand_m2: number;
+  recommended_m2: number;
+  customers_expecting: number;
+  customer_names: string[];
+}
+
+export interface DemandForecastResponse {
+  velocity_based_demand_m2: number;
+  pattern_based_demand_m2: number;
+  recommended_demand_m2: number;
+  lead_time_days: number;
+  customers_due_soon: CustomerDue[];
+  overdue_alerts: OverdueAlert[];
+  demand_by_product: ProductDemand[];
+}
+
 export const orderBuilderApi = {
   get: async (params?: OrderBuilderParams): Promise<OrderBuilderResponse> => {
     const queryParams = new URLSearchParams();
@@ -155,6 +221,17 @@ export const orderBuilderApi = {
     const response = await api.post('/order-builder/export', request, {
       responseType: 'blob',
     });
+    return response.data;
+  },
+
+  getDemandForecast: async (boatId?: string): Promise<DemandForecastResponse> => {
+    const queryParams = new URLSearchParams();
+    if (boatId) {
+      queryParams.append('boat_id', boatId);
+    }
+    const queryString = queryParams.toString();
+    const url = `/order-builder/demand-forecast${queryString ? `?${queryString}` : ''}`;
+    const response = await api.get<DemandForecastResponse>(url);
     return response.data;
   },
 };

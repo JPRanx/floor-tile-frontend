@@ -1,6 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import type { OrderBuilderSummary as SummaryType } from '../requests/orderBuilder';
 
+// Container weight limit (matches backend)
+const CONTAINER_MAX_WEIGHT_KG = 27500;
+const WEIGHT_PER_M2_KG = 14.90;
+
 interface OrderBuilderSummaryProps {
   summary: SummaryType;
 }
@@ -13,6 +17,16 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
   const palletPercent = Math.min(100, (summary.total_pallets / maxPallets) * 100);
   const containerPercent = Math.min(100, (summary.total_containers / summary.boat_max_containers) * 100);
   const warehousePercent = Math.min(100, summary.warehouse_utilization_after);
+
+  // Weight calculations
+  const totalWeight = summary.total_weight_kg || 0;
+  const maxWeight = summary.total_containers * CONTAINER_MAX_WEIGHT_KG;
+  const weightUtilization = maxWeight > 0 ? Math.min(100, (totalWeight / maxWeight) * 100) : 0;
+
+  // Calculate remaining capacity in last container
+  const lastContainerWeight = totalWeight % CONTAINER_MAX_WEIGHT_KG || (totalWeight > 0 ? CONTAINER_MAX_WEIGHT_KG : 0);
+  const remainingWeightKg = summary.total_containers > 0 ? CONTAINER_MAX_WEIGHT_KG - lastContainerWeight : 0;
+  const remainingM2 = remainingWeightKg / WEIGHT_PER_M2_KG;
 
   // Determine colors and glow based on thresholds
   const getPalletStyles = () => {
@@ -34,9 +48,16 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
     return { bar: 'bg-gradient-to-r from-emerald-600 to-emerald-400', glow: 'shadow-emerald-500/30' };
   };
 
+  const getWeightStyles = () => {
+    if (summary.weight_is_limiting) return { bar: 'bg-gradient-to-r from-amber-600 to-amber-400', glow: 'shadow-amber-500/30' };
+    if (weightUtilization > 90) return { bar: 'bg-gradient-to-r from-emerald-600 to-emerald-400', glow: 'shadow-emerald-500/30' };
+    return { bar: 'bg-gradient-to-r from-indigo-600 to-indigo-400', glow: 'shadow-indigo-500/30' };
+  };
+
   const palletStyles = getPalletStyles();
   const containerStyles = getContainerStyles();
   const warehouseStyles = getWarehouseStyles();
+  const weightStyles = getWeightStyles();
 
   return (
     <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-5 shadow-xl">
@@ -78,6 +99,49 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
               className={`h-full ${containerStyles.bar} transition-all duration-500 ease-out rounded-full shadow-lg ${containerStyles.glow}`}
               style={{ width: `${containerPercent}%` }}
             />
+          </div>
+          {/* Container breakdown */}
+          <div className="flex justify-between text-xs text-slate-500 mt-2">
+            <span className="flex items-center gap-1">
+              {t('orderBuilderSummary.byPallets')}: {summary.containers_by_pallets || 0}
+            </span>
+            <span className="flex items-center gap-1">
+              {t('orderBuilderSummary.byWeight')}: {summary.containers_by_weight || 0}
+              {summary.weight_is_limiting && (
+                <span className="text-amber-400 font-medium ml-1">
+                  ({t('orderBuilderSummary.limiting')})
+                </span>
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* Weight Bar */}
+        <div>
+          <div className="flex justify-between text-sm mb-2">
+            <span className="text-slate-400 font-medium flex items-center gap-1.5">
+              <span>⚖️</span>
+              {t('orderBuilderSummary.weight')}
+            </span>
+            <span className="font-semibold text-white">
+              {Math.round(totalWeight).toLocaleString()} kg
+            </span>
+          </div>
+          <div className="h-3 bg-slate-700/50 rounded-full overflow-hidden shadow-inner">
+            <div
+              className={`h-full ${weightStyles.bar} transition-all duration-500 ease-out rounded-full shadow-lg ${weightStyles.glow}`}
+              style={{ width: `${weightUtilization}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-xs text-slate-500 mt-2">
+            <span>
+              {t('orderBuilderSummary.utilization')}: {Math.round(weightUtilization)}%
+            </span>
+            {remainingWeightKg > 0 && summary.total_containers > 0 && (
+              <span className="text-emerald-400">
+                {t('orderBuilderSummary.remaining')}: {Math.round(remainingWeightKg).toLocaleString()} kg ({Math.round(remainingM2).toLocaleString()} m²)
+              </span>
+            )}
           </div>
         </div>
 

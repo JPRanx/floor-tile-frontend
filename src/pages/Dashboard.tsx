@@ -7,7 +7,7 @@ import { inventoryApi } from '../requests/inventory';
 import { StatusBadge } from '../components/StatusBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { InventoryUploadModal } from '../components/InventoryUploadModal';
-import { TopMoversWidget, AlertsWidget } from '../components/dashboard';
+import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -212,9 +212,10 @@ export function Dashboard() {
       </div>
 
       {/* Intelligence Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <TopMoversWidget periodDays={365} />
         <AlertsWidget periodDays={365} />
+        <OverdueCustomersWidget limit={5} />
       </div>
 
       {/* Product Table */}

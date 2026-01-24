@@ -134,7 +134,7 @@ export function OrderBuilderProductCard({
               )}
             </div>
 
-            {/* Right Side: Quantity + Confidence */}
+            {/* Right Side: Quantity + Weight + Confidence */}
             <div className="flex items-center gap-3">
               {/* Quantity Selector */}
               <div className="flex items-center gap-2">
@@ -161,6 +161,16 @@ export function OrderBuilderProductCard({
                 </select>
                 <span className="text-sm text-slate-400">{t('orderBuilderProduct.pallets')}</span>
               </div>
+
+              {/* Weight Display (when selected) */}
+              {product.is_selected && product.selected_pallets > 0 && (
+                <div className="hidden sm:flex items-center gap-1 text-sm">
+                  <span className="text-slate-500">⚖️</span>
+                  <span className="text-slate-300 font-medium">
+                    {Math.round(Number(product.total_weight_kg) || 0).toLocaleString()} kg
+                  </span>
+                </div>
+              )}
 
               {/* Confidence Badge */}
               <span className={`

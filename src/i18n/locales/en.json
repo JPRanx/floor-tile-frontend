@@ -64,6 +64,14 @@
     "daysText": "{{count}} days",
     "velocityText": "{{count}} m²/day",
     "loadError": "Failed to load dashboard data. Is the backend running?",
+    "overdueCustomers": "Overdue Customers",
+    "viewAll": "View all",
+    "overdueCount": "customers overdue",
+    "valueAtRisk": "value at risk",
+    "topOverdue": "Most overdue",
+    "noOverdueCustomers": "All customers on track",
+    "noOverdueData": "No overdue data",
+    "overdueLoadError": "Failed to load overdue customers",
     "widgets": {
       "loadError": "Failed to load data",
       "topMovers": {
@@ -354,6 +362,12 @@
     "title": "ORDER SUMMARY",
     "pallets": "Pallets",
     "containers": "Containers",
+    "weight": "Weight",
+    "byPallets": "By pallets",
+    "byWeight": "By weight",
+    "limiting": "limiting",
+    "utilization": "Utilization",
+    "remaining": "Remaining",
     "warehouseAfter": "Warehouse (after delivery)",
     "current": "Current",
     "after": "After",
@@ -378,6 +392,37 @@
     "minusStock": "Minus current stock",
     "minusIncoming": "Minus incoming",
     "suggestion": "Suggestion"
+  },
+  "demandForecast": {
+    "title": "Expected Demand",
+    "velocityBased": "Velocity-Based",
+    "patternBased": "Pattern-Based",
+    "velocityDescription": "Based on current velocity × lead time",
+    "patternDescription": "Based on customers expected to order soon",
+    "patternHigherWarning": "Patterns suggest {{percent}}% more demand ({{customers}} customers expected)",
+    "velocityHigherInfo": "Current velocity exceeds customer patterns",
+    "recommendation": "Recommended demand: {{recommended}}",
+    "customersDueSoon": "Customers due soon",
+    "leadTime": "Lead time"
+  },
+  "customersDue": {
+    "title": "Customers Due to Order",
+    "customers": "customers",
+    "noCustomers": "No customers expected soon",
+    "topProducts": "Typical products",
+    "dueIn": "In {{days}} days",
+    "dueToday": "Due today",
+    "overdue": "{{days}}d overdue",
+    "showMore": "Show {{count}} more",
+    "showLess": "Show less"
+  },
+  "callAlert": {
+    "criticalTitle": "Call Before Ordering",
+    "warningTitle": "Verify Availability",
+    "criticalDescription": "These customers haven't ordered in a long time. Confirm if still active before including their demand.",
+    "warningDescription": "These customers are overdue. Verify availability before including in order.",
+    "dismiss": "Dismiss",
+    "moreCustomers": "more customers"
   },
   "inventory": {
     "uploadTitle": "Update Inventory",
@@ -605,6 +650,26 @@
     "filters": {
       "allStatuses": "All",
       "allCountries": "All countries"
+    },
+    "customerPattern": {
+      "title": "Buying Pattern",
+      "frequency": "Frequency",
+      "ordersEvery": "Every {{days}} days",
+      "predictability": "Predictability",
+      "totalOrders": "Total Orders",
+      "avgOrder": "Avg Order",
+      "firstOrder": "First Order",
+      "lastOrder": "Last Order",
+      "expectedNext": "Expected Next",
+      "daysOverdue": "{{days}} days overdue",
+      "daysUntil": "{{days}} days until next",
+      "possiblyLost": "Possibly lost - no activity for too long",
+      "readyToBuy": "Ready to buy",
+      "clockwork": "Clockwork",
+      "predictable": "Predictable",
+      "moderate": "Moderate",
+      "erratic": "Erratic",
+      "expected": "expected"
     }
   }
 }

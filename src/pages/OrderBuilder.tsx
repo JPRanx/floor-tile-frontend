@@ -7,6 +7,7 @@ import type {
   OrderBuilderMode,
   OrderBuilderSummary as SummaryType,
   OrderBuilderAlert,
+  DemandForecastResponse,
 } from '../requests/orderBuilder';
 import { boatsApi } from '../requests/boats';
 import { factoryOrdersApi } from '../requests/factoryOrders';
@@ -16,6 +17,9 @@ import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
 import { OrderBuilderProductCard } from '../components/OrderBuilderProductCard';
 import { OrderBuilderSummary } from '../components/OrderBuilderSummary';
 import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
+import { ExpectedDemandSection } from '../components/ExpectedDemandSection';
+import { CustomersDueList } from '../components/CustomersDueList';
+import { CallBeforeOrderingAlert } from '../components/CallBeforeOrderingAlert';
 
 const M2_PER_PALLET = 135;
 const PALLETS_PER_CONTAINER = 14;
@@ -45,6 +49,10 @@ export function OrderBuilder() {
 
   // Track if boats have been loaded
   const [boatsLoaded, setBoatsLoaded] = useState(false);
+
+  // Demand forecast state
+  const [demandForecast, setDemandForecast] = useState<DemandForecastResponse | null>(null);
+  const [demandLoading, setDemandLoading] = useState(false);
 
   // Fetch available boats on mount
   useEffect(() => {
@@ -91,12 +99,27 @@ export function OrderBuilder() {
     }
   }, []);
 
+  // Load demand forecast
+  const loadDemandForecast = useCallback(async (boatId?: string) => {
+    try {
+      setDemandLoading(true);
+      const forecast = await orderBuilderApi.getDemandForecast(boatId);
+      setDemandForecast(forecast);
+    } catch (err) {
+      console.error('Failed to load demand forecast:', err);
+      // Don't set error - this is optional data
+    } finally {
+      setDemandLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     // Load data even without a boat - backend will use defaults
     if (boatsLoaded) {
       loadData(mode, selectedBoatId);
+      loadDemandForecast(selectedBoatId);
     }
-  }, [mode, selectedBoatId, loadData, boatsLoaded]);
+  }, [mode, selectedBoatId, loadData, loadDemandForecast, boatsLoaded]);
 
   const handleBoatChange = (boatId: string) => {
     setSelectedBoatId(boatId);
@@ -215,10 +238,20 @@ export function OrderBuilder() {
     const warehouseAfter = warehouseCurrent + totalPallets;
     const boatMaxContainers = data?.boat.max_containers || 5;
 
+    // Calculate weight
+    const totalWeightKg = selected.reduce((sum, p) => sum + (p.total_weight_kg || 0), 0);
+    const containersByPallets = totalContainers;
+    const containersByWeight = Math.ceil(totalWeightKg / 27500); // 27.5 tons per container
+    const weightIsLimiting = containersByWeight > containersByPallets;
+
     return {
       total_pallets: totalPallets,
       total_containers: totalContainers,
       total_m2: totalM2,
+      total_weight_kg: totalWeightKg,
+      containers_by_pallets: containersByPallets,
+      containers_by_weight: containersByWeight,
+      weight_is_limiting: weightIsLimiting,
       boat_max_containers: boatMaxContainers,
       boat_remaining_containers: Math.max(0, boatMaxContainers - totalContainers),
       warehouse_current_pallets: warehouseCurrent,
@@ -413,6 +446,18 @@ export function OrderBuilder() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Products Column (2/3 width on desktop) */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Expected Demand Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ExpectedDemandSection
+                forecast={demandForecast}
+                loading={demandLoading}
+              />
+              <CustomersDueList
+                customers={demandForecast?.customers_due_soon || []}
+                loading={demandLoading}
+              />
+            </div>
+
             {sectionConfig.map(({ key, titleKey, subtitleKey, bgColor, accentColor }) => {
               const sectionProducts = productsByPriority[key];
               const selectedCount = sectionProducts.filter((p) => p.is_selected).length;
@@ -476,6 +521,12 @@ export function OrderBuilder() {
 
           {/* Summary Column (1/3 width on desktop) */}
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            {/* Call Before Ordering Alerts */}
+            <CallBeforeOrderingAlert
+              alerts={demandForecast?.overdue_alerts || []}
+              loading={demandLoading}
+            />
+
             <OrderBuilderSummary summary={summary} />
             <OrderBuilderAlerts alerts={alerts} />
 

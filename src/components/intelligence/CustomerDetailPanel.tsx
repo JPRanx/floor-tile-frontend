@@ -1,12 +1,20 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { CustomerTrend } from '../../requests/intelligence';
+import type { CustomerTrend, Predictability } from '../../requests/intelligence';
 import { Sparkline } from './Sparkline';
 import { TrendArrow } from './TrendArrow';
 import { StatusDot } from './StatusDot';
 import { ProductMixBar } from './ProductMixBar';
 import { InsightBrief } from './InsightBrief';
 import { generateCustomerBrief } from '../../utils/briefGenerator';
+
+// Predictability badge colors
+const predictabilityStyles: Record<Predictability, { bg: string; text: string; label: string }> = {
+  CLOCKWORK: { bg: 'bg-emerald-500/20', text: 'text-emerald-400', label: 'Muy Regular' },
+  PREDICTABLE: { bg: 'bg-green-500/20', text: 'text-green-400', label: 'Predecible' },
+  MODERATE: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', label: 'Moderado' },
+  ERRATIC: { bg: 'bg-orange-500/20', text: 'text-orange-400', label: 'Errático' },
+};
 
 interface CustomerDetailPanelProps {
   customer: CustomerTrend | null;
@@ -236,6 +244,79 @@ export function CustomerDetailPanel({ customer, isOpen, onClose }: CustomerDetai
               </div>
             </div>
           </div>
+
+          {/* Order Pattern Section */}
+          {(customer.avg_gap_days || customer.days_overdue > 0) && (
+            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+              <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+                <span>📅</span>
+                {t('intelligence.customerPattern.title')}
+              </h3>
+              <div className="space-y-3">
+                {/* Frequency */}
+                {customer.avg_gap_days && customer.order_count >= 2 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">{t('intelligence.customerPattern.frequency')}</span>
+                    <span className="text-white font-medium">
+                      {t('intelligence.customerPattern.ordersEvery', { days: Math.round(customer.avg_gap_days) })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Predictability */}
+                {customer.predictability && predictabilityStyles[customer.predictability] && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">{t('intelligence.customerPattern.predictability')}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs font-medium ${predictabilityStyles[customer.predictability].bg} ${predictabilityStyles[customer.predictability].text}`}>
+                      {predictabilityStyles[customer.predictability].label}
+                      {customer.coefficient_of_variation != null && (
+                        <span className="text-slate-500 ml-1">(CV: {customer.coefficient_of_variation.toFixed(2)})</span>
+                      )}
+                    </span>
+                  </div>
+                )}
+
+                {/* Total Orders */}
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">{t('intelligence.customerPattern.totalOrders')}</span>
+                  <span className="text-white font-medium">{customer.order_count}</span>
+                </div>
+
+                {/* Avg Order USD */}
+                {customer.avg_order_usd && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">{t('intelligence.customerPattern.avgOrder')}</span>
+                    <span className="text-white font-medium">
+                      {formatM2(customer.avg_order_m2)} / {formatRevenue(customer.avg_order_usd)}
+                    </span>
+                  </div>
+                )}
+
+                {/* Expected Next */}
+                {customer.expected_next_date && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400">{t('intelligence.customerPattern.expectedNext')}</span>
+                    <span className="text-white font-medium">{customer.expected_next_date}</span>
+                  </div>
+                )}
+
+                {/* Days Overdue Alert */}
+                {customer.days_overdue > 0 && (
+                  <div className={`mt-3 p-3 rounded-lg ${customer.days_overdue > 60 ? 'bg-red-500/10 border border-red-500/30' : 'bg-amber-500/10 border border-amber-500/30'}`}>
+                    <div className="flex items-center gap-2">
+                      <span className={customer.days_overdue > 60 ? 'text-red-400' : 'text-amber-400'}>⚠️</span>
+                      <span className={`font-semibold ${customer.days_overdue > 60 ? 'text-red-400' : 'text-amber-400'}`}>
+                        {t('intelligence.customerPattern.daysOverdue', { days: customer.days_overdue })}
+                      </span>
+                    </div>
+                    {customer.days_overdue > 180 && (
+                      <p className="text-red-300 text-xs mt-1">{t('intelligence.customerPattern.possiblyLost')}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Product Mix */}
           {customer.top_products.length > 0 && (
