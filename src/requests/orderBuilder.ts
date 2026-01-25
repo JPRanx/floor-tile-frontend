@@ -21,6 +21,75 @@ export interface CalculationBreakdown {
   final_suggestion_pallets: number;
 }
 
+// ===================
+// REASONING TYPES
+// ===================
+
+export type PrimaryFactor =
+  | 'LOW_STOCK'
+  | 'TRENDING_UP'
+  | 'OVERSTOCKED'
+  | 'DECLINING'
+  | 'NO_SALES'
+  | 'NO_DATA'
+  | 'STABLE';
+
+export type ExclusionReason = 'OVERSTOCKED' | 'NO_SALES' | 'DECLINING' | 'NO_DATA';
+
+export interface StockAnalysis {
+  current_m2: number;
+  days_of_stock: number | null;
+  days_to_boat: number;
+  gap_days: number | null; // Negative = stockout before boat
+}
+
+export interface DemandAnalysis {
+  velocity_m2_day: number;
+  trend_pct: number;
+  trend_direction: string;
+  sales_rank: number | null;
+}
+
+export interface QuantityReasoning {
+  target_coverage_days: number;
+  m2_needed: number;
+  m2_in_transit: number;
+  m2_in_stock: number;
+  m2_to_order: number;
+}
+
+export interface ProductReasoning {
+  primary_factor: PrimaryFactor;
+  stock: StockAnalysis;
+  demand: DemandAnalysis;
+  quantity: QuantityReasoning;
+  exclusion_reason: ExclusionReason | null;
+}
+
+export interface ExcludedProduct {
+  sku: string;
+  product_name: string | null;
+  reason: ExclusionReason;
+  days_of_stock: number | null;
+  trend_pct: number | null;
+  last_sale_days_ago: number | null;
+}
+
+export type OrderStrategy = 'STOCKOUT_PREVENTION' | 'DEMAND_CAPTURE' | 'BALANCED';
+
+export interface OrderSummaryReasoning {
+  strategy: OrderStrategy;
+  days_to_boat: number;
+  boat_date: string;
+  boat_name: string;
+  critical_count: number;
+  urgent_count: number;
+  stable_count: number;
+  excluded_count: number;
+  key_insights: string[];
+  excluded_products: ExcludedProduct[];
+}
+
 export interface OrderBuilderProduct {
   // Product info
   product_id: string;
@@ -59,6 +128,9 @@ export interface OrderBuilderProduct {
   velocity_change_pct: number;
   daily_velocity_m2: number;
   calculation_breakdown: CalculationBreakdown | null;
+
+  // Reasoning (explains WHY this recommendation)
+  reasoning: ProductReasoning | null;
 
   // Weight data (for container optimization)
   weight_per_m2_kg: number;
@@ -129,6 +201,9 @@ export interface OrderBuilderResponse {
 
   // Summary
   summary: OrderBuilderSummary;
+
+  // Reasoning (explains WHY this order strategy)
+  summary_reasoning: OrderSummaryReasoning | null;
 }
 
 export interface OrderBuilderParams {

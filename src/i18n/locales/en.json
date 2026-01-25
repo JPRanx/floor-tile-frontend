@@ -151,7 +151,26 @@
     "using45DayLeadTime": "Using 45-day lead time",
     "noTimelineAvailable": "No timeline available — upload a boat schedule to see shipping milestones",
     "exportSuccess": "Order {{pvNumber}} created and exported",
-    "exportError": "Failed to create order. Please try again."
+    "exportError": "Failed to create order. Please try again.",
+    "strategy": {
+      "STOCKOUT_PREVENTION": "Stockout Prevention",
+      "DEMAND_CAPTURE": "Demand Capture",
+      "BALANCED": "Balanced Strategy"
+    },
+    "strategyFor": "Strategy for {{boat}}",
+    "critical": "Critical",
+    "urgent": "Urgent",
+    "stable": "Stable",
+    "excluded": "Excluded",
+    "keyInsights": "Key Insights",
+    "excludedProducts": "Excluded Products",
+    "daysStock": "days stock",
+    "exclusionReason": {
+      "OVERSTOCKED": "Overstocked",
+      "NO_SALES": "No recent sales",
+      "DECLINING": "Declining demand",
+      "NO_DATA": "Insufficient data"
+    }
   },
   "recommendations": {
     "title": "Order Recommendations",

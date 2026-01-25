@@ -151,7 +151,26 @@
     "using45DayLeadTime": "Usando tiempo de entrega de 45 días",
     "noTimelineAvailable": "Sin línea de tiempo — suba un horario de barco para ver los hitos de envío",
     "exportSuccess": "Orden {{pvNumber}} creada y exportada",
-    "exportError": "Error al crear la orden. Por favor intenta de nuevo."
+    "exportError": "Error al crear la orden. Por favor intenta de nuevo.",
+    "strategy": {
+      "STOCKOUT_PREVENTION": "Prevención de Agotamiento",
+      "DEMAND_CAPTURE": "Captura de Demanda",
+      "BALANCED": "Estrategia Balanceada"
+    },
+    "strategyFor": "Estrategia para {{boat}}",
+    "critical": "Crítico",
+    "urgent": "Urgente",
+    "stable": "Estable",
+    "excluded": "Excluido",
+    "keyInsights": "Puntos Clave",
+    "excludedProducts": "Productos Excluidos",
+    "daysStock": "días de stock",
+    "exclusionReason": {
+      "OVERSTOCKED": "Sobrestock",
+      "NO_SALES": "Sin ventas recientes",
+      "DECLINING": "Demanda en declive",
+      "NO_DATA": "Datos insuficientes"
+    }
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",

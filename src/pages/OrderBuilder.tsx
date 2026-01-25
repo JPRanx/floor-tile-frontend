@@ -14,6 +14,7 @@ import { factoryOrdersApi } from '../requests/factoryOrders';
 import type { BoatSchedule } from '../requests/boats';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
+import { OrderBuilderStrategy } from '../components/OrderBuilderStrategy';
 import { OrderBuilderProductCard } from '../components/OrderBuilderProductCard';
 import { OrderBuilderSummary } from '../components/OrderBuilderSummary';
 import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
@@ -446,6 +447,9 @@ export function OrderBuilder() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Products Column (2/3 width on desktop) */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Order Strategy Summary */}
+            <OrderBuilderStrategy reasoning={data.summary_reasoning} />
+
             {/* Expected Demand Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ExpectedDemandSection
