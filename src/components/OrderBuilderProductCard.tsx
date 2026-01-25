@@ -22,9 +22,6 @@ export function OrderBuilderProductCard({
   const { t } = useTranslation();
   const [showBreakdown, setShowBreakdown] = useState(false);
 
-  // Generate pallet options (0-50 in increments of 1)
-  const palletOptions = Array.from({ length: 51 }, (_, i) => i);
-
   const confidenceStyles: Record<ConfidenceLevel, { bg: string; text: string; border: string; glow: string }> = {
     HIGH: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', glow: 'shadow-emerald-500/20' },
     MEDIUM: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30', glow: 'shadow-amber-500/20' },
