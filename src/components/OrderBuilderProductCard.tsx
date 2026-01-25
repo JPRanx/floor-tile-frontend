@@ -135,31 +135,88 @@ export function OrderBuilderProductCard({
             </div>
 
             {/* Right Side: Quantity + Weight + Confidence */}
-            <div className="flex items-center gap-3">
-              {/* Quantity Selector */}
-              <div className="flex items-center gap-2">
-                <select
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Pallet Selector with +/- buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => onQuantityChange(product.product_id, Math.max(0, product.selected_pallets - 1))}
+                  disabled={!product.is_selected || product.selected_pallets <= 0}
+                  className={`
+                    w-7 h-7 rounded-lg flex items-center justify-center font-bold text-lg transition-all
+                    ${product.is_selected && product.selected_pallets > 0
+                      ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/30'
+                      : 'bg-slate-800/50 border-slate-600/50 text-slate-600 cursor-not-allowed'
+                    }
+                    border
+                  `}
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="0"
+                  max="50"
                   value={product.selected_pallets}
-                  onChange={(e) =>
-                    onQuantityChange(product.product_id, parseInt(e.target.value))
-                  }
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    onQuantityChange(product.product_id, Math.min(50, Math.max(0, val)));
+                  }}
                   disabled={!product.is_selected}
                   className={`
-                    px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200
+                    w-14 px-2 py-1 rounded-lg text-sm font-semibold text-center transition-all
                     ${product.is_selected
-                      ? 'bg-indigo-500/20 border-indigo-500/50 text-white hover:bg-indigo-500/30'
+                      ? 'bg-indigo-500/20 border-indigo-500/50 text-white'
                       : 'bg-slate-800/50 border-slate-600/50 text-slate-500 cursor-not-allowed'
                     }
                     border focus:outline-none focus:ring-2 focus:ring-indigo-500/50
+                    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                  `}
+                />
+                <button
+                  onClick={() => onQuantityChange(product.product_id, Math.min(50, product.selected_pallets + 1))}
+                  disabled={!product.is_selected || product.selected_pallets >= 50}
+                  className={`
+                    w-7 h-7 rounded-lg flex items-center justify-center font-bold text-lg transition-all
+                    ${product.is_selected && product.selected_pallets < 50
+                      ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/30'
+                      : 'bg-slate-800/50 border-slate-600/50 text-slate-600 cursor-not-allowed'
+                    }
+                    border
                   `}
                 >
-                  {palletOptions.map((n) => (
-                    <option key={n} value={n}>
-                      {n}
-                    </option>
-                  ))}
-                </select>
-                <span className="text-sm text-slate-400">{t('orderBuilderProduct.pallets')}</span>
+                  +
+                </button>
+                <span className="text-sm text-slate-400 ml-1">{t('orderBuilderProduct.pallets')}</span>
+              </div>
+
+              {/* Separator */}
+              <span className="text-slate-600">=</span>
+
+              {/* m² Input (connected to pallets) */}
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min="0"
+                  step="134.4"
+                  value={Math.round(product.selected_pallets * 134.4 * 10) / 10}
+                  onChange={(e) => {
+                    const m2 = parseFloat(e.target.value) || 0;
+                    // Round up to nearest full pallet
+                    const pallets = Math.ceil(m2 / 134.4);
+                    onQuantityChange(product.product_id, Math.min(50, Math.max(0, pallets)));
+                  }}
+                  disabled={!product.is_selected}
+                  className={`
+                    w-20 px-2 py-1 rounded-lg text-sm font-semibold text-center transition-all
+                    ${product.is_selected
+                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                      : 'bg-slate-800/50 border-slate-600/50 text-slate-500 cursor-not-allowed'
+                    }
+                    border focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+                  `}
+                />
+                <span className="text-sm text-slate-400">m²</span>
               </div>
 
               {/* Weight Display (when selected) */}
