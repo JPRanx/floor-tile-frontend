@@ -147,6 +147,8 @@ export interface OrderBuilderBoat {
   departure_date: string;
   arrival_date: string;
   days_until_departure: number;
+  days_until_arrival: number;
+  days_until_warehouse: number; // Lead time: days until product IN warehouse
   booking_deadline: string;
   days_until_deadline: number;
   max_containers: number;

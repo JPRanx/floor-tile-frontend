@@ -41,11 +41,11 @@ export function OrderBuilderHeader({
     return Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   };
 
-  // Calculate "In Warehouse" date (arrival + 5 days)
+  // Calculate "In Warehouse" date from days_until_warehouse
   const getInWarehouseDate = () => {
-    const arrival = new Date(boat.arrival_date);
-    arrival.setDate(arrival.getDate() + 5);
-    return arrival.toISOString().split('T')[0];
+    const today = new Date();
+    today.setDate(today.getDate() + boat.days_until_warehouse);
+    return today.toISOString().split('T')[0];
   };
 
   const inWarehouseDate = getInWarehouseDate();
@@ -54,8 +54,8 @@ export function OrderBuilderHeader({
   const milestones = [
     { label: 'Book by', date: boat.booking_deadline, days: boat.days_until_deadline, color: 'orange' },
     { label: 'Departs', date: boat.departure_date, days: boat.days_until_departure, color: 'indigo' },
-    { label: 'Arrives', date: boat.arrival_date, days: daysFromToday(boat.arrival_date), color: 'indigo' },
-    { label: 'In Warehouse', date: inWarehouseDate, days: daysFromToday(inWarehouseDate), color: 'emerald' },
+    { label: 'Arrives Port', date: boat.arrival_date, days: boat.days_until_arrival, color: 'indigo' },
+    { label: 'In Warehouse', date: inWarehouseDate, days: boat.days_until_warehouse, color: 'emerald' },
   ];
 
   const modeButtons: { value: OrderBuilderMode; label: string; containers: number; icon: string }[] = [
