@@ -13,8 +13,8 @@ import { useTranslation } from 'react-i18next';
 export interface StockCoverageProps {
   /** Days of coverage from warehouse stock only */
   warehouseDays: number | null;
-  /** Days of coverage including in-transit */
-  withTransitDays: number | null;
+  /** Days of coverage including in-transit (required for 'bars' variant) */
+  withTransitDays?: number | null;
   /** Days of coverage from transit alone (withTransitDays - warehouseDays) */
   inTransitDays?: number | null;
   /** When transit arrives (formatted date string) */
@@ -149,7 +149,7 @@ const BarsVariant: React.FC<StockCoverageProps> = ({
             />
           </div>
           <span className="text-xs text-slate-400">
-            {formatDays(withTransitDays)}d {t('stockCoverage.total', 'total')}
+            {formatDays(withTransitDays ?? null)}d {t('stockCoverage.total', 'total')}
           </span>
         </div>
       )}
@@ -228,7 +228,7 @@ const ComparisonVariant: React.FC<StockCoverageProps> = ({
             {t('stockCoverage.withOrder', 'CON PEDIDO')}
           </div>
           <div className="font-bold text-emerald-400">
-            📦 +{formatDays(withOrderDays)} {t('stockCoverage.days', 'días')}
+            📦 +{formatDays(withOrderDays ?? null)} {t('stockCoverage.days', 'días')}
           </div>
           {orderArrivalDate && (
             <div className="text-sm text-emerald-400">

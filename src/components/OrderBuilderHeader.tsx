@@ -32,15 +32,6 @@ export function OrderBuilderHeader({
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  // Calculate days from today for a date string
-  const daysFromToday = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    date.setHours(0, 0, 0, 0);
-    return Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  };
-
   // Calculate "In Warehouse" date from days_until_warehouse
   const getInWarehouseDate = () => {
     const today = new Date();
