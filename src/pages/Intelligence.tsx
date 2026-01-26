@@ -7,6 +7,9 @@ import {
   type ProductTrend,
   type CountryTrend,
   type CustomerTrend,
+  type ProductSortBy,
+  type CategoryMetrics,
+  type CategoryInsight,
 } from '../requests/intelligence';
 import { MetricBox } from '../components/intelligence/MetricBox';
 import { CountryCard } from '../components/intelligence/CountryCard';
@@ -15,8 +18,9 @@ import { CustomerCard } from '../components/intelligence/CustomerCard';
 import { ProductDetailPanel } from '../components/intelligence/ProductDetailPanel';
 import { CustomerDetailPanel } from '../components/intelligence/CustomerDetailPanel';
 import { Breadcrumb } from '../components/intelligence/Breadcrumb';
+import { CategoryCard } from '../components/intelligence/CategoryCard';
 
-type ViewType = 'region' | 'products' | 'customers';
+type ViewType = 'region' | 'products' | 'customers' | 'categories';
 
 export function Intelligence() {
   const { t } = useTranslation();
@@ -31,7 +35,8 @@ export function Intelligence() {
 
   // State
   const [view, setView] = useState<ViewType>(urlView || 'region');
-  const [periodDays, setPeriodDays] = useState(365);
+  const [periodDays, setPeriodDays] = useState(90);
+  const [sortBy, setSortBy] = useState<ProductSortBy>('velocity');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +49,8 @@ export function Intelligence() {
   const [products, setProducts] = useState<ProductTrend[]>([]);
   const [countries, setCountries] = useState<CountryTrend[]>([]);
   const [customers, setCustomers] = useState<CustomerTrend[]>([]);
+  const [categories, setCategories] = useState<CategoryMetrics[]>([]);
+  const [categoryInsights, setCategoryInsights] = useState<CategoryInsight[]>([]);
 
   // Panel states
   const [selectedProduct, setSelectedProduct] = useState<ProductTrend | null>(null);
@@ -95,7 +102,7 @@ export function Intelligence() {
           const countryData = await intelligenceApi.getCountries(periodDays, periodDays);
           setCountries(countryData);
         } else if (view === 'products') {
-          const productData = await intelligenceApi.getProducts(periodDays, periodDays);
+          const productData = await intelligenceApi.getProducts(periodDays, periodDays, sortBy);
           setProducts(productData);
 
           // If URL has product param, find and open panel
@@ -118,6 +125,13 @@ export function Intelligence() {
               setCustomerPanelOpen(true);
             }
           }
+        } else if (view === 'categories') {
+          const [categoryData, insightsData] = await Promise.all([
+            intelligenceApi.getCategories(periodDays),
+            intelligenceApi.getCategoryInsights(periodDays),
+          ]);
+          setCategories(categoryData);
+          setCategoryInsights(insightsData);
         }
       } catch (err) {
         console.error('Failed to fetch intelligence data:', err);
@@ -128,7 +142,7 @@ export function Intelligence() {
     }
 
     fetchData();
-  }, [view, periodDays, t, urlProduct, urlCustomer]);
+  }, [view, periodDays, sortBy, t, urlProduct, urlCustomer]);
 
   // Filter customers based on country/status filters
   const filteredCustomers = customers.filter(c => {
@@ -189,13 +203,20 @@ export function Intelligence() {
     { key: 'region', label: t('intelligence.regionView'), icon: '🌎' },
     { key: 'products', label: t('intelligence.productsView'), icon: '📦' },
     { key: 'customers', label: t('intelligence.customersView'), icon: '👥' },
+    { key: 'categories', label: t('intelligence.categoriesView', 'Categorías'), icon: '🏷️' },
   ];
 
-  // Period options
+  // Period options (30/60/90 days for trend analysis)
   const periodOptions = [
-    { days: 90, label: '90 días' },
-    { days: 180, label: '6 meses' },
-    { days: 365, label: '1 año' },
+    { days: 30, label: '30d' },
+    { days: 60, label: '60d' },
+    { days: 90, label: '90d' },
+  ];
+
+  // Sort options for products view
+  const sortOptions: { key: ProductSortBy; label: string; icon: string }[] = [
+    { key: 'velocity', label: t('intelligence.sortVelocity', 'Velocidad'), icon: '📈' },
+    { key: 'revenue', label: t('intelligence.sortRevenue', 'Ventas'), icon: '💰' },
   ];
 
   // Show breadcrumb when viewing filtered customers
@@ -213,23 +234,50 @@ export function Intelligence() {
             <p className="text-slate-400 mt-1">{t('intelligence.subtitle')}</p>
           </div>
 
-          {/* Period selector */}
-          <div className="flex items-center gap-2">
-            {periodOptions.map((opt) => (
-              <button
-                key={opt.days}
-                onClick={() => setPeriodDays(opt.days)}
-                className={`
-                  px-3 py-1.5 rounded-lg text-sm font-medium transition-all
-                  ${periodDays === opt.days
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white'
-                  }
-                `}
-              >
-                {opt.label}
-              </button>
-            ))}
+          {/* Period and Sort selectors */}
+          <div className="flex items-center gap-4">
+            {/* Period selector */}
+            <div className="flex items-center gap-1">
+              <span className="text-xs text-slate-500 mr-1">{t('intelligence.period', 'Período')}:</span>
+              {periodOptions.map((opt) => (
+                <button
+                  key={opt.days}
+                  onClick={() => setPeriodDays(opt.days)}
+                  className={`
+                    px-2.5 py-1 rounded-lg text-sm font-medium transition-all
+                    ${periodDays === opt.days
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white'
+                    }
+                  `}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort selector (only in products view) */}
+            {view === 'products' && (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-slate-500 mr-1">{t('intelligence.sortBy', 'Ordenar')}:</span>
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setSortBy(opt.key)}
+                    className={`
+                      px-2.5 py-1 rounded-lg text-sm font-medium transition-all flex items-center gap-1
+                      ${sortBy === opt.key
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white'
+                      }
+                    `}
+                  >
+                    <span>{opt.icon}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -459,6 +507,70 @@ export function Intelligence() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Categories View */}
+        {!loading && !error && view === 'categories' && (
+          <div className="space-y-6">
+            {/* Insights Banner */}
+            {categoryInsights.length > 0 && (
+              <div className="space-y-3">
+                <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                  <span>💡</span>
+                  <span>{t('intelligence.insights', 'Insights')}</span>
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {categoryInsights.map((insight, index) => (
+                    <div
+                      key={`${insight.category}-${insight.insight_type}-${index}`}
+                      className={`
+                        p-4 rounded-xl border transition-all
+                        ${insight.severity === 'CRITICAL'
+                          ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                          : insight.severity === 'WARNING'
+                          ? 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+                          : 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300'
+                        }
+                      `}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-lg">
+                          {insight.severity === 'CRITICAL' ? '🚨' : insight.severity === 'WARNING' ? '⚠️' : '💡'}
+                        </span>
+                        <div>
+                          <p className="text-sm font-medium">{insight.message}</p>
+                          <p className="text-xs opacity-70 mt-1">
+                            {insight.insight_type.replace('_', ' ')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Categories Grid */}
+            <div>
+              <h2 className="text-xl font-semibold text-white flex items-center gap-2 mb-4">
+                <span>🏷️</span>
+                <span>{t('intelligence.byCategory', 'Por Categoría')}</span>
+              </h2>
+              {categories.length === 0 ? (
+                <p className="text-slate-500 text-center py-10">{t('intelligence.noData')}</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {categories.map((category, index) => (
+                    <CategoryCard
+                      key={category.category}
+                      category={category}
+                      index={index}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

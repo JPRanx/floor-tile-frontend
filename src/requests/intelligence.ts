@@ -31,6 +31,8 @@ export interface ProductTrend {
   // Stock metrics
   days_of_stock: number | null;
   current_stock_m2: number | null;
+  in_transit_m2: number | null;
+  days_with_transit: number | null;
 
   // Revenue metrics
   total_revenue_usd: number;
@@ -231,6 +233,8 @@ interface ApiProductTrend {
   sample_count: number;
   days_of_stock: number;
   current_stock_m2: string | null;
+  in_transit_m2: string | null;
+  days_with_transit: number | null;
   sparkline: { period: string; value: string }[];
 }
 
@@ -298,6 +302,8 @@ function transformProduct(p: ApiProductTrend): ProductTrend {
     velocity_change_pct: velocityChange,
     days_of_stock: p.days_of_stock != null && isFinite(p.days_of_stock) ? p.days_of_stock : null,
     current_stock_m2: p.current_stock_m2 ? parseFloat(p.current_stock_m2) : null,
+    in_transit_m2: p.in_transit_m2 ? parseFloat(p.in_transit_m2) : null,
+    days_with_transit: p.days_with_transit != null && isFinite(p.days_with_transit) ? p.days_with_transit : null,
     total_revenue_usd: parseFloat(p.total_revenue_usd),
     avg_weekly_revenue_usd: parseFloat(p.total_revenue_usd) / (p.sample_count || 1),
     trend_direction: p.direction.toUpperCase() as TrendDirection,
@@ -373,6 +379,74 @@ function transformCustomer(c: ApiCustomerTrend, index: number): CustomerTrend {
   };
 }
 
+// Sort options for products
+export type ProductSortBy = 'velocity' | 'revenue' | 'volume';
+
+// ===================
+// CATEGORY TYPES
+// ===================
+
+export type InsightType = 'IMBALANCE' | 'GROWTH_OPPORTUNITY' | 'RISK' | 'LOW_COVERAGE';
+export type InsightSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
+
+export interface CategoryMetrics {
+  category: string;
+  warehouse_m2: number;
+  warehouse_pct: number;
+  product_count: number;
+  total_velocity_m2_day: number;
+  avg_velocity_m2_day: number;
+  velocity_change_pct: number;
+  trend_direction: TrendDirection;
+  trend_strength: TrendStrength;
+  avg_warehouse_days: number | null;
+  products_at_risk: number;
+}
+
+export interface CategoryInsight {
+  category: string;
+  insight_type: InsightType;
+  message: string;
+  severity: InsightSeverity;
+}
+
+interface ApiCategoryMetrics {
+  category: string;
+  warehouse_m2: string;
+  warehouse_pct: string;
+  product_count: number;
+  total_velocity_m2_day: string;
+  avg_velocity_m2_day: string;
+  velocity_change_pct: string;
+  trend_direction: string;
+  trend_strength: string;
+  avg_warehouse_days: string | null;
+  products_at_risk: number;
+}
+
+interface ApiCategoryInsight {
+  category: string;
+  insight_type: string;
+  message: string;
+  severity: string;
+}
+
+function transformCategoryMetrics(c: ApiCategoryMetrics): CategoryMetrics {
+  return {
+    category: c.category,
+    warehouse_m2: parseFloat(c.warehouse_m2),
+    warehouse_pct: parseFloat(c.warehouse_pct),
+    product_count: c.product_count,
+    total_velocity_m2_day: parseFloat(c.total_velocity_m2_day),
+    avg_velocity_m2_day: parseFloat(c.avg_velocity_m2_day),
+    velocity_change_pct: parseFloat(c.velocity_change_pct),
+    trend_direction: c.trend_direction.toUpperCase() as TrendDirection,
+    trend_strength: c.trend_strength.toUpperCase() as TrendStrength,
+    avg_warehouse_days: c.avg_warehouse_days ? parseFloat(c.avg_warehouse_days) : null,
+    products_at_risk: c.products_at_risk,
+  };
+}
+
 export const intelligenceApi = {
   getDashboard: async (periodDays = 90, comparisonDays = 90): Promise<IntelligenceDashboard> => {
     const response = await api.get<DashboardResponse>('/intelligence/dashboard', {
@@ -399,9 +473,9 @@ export const intelligenceApi = {
     };
   },
 
-  getProducts: async (periodDays = 90, comparisonDays = 90): Promise<ProductTrend[]> => {
+  getProducts: async (periodDays = 90, comparisonDays = 90, sortBy: ProductSortBy = 'velocity'): Promise<ProductTrend[]> => {
     const response = await api.get<ApiProductTrend[]>('/intelligence/products', {
-      params: { period_days: periodDays, comparison_days: comparisonDays }
+      params: { period_days: periodDays, comparison_days: comparisonDays, sort_by: sortBy }
     });
     return response.data.map(transformProduct);
   },
@@ -440,5 +514,28 @@ export const intelligenceApi = {
   refreshPatterns: async (): Promise<{ success: boolean; patterns_updated: number }> => {
     const response = await api.post<{ success: boolean; patterns_updated: number }>('/intelligence/patterns/refresh');
     return response.data;
+  },
+
+  // ===================
+  // CATEGORY ANALYSIS
+  // ===================
+
+  getCategories: async (periodDays = 90): Promise<CategoryMetrics[]> => {
+    const response = await api.get<ApiCategoryMetrics[]>('/intelligence/categories', {
+      params: { period_days: periodDays }
+    });
+    return response.data.map(transformCategoryMetrics);
+  },
+
+  getCategoryInsights: async (periodDays = 90): Promise<CategoryInsight[]> => {
+    const response = await api.get<ApiCategoryInsight[]>('/intelligence/categories/insights', {
+      params: { period_days: periodDays }
+    });
+    return response.data.map(i => ({
+      category: i.category,
+      insight_type: i.insight_type as InsightType,
+      message: i.message,
+      severity: i.severity as InsightSeverity,
+    }));
   },
 };
