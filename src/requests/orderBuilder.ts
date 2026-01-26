@@ -78,6 +78,22 @@ export interface ExcludedProduct {
 
 export type OrderStrategy = 'STOCKOUT_PREVENTION' | 'DEMAND_CAPTURE' | 'BALANCED';
 
+export interface OrderReasoning {
+  // Core narrative sentences
+  strategy_sentence: string;
+  risk_sentence: string;
+  constraint_sentence: string;
+  customer_sentence: string | null;
+
+  // Supporting facts for badges
+  limiting_factor: 'warehouse' | 'boat' | 'mode' | 'none';
+  deferred_count: number;
+  customers_expecting: number;
+  critical_count: number;
+  highest_risk_sku: string | null;
+  highest_risk_days: number | null;
+}
+
 export interface OrderSummaryReasoning {
   strategy: OrderStrategy;
   days_to_boat: number;
@@ -87,8 +103,9 @@ export interface OrderSummaryReasoning {
   urgent_count: number;
   stable_count: number;
   excluded_count: number;
-  key_insights: string[];
+  key_insights: string[]; // Legacy - being replaced by reasoning
   excluded_products: ExcludedProduct[];
+  reasoning: OrderReasoning | null; // NEW: Structured narrative
 }
 
 export interface OrderBuilderProduct {

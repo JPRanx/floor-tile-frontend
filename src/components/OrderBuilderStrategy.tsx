@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { OrderSummaryReasoning, ExcludedProduct } from '../requests/orderBuilder';
+import type { OrderSummaryReasoning, OrderReasoning, ExcludedProduct } from '../requests/orderBuilder';
 
 interface OrderBuilderStrategyProps {
   reasoning: OrderSummaryReasoning | null;
@@ -126,25 +126,81 @@ export function OrderBuilderStrategy({ reasoning }: OrderBuilderStrategyProps) {
             )}
           </div>
 
-          {/* Key Insights */}
-          {reasoning.key_insights.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                <span>💡</span>
-                {t('orderBuilder.keyInsights')}
-              </h4>
-              <ul className="space-y-1.5">
-                {reasoning.key_insights.map((insight, index) => (
-                  <li
-                    key={index}
-                    className="text-sm text-slate-400 flex items-start gap-2"
-                  >
-                    <span className="text-slate-600 mt-0.5">•</span>
-                    <span>{insight}</span>
-                  </li>
-                ))}
-              </ul>
+          {/* Narrative Reasoning */}
+          {reasoning.reasoning ? (
+            <div className="space-y-3">
+              {/* Strategy sentence */}
+              <p className="text-sm text-slate-300 leading-relaxed">
+                <span className="text-emerald-400 font-medium">
+                  {reasoning.reasoning.strategy_sentence}
+                </span>
+              </p>
+
+              {/* Risk sentence */}
+              <p className="text-sm text-slate-400 leading-relaxed">
+                {reasoning.reasoning.risk_sentence}
+              </p>
+
+              {/* Constraint sentence */}
+              {reasoning.reasoning.limiting_factor !== 'none' && (
+                <p className="text-sm text-amber-400/90 leading-relaxed">
+                  {reasoning.reasoning.constraint_sentence}
+                </p>
+              )}
+              {reasoning.reasoning.limiting_factor === 'none' && (
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {reasoning.reasoning.constraint_sentence}
+                </p>
+              )}
+
+              {/* Customer sentence (if available) */}
+              {reasoning.reasoning.customer_sentence && (
+                <p className="text-sm text-blue-400/90 leading-relaxed">
+                  <span className="text-blue-400">👥</span>{' '}
+                  {reasoning.reasoning.customer_sentence}
+                </p>
+              )}
+
+              {/* Supporting badges */}
+              {(reasoning.reasoning.deferred_count > 0 || reasoning.reasoning.limiting_factor !== 'none') && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {reasoning.reasoning.limiting_factor !== 'none' && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      {reasoning.reasoning.limiting_factor === 'warehouse' && '🏭'}
+                      {reasoning.reasoning.limiting_factor === 'boat' && '🚢'}
+                      {reasoning.reasoning.limiting_factor === 'mode' && '⚙️'}
+                      {t(`orderBuilder.limitingFactor.${reasoning.reasoning.limiting_factor}`)}
+                    </span>
+                  )}
+                  {reasoning.reasoning.deferred_count > 0 && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                      📦 {reasoning.reasoning.deferred_count} {t('orderBuilder.palletsDeferredShort')}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
+          ) : (
+            /* Fallback to legacy key_insights */
+            reasoning.key_insights.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                  <span>💡</span>
+                  {t('orderBuilder.keyInsights')}
+                </h4>
+                <ul className="space-y-1.5">
+                  {reasoning.key_insights.map((insight, index) => (
+                    <li
+                      key={index}
+                      className="text-sm text-slate-400 flex items-start gap-2"
+                    >
+                      <span className="text-slate-600 mt-0.5">•</span>
+                      <span>{insight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )
           )}
 
           {/* Excluded Products (Collapsible) */}

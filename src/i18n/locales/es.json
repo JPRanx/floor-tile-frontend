@@ -170,7 +170,13 @@
       "NO_SALES": "Sin ventas recientes",
       "DECLINING": "Demanda en declive",
       "NO_DATA": "Datos insuficientes"
-    }
+    },
+    "limitingFactor": {
+      "warehouse": "Límite de almacén",
+      "boat": "Capacidad del barco",
+      "mode": "Límite del modo"
+    },
+    "palletsDeferredShort": "diferidas"
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",
