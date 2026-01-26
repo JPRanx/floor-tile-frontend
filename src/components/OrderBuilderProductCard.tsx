@@ -315,8 +315,8 @@ export function OrderBuilderProductCard({
                       <span className="text-slate-300 font-medium">{breakdown.lead_time_days}d</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>{t('orderBuilderProduct.safetyStock')}:</span>
-                      <span className="text-slate-300 font-medium">{breakdown.safety_stock_days}d</span>
+                      <span>{t('orderBuilderProduct.untilNextBoat', 'Until next boat')}:</span>
+                      <span className="text-slate-300 font-medium">{breakdown.ordering_cycle_days}d</span>
                     </div>
                     <div className="flex justify-between">
                       <span>{t('orderBuilderProduct.dailyVelocity')}:</span>
@@ -361,10 +361,35 @@ export function OrderBuilderProductCard({
             </div>
           )}
 
-          {/* Factory Status (MVP placeholder) */}
-          {product.factory_status === 'unknown' && product.is_selected && (
-            <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-amber-400 bg-amber-500/10 px-2 py-1 rounded-lg">
-              ⚠️ {t('orderBuilderProduct.verifyFactory')}
+          {/* Factory Production Status */}
+          {product.factory_status === 'in_production' && (
+            <div className={`
+              mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg
+              ${product.factory_ready_before_boat
+                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+              }
+            `}>
+              <span>🏭</span>
+              <span className="font-medium">
+                {product.factory_timing_message || (
+                  product.factory_production_date
+                    ? `Production: ${new Date(product.factory_production_date).toLocaleDateString()}`
+                    : 'In production'
+                )}
+              </span>
+              {product.factory_production_m2 && (
+                <span className="text-slate-400 ml-1">
+                  ({Math.round(Number(product.factory_production_m2)).toLocaleString()} m²)
+                </span>
+              )}
+            </div>
+          )}
+
+          {product.factory_status === 'not_scheduled' && product.is_selected && (
+            <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-400 bg-slate-500/10 px-2.5 py-1 rounded-lg border border-slate-500/30">
+              <span>📋</span>
+              <span>{t('orderBuilderProduct.notInSchedule', 'Not in production schedule')}</span>
             </div>
           )}
         </div>

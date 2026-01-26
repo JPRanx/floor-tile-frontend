@@ -7,10 +7,11 @@ export type Priority = 'HIGH_PRIORITY' | 'CONSIDER' | 'WELL_COVERED' | 'YOUR_CAL
 export type Urgency = 'critical' | 'urgent' | 'soon' | 'ok';
 export type TrendDirection = 'up' | 'down' | 'stable';
 export type TrendStrength = 'strong' | 'moderate' | 'weak';
+export type FactoryStatus = 'in_production' | 'not_scheduled';
 
 export interface CalculationBreakdown {
   lead_time_days: number;
-  safety_stock_days: number;
+  ordering_cycle_days: number;
   daily_velocity_m2: number;
   base_quantity_m2: number;
   trend_adjustment_m2: number;
@@ -116,9 +117,13 @@ export interface OrderBuilderProduct {
   top_customer_name: string | null;
   top_customer_share: number | null;
 
-  // Factory (MVP: placeholder)
-  factory_available: number | null;
-  factory_status: string;
+  // Factory production status (from production_schedule)
+  factory_status: FactoryStatus;
+  factory_production_date: string | null;
+  factory_production_m2: number | null;
+  days_until_factory_ready: number | null;
+  factory_ready_before_boat: boolean | null;
+  factory_timing_message: string | null;
 
   // Trend data (from Intelligence system)
   urgency: Urgency;
@@ -135,6 +140,10 @@ export interface OrderBuilderProduct {
   // Weight data (for container optimization)
   weight_per_m2_kg: number;
   total_weight_kg: number;
+
+  // Customer demand signal (for intelligent prioritization)
+  customer_demand_score: number;
+  customers_expecting_count: number;
 
   // Selection state
   is_selected: boolean;
@@ -187,6 +196,66 @@ export interface OrderBuilderSummary {
   alerts: OrderBuilderAlert[];
 }
 
+export type LimitingFactor = 'none' | 'warehouse' | 'boat' | 'mode';
+
+export type LiquidationReason = 'declining_overstocked' | 'no_sales' | 'extreme_overstock';
+
+export interface LiquidationCandidate {
+  product_id: string;
+  sku: string;
+  description: string | null;
+
+  // Current stock
+  current_m2: number;
+  current_pallets: number;
+
+  // Stock metrics
+  days_of_stock: number | null;
+  trend_direction: string;
+  trend_pct: number;
+  daily_velocity_m2: number;
+
+  // Liquidation reason
+  reason: LiquidationReason;
+  reason_display: string;
+
+  // Space that could be freed
+  potential_space_freed_m2: number;
+  potential_space_freed_pallets: number;
+}
+
+export interface ConstraintAnalysis {
+  // Total demand
+  total_needed_pallets: number;
+  total_needed_m2: number;
+
+  // Available capacity
+  warehouse_available_pallets: number;
+  boat_capacity_pallets: number;
+  mode_limit_pallets: number;
+
+  // Limiting factor
+  limiting_factor: LimitingFactor;
+  effective_limit_pallets: number;
+
+  // What fits vs what doesn't
+  can_order_pallets: number;
+  deferred_pallets: number;
+  deferred_skus: string[];
+
+  // Utilization
+  constraint_utilization_pct: number;
+
+  // Liquidation insight
+  liquidation_candidates: LiquidationCandidate[];
+  total_liquidation_potential_pallets: number;
+  total_liquidation_potential_m2: number;
+
+  // Helpful flags
+  liquidation_needed: boolean;
+  liquidation_could_fit_deferred: boolean;
+}
+
 export interface OrderBuilderResponse {
   // Boat info
   boat: OrderBuilderBoat;
@@ -203,6 +272,9 @@ export interface OrderBuilderResponse {
 
   // Summary
   summary: OrderBuilderSummary;
+
+  // Constraint analysis (explains capacity limits)
+  constraint_analysis: ConstraintAnalysis | null;
 
   // Reasoning (explains WHY this order strategy)
   summary_reasoning: OrderSummaryReasoning | null;
@@ -277,6 +349,60 @@ export interface DemandForecastResponse {
   customers_due_soon: CustomerDue[];
   overdue_alerts: OverdueAlert[];
   demand_by_product: ProductDemand[];
+}
+
+// ===================
+// PRODUCTION SCHEDULE TYPES
+// ===================
+
+export interface MatchSuggestion {
+  product_id: string;
+  sku: string;
+  score: number;
+  match_reason: string;
+}
+
+export interface UnmappedProduct {
+  factory_code: string;
+  factory_name: string;
+  total_m2: number;
+  production_dates: string[];
+  row_count: number;
+  suggested_matches: MatchSuggestion[];
+}
+
+export interface UploadResult {
+  total_rows: number;
+  matched_count: number;
+  unmatched_count: number;
+  schedule_date: string;
+  schedule_version: string | null;
+  filename: string;
+  unmatched_products: UnmappedProduct[];
+  warnings: string[];
+}
+
+export interface MapProductRequest {
+  factory_code: string;
+  product_id: string;
+}
+
+export interface MapProductResponse {
+  factory_code: string;
+  product_id: string;
+  product_sku: string;
+  rows_updated: number;
+}
+
+export interface ProductFactoryStatus {
+  product_id: string;
+  sku: string;
+  status: FactoryStatus;
+  production_date: string | null;
+  production_m2: number | null;
+  days_until_ready: number | null;
+  ready_before_boat: boolean | null;
+  timing_message: string | null;
 }
 
 export const orderBuilderApi = {
