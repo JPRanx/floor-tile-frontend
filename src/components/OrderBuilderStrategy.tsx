@@ -35,6 +35,9 @@ function ExcludedProductItem({ product }: { product: ExcludedProduct }) {
   const { t } = useTranslation();
   const config = EXCLUSION_REASON_CONFIG[product.reason] || EXCLUSION_REASON_CONFIG.NO_DATA;
 
+  // Convert trend_pct to number (backend sends as string from Decimal)
+  const trendPct = product.trend_pct !== null ? Number(product.trend_pct) : null;
+
   return (
     <div className="flex items-center gap-3 py-2 px-3 bg-slate-800/30 rounded-lg">
       <span className="text-lg">{config.icon}</span>
@@ -46,12 +49,12 @@ function ExcludedProductItem({ product }: { product: ExcludedProduct }) {
           {t(`orderBuilder.exclusionReason.${product.reason}`)}
           {product.days_of_stock !== null && (
             <span className="text-slate-500 ml-1">
-              · {product.days_of_stock} {t('orderBuilder.daysStock')}
+              · {Math.round(Number(product.days_of_stock))} {t('orderBuilder.daysStock')}
             </span>
           )}
-          {product.trend_pct !== null && product.trend_pct !== 0 && (
+          {trendPct !== null && trendPct !== 0 && (
             <span className="text-slate-500 ml-1">
-              · {product.trend_pct > 0 ? '+' : ''}{product.trend_pct.toFixed(0)}%
+              · {trendPct > 0 ? '+' : ''}{trendPct.toFixed(0)}%
             </span>
           )}
         </p>
