@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { OrderSummaryReasoning, OrderReasoning, ExcludedProduct } from '../requests/orderBuilder';
+import type { OrderSummaryReasoning, ExcludedProduct } from '../requests/orderBuilder';
 
 interface OrderBuilderStrategyProps {
   reasoning: OrderSummaryReasoning | null;
