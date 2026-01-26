@@ -7,6 +7,7 @@ import { inventoryApi } from '../requests/inventory';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { InventoryUploadModal } from '../components/InventoryUploadModal';
 import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
+import { StockCoverage } from '../components/shared';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -269,18 +270,27 @@ export function Dashboard() {
                     <StatusBadgeDark status={product.status} />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <span
-                      className={`text-sm font-medium ${
-                        product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout)) &&
-                        data.days_to_next_boat != null && Number(product.days_to_stockout) < data.days_to_next_boat
-                          ? 'text-rose-400'
-                          : 'text-white'
-                      }`}
-                    >
-                      {product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout))
-                        ? t('dashboard.daysText', { count: Math.round(Number(product.days_to_stockout)) })
-                        : '—'}
-                    </span>
+                    <StockCoverage
+                      variant="compact"
+                      warehouseDays={product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout))
+                        ? Number(product.days_to_stockout)
+                        : null}
+                      withTransitDays={
+                        product.days_to_stockout != null && Number(product.avg_daily_sales) > 0
+                          ? Number(product.days_to_stockout) + (Number(product.in_transit_qty) / Number(product.avg_daily_sales))
+                          : null
+                      }
+                      inTransitDays={
+                        Number(product.in_transit_qty) > 0 && Number(product.avg_daily_sales) > 0
+                          ? Number(product.in_transit_qty) / Number(product.avg_daily_sales)
+                          : null
+                      }
+                      hasGap={
+                        product.days_to_stockout != null &&
+                        data.days_to_next_boat != null &&
+                        Number(product.days_to_stockout) < data.days_to_next_boat
+                      }
+                    />
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-slate-400">
                     {Number(product.avg_daily_sales) > 0

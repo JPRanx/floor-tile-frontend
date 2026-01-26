@@ -690,5 +690,18 @@
       "erratic": "Errático",
       "expected": "esperado"
     }
+  },
+  "stockCoverage": {
+    "warehouse": "bodega",
+    "total": "total",
+    "transit": "Tránsito llega",
+    "gap": "Gap",
+    "daysWithoutProduct": "días sin producto",
+    "noSales": "Sin ventas",
+    "now": "AHORA",
+    "withOrder": "CON PEDIDO",
+    "covered": "Cubierto",
+    "days": "días",
+    "gapWarning": "Agotamiento antes de que llegue el tránsito"
   }
 }

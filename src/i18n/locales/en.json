@@ -690,5 +690,18 @@
       "erratic": "Erratic",
       "expected": "expected"
     }
+  },
+  "stockCoverage": {
+    "warehouse": "warehouse",
+    "total": "total",
+    "transit": "Transit arrives",
+    "gap": "Gap",
+    "daysWithoutProduct": "days without product",
+    "noSales": "No sales",
+    "now": "NOW",
+    "withOrder": "WITH ORDER",
+    "covered": "Covered",
+    "days": "days",
+    "gapWarning": "Stockout before transit arrives"
   }
 }
