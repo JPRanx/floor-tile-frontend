@@ -1,9 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { OrderBuilderSummary as SummaryType } from '../requests/orderBuilder';
-
-// Container weight limit (matches backend)
-const CONTAINER_MAX_WEIGHT_KG = 27500;
-const WEIGHT_PER_M2_KG = 14.90;
+import { CONTAINER_MAX_WEIGHT_KG, WEIGHT_PER_M2_KG } from '../constants/inventory';
 
 interface OrderBuilderSummaryProps {
   summary: SummaryType;

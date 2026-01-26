@@ -21,10 +21,17 @@ import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
 import { ExpectedDemandSection } from '../components/ExpectedDemandSection';
 import { CustomersDueList } from '../components/CustomersDueList';
 import { CallBeforeOrderingAlert } from '../components/CallBeforeOrderingAlert';
+import {
+  M2_PER_PALLET,
+  CONTAINER_MAX_PALLETS,
+  WAREHOUSE_MAX_PALLETS,
+  WEIGHT_PER_M2_KG,
+} from '../constants/inventory';
 
-const M2_PER_PALLET = 135;
-const PALLETS_PER_CONTAINER = 14;
-const WAREHOUSE_CAPACITY = 740;
+// Extended product type with selected_m2 for two-way input sync
+interface OrderBuilderProductWithM2 extends OrderBuilderProduct {
+  selected_m2: number;
+}
 
 export function OrderBuilder() {
   const { t } = useTranslation();
@@ -38,7 +45,8 @@ export function OrderBuilder() {
   const [selectedBoatId, setSelectedBoatId] = useState<string | undefined>(undefined);
 
   // Local state for products (allows editing without refetching)
-  const [products, setProducts] = useState<OrderBuilderProduct[]>([]);
+  // Uses extended type with selected_m2 for two-way pallet/m² sync
+  const [products, setProducts] = useState<OrderBuilderProductWithM2[]>([]);
 
   // Expanded state for sections
   const [expandedSections, setExpandedSections] = useState({
@@ -85,12 +93,16 @@ export function OrderBuilder() {
       const result = await orderBuilderApi.get({ mode: selectedMode, boat_id: boatId });
       setData(result);
       // Flatten all products into a single array for local state
-      const allProducts = [
+      // Initialize selected_m2 from selected_pallets for two-way sync
+      const allProducts: OrderBuilderProductWithM2[] = [
         ...result.high_priority,
         ...result.consider,
         ...result.well_covered,
         ...result.your_call,
-      ];
+      ].map((p) => ({
+        ...p,
+        selected_m2: p.selected_pallets * M2_PER_PALLET,
+      }));
       setProducts(allProducts);
     } catch (err) {
       setError('Failed to load order builder data');
@@ -135,10 +147,12 @@ export function OrderBuilder() {
       prev.map((p) => {
         if (p.product_id === productId) {
           const newSelected = !p.is_selected;
+          const newPallets = newSelected ? p.coverage_gap_pallets : 0;
           return {
             ...p,
             is_selected: newSelected,
-            selected_pallets: newSelected ? p.coverage_gap_pallets : 0,
+            selected_pallets: newPallets,
+            selected_m2: newPallets * M2_PER_PALLET,
           };
         }
         return p;
@@ -146,6 +160,7 @@ export function OrderBuilder() {
     );
   };
 
+  // Handle pallet input change: pallets → m² = pallets × 134.4
   const handleQuantityChange = (productId: string, pallets: number) => {
     setProducts((prev) =>
       prev.map((p) => {
@@ -153,7 +168,26 @@ export function OrderBuilder() {
           return {
             ...p,
             selected_pallets: pallets,
+            selected_m2: pallets * M2_PER_PALLET,
             is_selected: pallets > 0,
+          };
+        }
+        return p;
+      })
+    );
+  };
+
+  // Handle m² input change: pallets = FLOOR(m² / 134.4), preserve exact m²
+  const handleM2Change = (productId: string, m2: number) => {
+    setProducts((prev) =>
+      prev.map((p) => {
+        if (p.product_id === productId) {
+          const pallets = Math.floor(m2 / M2_PER_PALLET);
+          return {
+            ...p,
+            selected_pallets: pallets,
+            selected_m2: m2, // Preserve exact m² value entered by user
+            is_selected: m2 > 0,
           };
         }
         return p;
@@ -192,7 +226,7 @@ export function OrderBuilder() {
           : 'Order Builder export (no boat selected, using 45-day lead time)',
         items: selected.map((p) => ({
           product_id: p.product_id,
-          quantity_ordered: p.selected_pallets * M2_PER_PALLET, // Convert pallets to m²
+          quantity_ordered: p.selected_m2, // Use actual m² entered by user
         })),
       });
 
@@ -230,17 +264,19 @@ export function OrderBuilder() {
   };
 
   // Recalculate summary from local products state
+  // Uses selected_m2 (exact user input) for accurate totals
   const summary: SummaryType = (() => {
     const selected = products.filter((p) => p.is_selected);
     const totalPallets = selected.reduce((sum, p) => sum + p.selected_pallets, 0);
-    const totalM2 = totalPallets * M2_PER_PALLET;
-    const totalContainers = Math.ceil(totalPallets / PALLETS_PER_CONTAINER);
+    // Use actual m² entered by user, not derived from pallets
+    const totalM2 = selected.reduce((sum, p) => sum + p.selected_m2, 0);
+    const totalContainers = Math.ceil(totalPallets / CONTAINER_MAX_PALLETS);
     const warehouseCurrent = data?.summary.warehouse_current_pallets || 0;
     const warehouseAfter = warehouseCurrent + totalPallets;
     const boatMaxContainers = data?.boat.max_containers || 5;
 
-    // Calculate weight
-    const totalWeightKg = selected.reduce((sum, p) => sum + (p.total_weight_kg || 0), 0);
+    // Calculate weight from actual m² entered (not from pallets)
+    const totalWeightKg = totalM2 * WEIGHT_PER_M2_KG;
     const containersByPallets = totalContainers;
     const containersByWeight = Math.ceil(totalWeightKg / 27500); // 27.5 tons per container
     const weightIsLimiting = containersByWeight > containersByPallets;
@@ -256,9 +292,9 @@ export function OrderBuilder() {
       boat_max_containers: boatMaxContainers,
       boat_remaining_containers: Math.max(0, boatMaxContainers - totalContainers),
       warehouse_current_pallets: warehouseCurrent,
-      warehouse_capacity: WAREHOUSE_CAPACITY,
+      warehouse_capacity: WAREHOUSE_MAX_PALLETS,
       warehouse_after_delivery: warehouseAfter,
-      warehouse_utilization_after: (warehouseAfter / WAREHOUSE_CAPACITY) * 100,
+      warehouse_utilization_after: (warehouseAfter / WAREHOUSE_MAX_PALLETS) * 100,
       alerts: [],
     };
   })();
@@ -268,8 +304,8 @@ export function OrderBuilder() {
     const alertList: OrderBuilderAlert[] = [];
 
     // Warehouse exceeded
-    if (summary.warehouse_after_delivery > WAREHOUSE_CAPACITY) {
-      const over = summary.warehouse_after_delivery - WAREHOUSE_CAPACITY;
+    if (summary.warehouse_after_delivery > WAREHOUSE_MAX_PALLETS) {
+      const over = summary.warehouse_after_delivery - WAREHOUSE_MAX_PALLETS;
       alertList.push({
         type: 'blocked',
         icon: '🚫',
@@ -507,6 +543,7 @@ export function OrderBuilder() {
                             product={product}
                             onToggleSelect={handleToggleSelect}
                             onQuantityChange={handleQuantityChange}
+                            onM2Change={handleM2Change}
                           />
                         ))}
                       </div>

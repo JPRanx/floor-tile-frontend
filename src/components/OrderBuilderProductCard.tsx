@@ -7,17 +7,26 @@ import type {
   TrendDirection,
   TrendStrength,
 } from '../requests/orderBuilder';
+import { StockCoverage } from './shared';
+import { M2_PER_PALLET, WEIGHT_PER_M2_KG } from '../constants/inventory';
+
+// Extended product type with selected_m2 for two-way input sync
+interface OrderBuilderProductWithM2 extends OrderBuilderProduct {
+  selected_m2: number;
+}
 
 interface OrderBuilderProductCardProps {
-  product: OrderBuilderProduct;
+  product: OrderBuilderProductWithM2;
   onToggleSelect: (productId: string) => void;
   onQuantityChange: (productId: string, pallets: number) => void;
+  onM2Change: (productId: string, m2: number) => void;
 }
 
 export function OrderBuilderProductCard({
   product,
   onToggleSelect,
   onQuantityChange,
+  onM2Change,
 }: OrderBuilderProductCardProps) {
   const { t } = useTranslation();
   const [showBreakdown, setShowBreakdown] = useState(false);
@@ -189,18 +198,18 @@ export function OrderBuilderProductCard({
               {/* Separator */}
               <span className="text-slate-600">=</span>
 
-              {/* m² Input (connected to pallets) */}
+              {/* m² Input (two-way sync with pallets) */}
               <div className="flex items-center gap-1">
                 <input
                   type="number"
                   min="0"
-                  step="134.4"
-                  value={Math.round(product.selected_pallets * 134.4 * 10) / 10}
+                  step="1"
+                  value={Math.round(product.selected_m2 * 10) / 10}
                   onChange={(e) => {
                     const m2 = parseFloat(e.target.value) || 0;
-                    // Round up to nearest full pallet
-                    const pallets = Math.ceil(m2 / 134.4);
-                    onQuantityChange(product.product_id, Math.min(50, Math.max(0, pallets)));
+                    // Clamp to max 50 pallets worth of m²
+                    const maxM2 = 50 * M2_PER_PALLET;
+                    onM2Change(product.product_id, Math.min(maxM2, Math.max(0, m2)));
                   }}
                   disabled={!product.is_selected}
                   className={`
@@ -216,12 +225,12 @@ export function OrderBuilderProductCard({
                 <span className="text-sm text-slate-400">m²</span>
               </div>
 
-              {/* Weight Display (when selected) */}
-              {product.is_selected && product.selected_pallets > 0 && (
+              {/* Weight Display (when selected) - calculated from actual m² */}
+              {product.is_selected && product.selected_m2 > 0 && (
                 <div className="hidden sm:flex items-center gap-1 text-sm">
                   <span className="text-slate-500">⚖️</span>
                   <span className="text-slate-300 font-medium">
-                    {Math.round(Number(product.total_weight_kg) || 0).toLocaleString()} kg
+                    {Math.round(product.selected_m2 * WEIGHT_PER_M2_KG).toLocaleString()} kg
                   </span>
                 </div>
               )}
@@ -237,27 +246,21 @@ export function OrderBuilderProductCard({
             </div>
           </div>
 
-          {/* Stock & Days of Stock Row */}
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm">
-            <span className="text-slate-400">
-              {t('orderBuilderProduct.stock')}:{' '}
-              <span className="font-semibold text-slate-200">{Math.round(product.current_stock_m2).toLocaleString()} m²</span>
-              {product.in_transit_m2 > 0 && (
-                <span className="text-indigo-400 ml-2">
-                  + 📦 {Math.round(product.in_transit_m2).toLocaleString()} m² {t('orderBuilderProduct.inTransit')}
-                </span>
-              )}
-            </span>
-            {product.days_of_stock !== null && (
-              <span className="text-slate-400">
-                {t('orderBuilderProduct.daysOfStock')}:{' '}
-                <span className={`font-bold ${
-                  product.days_of_stock < 14 ? 'text-red-400' :
-                  product.days_of_stock < 30 ? 'text-amber-400' : 'text-emerald-400'
-                }`}>
-                  {product.days_of_stock}d
-                </span>
-              </span>
+          {/* Stock Coverage Comparison */}
+          <div className="mt-3">
+            <StockCoverage
+              variant="comparison"
+              warehouseDays={product.days_of_stock}
+              withOrderDays={
+                product.days_of_stock !== null && product.daily_velocity_m2 > 0 && product.selected_m2 > 0
+                  ? product.days_of_stock + Math.round(product.selected_m2 / product.daily_velocity_m2)
+                  : product.days_of_stock
+              }
+            />
+            {product.in_transit_m2 > 0 && (
+              <div className="mt-1 text-xs text-indigo-400">
+                + 📦 {Math.round(product.in_transit_m2).toLocaleString()} m² {t('orderBuilderProduct.inTransit')}
+              </div>
             )}
           </div>
 
