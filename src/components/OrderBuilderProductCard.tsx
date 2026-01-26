@@ -126,6 +126,31 @@ export function OrderBuilderProductCard({
                 {urgency.label}
               </span>
 
+              {/* Score Badge */}
+              {product.score && (
+                <span
+                  className={`
+                    inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold
+                    ${product.score.total >= 70
+                      ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                      : product.score.total >= 40
+                      ? 'bg-slate-500/20 text-slate-300 border-slate-500/30'
+                      : 'bg-slate-600/20 text-slate-400 border-slate-600/30'
+                    }
+                    border
+                  `}
+                  title={t('orderBuilderProduct.scoreTooltip', 'Priority score: Stockout {{stockout}}, Customer {{customer}}, Trend {{trend}}, Revenue {{revenue}}', {
+                    stockout: product.score.stockout_risk,
+                    customer: product.score.customer_demand,
+                    trend: product.score.growth_trend,
+                    revenue: product.score.revenue_impact,
+                  })}
+                >
+                  {product.score.total}
+                  <span className="text-slate-500 ml-0.5">/100</span>
+                </span>
+              )}
+
               {/* Trend Indicator */}
               {product.trend_direction && product.trend_direction !== 'stable' && (
                 <span className={`
@@ -269,6 +294,16 @@ export function OrderBuilderProductCard({
             <div className="mt-1 text-sm text-slate-400">
               {t('orderBuilderProduct.velocity')}:{' '}
               <span className="font-semibold text-slate-200">{Number(product.daily_velocity_m2).toFixed(1)} m²/day</span>
+            </div>
+          )}
+
+          {/* Reasoning Sentence (Layer 4) */}
+          {product.reasoning_display && (
+            <div className="mt-2 flex items-start gap-2 text-sm">
+              <span className="text-yellow-400">💡</span>
+              <span className="text-slate-300">
+                {product.reasoning_display.why_product_sentence}
+              </span>
             </div>
           )}
 

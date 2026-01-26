@@ -94,6 +94,27 @@ export interface OrderReasoning {
   highest_risk_days: number | null;
 }
 
+// ===================
+// PRIORITY SCORING (Layer 2 & 4)
+// ===================
+
+export type DominantFactor = 'stockout' | 'customer' | 'trend' | 'revenue';
+
+export interface ProductScore {
+  total: number;           // 0-100 composite score
+  stockout_risk: number;   // 0-40 points
+  customer_demand: number; // 0-30 points
+  growth_trend: number;    // 0-20 points
+  revenue_impact: number;  // 0-10 points
+}
+
+export interface ProductReasoningDisplay {
+  why_product_sentence: string;    // "Out of stock · 2 customers waiting"
+  why_quantity_sentence: string;   // "63d coverage × 30 m²/day"
+  dominant_factor: DominantFactor; // Which factor contributed most
+  would_include_if: string | null; // For excluded: "Stock drops below 60 days"
+}
+
 export interface OrderSummaryReasoning {
   strategy: OrderStrategy;
   days_to_boat: number;
@@ -153,6 +174,12 @@ export interface OrderBuilderProduct {
 
   // Reasoning (explains WHY this recommendation)
   reasoning: ProductReasoning | null;
+
+  // Priority score (Layer 2 scoring system)
+  score: ProductScore | null;
+
+  // Display reasoning (Layer 4 per-product explanation)
+  reasoning_display: ProductReasoningDisplay | null;
 
   // Weight data (for container optimization)
   weight_per_m2_kg: number;

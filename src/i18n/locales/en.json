@@ -176,7 +176,20 @@
       "boat": "Boat capacity",
       "mode": "Mode limit"
     },
-    "palletsDeferredShort": "deferred"
+    "palletsDeferredShort": "deferred",
+    "scoring": {
+      "title": "How Products Are Ranked",
+      "description": "Each product receives a priority score from 0-100 based on four factors:",
+      "stockoutRisk": "Stockout Risk",
+      "stockoutRiskDesc": "Days until out of stock",
+      "customerDemand": "Customer Demand",
+      "customerDemandDesc": "Customers expected to order soon",
+      "growthTrend": "Growth Trend",
+      "growthTrendDesc": "Increasing or decreasing demand",
+      "revenueImpact": "Revenue Impact",
+      "revenueImpactDesc": "Sales velocity / importance",
+      "note": "Higher scores are prioritized when capacity is limited."
+    }
   },
   "recommendations": {
     "title": "Order Recommendations",

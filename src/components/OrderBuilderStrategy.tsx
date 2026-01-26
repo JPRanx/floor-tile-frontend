@@ -6,6 +6,93 @@ interface OrderBuilderStrategyProps {
   reasoning: OrderSummaryReasoning | null;
 }
 
+// Scoring Framework - explains how products are ranked (Layer 2)
+function ScoringFramework() {
+  const { t } = useTranslation();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const factors = [
+    {
+      name: t('orderBuilder.scoring.stockoutRisk'),
+      weight: '40%',
+      description: t('orderBuilder.scoring.stockoutRiskDesc'),
+      color: 'text-red-400',
+      bgColor: 'bg-red-500/10',
+    },
+    {
+      name: t('orderBuilder.scoring.customerDemand'),
+      weight: '30%',
+      description: t('orderBuilder.scoring.customerDemandDesc'),
+      color: 'text-blue-400',
+      bgColor: 'bg-blue-500/10',
+    },
+    {
+      name: t('orderBuilder.scoring.growthTrend'),
+      weight: '20%',
+      description: t('orderBuilder.scoring.growthTrendDesc'),
+      color: 'text-emerald-400',
+      bgColor: 'bg-emerald-500/10',
+    },
+    {
+      name: t('orderBuilder.scoring.revenueImpact'),
+      weight: '10%',
+      description: t('orderBuilder.scoring.revenueImpactDesc'),
+      color: 'text-amber-400',
+      bgColor: 'bg-amber-500/10',
+    },
+  ];
+
+  return (
+    <div className="border-t border-slate-700/30 pt-4">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between text-left group"
+      >
+        <h4 className="text-sm font-medium text-slate-300 flex items-center gap-2">
+          <span>📊</span>
+          {t('orderBuilder.scoring.title')}
+        </h4>
+        <span className={`text-slate-500 text-xs transition-transform duration-200 group-hover:text-slate-400 ${isOpen ? 'rotate-180' : ''}`}>
+          ▼
+        </span>
+      </button>
+
+      {isOpen && (
+        <div className="mt-3 space-y-3">
+          <p className="text-xs text-slate-500">
+            {t('orderBuilder.scoring.description')}
+          </p>
+
+          <div className="space-y-2">
+            {factors.map((factor) => (
+              <div
+                key={factor.name}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg ${factor.bgColor}`}
+              >
+                <span className={`text-sm font-medium ${factor.color} min-w-[3rem]`}>
+                  {factor.weight}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium ${factor.color}`}>
+                    {factor.name}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {factor.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs text-slate-600 italic">
+            {t('orderBuilder.scoring.note')}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 const STRATEGY_CONFIG = {
   STOCKOUT_PREVENTION: {
     icon: '🛡️',
@@ -202,6 +289,9 @@ export function OrderBuilderStrategy({ reasoning }: OrderBuilderStrategyProps) {
               </div>
             )
           )}
+
+          {/* Scoring Framework - How products are ranked (Layer 2) */}
+          <ScoringFramework />
 
           {/* Excluded Products (Collapsible) */}
           {hasExcluded && (

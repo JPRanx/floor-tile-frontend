@@ -176,7 +176,20 @@
       "boat": "Capacidad del barco",
       "mode": "Límite del modo"
     },
-    "palletsDeferredShort": "diferidas"
+    "palletsDeferredShort": "diferidas",
+    "scoring": {
+      "title": "Cómo se Clasifican los Productos",
+      "description": "Cada producto recibe una puntuación de prioridad de 0-100 basada en cuatro factores:",
+      "stockoutRisk": "Riesgo de Agotamiento",
+      "stockoutRiskDesc": "Días hasta agotarse",
+      "customerDemand": "Demanda de Clientes",
+      "customerDemandDesc": "Clientes esperados a ordenar pronto",
+      "growthTrend": "Tendencia de Crecimiento",
+      "growthTrendDesc": "Demanda creciente o decreciente",
+      "revenueImpact": "Impacto en Ingresos",
+      "revenueImpactDesc": "Velocidad de ventas / importancia",
+      "note": "Las puntuaciones más altas se priorizan cuando la capacidad es limitada."
+    }
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",
