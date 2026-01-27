@@ -174,7 +174,7 @@
     "limitingFactor": {
       "warehouse": "Warehouse limit",
       "boat": "Boat capacity",
-      "mode": "Mode limit"
+      "bl_capacity": "BL capacity"
     },
     "palletsDeferredShort": "deferred",
     "scoring": {

@@ -255,7 +255,7 @@ export function OrderBuilderStrategy({ reasoning }: OrderBuilderStrategyProps) {
                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20">
                       {reasoning.reasoning.limiting_factor === 'warehouse' && '🏭'}
                       {reasoning.reasoning.limiting_factor === 'boat' && '🚢'}
-                      {reasoning.reasoning.limiting_factor === 'mode' && '⚙️'}
+                      {reasoning.reasoning.limiting_factor === 'bl_capacity' && '📦'}
                       {t(`orderBuilder.limitingFactor.${reasoning.reasoning.limiting_factor}`)}
                     </span>
                   )}

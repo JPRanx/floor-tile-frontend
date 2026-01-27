@@ -4,7 +4,6 @@ import { orderBuilderApi } from '../requests/orderBuilder';
 import type {
   OrderBuilderResponse,
   OrderBuilderProduct,
-  OrderBuilderMode,
   OrderBuilderSummary as SummaryType,
   OrderBuilderAlert,
   DemandForecastResponse,
@@ -40,7 +39,6 @@ export function OrderBuilder() {
   const [data, setData] = useState<OrderBuilderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<OrderBuilderMode>('standard');
 
   // Available boats for selector
   const [availableBoats, setAvailableBoats] = useState<BoatSchedule[]>([]);
@@ -95,11 +93,11 @@ export function OrderBuilder() {
     fetchBoats();
   }, []);
 
-  const loadData = useCallback(async (selectedMode: OrderBuilderMode, boatId?: string) => {
+  const loadData = useCallback(async (blCount: number, boatId?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const result = await orderBuilderApi.get({ mode: selectedMode, boat_id: boatId });
+      const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId });
       setData(result);
       // Flatten all products into a single array for local state
       // Initialize selected_m2 from selected_pallets for two-way sync
@@ -138,17 +136,13 @@ export function OrderBuilder() {
   useEffect(() => {
     // Load data even without a boat - backend will use defaults
     if (boatsLoaded) {
-      loadData(mode, selectedBoatId);
+      loadData(numBLs, selectedBoatId);
       loadDemandForecast(selectedBoatId);
     }
-  }, [mode, selectedBoatId, loadData, loadDemandForecast, boatsLoaded]);
+  }, [numBLs, selectedBoatId, loadData, loadDemandForecast, boatsLoaded]);
 
   const handleBoatChange = (boatId: string) => {
     setSelectedBoatId(boatId);
-  };
-
-  const handleModeChange = (newMode: OrderBuilderMode) => {
-    setMode(newMode);
   };
 
   const handleToggleSelect = (productId: string) => {
@@ -205,17 +199,18 @@ export function OrderBuilder() {
   };
 
   const handleReset = () => {
-    loadData(mode, selectedBoatId);
+    loadData(numBLs, selectedBoatId);
     // Reset BL allocation view when products are reset
     setBLAllocationReport(null);
     setShowBLView(false);
   };
 
-  // BL Allocation handlers
+  // BL count change handler - triggers reload via useEffect
   const handleNumBLsChange = (newNumBLs: number) => {
     setNumBLs(newNumBLs);
     // Invalidate existing allocation when BL count changes
     setBLAllocationReport(null);
+    setShowBLView(false);  // Return to product view when capacity changes
   };
 
   const handleAllocateToBLs = async () => {
@@ -356,7 +351,8 @@ export function OrderBuilder() {
     const totalContainers = Math.ceil(totalPallets / CONTAINER_MAX_PALLETS);
     const warehouseCurrent = data?.summary.warehouse_current_pallets || 0;
     const warehouseAfter = warehouseCurrent + totalPallets;
-    const boatMaxContainers = data?.boat.max_containers || 5;
+    // Use BL capacity from backend (num_bls × 5 containers), not boat's physical capacity
+    const boatMaxContainers = data?.summary.boat_max_containers || 5;
 
     // Calculate weight from actual m² entered (not from pallets)
     const totalWeightKg = totalM2 * WEIGHT_PER_M2_KG;
@@ -492,7 +488,7 @@ export function OrderBuilder() {
           </div>
           <p className="text-rose-200/80 mb-4">{error}</p>
           <button
-            onClick={() => loadData(mode)}
+            onClick={() => loadData(numBLs)}
             className="px-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg hover:bg-rose-500/30 transition-colors font-medium"
           >
             {t('common.tryAgain')}
@@ -551,18 +547,15 @@ export function OrderBuilder() {
   return (
     <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header with boat info and mode/BL selector */}
+        {/* Header with boat info and BL selector */}
         <OrderBuilderHeader
           boat={data.boat}
           nextBoat={data.next_boat}
-          mode={mode}
-          onModeChange={handleModeChange}
           availableBoats={availableBoats}
           selectedBoatId={selectedBoatId}
           onBoatChange={handleBoatChange}
           numBLs={numBLs}
           onNumBLsChange={handleNumBLsChange}
-          showBLSelector={showBLView}
         />
 
         {/* BL Allocation View - shown when allocation is generated */}

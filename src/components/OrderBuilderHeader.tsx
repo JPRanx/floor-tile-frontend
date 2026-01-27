@@ -1,36 +1,30 @@
 import { useTranslation } from 'react-i18next';
-import type { OrderBuilderBoat, OrderBuilderMode } from '../requests/orderBuilder';
+import type { OrderBuilderBoat } from '../requests/orderBuilder';
 import type { BoatSchedule } from '../requests/boats';
 
 interface OrderBuilderHeaderProps {
   boat: OrderBuilderBoat;
   nextBoat: OrderBuilderBoat | null;
-  mode: OrderBuilderMode;
-  onModeChange: (mode: OrderBuilderMode) => void;
   availableBoats: BoatSchedule[];
   selectedBoatId: string | undefined;
   onBoatChange: (boatId: string) => void;
-  // BL allocation props (optional)
-  numBLs?: number;
-  onNumBLsChange?: (numBLs: number) => void;
-  showBLSelector?: boolean;
+  // BL count determines capacity: num_bls × 5 × 14 pallets
+  numBLs: number;
+  onNumBLsChange: (numBLs: number) => void;
 }
 
 export function OrderBuilderHeader({
   boat,
   nextBoat,
-  mode,
-  onModeChange,
   availableBoats,
   selectedBoatId,
   onBoatChange,
-  numBLs = 3,
+  numBLs,
   onNumBLsChange,
-  showBLSelector = false,
 }: OrderBuilderHeaderProps) {
   const { t } = useTranslation();
 
-  // BL options
+  // BL options (1-5 BLs)
   const blOptions = [1, 2, 3, 4, 5];
 
   // Check if we have a real boat or are in no-boat mode
@@ -57,12 +51,6 @@ export function OrderBuilderHeader({
     { label: 'Departs', date: boat.departure_date, days: boat.days_until_departure, color: 'indigo' },
     { label: 'Arrives Port', date: boat.arrival_date, days: boat.days_until_arrival, color: 'indigo' },
     { label: 'In Warehouse', date: inWarehouseDate, days: boat.days_until_warehouse, color: 'emerald' },
-  ];
-
-  const modeButtons: { value: OrderBuilderMode; label: string; containers: number; icon: string }[] = [
-    { value: 'minimal', label: 'Minimal', containers: 3, icon: '📦' },
-    { value: 'standard', label: 'Standard', containers: 4, icon: '📦📦' },
-    { value: 'optimal', label: 'Optimal', containers: 5, icon: '🚢' },
   ];
 
   return (
@@ -200,64 +188,37 @@ export function OrderBuilderHeader({
         </div>
       )}
 
-      {/* Mode / BL Selector Section */}
+      {/* BL Selector Section */}
       <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700/30">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {/* Mode Selector (hidden when BL selector is shown) */}
-          {!showBLSelector && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mode</span>
-              <div className="flex gap-2">
-                {modeButtons.map((btn) => (
-                  <button
-                    key={btn.value}
-                    onClick={() => onModeChange(btn.value)}
-                    className={`
-                      px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
-                      ${mode === btn.value
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
-                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
-                      }
-                    `}
-                  >
-                    <span className="block font-semibold">{btn.label}</span>
-                    <span className="block text-xs opacity-75 mt-0.5">{btn.containers} containers</span>
-                  </button>
-                ))}
-              </div>
+          {/* BL Count Selector - Always visible */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              {t('blAllocation.numBLs', 'Number of BLs')}
+            </span>
+            <div className="flex gap-2">
+              {blOptions.map((num) => (
+                <button
+                  key={num}
+                  onClick={() => onNumBLsChange(num)}
+                  className={`
+                    w-12 h-12 rounded-xl text-sm font-bold transition-all duration-300
+                    ${numBLs === num
+                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
+                      : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
+                    }
+                  `}
+                >
+                  {num}
+                </button>
+              ))}
             </div>
-          )}
-
-          {/* BL Count Selector */}
-          {showBLSelector && onNumBLsChange && (
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                {t('blAllocation.numBLs', 'Number of BLs')}
-              </span>
-              <div className="flex gap-2">
-                {blOptions.map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => onNumBLsChange(num)}
-                    className={`
-                      w-12 h-12 rounded-xl text-sm font-bold transition-all duration-300
-                      ${numBLs === num
-                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
-                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
-                      }
-                    `}
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-              <div className="text-sm text-slate-400">
-                {t('blAllocation.capacity', 'Capacity')}: {numBLs * 5}{' '}
-                {t('blAllocation.containers', 'containers')} ({numBLs * 70}{' '}
-                {t('blAllocation.pallets', 'pallets')})
-              </div>
+            <div className="text-sm text-slate-400">
+              {t('blAllocation.capacity', 'Capacity')}: {numBLs * 5}{' '}
+              {t('blAllocation.containers', 'containers')} ({numBLs * 70}{' '}
+              {t('blAllocation.pallets', 'pallets')})
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,5 @@
 import api from './api';
 
-export type OrderBuilderMode = 'minimal' | 'standard' | 'optimal';
 export type OrderBuilderAlertType = 'warning' | 'blocked' | 'suggestion';
 export type ConfidenceLevel = 'HIGH' | 'MEDIUM' | 'LOW';
 export type Priority = 'HIGH_PRIORITY' | 'CONSIDER' | 'WELL_COVERED' | 'YOUR_CALL';
@@ -86,7 +85,7 @@ export interface OrderReasoning {
   customer_sentence: string | null;
 
   // Supporting facts for badges
-  limiting_factor: 'warehouse' | 'boat' | 'mode' | 'none';
+  limiting_factor: 'warehouse' | 'boat' | 'bl_capacity' | 'none';
   deferred_count: number;
   customers_expecting: number;
   critical_count: number;
@@ -305,8 +304,8 @@ export interface OrderBuilderResponse {
   boat: OrderBuilderBoat;
   next_boat: OrderBuilderBoat | null;
 
-  // Mode
-  mode: OrderBuilderMode;
+  // BL count (determines capacity)
+  num_bls: number;
 
   // Products grouped by priority
   high_priority: OrderBuilderProduct[];
@@ -326,7 +325,7 @@ export interface OrderBuilderResponse {
 
 export interface OrderBuilderParams {
   boat_id?: string;
-  mode?: OrderBuilderMode;
+  num_bls?: number;  // 1-5, determines capacity: num_bls × 5 × 14 pallets
 }
 
 export interface ExportProductItem {
@@ -515,9 +514,10 @@ export const orderBuilderApi = {
     if (params?.boat_id) {
       queryParams.append('boat_id', params.boat_id);
     }
-    if (params?.mode) {
-      queryParams.append('mode', params.mode);
-    }
+    // Always send num_bls (default to 1 if not provided)
+    // This ensures the backend uses BL capacity, not boat capacity
+    const numBLs = params?.num_bls ?? 1;
+    queryParams.append('num_bls', numBLs.toString());
     const queryString = queryParams.toString();
     const url = `/order-builder${queryString ? `?${queryString}` : ''}`;
     const response = await api.get<OrderBuilderResponse>(url);
