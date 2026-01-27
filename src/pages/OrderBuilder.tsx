@@ -236,7 +236,7 @@ export function OrderBuilder() {
         })),
       });
 
-      setBLAllocationReport(response.report);
+      setBLAllocationReport(response.allocation);
       setShowBLView(true);
     } catch (err) {
       console.error('BL allocation failed:', err);

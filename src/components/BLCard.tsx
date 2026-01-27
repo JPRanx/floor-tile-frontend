@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BLAllocation, BLProductAllocation } from '../requests/orderBuilder';
 import { CRITICAL_THRESHOLD } from '../requests/orderBuilder';
