@@ -10,6 +10,10 @@ interface OrderBuilderHeaderProps {
   availableBoats: BoatSchedule[];
   selectedBoatId: string | undefined;
   onBoatChange: (boatId: string) => void;
+  // BL allocation props (optional)
+  numBLs?: number;
+  onNumBLsChange?: (numBLs: number) => void;
+  showBLSelector?: boolean;
 }
 
 export function OrderBuilderHeader({
@@ -20,8 +24,14 @@ export function OrderBuilderHeader({
   availableBoats,
   selectedBoatId,
   onBoatChange,
+  numBLs = 3,
+  onNumBLsChange,
+  showBLSelector = false,
 }: OrderBuilderHeaderProps) {
   const { t } = useTranslation();
+
+  // BL options
+  const blOptions = [1, 2, 3, 4, 5];
 
   // Check if we have a real boat or are in no-boat mode
   const hasBoat = availableBoats.length > 0 && boat.departure_date;
@@ -190,28 +200,64 @@ export function OrderBuilderHeader({
         </div>
       )}
 
-      {/* Mode Selector Section */}
+      {/* Mode / BL Selector Section */}
       <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700/30">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mode</span>
-          <div className="flex gap-2">
-            {modeButtons.map((btn) => (
-              <button
-                key={btn.value}
-                onClick={() => onModeChange(btn.value)}
-                className={`
-                  px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
-                  ${mode === btn.value
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
-                    : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
-                  }
-                `}
-              >
-                <span className="block font-semibold">{btn.label}</span>
-                <span className="block text-xs opacity-75 mt-0.5">{btn.containers} containers</span>
-              </button>
-            ))}
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+          {/* Mode Selector (hidden when BL selector is shown) */}
+          {!showBLSelector && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Mode</span>
+              <div className="flex gap-2">
+                {modeButtons.map((btn) => (
+                  <button
+                    key={btn.value}
+                    onClick={() => onModeChange(btn.value)}
+                    className={`
+                      px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-300
+                      ${mode === btn.value
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
+                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
+                      }
+                    `}
+                  >
+                    <span className="block font-semibold">{btn.label}</span>
+                    <span className="block text-xs opacity-75 mt-0.5">{btn.containers} containers</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* BL Count Selector */}
+          {showBLSelector && onNumBLsChange && (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                {t('blAllocation.numBLs', 'Number of BLs')}
+              </span>
+              <div className="flex gap-2">
+                {blOptions.map((num) => (
+                  <button
+                    key={num}
+                    onClick={() => onNumBLsChange(num)}
+                    className={`
+                      w-12 h-12 rounded-xl text-sm font-bold transition-all duration-300
+                      ${numBLs === num
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
+                        : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
+                      }
+                    `}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+              <div className="text-sm text-slate-400">
+                {t('blAllocation.capacity', 'Capacity')}: {numBLs * 5}{' '}
+                {t('blAllocation.containers', 'containers')} ({numBLs * 70}{' '}
+                {t('blAllocation.pallets', 'pallets')})
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

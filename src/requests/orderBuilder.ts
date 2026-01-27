@@ -438,6 +438,66 @@ export interface MapProductResponse {
   rows_updated: number;
 }
 
+// ===================
+// BL ALLOCATION TYPES
+// ===================
+
+/**
+ * Critical threshold for BL spreading.
+ * Products with score >= 85 are spread across BLs for safety.
+ */
+export const CRITICAL_THRESHOLD = 85;
+
+export interface BLProductAllocation {
+  product_id: string;
+  sku: string;
+  description: string | null;
+  pallets: number;
+  m2: number;
+  weight_kg: number;
+  primary_customer: string | null;
+  score: number;
+  is_critical: boolean;
+}
+
+export interface BLAllocation {
+  bl_number: number;
+  primary_customers: string[];
+  products: BLProductAllocation[];
+  total_pallets: number;
+  total_containers: number;
+  total_m2: number;
+  total_weight_kg: number;
+  critical_product_count: number;
+}
+
+export interface BLAllocationReport {
+  generated_at: string;
+  boat_departure: string;
+  boat_name: string;
+  num_bls: number;
+  total_containers: number;
+  total_pallets: number;
+  total_m2: number;
+  total_weight_kg: number;
+  total_critical_products: number;
+  allocations: BLAllocation[];
+  warnings: string[];
+  risk_distribution_even: boolean;
+  max_critical_pct: number;
+}
+
+export interface BLAllocationRequest {
+  num_bls: number;
+  boat_id?: string;
+  products?: Array<{ sku: string; pallets: number }>;
+}
+
+export interface BLAllocationResponse {
+  allocation: BLAllocationReport;
+  download_url: string | null;
+}
+
 export interface ProductFactoryStatus {
   product_id: string;
   sku: string;
@@ -479,6 +539,29 @@ export const orderBuilderApi = {
     const queryString = queryParams.toString();
     const url = `/order-builder/demand-forecast${queryString ? `?${queryString}` : ''}`;
     const response = await api.get<DemandForecastResponse>(url);
+    return response.data;
+  },
+
+  /**
+   * Generate BL allocation for the current order selection.
+   * Returns allocation report with products grouped by BL.
+   */
+  generateBLAllocation: async (request: BLAllocationRequest): Promise<BLAllocationResponse> => {
+    const response = await api.post<BLAllocationResponse>(
+      '/order-builder/generate-bl-allocation',
+      request
+    );
+    return response.data;
+  },
+
+  /**
+   * Export BL allocation as Excel file.
+   * Returns Excel file with summary + per-BL sheets.
+   */
+  exportBLAllocation: async (request: BLAllocationRequest): Promise<Blob> => {
+    const response = await api.post('/order-builder/export-bl-allocation', request, {
+      responseType: 'blob',
+    });
     return response.data;
   },
 };

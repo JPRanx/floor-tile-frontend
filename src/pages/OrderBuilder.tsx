@@ -8,6 +8,7 @@ import type {
   OrderBuilderSummary as SummaryType,
   OrderBuilderAlert,
   DemandForecastResponse,
+  BLAllocationReport,
 } from '../requests/orderBuilder';
 import { boatsApi } from '../requests/boats';
 import { factoryOrdersApi } from '../requests/factoryOrders';
@@ -21,6 +22,7 @@ import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
 import { ExpectedDemandSection } from '../components/ExpectedDemandSection';
 import { CustomersDueList } from '../components/CustomersDueList';
 import { CallBeforeOrderingAlert } from '../components/CallBeforeOrderingAlert';
+import { BLAllocationView } from '../components/BLAllocationView';
 import {
   M2_PER_PALLET,
   CONTAINER_MAX_PALLETS,
@@ -62,6 +64,13 @@ export function OrderBuilder() {
   // Demand forecast state
   const [demandForecast, setDemandForecast] = useState<DemandForecastResponse | null>(null);
   const [demandLoading, setDemandLoading] = useState(false);
+
+  // BL Allocation state
+  const [numBLs, setNumBLs] = useState(3);
+  const [blAllocationReport, setBLAllocationReport] = useState<BLAllocationReport | null>(null);
+  const [showBLView, setShowBLView] = useState(false);
+  const [blLoading, setBLLoading] = useState(false);
+  const [blExporting, setBLExporting] = useState(false);
 
   // Fetch available boats on mount
   useEffect(() => {
@@ -197,6 +206,80 @@ export function OrderBuilder() {
 
   const handleReset = () => {
     loadData(mode, selectedBoatId);
+    // Reset BL allocation view when products are reset
+    setBLAllocationReport(null);
+    setShowBLView(false);
+  };
+
+  // BL Allocation handlers
+  const handleNumBLsChange = (newNumBLs: number) => {
+    setNumBLs(newNumBLs);
+    // Invalidate existing allocation when BL count changes
+    setBLAllocationReport(null);
+  };
+
+  const handleAllocateToBLs = async () => {
+    const selected = products.filter((p) => p.is_selected && p.selected_pallets > 0);
+    if (selected.length === 0) {
+      alert(t('orderBuilder.noProductsSelected'));
+      return;
+    }
+
+    setBLLoading(true);
+    try {
+      const response = await orderBuilderApi.generateBLAllocation({
+        num_bls: numBLs,
+        boat_id: selectedBoatId,
+        products: selected.map((p) => ({
+          sku: p.sku,
+          pallets: p.selected_pallets,
+        })),
+      });
+
+      setBLAllocationReport(response.report);
+      setShowBLView(true);
+    } catch (err) {
+      console.error('BL allocation failed:', err);
+      alert(t('blAllocation.allocationError', 'Failed to generate BL allocation'));
+    } finally {
+      setBLLoading(false);
+    }
+  };
+
+  const handleExportBLs = async () => {
+    if (!blAllocationReport) return;
+
+    setBLExporting(true);
+    try {
+      const blob = await orderBuilderApi.exportBLAllocation({
+        num_bls: numBLs,
+        boat_id: selectedBoatId,
+        products: products
+          .filter((p) => p.is_selected && p.selected_pallets > 0)
+          .map((p) => ({
+            sku: p.sku,
+            pallets: p.selected_pallets,
+          })),
+      });
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = blAllocationReport.boat_departure.replace(/-/g, '');
+      a.download = `BL_ALLOCATION_${dateStr}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('BL export failed:', err);
+      alert(t('blAllocation.exportError', 'Failed to export BL allocation'));
+    } finally {
+      setBLExporting(false);
+    }
+  };
+
+  const handleBackToProducts = () => {
+    setShowBLView(false);
   };
 
   const [exporting, setExporting] = useState(false);
@@ -468,7 +551,7 @@ export function OrderBuilder() {
   return (
     <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header with boat info and mode selector */}
+        {/* Header with boat info and mode/BL selector */}
         <OrderBuilderHeader
           boat={data.boat}
           nextBoat={data.next_boat}
@@ -477,9 +560,23 @@ export function OrderBuilder() {
           availableBoats={availableBoats}
           selectedBoatId={selectedBoatId}
           onBoatChange={handleBoatChange}
+          numBLs={numBLs}
+          onNumBLsChange={handleNumBLsChange}
+          showBLSelector={showBLView}
         />
 
+        {/* BL Allocation View - shown when allocation is generated */}
+        {showBLView && blAllocationReport && (
+          <BLAllocationView
+            report={blAllocationReport}
+            onBack={handleBackToProducts}
+            onExport={handleExportBLs}
+            isExporting={blExporting}
+          />
+        )}
+
         {/* Main content: Products and Summary side by side on desktop */}
+        {!showBLView && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Products Column (2/3 width on desktop) */}
           <div className="lg:col-span-2 space-y-4">
@@ -573,6 +670,18 @@ export function OrderBuilder() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
+              {/* Allocate to BLs Button */}
+              <button
+                onClick={handleAllocateToBLs}
+                disabled={blLoading || products.filter((p) => p.is_selected && p.selected_pallets > 0).length === 0}
+                className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                {blLoading
+                  ? t('blAllocation.allocating', 'Allocating...')
+                  : t('blAllocation.allocateToBLs', 'Allocate to BLs')}
+              </button>
+
+              {/* Quick Export (single BL) */}
               <button
                 onClick={handleExport}
                 disabled={exporting}
@@ -599,6 +708,7 @@ export function OrderBuilder() {
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );
