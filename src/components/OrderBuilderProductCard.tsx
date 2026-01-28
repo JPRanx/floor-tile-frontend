@@ -3,10 +3,9 @@ import { useTranslation } from 'react-i18next';
 import type {
   OrderBuilderProduct,
   ConfidenceLevel,
-  Urgency,
   TrendDirection,
 } from '../requests/orderBuilder';
-import { M2_PER_PALLET, WEIGHT_PER_M2_KG } from '../constants/inventory';
+import { WEIGHT_PER_M2_KG } from '../constants/inventory';
 
 // Extended product type with selected_m2 for two-way input sync
 interface OrderBuilderProductWithM2 extends OrderBuilderProduct {
@@ -24,7 +23,7 @@ export function OrderBuilderProductCard({
   product,
   onToggleSelect,
   onQuantityChange,
-  onM2Change,
+  onM2Change: _onM2Change,
 }: OrderBuilderProductCardProps) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
