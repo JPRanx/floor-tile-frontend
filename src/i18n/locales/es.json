@@ -453,7 +453,17 @@
     "singleLot": "lote único",
     "mixedLots": "lotes mixtos",
     "needsProduction": "necesita producción",
-    "noStock": "sin stock"
+    "noStock": "sin stock",
+    "velocityBreakdown": "Velocidad",
+    "velocity90d": "90 días",
+    "velocity180d": "6 meses",
+    "recent": "reciente",
+    "historical": "histórico",
+    "trend": "Tendencia",
+    "growing": "Creciendo",
+    "stable": "Estable",
+    "declining": "Bajando",
+    "vs6mo": "vs 6m"
   },
   "blAllocation": {
     "title": "Asignación de BL",

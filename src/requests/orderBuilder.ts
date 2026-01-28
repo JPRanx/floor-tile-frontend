@@ -8,6 +8,7 @@ export type TrendDirection = 'up' | 'down' | 'stable';
 export type TrendStrength = 'strong' | 'moderate' | 'weak';
 export type FactoryStatus = 'in_production' | 'not_scheduled';
 export type FactoryFillStatus = 'single_lot' | 'mixed_lots' | 'needs_production' | 'no_stock' | 'not_needed' | 'unknown';
+export type VelocityTrendSignal = 'growing' | 'stable' | 'declining';
 
 export interface CalculationBreakdown {
   lead_time_days: number;
@@ -178,6 +179,13 @@ export interface OrderBuilderProduct {
   trend_strength: TrendStrength;
   velocity_change_pct: number;
   daily_velocity_m2: number;
+
+  // Dual velocity system (90-day vs 6-month comparison)
+  velocity_90d_m2: number;
+  velocity_180d_m2: number;
+  velocity_trend_signal: VelocityTrendSignal;
+  velocity_trend_ratio: number;
+
   calculation_breakdown: CalculationBreakdown | null;
 
   // Reasoning (explains WHY this recommendation)

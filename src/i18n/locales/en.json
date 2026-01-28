@@ -453,7 +453,17 @@
     "singleLot": "single lot",
     "mixedLots": "mixed lots",
     "needsProduction": "needs production",
-    "noStock": "no stock"
+    "noStock": "no stock",
+    "velocityBreakdown": "Velocity",
+    "velocity90d": "90-day",
+    "velocity180d": "6-month",
+    "recent": "recent",
+    "historical": "historical",
+    "trend": "Trend",
+    "growing": "Growing",
+    "stable": "Stable",
+    "declining": "Declining",
+    "vs6mo": "vs 6mo"
   },
   "blAllocation": {
     "title": "BL Allocation",

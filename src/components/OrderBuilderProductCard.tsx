@@ -5,6 +5,7 @@ import type {
   ConfidenceLevel,
   TrendDirection,
   FactoryFillStatus,
+  VelocityTrendSignal,
 } from '../requests/orderBuilder';
 import { WEIGHT_PER_M2_KG } from '../constants/inventory';
 
@@ -63,6 +64,12 @@ export function OrderBuilderProductCard({
     no_stock: { icon: '—', color: 'text-slate-500', textColor: 'text-slate-500' },
     not_needed: { icon: '', color: '', textColor: 'text-slate-400' },
     unknown: { icon: '?', color: 'text-slate-500', textColor: 'text-slate-500' },
+  };
+
+  const velocityTrendStyles: Record<VelocityTrendSignal, { icon: string; color: string; label: string }> = {
+    growing: { icon: '📈', color: 'text-emerald-400', label: 'growing' },
+    stable: { icon: '➡️', color: 'text-slate-400', label: 'stable' },
+    declining: { icon: '📉', color: 'text-amber-400', label: 'declining' },
   };
 
   // Override urgency to COVERED when in-transit covers the need
@@ -252,13 +259,25 @@ export function OrderBuilderProductCard({
             </div>
           )}
 
-          {/* Velocity */}
+          {/* Velocity with Trend Signal */}
           {product.daily_velocity_m2 > 0 && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-500">⚡</span>
               <span className="text-slate-400">
                 {Number(product.daily_velocity_m2).toFixed(1)} m²/d
               </span>
+              {product.velocity_trend_signal && product.velocity_180d_m2 > 0 && (
+                <span className={`text-xs ${velocityTrendStyles[product.velocity_trend_signal].color}`}>
+                  {velocityTrendStyles[product.velocity_trend_signal].icon}{' '}
+                  {product.velocity_trend_signal === 'growing' && (
+                    <>+{Math.round((product.velocity_trend_ratio - 1) * 100)}% {t('orderBuilderProduct.vs6mo', 'vs 6mo')}</>
+                  )}
+                  {product.velocity_trend_signal === 'declining' && (
+                    <>{Math.round((product.velocity_trend_ratio - 1) * 100)}% {t('orderBuilderProduct.vs6mo', 'vs 6mo')}</>
+                  )}
+                  {product.velocity_trend_signal === 'stable' && t('orderBuilderProduct.stable', 'Stable')}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -372,6 +391,38 @@ export function OrderBuilderProductCard({
       {showDetails && (
         <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200">
           <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 overflow-hidden">
+
+            {/* Velocity Breakdown (90d vs 6mo) */}
+            {product.velocity_90d_m2 > 0 && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {t('orderBuilderProduct.velocityBreakdown', 'Velocity')}
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between text-slate-400">
+                    <span>{t('orderBuilderProduct.velocity90d', '90-day')} ({t('orderBuilderProduct.recent', 'recent')})</span>
+                    <span className="text-slate-300 font-medium">{Number(product.velocity_90d_m2).toFixed(1)} m²/d</span>
+                  </div>
+                  {product.velocity_180d_m2 > 0 && (
+                    <>
+                      <div className="flex justify-between text-slate-400">
+                        <span>{t('orderBuilderProduct.velocity180d', '6-month')} ({t('orderBuilderProduct.historical', 'historical')})</span>
+                        <span className="text-slate-300">{Number(product.velocity_180d_m2).toFixed(1)} m²/d</span>
+                      </div>
+                      <div className={`flex justify-between font-medium pt-1 border-t border-slate-700/50 mt-1 ${velocityTrendStyles[product.velocity_trend_signal].color}`}>
+                        <span>{t('orderBuilderProduct.trend', 'Trend')}</span>
+                        <span>
+                          {velocityTrendStyles[product.velocity_trend_signal].icon}{' '}
+                          {product.velocity_trend_signal === 'growing' && `${t('orderBuilderProduct.growing', 'Growing')} +${Math.round((product.velocity_trend_ratio - 1) * 100)}%`}
+                          {product.velocity_trend_signal === 'declining' && `${t('orderBuilderProduct.declining', 'Declining')} ${Math.round((product.velocity_trend_ratio - 1) * 100)}%`}
+                          {product.velocity_trend_signal === 'stable' && t('orderBuilderProduct.stable', 'Stable')}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Calculation Breakdown */}
             {breakdown && (
