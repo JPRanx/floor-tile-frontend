@@ -5,9 +5,7 @@ import type {
   ConfidenceLevel,
   Urgency,
   TrendDirection,
-  TrendStrength,
 } from '../requests/orderBuilder';
-import { StockCoverage } from './shared';
 import { M2_PER_PALLET, WEIGHT_PER_M2_KG } from '../constants/inventory';
 
 // Extended product type with selected_m2 for two-way input sync
@@ -29,25 +27,21 @@ export function OrderBuilderProductCard({
   onM2Change,
 }: OrderBuilderProductCardProps) {
   const { t } = useTranslation();
-  const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
-  const confidenceStyles: Record<ConfidenceLevel, { bg: string; text: string; border: string; glow: string }> = {
-    HIGH: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30', glow: 'shadow-emerald-500/20' },
-    MEDIUM: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/30', glow: 'shadow-amber-500/20' },
-    LOW: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30', glow: 'shadow-slate-500/20' },
+  // Urgency styles - now combined with score
+  const urgencyStyles: Record<string, { bg: string; text: string; border: string; label: string }> = {
+    covered: { bg: 'bg-indigo-500/15', text: 'text-indigo-400', border: 'border-indigo-500/40', label: '🚢 COVERED' },
+    critical: { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/40', label: 'CRITICAL' },
+    urgent: { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/40', label: 'URGENT' },
+    soon: { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/40', label: 'SOON' },
+    ok: { bg: 'bg-slate-500/15', text: 'text-slate-400', border: 'border-slate-500/40', label: 'OK' },
   };
 
-  const confidenceIcons: Record<ConfidenceLevel, string> = {
-    HIGH: '✓',
-    MEDIUM: '⚠',
-    LOW: '?',
-  };
-
-  const urgencyStyles: Record<Urgency, { bg: string; text: string; border: string; label: string; glow: string }> = {
-    critical: { bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/30', label: 'CRITICAL', glow: 'shadow-[0_0_15px_rgba(239,68,68,0.3)]' },
-    urgent: { bg: 'bg-orange-500/10', text: 'text-orange-400', border: 'border-orange-500/30', label: 'URGENT', glow: 'shadow-[0_0_10px_rgba(249,115,22,0.2)]' },
-    soon: { bg: 'bg-yellow-500/10', text: 'text-yellow-400', border: 'border-yellow-500/30', label: 'SOON', glow: '' },
-    ok: { bg: 'bg-slate-500/10', text: 'text-slate-400', border: 'border-slate-500/30', label: 'OK', glow: '' },
+  const trendColors: Record<TrendDirection, string> = {
+    up: 'text-emerald-400',
+    down: 'text-red-400',
+    stable: 'text-slate-500',
   };
 
   const trendIcons: Record<TrendDirection, string> = {
@@ -56,26 +50,85 @@ export function OrderBuilderProductCard({
     stable: '→',
   };
 
-  const trendColors: Record<TrendDirection, string> = {
-    up: 'text-emerald-400',
-    down: 'text-red-400',
-    stable: 'text-slate-400',
+  const confidenceLabels: Record<ConfidenceLevel, { icon: string; color: string }> = {
+    HIGH: { icon: '✓', color: 'text-emerald-400' },
+    MEDIUM: { icon: '⚠', color: 'text-amber-400' },
+    LOW: { icon: '?', color: 'text-slate-400' },
   };
 
-  const strengthLabels: Record<TrendStrength, string> = {
-    strong: '+++',
-    moderate: '++',
-    weak: '+',
-  };
-
-  const urgency = urgencyStyles[product.urgency] || urgencyStyles.ok;
+  // Override urgency to COVERED when in-transit covers the need
+  const isCoveredByTransit = product.suggested_pallets === 0 && product.in_transit_m2 > 0;
+  const effectiveUrgency = isCoveredByTransit ? 'covered' : product.urgency;
+  const urgency = urgencyStyles[effectiveUrgency] || urgencyStyles.ok;
   const breakdown = product.calculation_breakdown;
-  const confidence = confidenceStyles[product.confidence];
+  const confidence = confidenceLabels[product.confidence];
+
+  // Calculate coverage change
+  const currentDays = product.days_of_stock ?? 0;
+  const addedDays = product.daily_velocity_m2 > 0 && product.selected_m2 > 0
+    ? Math.round(product.selected_m2 / product.daily_velocity_m2)
+    : 0;
+  const newDays = currentDays + addedDays;
+
+  // Format arrival date for in-transit
+  // For now, we'll show days until arrival if available, or estimate from boat arrival
+  const formatTransitArrival = () => {
+    // If we have boat arrival info, use that
+    // Otherwise just show the quantity
+    return product.in_transit_m2 > 0 ? `${Math.round(product.in_transit_m2).toLocaleString()} m²` : null;
+  };
+
+  // Build consolidated reasoning sentence
+  const buildReasoningSentence = () => {
+    const parts: string[] = [];
+
+    // If covered by in-transit, lead with that explanation
+    if (isCoveredByTransit) {
+      const transitDays = product.daily_velocity_m2 > 0
+        ? Math.round(product.in_transit_m2 / product.daily_velocity_m2)
+        : 0;
+      parts.push(t('orderBuilderProduct.coveredByTransit',
+        'Covered by {{m2}} m² in transit ({{days}}d)',
+        { m2: Math.round(product.in_transit_m2).toLocaleString(), days: transitDays }));
+      return parts.join(' · ');
+    }
+
+    // Stock urgency
+    if (currentDays !== null && currentDays <= 7) {
+      parts.push(currentDays === 0
+        ? t('orderBuilderProduct.outOfStock', 'Out of stock')
+        : t('orderBuilderProduct.daysLeft', '{{days}}d left', { days: currentDays }));
+    }
+
+    // Customer count
+    if (product.unique_customers > 0) {
+      parts.push(t('orderBuilderProduct.customersCount', '{{count}} customers', { count: product.unique_customers }));
+    }
+
+    // Top customer concentration (if significant)
+    if (product.top_customer_share != null && Number(product.top_customer_share) > 0.3 && product.top_customer_name) {
+      const percent = Math.round(Number(product.top_customer_share) * 100);
+      // Shorten customer name if too long
+      const shortName = product.top_customer_name.length > 15
+        ? product.top_customer_name.substring(0, 12) + '...'
+        : product.top_customer_name;
+      parts.push(`${percent}% ${shortName}`);
+    }
+
+    // Use reasoning display if available and we don't have enough parts
+    if (parts.length === 0 && product.reasoning_display?.why_product_sentence) {
+      return product.reasoning_display.why_product_sentence;
+    }
+
+    return parts.join(' · ');
+  };
+
+  const reasoningSentence = buildReasoningSentence();
 
   return (
     <div
       className={`
-        rounded-xl border p-4 transition-all duration-300
+        rounded-xl border transition-all duration-300
         ${product.is_selected
           ? 'bg-indigo-900/20 border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.15)]'
           : 'bg-slate-800/30 border-slate-700/50 hover:border-slate-600/50 hover:bg-slate-800/40'
@@ -83,9 +136,10 @@ export function OrderBuilderProductCard({
         backdrop-blur-sm
       `}
     >
-      <div className="flex items-start gap-3">
-        {/* Checkbox with custom styling */}
-        <label className="relative flex items-center mt-0.5 cursor-pointer">
+      {/* Header Row */}
+      <div className="flex items-center gap-3 p-4 pb-3">
+        {/* Checkbox */}
+        <label className="relative flex items-center cursor-pointer shrink-0">
           <input
             type="checkbox"
             checked={product.is_selected}
@@ -108,327 +162,312 @@ export function OrderBuilderProductCard({
           </div>
         </label>
 
-        {/* Product Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            {/* SKU and Badges Row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* SKU */}
-              <span className="font-semibold text-white text-lg truncate">
-                {product.sku}
+        {/* SKU */}
+        <span className="font-semibold text-white text-lg truncate flex-1 min-w-0">
+          {product.sku}
+        </span>
+
+        {/* Combined Urgency + Score Badge */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`
+            inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold
+            ${urgency.bg} ${urgency.text} border ${urgency.border}
+          `}>
+            {urgency.label}
+            {product.score && (
+              <span className="opacity-75">{product.score.total}</span>
+            )}
+          </span>
+
+          {/* Trend (simplified) */}
+          {product.trend_direction && product.trend_direction !== 'stable' && (
+            <span className={`text-sm font-medium ${trendColors[product.trend_direction]}`}>
+              {trendIcons[product.trend_direction]}{Math.abs(Number(product.velocity_change_pct)).toFixed(0)}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-slate-700/50" />
+
+      {/* Two-Column: Inventory | Order */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+        {/* INVENTORY Column */}
+        <div className="space-y-1.5">
+          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            {t('orderBuilderProduct.inventory', 'Inventory')}
+          </div>
+
+          {/* Warehouse */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-slate-500">📦</span>
+            <span className="text-slate-200 font-medium">
+              {Math.round(Number(product.current_stock_m2)).toLocaleString()} m²
+            </span>
+            {product.days_of_stock !== null && (
+              <span className={`text-xs ${currentDays <= 7 ? 'text-red-400' : currentDays <= 14 ? 'text-amber-400' : 'text-slate-500'}`}>
+                ({currentDays}d)
               </span>
+            )}
+          </div>
 
-              {/* Urgency Badge */}
-              <span className={`
-                inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-bold
-                ${urgency.bg} ${urgency.text} border ${urgency.border} ${urgency.glow}
-              `}>
-                {urgency.label}
+          {/* In Transit */}
+          {product.in_transit_m2 > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">🚢</span>
+              <span className="text-indigo-300 font-medium">
+                {formatTransitArrival()}
               </span>
-
-              {/* Score Badge */}
-              {product.score && (
-                <span
-                  className={`
-                    inline-flex items-center px-2 py-1 rounded-lg text-xs font-bold
-                    ${product.score.total >= 70
-                      ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
-                      : product.score.total >= 40
-                      ? 'bg-slate-500/20 text-slate-300 border-slate-500/30'
-                      : 'bg-slate-600/20 text-slate-400 border-slate-600/30'
-                    }
-                    border
-                  `}
-                  title={t('orderBuilderProduct.scoreTooltip', 'Priority score: Stockout {{stockout}}, Customer {{customer}}, Trend {{trend}}, Revenue {{revenue}}', {
-                    stockout: product.score.stockout_risk,
-                    customer: product.score.customer_demand,
-                    trend: product.score.growth_trend,
-                    revenue: product.score.revenue_impact,
-                  })}
-                >
-                  {product.score.total}
-                  <span className="text-slate-500 ml-0.5">/100</span>
-                </span>
-              )}
-
-              {/* Trend Indicator */}
-              {product.trend_direction && product.trend_direction !== 'stable' && (
-                <span className={`
-                  inline-flex items-center gap-1 px-2 py-1 rounded-lg text-sm font-medium
-                  ${product.trend_direction === 'up' ? 'bg-emerald-500/10' : 'bg-red-500/10'}
-                  ${trendColors[product.trend_direction]}
-                `}>
-                  <span className="text-base">{trendIcons[product.trend_direction]}</span>
-                  <span>{Math.abs(Number(product.velocity_change_pct)).toFixed(0)}%</span>
-                  <span className="text-xs opacity-60">{strengthLabels[product.trend_strength]}</span>
-                </span>
-              )}
+              <span className="text-xs text-slate-500">{t('orderBuilderProduct.inTransit', 'in transit')}</span>
             </div>
+          )}
 
-            {/* Right Side: Quantity + Weight + Confidence */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Pallet Selector with +/- buttons */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => onQuantityChange(product.product_id, Math.max(0, product.selected_pallets - 1))}
-                  disabled={!product.is_selected || product.selected_pallets <= 0}
-                  className={`
-                    w-7 h-7 rounded-lg flex items-center justify-center font-bold text-lg transition-all
-                    ${product.is_selected && product.selected_pallets > 0
-                      ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/30'
-                      : 'bg-slate-800/50 border-slate-600/50 text-slate-600 cursor-not-allowed'
-                    }
-                    border
-                  `}
-                >
-                  -
-                </button>
-                <input
-                  type="number"
-                  min="0"
-                  max="50"
-                  value={product.selected_pallets}
-                  onChange={(e) => {
-                    const val = parseInt(e.target.value) || 0;
-                    onQuantityChange(product.product_id, Math.min(50, Math.max(0, val)));
-                  }}
-                  disabled={!product.is_selected}
-                  className={`
-                    w-14 px-2 py-1 rounded-lg text-sm font-semibold text-center transition-all
-                    ${product.is_selected
-                      ? 'bg-indigo-500/20 border-indigo-500/50 text-white'
-                      : 'bg-slate-800/50 border-slate-600/50 text-slate-500 cursor-not-allowed'
-                    }
-                    border focus:outline-none focus:ring-2 focus:ring-indigo-500/50
-                    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
-                  `}
-                />
-                <button
-                  onClick={() => onQuantityChange(product.product_id, Math.min(50, product.selected_pallets + 1))}
-                  disabled={!product.is_selected || product.selected_pallets >= 50}
-                  className={`
-                    w-7 h-7 rounded-lg flex items-center justify-center font-bold text-lg transition-all
-                    ${product.is_selected && product.selected_pallets < 50
-                      ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/30'
-                      : 'bg-slate-800/50 border-slate-600/50 text-slate-600 cursor-not-allowed'
-                    }
-                    border
-                  `}
-                >
-                  +
-                </button>
-                <span className="text-sm text-slate-400 ml-1">{t('orderBuilderProduct.pallets')}</span>
+          {/* Velocity */}
+          {product.daily_velocity_m2 > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">⚡</span>
+              <span className="text-slate-400">
+                {Number(product.daily_velocity_m2).toFixed(1)} m²/d
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* ORDER Column */}
+        <div className="space-y-2">
+          <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+            {t('orderBuilderProduct.order', 'Order')}
+          </div>
+
+          {/* Pallet Selector */}
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => onQuantityChange(product.product_id, Math.max(0, product.selected_pallets - 1))}
+              disabled={!product.is_selected || product.selected_pallets <= 0}
+              className={`
+                w-7 h-7 rounded-lg flex items-center justify-center font-bold text-lg transition-all
+                ${product.is_selected && product.selected_pallets > 0
+                  ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/30'
+                  : 'bg-slate-800/50 border-slate-600/50 text-slate-600 cursor-not-allowed'
+                }
+                border
+              `}
+            >
+              -
+            </button>
+            <input
+              type="number"
+              min="0"
+              max="50"
+              value={product.selected_pallets}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                onQuantityChange(product.product_id, Math.min(50, Math.max(0, val)));
+              }}
+              disabled={!product.is_selected}
+              className={`
+                w-12 px-1.5 py-1 rounded-lg text-sm font-semibold text-center transition-all
+                ${product.is_selected
+                  ? 'bg-indigo-500/20 border-indigo-500/50 text-white'
+                  : 'bg-slate-800/50 border-slate-600/50 text-slate-500 cursor-not-allowed'
+                }
+                border focus:outline-none focus:ring-2 focus:ring-indigo-500/50
+                [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+              `}
+            />
+            <button
+              onClick={() => onQuantityChange(product.product_id, Math.min(50, product.selected_pallets + 1))}
+              disabled={!product.is_selected || product.selected_pallets >= 50}
+              className={`
+                w-7 h-7 rounded-lg flex items-center justify-center font-bold text-lg transition-all
+                ${product.is_selected && product.selected_pallets < 50
+                  ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-400 hover:bg-indigo-500/30'
+                  : 'bg-slate-800/50 border-slate-600/50 text-slate-600 cursor-not-allowed'
+                }
+                border
+              `}
+            >
+              +
+            </button>
+            <span className="text-xs text-slate-500 ml-1">p</span>
+            <span className="text-slate-600 mx-1">=</span>
+            <span className={`text-sm font-semibold ${product.is_selected ? 'text-emerald-300' : 'text-slate-500'}`}>
+              {Math.round(product.selected_m2).toLocaleString()} m²
+            </span>
+          </div>
+
+          {/* Coverage Change */}
+          {product.is_selected && product.selected_m2 > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">{t('orderBuilderProduct.coverage', 'Coverage')}:</span>
+              <span className={`font-medium ${currentDays <= 7 ? 'text-red-400' : 'text-slate-400'}`}>
+                {currentDays}d
+              </span>
+              <span className="text-slate-600">→</span>
+              <span className="font-medium text-emerald-400">
+                {newDays}d
+              </span>
+              <span className="text-emerald-500">✓</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="mx-4 border-t border-slate-700/50" />
+
+      {/* Reasoning + Details Toggle */}
+      <div className="flex items-center justify-between gap-4 px-4 py-3">
+        {/* Reasoning sentence */}
+        {reasoningSentence && (
+          <div className="flex items-center gap-2 text-sm min-w-0 flex-1">
+            <span className="shrink-0">💡</span>
+            <span className="text-slate-300 truncate">{reasoningSentence}</span>
+          </div>
+        )}
+
+        {/* Details toggle */}
+        <button
+          onClick={() => setShowDetails(!showDetails)}
+          className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors shrink-0"
+        >
+          <span className={`transform transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`}>
+            ▼
+          </span>
+          {t('orderBuilderProduct.details', 'Details')}
+        </button>
+      </div>
+
+      {/* Expanded Details Section */}
+      {showDetails && (
+        <div className="px-4 pb-4 animate-in slide-in-from-top-2 duration-200">
+          <div className="bg-slate-900/50 rounded-xl border border-slate-700/50 overflow-hidden">
+
+            {/* Calculation Breakdown */}
+            {breakdown && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {t('orderBuilderProduct.calculation', 'Calculation')}
+                </div>
+                <div className="space-y-1 text-xs text-slate-400">
+                  <div className="flex justify-between">
+                    <span>{t('orderBuilderProduct.baseQuantity', 'Base')}: {Number(breakdown.daily_velocity_m2).toFixed(1)} m²/d × {breakdown.lead_time_days + breakdown.ordering_cycle_days}d</span>
+                    <span className="text-slate-300">{Math.round(Number(breakdown.base_quantity_m2)).toLocaleString()} m²</span>
+                  </div>
+                  {Number(breakdown.trend_adjustment_m2) !== 0 && (
+                    <div className="flex justify-between text-emerald-400">
+                      <span>{t('orderBuilderProduct.trendAdjustment', 'Trend')} (+{Number(breakdown.trend_adjustment_pct).toFixed(0)}%)</span>
+                      <span>+{Math.round(Number(breakdown.trend_adjustment_m2)).toLocaleString()} m²</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-red-400">
+                    <span>- {t('orderBuilderProduct.warehouse', 'Warehouse')}</span>
+                    <span>-{Math.round(Number(breakdown.minus_current_stock_m2)).toLocaleString()} m²</span>
+                  </div>
+                  {Number(breakdown.minus_incoming_m2) > 0 && (
+                    <div className="flex justify-between text-amber-400">
+                      <span>- {t('orderBuilderProduct.inTransitLabel', 'In transit')}</span>
+                      <span>-{Math.round(Number(breakdown.minus_incoming_m2)).toLocaleString()} m²</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-semibold text-white pt-1 border-t border-slate-700/50 mt-1">
+                    <span>= {t('orderBuilderProduct.suggestion', 'Suggestion')}</span>
+                    <span>{Math.round(Number(breakdown.final_suggestion_m2)).toLocaleString()} m²</span>
+                  </div>
+                </div>
               </div>
+            )}
 
-              {/* Separator */}
-              <span className="text-slate-600">=</span>
-
-              {/* m² Input (two-way sync with pallets) */}
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={Math.round(product.selected_m2 * 10) / 10}
-                  onChange={(e) => {
-                    const m2 = parseFloat(e.target.value) || 0;
-                    // Clamp to max 50 pallets worth of m²
-                    const maxM2 = 50 * M2_PER_PALLET;
-                    onM2Change(product.product_id, Math.min(maxM2, Math.max(0, m2)));
-                  }}
-                  disabled={!product.is_selected}
-                  className={`
-                    w-20 px-2 py-1 rounded-lg text-sm font-semibold text-center transition-all
-                    ${product.is_selected
-                      ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-                      : 'bg-slate-800/50 border-slate-600/50 text-slate-500 cursor-not-allowed'
-                    }
-                    border focus:outline-none focus:ring-2 focus:ring-emerald-500/50
-                    [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
-                  `}
-                />
-                <span className="text-sm text-slate-400">m²</span>
+            {/* Customer Info */}
+            {product.unique_customers > 0 && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {t('orderBuilderProduct.customers', 'Customers')}
+                </div>
+                <div className="text-xs text-slate-400">
+                  <span className="text-indigo-400 font-medium">{product.unique_customers}</span> {t('orderBuilderProduct.totalCustomers', 'total')}
+                  {product.top_customer_name && Number(product.top_customer_share) > 0.2 && (
+                    <span className="ml-2">
+                      · {t('orderBuilderProduct.top', 'Top')}: <span className="text-slate-300">{product.top_customer_name}</span>
+                      <span className="text-amber-400 ml-1">({Math.round(Number(product.top_customer_share) * 100)}%)</span>
+                    </span>
+                  )}
+                </div>
               </div>
+            )}
 
-              {/* Weight Display (when selected) - calculated from actual m² */}
-              {product.is_selected && product.selected_m2 > 0 && (
-                <div className="hidden sm:flex items-center gap-1 text-sm">
-                  <span className="text-slate-500">⚖️</span>
+            {/* Factory Status */}
+            {product.factory_status === 'in_production' && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {t('orderBuilderProduct.factory', 'Factory')}
+                </div>
+                <div className={`text-xs flex items-center gap-2 ${product.factory_ready_before_boat ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <span>🏭</span>
+                  <span>
+                    {product.factory_timing_message || (
+                      product.factory_production_date
+                        ? `Ready ${new Date(product.factory_production_date).toLocaleDateString()}`
+                        : 'In production'
+                    )}
+                  </span>
+                  {product.factory_production_m2 && (
+                    <span className="text-slate-400">
+                      ({Math.round(Number(product.factory_production_m2)).toLocaleString()} m²)
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {product.factory_status === 'not_scheduled' && product.is_selected && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {t('orderBuilderProduct.factory', 'Factory')}
+                </div>
+                <div className="text-xs text-slate-400 flex items-center gap-2">
+                  <span>📋</span>
+                  <span>{t('orderBuilderProduct.notInSchedule', 'Not in production schedule')}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Weight + Confidence */}
+            <div className="p-3 flex flex-wrap gap-4 text-xs text-slate-400">
+              {/* Weight */}
+              {product.selected_m2 > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span>⚖️</span>
+                  <span>{t('orderBuilderProduct.weight', 'Weight')}:</span>
                   <span className="text-slate-300 font-medium">
                     {Math.round(product.selected_m2 * WEIGHT_PER_M2_KG).toLocaleString()} kg
                   </span>
                 </div>
               )}
 
-              {/* Confidence Badge */}
-              <span className={`
-                inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-semibold
-                ${confidence.bg} ${confidence.text} ${confidence.border}
-              `}>
-                <span>{confidenceIcons[product.confidence]}</span>
-                {product.confidence}
-              </span>
-            </div>
-          </div>
-
-          {/* Stock Coverage Comparison */}
-          <div className="mt-3">
-            <StockCoverage
-              variant="comparison"
-              warehouseDays={product.days_of_stock}
-              withOrderDays={
-                product.days_of_stock !== null && product.daily_velocity_m2 > 0 && product.selected_m2 > 0
-                  ? product.days_of_stock + Math.round(product.selected_m2 / product.daily_velocity_m2)
-                  : product.days_of_stock
-              }
-            />
-            {product.in_transit_m2 > 0 && (
-              <div className="mt-1 text-xs text-indigo-400">
-                + 📦 {Math.round(product.in_transit_m2).toLocaleString()} m² {t('orderBuilderProduct.inTransit')}
-              </div>
-            )}
-          </div>
-
-          {/* Velocity Row */}
-          {product.daily_velocity_m2 > 0 && (
-            <div className="mt-1 text-sm text-slate-400">
-              {t('orderBuilderProduct.velocity')}:{' '}
-              <span className="font-semibold text-slate-200">{Number(product.daily_velocity_m2).toFixed(1)} m²/day</span>
-            </div>
-          )}
-
-          {/* Reasoning Sentence (Layer 4) */}
-          {product.reasoning_display && (
-            <div className="mt-2 flex items-start gap-2 text-sm">
-              <span className="text-yellow-400">💡</span>
-              <span className="text-slate-300">
-                {product.reasoning_display.why_product_sentence}
-              </span>
-            </div>
-          )}
-
-          {/* Gap & Customers Row */}
-          <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-400">
-            <span>
-              {t('orderBuilderProduct.gap')}:{' '}
-              <span className="font-semibold text-white">{Math.round(product.coverage_gap_m2).toLocaleString()} m²</span>
-              <span className="text-slate-500 ml-1">({product.coverage_gap_pallets}p)</span>
-            </span>
-            {product.unique_customers > 0 && (
-              <span>
-                <span className="text-indigo-400">{product.unique_customers}</span> {t('orderBuilderProduct.customers')}
-              </span>
-            )}
-            {product.top_customer_share != null && Number(product.top_customer_share) > 0.3 && (
-              <span className="text-amber-400">
-                {t('orderBuilderProduct.fromTopCustomer', {
-                  percent: Math.round(Number(product.top_customer_share) * 100),
-                  name: product.top_customer_name || 'top customer'
-                })}
-              </span>
-            )}
-          </div>
-
-          {/* Calculation Breakdown Toggle */}
-          {breakdown && (
-            <div className="mt-3">
-              <button
-                onClick={() => setShowBreakdown(!showBreakdown)}
-                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 transition-colors"
-              >
-                <span className={`transform transition-transform duration-200 ${showBreakdown ? 'rotate-90' : ''}`}>
-                  ▶
-                </span>
-                {t('orderBuilderProduct.showCalculation')}
-              </button>
-
-              {showBreakdown && (
-                <div className="mt-3 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50 text-xs animate-in slide-in-from-top-2 duration-200">
-                  <div className="space-y-2 text-slate-400">
-                    <div className="flex justify-between">
-                      <span>{t('orderBuilderProduct.leadTime')}:</span>
-                      <span className="text-slate-300 font-medium">{breakdown.lead_time_days}d</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t('orderBuilderProduct.untilNextBoat', 'Until next boat')}:</span>
-                      <span className="text-slate-300 font-medium">{breakdown.ordering_cycle_days}d</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{t('orderBuilderProduct.dailyVelocity')}:</span>
-                      <span className="text-slate-300 font-medium">{Number(breakdown.daily_velocity_m2).toFixed(1)} m²/d</span>
-                    </div>
-                    <div className="border-t border-slate-700/50 my-2" />
-                    <div className="flex justify-between">
-                      <span>{t('orderBuilderProduct.baseQuantity')}:</span>
-                      <span className="text-slate-300 font-medium">{Math.round(Number(breakdown.base_quantity_m2)).toLocaleString()} m²</span>
-                    </div>
-                    {Number(breakdown.trend_adjustment_m2) !== 0 && (
-                      <div className="flex justify-between text-emerald-400">
-                        <span>{t('orderBuilderProduct.trendAdjustment')} (+{Number(breakdown.trend_adjustment_pct).toFixed(0)}%):</span>
-                        <span className="font-medium">+{Math.round(Number(breakdown.trend_adjustment_m2)).toLocaleString()} m²</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-red-400">
-                      <span>{t('orderBuilderProduct.minusStock')}:</span>
-                      <span className="font-medium">-{Math.round(Number(breakdown.minus_current_stock_m2)).toLocaleString()} m²</span>
-                    </div>
-                    {Number(breakdown.minus_incoming_m2) > 0 && (
-                      <div className="flex justify-between text-amber-400">
-                        <span>{t('orderBuilderProduct.minusIncoming')}:</span>
-                        <span className="font-medium">-{Math.round(Number(breakdown.minus_incoming_m2)).toLocaleString()} m²</span>
-                      </div>
-                    )}
-                    <div className="border-t border-slate-700/50 my-2" />
-                    <div className="flex justify-between font-semibold text-white text-sm">
-                      <span>{t('orderBuilderProduct.suggestion')}:</span>
-                      <span>{Math.round(Number(breakdown.final_suggestion_m2)).toLocaleString()} m² ({breakdown.final_suggestion_pallets}p)</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Confidence Reason (if LOW) */}
-          {product.confidence === 'LOW' && product.confidence_reason && (
-            <div className="mt-2 text-xs text-slate-500 italic">
-              {product.confidence_reason}
-            </div>
-          )}
-
-          {/* Factory Production Status */}
-          {product.factory_status === 'in_production' && (
-            <div className={`
-              mt-2 inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg
-              ${product.factory_ready_before_boat
-                ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                : 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-              }
-            `}>
-              <span>🏭</span>
-              <span className="font-medium">
-                {product.factory_timing_message || (
-                  product.factory_production_date
-                    ? `Production: ${new Date(product.factory_production_date).toLocaleDateString()}`
-                    : 'In production'
+              {/* Confidence */}
+              <div className="flex items-center gap-1.5">
+                <span className={confidence.color}>{confidence.icon}</span>
+                <span>{t('orderBuilderProduct.confidence', 'Confidence')}:</span>
+                <span className={`font-medium ${confidence.color}`}>{product.confidence}</span>
+                {product.confidence === 'LOW' && product.confidence_reason && (
+                  <span className="text-slate-500 italic ml-1">({product.confidence_reason})</span>
                 )}
-              </span>
-              {product.factory_production_m2 && (
-                <span className="text-slate-400 ml-1">
-                  ({Math.round(Number(product.factory_production_m2)).toLocaleString()} m²)
-                </span>
-              )}
-            </div>
-          )}
+              </div>
 
-          {product.factory_status === 'not_scheduled' && product.is_selected && (
-            <div className="mt-2 inline-flex items-center gap-1.5 text-xs text-slate-400 bg-slate-500/10 px-2.5 py-1 rounded-lg border border-slate-500/30">
-              <span>📋</span>
-              <span>{t('orderBuilderProduct.notInSchedule', 'Not in production schedule')}</span>
+              {/* Gap info */}
+              <div className="flex items-center gap-1.5">
+                <span>{t('orderBuilderProduct.gap', 'Gap')}:</span>
+                <span className="text-slate-300 font-medium">
+                  {Math.round(product.coverage_gap_m2).toLocaleString()} m²
+                </span>
+                <span className="text-slate-500">({product.coverage_gap_pallets}p)</span>
+              </div>
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
