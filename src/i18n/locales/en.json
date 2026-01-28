@@ -448,7 +448,12 @@
     "outOfStock": "Out of stock",
     "coveredByTransit": "Covered by {{m2}} m² in transit ({{days}}d)",
     "daysLeft": "{{days}}d left",
-    "scoreTooltip": "Priority score: Stockout {{stockout}}, Customer {{customer}}, Trend {{trend}}, Revenue {{revenue}}"
+    "scoreTooltip": "Priority score: Stockout {{stockout}}, Customer {{customer}}, Trend {{trend}}, Revenue {{revenue}}",
+    "atFactory": "at factory",
+    "singleLot": "single lot",
+    "mixedLots": "mixed lots",
+    "needsProduction": "needs production",
+    "noStock": "no stock"
   },
   "blAllocation": {
     "title": "BL Allocation",

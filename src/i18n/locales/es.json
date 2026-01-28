@@ -448,7 +448,12 @@
     "outOfStock": "Sin stock",
     "coveredByTransit": "Cubierto por {{m2}} m² en tránsito ({{days}}d)",
     "daysLeft": "{{days}}d restantes",
-    "scoreTooltip": "Puntaje de prioridad: Agotamiento {{stockout}}, Cliente {{customer}}, Tendencia {{trend}}, Ingresos {{revenue}}"
+    "scoreTooltip": "Puntaje de prioridad: Agotamiento {{stockout}}, Cliente {{customer}}, Tendencia {{trend}}, Ingresos {{revenue}}",
+    "atFactory": "en fábrica",
+    "singleLot": "lote único",
+    "mixedLots": "lotes mixtos",
+    "needsProduction": "necesita producción",
+    "noStock": "sin stock"
   },
   "blAllocation": {
     "title": "Asignación de BL",

@@ -4,6 +4,7 @@ import type {
   OrderBuilderProduct,
   ConfidenceLevel,
   TrendDirection,
+  FactoryFillStatus,
 } from '../requests/orderBuilder';
 import { WEIGHT_PER_M2_KG } from '../constants/inventory';
 
@@ -53,6 +54,15 @@ export function OrderBuilderProductCard({
     HIGH: { icon: '✓', color: 'text-emerald-400' },
     MEDIUM: { icon: '⚠', color: 'text-amber-400' },
     LOW: { icon: '?', color: 'text-slate-400' },
+  };
+
+  const factoryFillStyles: Record<FactoryFillStatus, { icon: string; color: string; textColor: string }> = {
+    single_lot: { icon: '✓', color: 'text-emerald-400', textColor: 'text-emerald-400' },
+    mixed_lots: { icon: '⚠', color: 'text-amber-400', textColor: 'text-amber-400' },
+    needs_production: { icon: '🔴', color: 'text-red-400', textColor: 'text-red-400' },
+    no_stock: { icon: '—', color: 'text-slate-500', textColor: 'text-slate-500' },
+    not_needed: { icon: '', color: '', textColor: 'text-slate-400' },
+    unknown: { icon: '?', color: 'text-slate-500', textColor: 'text-slate-500' },
   };
 
   // Override urgency to COVERED when in-transit covers the need
@@ -219,6 +229,26 @@ export function OrderBuilderProductCard({
                 {formatTransitArrival()}
               </span>
               <span className="text-xs text-slate-500">{t('orderBuilderProduct.inTransit', 'in transit')}</span>
+            </div>
+          )}
+
+          {/* Factory Available (SIESA) */}
+          {product.factory_available_m2 > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">🏭</span>
+              <span className="text-purple-300 font-medium">
+                {Math.round(product.factory_available_m2).toLocaleString()} m²
+              </span>
+              <span className="text-xs text-slate-500">{t('orderBuilderProduct.atFactory', 'at factory')}</span>
+              {product.factory_fill_status && product.factory_fill_status !== 'not_needed' && product.factory_fill_status !== 'unknown' && (
+                <span className={`text-xs ${factoryFillStyles[product.factory_fill_status].textColor}`}>
+                  {factoryFillStyles[product.factory_fill_status].icon}{' '}
+                  {product.factory_fill_status === 'single_lot' && t('orderBuilderProduct.singleLot', 'single lot')}
+                  {product.factory_fill_status === 'mixed_lots' && t('orderBuilderProduct.mixedLots', 'mixed lots')}
+                  {product.factory_fill_status === 'needs_production' && t('orderBuilderProduct.needsProduction', 'needs production')}
+                  {product.factory_fill_status === 'no_stock' && t('orderBuilderProduct.noStock', 'no stock')}
+                </span>
+              )}
             </div>
           )}
 

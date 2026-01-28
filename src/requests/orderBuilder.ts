@@ -7,6 +7,7 @@ export type Urgency = 'critical' | 'urgent' | 'soon' | 'ok';
 export type TrendDirection = 'up' | 'down' | 'stable';
 export type TrendStrength = 'strong' | 'moderate' | 'weak';
 export type FactoryStatus = 'in_production' | 'not_scheduled';
+export type FactoryFillStatus = 'single_lot' | 'mixed_lots' | 'needs_production' | 'no_stock' | 'not_needed' | 'unknown';
 
 export interface CalculationBreakdown {
   lead_time_days: number;
@@ -161,6 +162,14 @@ export interface OrderBuilderProduct {
   days_until_factory_ready: number | null;
   factory_ready_before_boat: boolean | null;
   factory_timing_message: string | null;
+
+  // Factory availability (SIESA finished goods)
+  factory_available_m2: number;
+  factory_largest_lot_m2: number | null;
+  factory_largest_lot_code: string | null;
+  factory_lot_count: number;
+  factory_fill_status: FactoryFillStatus;
+  factory_fill_message: string | null;
 
   // Trend data (from Intelligence system)
   urgency: Urgency;
