@@ -8,6 +8,7 @@ import type {
   OrderBuilderAlert,
   DemandForecastResponse,
   BLAllocationReport,
+  GenerateReportRequest,
 } from '../requests/orderBuilder';
 import { boatsApi } from '../requests/boats';
 import { factoryOrdersApi } from '../requests/factoryOrders';
@@ -376,6 +377,7 @@ export function OrderBuilder() {
 
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   const handleExport = async () => {
     const selected = products.filter((p) => p.is_selected && p.selected_pallets > 0);
@@ -435,6 +437,66 @@ export function OrderBuilder() {
       alert(t('orderBuilder.exportError'));
     } finally {
       setExporting(false);
+    }
+  };
+
+  // Generate comprehensive report with reasoning
+  const handleGenerateReport = async () => {
+    if (!data) return;
+
+    setGeneratingReport(true);
+    try {
+      // Collect selected items from each section
+      const warehouseItems = products
+        .filter((p) => p.is_selected && p.selected_pallets > 0 && p.factory_available_m2 > 0)
+        .map((p) => ({
+          product_id: p.product_id,
+          sku: p.sku,
+          pallets: p.selected_pallets,
+        }));
+
+      // Get selected add to production items
+      const addItems = data.add_to_production_summary?.items
+        .filter((item) => item.is_selected)
+        .map((item) => ({
+          product_id: item.product_id,
+          sku: item.sku,
+          pallets: item.suggested_additional_pallets,
+        })) || [];
+
+      // Get selected factory request items
+      const factoryItems = data.factory_request_summary?.items
+        .filter((item) => item.is_selected)
+        .map((item) => ({
+          product_id: item.product_id,
+          sku: item.sku,
+          pallets: item.gap_pallets,
+        })) || [];
+
+      const request: GenerateReportRequest = {
+        boat_id: selectedBoatId,
+        num_bls: numBLs,
+        warehouse_items: warehouseItems,
+        add_to_production_items: addItems,
+        factory_request_items: factoryItems,
+      };
+
+      const blob = await orderBuilderApi.generateReport(request);
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = data.boat.departure_date.replace(/-/g, '');
+      a.download = `ORDER_REPORT_${dateStr}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error('Report generation failed:', err);
+      alert(t('orderBuilder.reportError', 'Failed to generate report'));
+    } finally {
+      setGeneratingReport(false);
     }
   };
 
@@ -860,6 +922,17 @@ export function OrderBuilder() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">
+              {/* Generate Report Button */}
+              <button
+                onClick={handleGenerateReport}
+                disabled={generatingReport}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-blue-400 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                {generatingReport
+                  ? t('orderBuilder.generatingReport', 'Generating Report...')
+                  : t('orderBuilder.generateReport', 'Generate Report')}
+              </button>
+
               {/* Allocate to BLs Button */}
               <button
                 onClick={handleAllocateToBLs}

@@ -15,8 +15,28 @@ export function AddToProductionSection({
 }: AddToProductionSectionProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
+
+  // Initialize selectedItems from server-provided is_selected field
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(() => {
+    if (!summary) return new Set();
+    return new Set(
+      summary.items
+        .filter((item) => item.is_selected)
+        .map((item) => item.product_id)
+    );
+  });
+
+  // Initialize quantities for selected items
+  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(() => {
+    if (!summary) return {};
+    const quantities: Record<string, number> = {};
+    summary.items
+      .filter((item) => item.is_selected)
+      .forEach((item) => {
+        quantities[item.product_id] = item.suggested_additional_pallets;
+      });
+    return quantities;
+  });
 
   if (!summary || summary.items.length === 0) {
     return null;
@@ -66,7 +86,8 @@ export function AddToProductionSection({
           <div className="w-2 h-10 rounded-full bg-amber-500" />
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              {t('orderBuilder.addToProduction', 'Add to Production')}
+              <span className="text-amber-400">⚠️</span>
+              {t('orderBuilder.actionRequired', 'ACTION REQUIRED')}
               <span className="text-slate-500 font-normal">({summary.items.length})</span>
               {summary.has_critical_items && (
                 <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
@@ -75,7 +96,12 @@ export function AddToProductionSection({
               )}
             </h2>
             <p className="text-sm text-amber-400/80 mt-0.5">
-              {t('orderBuilder.addToProductionDesc', 'Piggyback on scheduled items · Ready in 4-7 days')}
+              {t('orderBuilder.addToProductionDesc2', 'Piggyback on scheduled items')}
+              {summary.action_deadline_display && (
+                <span className="ml-1 font-medium text-amber-300">
+                  · {t('orderBuilder.actBy', 'Act by')} {summary.action_deadline_display}
+                </span>
+              )}
             </p>
           </div>
         </div>

@@ -15,8 +15,28 @@ export function FactoryRequestSection({
 }: FactoryRequestSectionProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
+
+  // Initialize selectedItems from server-provided is_selected field
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(() => {
+    if (!summary) return new Set();
+    return new Set(
+      summary.items
+        .filter((item) => item.is_selected)
+        .map((item) => item.product_id)
+    );
+  });
+
+  // Initialize quantities for selected items
+  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>(() => {
+    if (!summary) return {};
+    const quantities: Record<string, number> = {};
+    summary.items
+      .filter((item) => item.is_selected)
+      .forEach((item) => {
+        quantities[item.product_id] = item.gap_pallets;
+      });
+    return quantities;
+  });
 
   if (!summary || summary.items.length === 0) {
     return null;
@@ -77,7 +97,12 @@ export function FactoryRequestSection({
               <span className="text-slate-500 font-normal">({summary.items.length})</span>
             </h2>
             <p className="text-sm text-slate-400 mt-0.5">
-              {t('orderBuilder.factoryRequestDesc', 'For products not in schedule · Ready in 30-60 days')}
+              {t('orderBuilder.factoryRequestDesc2', 'For products not currently in production')}
+              {summary.submit_deadline_display && (
+                <span className="ml-1 font-medium text-slate-300">
+                  · {summary.submit_deadline_display}
+                </span>
+              )}
             </p>
           </div>
         </div>

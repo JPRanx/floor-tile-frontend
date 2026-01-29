@@ -357,6 +357,9 @@ export interface AddToProductionItem {
   // Priority
   score: number;
   is_critical: boolean;
+
+  // Selection (pre-selected by default)
+  is_selected: boolean;
 }
 
 export interface FactoryRequestItem {
@@ -385,6 +388,9 @@ export interface FactoryRequestItem {
   // Priority
   urgency: Urgency;
   score: number;
+
+  // Selection (pre-selected by default)
+  is_selected: boolean;
 }
 
 export interface WarehouseOrderSummary {
@@ -416,6 +422,10 @@ export interface AddToProductionSummary {
 
   // Alert flag
   has_critical_items: boolean;
+
+  // ACTION REQUIRED deadline
+  action_deadline: string | null;
+  action_deadline_display: string;
 }
 
 export interface FactoryRequestSummary {
@@ -433,6 +443,10 @@ export interface FactoryRequestSummary {
 
   // Timing
   estimated_ready: string;
+
+  // Submit deadline
+  submit_deadline: string | null;
+  submit_deadline_display: string;
 }
 
 export interface OrderBuilderResponse {
@@ -724,6 +738,17 @@ export const orderBuilderApi = {
     );
     return response.data;
   },
+
+  /**
+   * Generate comprehensive order report explaining WHY recommendations were made.
+   * Returns Excel file with 6 sheets.
+   */
+  generateReport: async (request: GenerateReportRequest): Promise<Blob> => {
+    const response = await api.post('/order-builder/generate-report', request, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 
 // Request type for recalculate endpoint
@@ -731,4 +756,19 @@ export interface RecalculateRequest {
   boat_id?: string;
   num_bls: number;
   excluded_skus: string[];
+}
+
+// Request type for report generation
+export interface GenerateReportItem {
+  product_id: string;
+  sku: string;
+  pallets: number;
+}
+
+export interface GenerateReportRequest {
+  boat_id?: string;
+  num_bls: number;
+  warehouse_items: GenerateReportItem[];
+  add_to_production_items: GenerateReportItem[];
+  factory_request_items: GenerateReportItem[];
 }

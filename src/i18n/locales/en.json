@@ -229,7 +229,14 @@
     "capacityFreed": "capacity freed",
     "recalculating": "Recalculating...",
     "recalculateOptimal": "Recalculate Optimal Order",
-    "recalculateError": "Failed to recalculate order"
+    "recalculateError": "Failed to recalculate order",
+    "generateReport": "Generate Report",
+    "generatingReport": "Generating Report...",
+    "reportError": "Failed to generate report",
+    "actionRequired": "ACTION REQUIRED",
+    "addToProductionDesc2": "Piggyback on scheduled items",
+    "actBy": "Act by",
+    "factoryRequestDesc2": "For products not currently in production"
   },
   "recommendations": {
     "title": "Order Recommendations",

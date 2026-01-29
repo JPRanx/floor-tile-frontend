@@ -229,7 +229,14 @@
     "capacityFreed": "capacidad liberada",
     "recalculating": "Recalculando...",
     "recalculateOptimal": "Recalcular Pedido Óptimo",
-    "recalculateError": "Error al recalcular pedido"
+    "recalculateError": "Error al recalcular pedido",
+    "generateReport": "Generar Reporte",
+    "generatingReport": "Generando Reporte...",
+    "reportError": "Error al generar el reporte",
+    "actionRequired": "ACCIÓN REQUERIDA",
+    "addToProductionDesc2": "Añadir a items programados",
+    "actBy": "Actuar antes de",
+    "factoryRequestDesc2": "Para productos no en producción actualmente"
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",
