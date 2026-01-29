@@ -12,6 +12,12 @@ interface OrderBuilderHeaderProps {
   // BL count determines capacity: num_bls × 5 × 14 pallets
   numBLs: number;
   onNumBLsChange: (numBLs: number) => void;
+  // Recommended BL count (based on TRUE NEED: coverage gap - transit - production)
+  recommendedBLs: number;
+  // Available BL count (what can ship now based on factory stock)
+  availableBLs: number;
+  // Message explaining both need and available
+  recommendedBLsReason: string;
 }
 
 export function OrderBuilderHeader({
@@ -22,6 +28,9 @@ export function OrderBuilderHeader({
   onBoatChange,
   numBLs,
   onNumBLsChange,
+  recommendedBLs,
+  availableBLs,
+  recommendedBLsReason,
 }: OrderBuilderHeaderProps) {
   const { t } = useTranslation();
 
@@ -188,28 +197,43 @@ export function OrderBuilderHeader({
 
       {/* BL Selector Section */}
       <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700/30">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex flex-col gap-3">
           {/* BL Count Selector - Always visible */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               {t('blAllocation.numBLs', 'Number of BLs')}
             </span>
             <div className="flex gap-2">
-              {blOptions.map((num) => (
-                <button
-                  key={num}
-                  onClick={() => onNumBLsChange(num)}
-                  className={`
-                    w-12 h-12 rounded-xl text-sm font-bold transition-all duration-300
-                    ${numBLs === num
-                      ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
-                      : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
-                    }
-                  `}
-                >
-                  {num}
-                </button>
-              ))}
+              {blOptions.map((num) => {
+                const isSelected = numBLs === num;
+                const isRecommended = recommendedBLs === num;
+                const isAvailable = availableBLs >= num && availableBLs > 0;
+                return (
+                  <button
+                    key={num}
+                    onClick={() => onNumBLsChange(num)}
+                    className={`
+                      relative w-12 h-12 rounded-xl text-sm font-bold transition-all duration-300
+                      ${isSelected
+                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
+                        : isRecommended
+                          ? 'bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/50 hover:bg-emerald-500/20'
+                          : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
+                      }
+                    `}
+                  >
+                    {num}
+                    {/* Recommended indicator (need) */}
+                    {isRecommended && !isSelected && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
+                    )}
+                    {/* Available indicator (cyan dot on bottom) */}
+                    {isAvailable && !isSelected && num <= availableBLs && (
+                      <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-cyan-400 rounded-full" />
+                    )}
+                  </button>
+                );
+              })}
             </div>
             <div className="text-sm text-slate-400">
               {t('blAllocation.capacity', 'Capacity')}: {numBLs * 5}{' '}
@@ -217,6 +241,29 @@ export function OrderBuilderHeader({
               {t('blAllocation.pallets', 'pallets')})
             </div>
           </div>
+
+          {/* BL Recommendation - shows both need and available */}
+          {recommendedBLsReason && (
+            <div className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm">
+              <div className="flex items-center gap-2">
+                <span className={availableBLs >= recommendedBLs ? 'text-emerald-400' : 'text-amber-400'}>
+                  {availableBLs >= recommendedBLs ? '✓' : '⚠️'}
+                </span>
+                <span className="text-slate-300">{recommendedBLsReason}</span>
+              </div>
+              {/* Legend */}
+              <div className="flex items-center gap-3 text-xs text-slate-500 sm:ml-auto">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                  {t('blAllocation.needIndicator', 'Need')}
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
+                  {t('blAllocation.availableIndicator', 'Available')}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

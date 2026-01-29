@@ -81,6 +81,9 @@ export function OrderBuilder() {
   const [removedSkus, setRemovedSkus] = useState<Set<string>>(new Set());
   const [recalculating, setRecalculating] = useState(false);
 
+  // Track if initial load has happened (for auto-selecting recommended BLs)
+  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+
   // Fetch available boats on mount
   useEffect(() => {
     const fetchBoats = async () => {
@@ -104,7 +107,7 @@ export function OrderBuilder() {
     fetchBoats();
   }, []);
 
-  const loadData = useCallback(async (blCount: number, boatId?: string) => {
+  const loadData = useCallback(async (blCount: number, boatId?: string, isInitialLoad?: boolean) => {
     try {
       setLoading(true);
       setError(null);
@@ -122,6 +125,15 @@ export function OrderBuilder() {
         selected_m2: p.selected_pallets * M2_PER_PALLET,
       }));
       setProducts(allProducts);
+
+      // Auto-select recommended BLs on initial load
+      if (isInitialLoad && result.recommended_bls && result.recommended_bls !== blCount) {
+        setNumBLs(result.recommended_bls);
+        setHasInitiallyLoaded(true);
+        // Reload will happen automatically via useEffect
+      } else if (isInitialLoad) {
+        setHasInitiallyLoaded(true);
+      }
     } catch (err) {
       setError('Failed to load order builder data');
       console.error(err);
@@ -147,10 +159,11 @@ export function OrderBuilder() {
   useEffect(() => {
     // Load data even without a boat - backend will use defaults
     if (boatsLoaded) {
-      loadData(numBLs, selectedBoatId);
+      // Pass isInitialLoad=true only on the first load (before hasInitiallyLoaded is set)
+      loadData(numBLs, selectedBoatId, !hasInitiallyLoaded);
       loadDemandForecast(selectedBoatId);
     }
-  }, [numBLs, selectedBoatId, loadData, loadDemandForecast, boatsLoaded]);
+  }, [numBLs, selectedBoatId, loadData, loadDemandForecast, boatsLoaded, hasInitiallyLoaded]);
 
   const handleBoatChange = (boatId: string) => {
     setSelectedBoatId(boatId);
@@ -640,6 +653,9 @@ export function OrderBuilder() {
           onBoatChange={handleBoatChange}
           numBLs={numBLs}
           onNumBLsChange={handleNumBLsChange}
+          recommendedBLs={data.recommended_bls}
+          availableBLs={data.available_bls}
+          recommendedBLsReason={data.recommended_bls_reason}
         />
 
         {/* BL Allocation View - shown when allocation is generated */}

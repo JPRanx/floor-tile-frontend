@@ -513,6 +513,7 @@
   "blAllocation": {
     "title": "BL Allocation",
     "numBLs": "Number of BLs",
+    "recommended": "Recommended",
     "capacity": "Capacity",
     "containers": "containers",
     "pallets": "pallets",
@@ -544,7 +545,9 @@
     "maxDelayed": "max {{pct}}% of critical delayed",
     "unevenWarning": "Consider using more BLs to spread critical products more evenly.",
     "generatedAt": "Generated",
-    "boat": "Boat"
+    "boat": "Boat",
+    "needIndicator": "Need",
+    "availableIndicator": "Available"
   },
   "demandForecast": {
     "title": "Expected Demand",

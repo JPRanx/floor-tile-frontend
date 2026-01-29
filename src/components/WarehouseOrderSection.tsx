@@ -148,7 +148,7 @@ export function WarehouseOrderSection({
 
           {/* Products by Priority */}
           <div className="pt-4 space-y-4">
-            {priorityConfig.map(({ key, label, color, bgColor, borderColor }) => {
+            {priorityConfig.map(({ key, label, color, bgColor }) => {
               const categoryProducts = productsByPriority[key];
               if (categoryProducts.length === 0) return null;
 

@@ -513,6 +513,7 @@
   "blAllocation": {
     "title": "Asignación de BL",
     "numBLs": "Número de BLs",
+    "recommended": "Recomendado",
     "capacity": "Capacidad",
     "containers": "contenedores",
     "pallets": "paletas",
@@ -544,7 +545,9 @@
     "maxDelayed": "máx {{pct}}% de críticos retrasados",
     "unevenWarning": "Considera usar más BLs para distribuir los productos críticos más uniformemente.",
     "generatedAt": "Generado",
-    "boat": "Barco"
+    "boat": "Barco",
+    "needIndicator": "Necesidad",
+    "availableIndicator": "Disponible"
   },
   "demandForecast": {
     "title": "Demanda Esperada",

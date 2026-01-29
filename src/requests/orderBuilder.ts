@@ -443,6 +443,13 @@ export interface OrderBuilderResponse {
   // BL count (determines capacity)
   num_bls: number;
 
+  // Recommended BL count (based on TRUE NEED: coverage gap - in transit - in production)
+  recommended_bls: number;
+  // Available BL count (what can ship now based on factory stock)
+  available_bls: number;
+  // Message showing both need and available
+  recommended_bls_reason: string;
+
   // Products grouped by priority
   high_priority: OrderBuilderProduct[];
   consider: OrderBuilderProduct[];
