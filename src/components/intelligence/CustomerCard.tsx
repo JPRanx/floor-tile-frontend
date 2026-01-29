@@ -4,6 +4,7 @@ import { Sparkline } from './Sparkline';
 import { ConfidenceBadge } from './ConfidenceBadge';
 import { StatusDot } from './StatusDot';
 import { TrendArrow } from './TrendArrow';
+import { formatDateUTC } from '../../utils/dateUtils';
 
 interface CustomerCardProps {
   customer: CustomerTrend;
@@ -126,12 +127,7 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
   // Format expected date
   const formatExpectedDate = (dateStr: string | null) => {
     if (!dateStr) return null;
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('es-GT', { month: 'short', day: 'numeric' });
-    } catch {
-      return dateStr;
-    }
+    return formatDateUTC(dateStr, 'es-GT');
   };
 
   return (

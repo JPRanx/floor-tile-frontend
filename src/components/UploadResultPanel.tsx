@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { SACUploadResponse, SIESAUploadResponse } from '../requests/dataHub';
+import { formatDateUTC } from '../utils/dateUtils';
 
 interface SACResultPanelProps {
   type: 'sac';
@@ -48,8 +49,8 @@ export function UploadResultPanel(props: UploadResultPanelProps) {
 
   if (props.type === 'sac') {
     const { result } = props;
-    const startDate = new Date(result.date_range_start).toLocaleDateString();
-    const endDate = new Date(result.date_range_end).toLocaleDateString();
+    const startDate = formatDateUTC(result.date_range_start);
+    const endDate = formatDateUTC(result.date_range_end);
 
     return (
       <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
@@ -104,7 +105,7 @@ export function UploadResultPanel(props: UploadResultPanelProps) {
 
   if (props.type === 'siesa') {
     const { result } = props;
-    const snapshotDate = new Date(result.snapshot_date).toLocaleDateString();
+    const snapshotDate = formatDateUTC(result.snapshot_date);
 
     return (
       <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">

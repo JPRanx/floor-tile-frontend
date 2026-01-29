@@ -9,6 +9,7 @@ export type TrendStrength = 'strong' | 'moderate' | 'weak';
 export type FactoryStatus = 'in_production' | 'not_scheduled';
 export type FactoryFillStatus = 'single_lot' | 'mixed_lots' | 'needs_production' | 'no_stock' | 'not_needed' | 'unknown';
 export type VelocityTrendSignal = 'growing' | 'stable' | 'declining';
+export type ProductionStatus = 'scheduled' | 'in_progress' | 'completed' | 'not_scheduled';
 
 export interface CalculationBreakdown {
   lead_time_days: number;
@@ -172,6 +173,17 @@ export interface OrderBuilderProduct {
   factory_fill_status: FactoryFillStatus;
   factory_fill_message: string | null;
 
+  // Production schedule status (from Programa de Produccion Excel)
+  production_status: ProductionStatus;
+  production_requested_m2: number;
+  production_completed_m2: number;
+  production_can_add_more: boolean;
+  production_estimated_ready: string | null;
+
+  // Pre-production alert (when user should add more before production starts)
+  production_add_more_m2: number;
+  production_add_more_alert: string | null;
+
   // Trend data (from Intelligence system)
   urgency: Urgency;
   days_of_stock: number | null;
@@ -218,6 +230,9 @@ export interface OrderBuilderBoat {
   days_until_departure: number;
   days_until_arrival: number;
   days_until_warehouse: number; // Lead time: days until product IN warehouse
+  order_deadline: string; // Recommended order deadline (30 days before departure)
+  days_until_order_deadline: number; // Can be negative if past deadline
+  past_order_deadline: boolean; // True if past recommended order deadline
   booking_deadline: string;
   days_until_deadline: number;
   max_containers: number;
@@ -316,6 +331,110 @@ export interface ConstraintAnalysis {
   liquidation_could_fit_deferred: boolean;
 }
 
+// ===================
+// SECTION SUMMARIES (Three-Section Order Builder)
+// ===================
+
+export interface AddToProductionItem {
+  product_id: string;
+  sku: string;
+  description: string | null;
+  referencia: string;
+
+  // Current production request
+  current_requested_m2: number;
+
+  // Order Builder suggestion
+  suggested_total_m2: number;
+  suggested_additional_m2: number;
+  suggested_additional_pallets: number;
+
+  // Timing
+  estimated_ready_date: string | null;
+  target_boat: string | null;
+  target_boat_departure: string | null;
+
+  // Priority
+  score: number;
+  is_critical: boolean;
+}
+
+export interface FactoryRequestItem {
+  product_id: string;
+  sku: string;
+  description: string | null;
+
+  // Current coverage
+  warehouse_m2: number;
+  in_transit_m2: number;
+  factory_available_m2: number;
+  in_production_m2: number;
+
+  // Need
+  suggested_m2: number;
+  gap_m2: number;
+  gap_pallets: number;
+
+  // Request
+  request_m2: number;
+  request_pallets: number;
+
+  // Timing
+  estimated_ready: string;
+
+  // Priority
+  urgency: Urgency;
+  score: number;
+}
+
+export interface WarehouseOrderSummary {
+  product_count: number;
+  selected_count: number;
+  total_m2: number;
+  total_pallets: number;
+  total_containers: number;
+  total_weight_kg: number;
+
+  // BL allocation
+  bl_count: number;
+
+  // Boat
+  boat_name: string | null;
+  boat_departure: string | null;
+}
+
+export interface AddToProductionSummary {
+  product_count: number;
+  total_additional_m2: number;
+  total_additional_pallets: number;
+
+  // Items eligible for adding more
+  items: AddToProductionItem[];
+
+  // Timing
+  estimated_ready_range: string;
+
+  // Alert flag
+  has_critical_items: boolean;
+}
+
+export interface FactoryRequestSummary {
+  product_count: number;
+  total_request_m2: number;
+  total_request_pallets: number;
+
+  // Items needing new requests
+  items: FactoryRequestItem[];
+
+  // Quota tracking (Guatemala: 60k m²/month)
+  limit_m2: number;
+  utilization_pct: number;
+  remaining_m2: number;
+
+  // Timing
+  estimated_ready: string;
+}
+
 export interface OrderBuilderResponse {
   // Boat info
   boat: OrderBuilderBoat;
@@ -332,6 +451,11 @@ export interface OrderBuilderResponse {
 
   // Summary
   summary: OrderBuilderSummary;
+
+  // Three-section summaries (NEW)
+  warehouse_order_summary: WarehouseOrderSummary | null;
+  add_to_production_summary: AddToProductionSummary | null;
+  factory_request_summary: FactoryRequestSummary | null;
 
   // Constraint analysis (explains capacity limits)
   constraint_analysis: ConstraintAnalysis | null;
@@ -581,4 +705,23 @@ export const orderBuilderApi = {
     });
     return response.data;
   },
+
+  /**
+   * Recalculate Order Builder with excluded products.
+   * Performs a full re-optimization using freed capacity.
+   */
+  recalculate: async (request: RecalculateRequest): Promise<OrderBuilderResponse> => {
+    const response = await api.post<OrderBuilderResponse>(
+      '/order-builder/recalculate',
+      request
+    );
+    return response.data;
+  },
 };
+
+// Request type for recalculate endpoint
+export interface RecalculateRequest {
+  boat_id?: string;
+  num_bls: number;
+  excluded_skus: string[];
+}

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import type { BoatSchedule, BoatStatus } from '../requests/boats';
+import { formatDateWithYear, parseDateLocal, getTodayLocal } from '../utils/dateUtils';
 
 interface BoatTableProps {
   boats: BoatSchedule[];
@@ -13,25 +14,14 @@ const statusStyles: Record<BoatStatus, string> = {
   arrived: 'bg-gray-100 text-gray-800 border-gray-200',
 };
 
-function formatDate(dateString: string, locale: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
 /**
  * Get the display status for a boat.
  * Status is auto-computed from departure date - past dates are always "departed".
  * This is the ONLY source of truth for display status.
  */
 function getDisplayStatus(boat: BoatSchedule): BoatStatus {
-  const etd = new Date(boat.departure_date);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  etd.setHours(0, 0, 0, 0);
+  const etd = parseDateLocal(boat.departure_date);
+  const today = getTodayLocal();
 
   if (etd < today) {
     return 'departed'; // Always departed if date has passed
@@ -121,17 +111,17 @@ export function BoatTable({ boats, onStatusChange }: BoatTableProps) {
                   </td>
                   <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {formatDate(boat.departure_date, i18n.language)}
+                      {formatDateWithYear(boat.departure_date, i18n.language === 'es' ? 'es-ES' : 'en-US')}
                     </div>
                     <div className="text-xs text-gray-500">{boat.origin_port}</div>
                     {/* Show arrival on mobile under departure */}
                     <div className="sm:hidden text-xs text-gray-400 mt-1">
-                      → {formatDate(boat.arrival_date, i18n.language)} ({boat.transit_days}d)
+                      → {formatDateWithYear(boat.arrival_date, i18n.language === 'es' ? 'es-ES' : 'en-US')} ({boat.transit_days}d)
                     </div>
                   </td>
                   <td className="hidden sm:table-cell px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {formatDate(boat.arrival_date, i18n.language)}
+                      {formatDateWithYear(boat.arrival_date, i18n.language === 'es' ? 'es-ES' : 'en-US')}
                     </div>
                     <div className="text-xs text-gray-500">
                       {boat.destination_port} ({boat.transit_days}d)
@@ -139,7 +129,7 @@ export function BoatTable({ boats, onStatusChange }: BoatTableProps) {
                   </td>
                   <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">
                     <div className="text-sm text-gray-900">
-                      {formatDate(boat.booking_deadline, i18n.language)}
+                      {formatDateWithYear(boat.booking_deadline, i18n.language === 'es' ? 'es-ES' : 'en-US')}
                     </div>
                   </td>
                   <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap text-center">

@@ -37,11 +37,11 @@ export const MAX_PALLETS_BY_WEIGHT = CONTAINER_MAX_WEIGHT_KG / WEIGHT_PER_PALLET
 // WAREHOUSE CONSTANTS
 // =============================================================================
 
-/** Maximum pallet capacity in warehouse */
-export const WAREHOUSE_MAX_PALLETS = 740;
+/** Maximum pallet capacity in warehouse (Guatemala) */
+export const WAREHOUSE_MAX_PALLETS = 672;
 
-/** Maximum m² capacity in warehouse */
-export const WAREHOUSE_MAX_M2 = WAREHOUSE_MAX_PALLETS * M2_PER_PALLET; // 99,456 m²
+/** Maximum m² capacity in warehouse (Guatemala: 90,316.80 m²) */
+export const WAREHOUSE_MAX_M2 = WAREHOUSE_MAX_PALLETS * M2_PER_PALLET; // 90,316.8 m²
 
 // =============================================================================
 // CONVERSION HELPERS

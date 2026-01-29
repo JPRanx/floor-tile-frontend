@@ -8,6 +8,7 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 import { InventoryUploadModal } from '../components/InventoryUploadModal';
 import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
 import { StockCoverage } from '../components/shared';
+import { formatDateUTC } from '../utils/dateUtils';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -129,14 +130,14 @@ export function Dashboard() {
             <div>
               <span className="text-slate-400">{t('dashboard.nextBoat')}</span>{' '}
               <span className="font-medium text-white">
-                {new Date(data.next_boat_departure).toLocaleDateString()} ({t('dashboard.daysLabel', { days: data.days_to_next_boat_departure })})
+                {formatDateUTC(data.next_boat_departure)} ({t('dashboard.daysLabel', { days: data.days_to_next_boat_departure })})
               </span>
             </div>
             {data.second_boat_departure && (
               <div>
                 <span className="text-slate-400">{t('dashboard.secondBoat')}</span>{' '}
                 <span className="font-medium text-white">
-                  {new Date(data.second_boat_departure).toLocaleDateString()} ({t('dashboard.daysLabel', { days: data.days_to_second_boat_departure })})
+                  {formatDateUTC(data.second_boat_departure)} ({t('dashboard.daysLabel', { days: data.days_to_second_boat_departure })})
                 </span>
               </div>
             )}

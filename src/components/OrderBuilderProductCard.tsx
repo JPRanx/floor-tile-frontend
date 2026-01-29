@@ -6,8 +6,10 @@ import type {
   TrendDirection,
   FactoryFillStatus,
   VelocityTrendSignal,
+  ProductionStatus,
 } from '../requests/orderBuilder';
 import { WEIGHT_PER_M2_KG } from '../constants/inventory';
+import { formatDateUTC } from '../utils/dateUtils';
 
 // Extended product type with selected_m2 for two-way input sync
 interface OrderBuilderProductWithM2 extends OrderBuilderProduct {
@@ -19,13 +21,17 @@ interface OrderBuilderProductCardProps {
   onToggleSelect: (productId: string) => void;
   onQuantityChange: (productId: string, pallets: number) => void;
   onM2Change: (productId: string, m2: number) => void;
+  onRemove?: (sku: string) => void;
+  isRemoved?: boolean;
 }
 
 export function OrderBuilderProductCard({
   product,
   onToggleSelect,
   onQuantityChange,
-  onM2Change: _onM2Change,
+  onM2Change,
+  onRemove,
+  isRemoved = false,
 }: OrderBuilderProductCardProps) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
@@ -70,6 +76,14 @@ export function OrderBuilderProductCard({
     growing: { icon: '📈', color: 'text-emerald-400', label: 'growing' },
     stable: { icon: '➡️', color: 'text-slate-400', label: 'stable' },
     declining: { icon: '📉', color: 'text-amber-400', label: 'declining' },
+  };
+
+  // Production schedule status styles
+  const productionStatusStyles: Record<ProductionStatus, { icon: string; color: string; bgColor: string; label: string }> = {
+    scheduled: { icon: '📋', color: 'text-amber-400', bgColor: 'bg-amber-500/20', label: 'Scheduled' },
+    in_progress: { icon: '🔧', color: 'text-blue-400', bgColor: 'bg-blue-500/20', label: 'In Production' },
+    completed: { icon: '✅', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20', label: 'Ready to Ship' },
+    not_scheduled: { icon: '', color: 'text-slate-500', bgColor: '', label: 'Not Scheduled' },
   };
 
   // Override urgency to COVERED when in-transit covers the need
@@ -141,6 +155,25 @@ export function OrderBuilderProductCard({
 
   const reasoningSentence = buildReasoningSentence();
 
+  // If removed, show dimmed version
+  if (isRemoved) {
+    return (
+      <div className="rounded-xl border border-slate-700/30 bg-slate-800/20 backdrop-blur-sm opacity-50 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-slate-500 text-lg line-through">{product.sku}</span>
+            <span className="text-slate-600 text-sm">
+              ({product.coverage_gap_pallets || 0}p = {Math.round((product.coverage_gap_pallets || 0) * 134.4).toLocaleString()} m²)
+            </span>
+            <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-700/50 text-slate-500">
+              {t('orderBuilder.removed', 'REMOVED')}
+            </span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`
@@ -194,6 +227,19 @@ export function OrderBuilderProductCard({
               <span className="opacity-75">{product.score.total}</span>
             )}
           </span>
+
+          {/* Remove Button */}
+          {onRemove && (
+            <button
+              onClick={() => onRemove(product.sku)}
+              className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+              title={t('orderBuilder.removeFromOrder', 'Remove from order')}
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
 
           {/* Trend (simplified) */}
           {product.trend_direction && product.trend_direction !== 'stable' && (
@@ -254,6 +300,29 @@ export function OrderBuilderProductCard({
                   {product.factory_fill_status === 'mixed_lots' && t('orderBuilderProduct.mixedLots', 'mixed lots')}
                   {product.factory_fill_status === 'needs_production' && t('orderBuilderProduct.needsProduction', 'needs production')}
                   {product.factory_fill_status === 'no_stock' && t('orderBuilderProduct.noStock', 'no stock')}
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Production Schedule Status (from Programa de Produccion) */}
+          {product.production_status && product.production_status !== 'not_scheduled' && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">{productionStatusStyles[product.production_status].icon}</span>
+              <span className={`font-medium ${productionStatusStyles[product.production_status].color}`}>
+                {product.production_status === 'completed' && (
+                  <>{Math.round(product.production_completed_m2).toLocaleString()} m² {t('orderBuilderProduct.readyToShip', 'ready to ship')}</>
+                )}
+                {product.production_status === 'in_progress' && (
+                  <>{Math.round(product.production_requested_m2).toLocaleString()} m² {t('orderBuilderProduct.inProduction', 'in production')}</>
+                )}
+                {product.production_status === 'scheduled' && (
+                  <>{Math.round(product.production_requested_m2).toLocaleString()} m² {t('orderBuilderProduct.scheduled', 'scheduled')}</>
+                )}
+              </span>
+              {product.production_can_add_more && (
+                <span className="text-xs text-amber-400 font-medium">
+                  ({t('orderBuilderProduct.canAddMore', 'can add more!')})
                 </span>
               )}
             </div>
@@ -339,10 +408,31 @@ export function OrderBuilderProductCard({
               +
             </button>
             <span className="text-xs text-slate-500 ml-1">p</span>
-            <span className="text-slate-600 mx-1">=</span>
-            <span className={`text-sm font-semibold ${product.is_selected ? 'text-emerald-300' : 'text-slate-500'}`}>
-              {Math.round(product.selected_m2).toLocaleString()} m²
-            </span>
+          </div>
+
+          {/* M² Input (synced with pallets) */}
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              min="0"
+              step="100"
+              value={Math.round(product.selected_m2)}
+              onChange={(e) => {
+                const val = parseInt(e.target.value) || 0;
+                onM2Change(product.product_id, Math.max(0, val));
+              }}
+              disabled={!product.is_selected}
+              className={`
+                w-20 px-1.5 py-1 rounded-lg text-sm font-semibold text-center transition-all
+                ${product.is_selected
+                  ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+                  : 'bg-slate-800/50 border-slate-600/50 text-slate-500 cursor-not-allowed'
+                }
+                border focus:outline-none focus:ring-2 focus:ring-emerald-500/50
+                [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none
+              `}
+            />
+            <span className="text-xs text-slate-500">m²</span>
           </div>
 
           {/* Coverage Change */}
@@ -361,6 +451,24 @@ export function OrderBuilderProductCard({
           )}
         </div>
       </div>
+
+      {/* Pre-Production Alert — Show when can add more to scheduled production */}
+      {product.production_add_more_alert && (
+        <div className="mx-4 mb-2 p-3 bg-amber-500/20 border border-amber-500/50 rounded-lg">
+          <div className="flex items-start gap-2">
+            <span className="text-amber-400 text-lg">⚠️</span>
+            <div className="flex-1 min-w-0">
+              <div className="text-amber-300 font-medium text-sm">
+                {product.production_add_more_alert}
+              </div>
+              <div className="text-amber-400/70 text-xs mt-1">
+                {t('orderBuilderProduct.productionScheduledNotStarted', 'Production scheduled but not started yet')} ·{' '}
+                {t('orderBuilderProduct.currentRequest', 'Current request')}: {Math.round(product.production_requested_m2).toLocaleString()} m²
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Divider */}
       <div className="mx-4 border-t border-slate-700/50" />
@@ -488,7 +596,7 @@ export function OrderBuilderProductCard({
                   <span>
                     {product.factory_timing_message || (
                       product.factory_production_date
-                        ? `Ready ${new Date(product.factory_production_date).toLocaleDateString()}`
+                        ? `Ready ${formatDateUTC(product.factory_production_date)}`
                         : 'In production'
                     )}
                   </span>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { factoryOrdersApi } from '../requests/factoryOrders';
 import type { FactoryOrder } from '../requests/factoryOrders';
+import { formatDateWithYear } from '../utils/dateUtils';
 
 interface FactoryOrderSelectorProps {
   value: string | null; // factory_order_id
@@ -114,12 +115,7 @@ export function FactoryOrderSelector({
   };
 
   const formatDate = (dateStr: string): string => {
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    } catch {
-      return dateStr;
-    }
+    return formatDateWithYear(dateStr, 'en-US');
   };
 
   const getStatusColor = (status: string): string => {

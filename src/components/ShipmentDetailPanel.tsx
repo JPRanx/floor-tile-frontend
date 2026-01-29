@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { shipmentsApi, portsApi } from '../requests/shipments';
 import type { Shipment, Container, ShipmentEvent, Port, ShipmentCostsUpdate } from '../requests/shipments';
 import { LoadingSpinner } from './LoadingSpinner';
+import { formatDateWithYear } from '../utils/dateUtils';
 
 interface ShipmentDetailPanelProps {
   shipmentId: string | null;
@@ -89,16 +90,7 @@ export function ShipmentDetailPanel({ shipmentId, onClose, onStatusChange }: Shi
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString(i18n.language === 'es' ? 'es-ES' : 'en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
+    return formatDateWithYear(dateString, i18n.language === 'es' ? 'es-ES' : 'en-US');
   };
 
   const formatDateTime = (dateString?: string): string => {

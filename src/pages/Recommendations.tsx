@@ -4,6 +4,7 @@ import { recommendationsApi } from '../requests/recommendations';
 import type { OrderRecommendations, ActionType, ConfidenceLevel } from '../requests/recommendations';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { ActionBadge } from '../components/StatusBadge';
+import { formatDateUTC } from '../utils/dateUtils';
 
 export function Recommendations() {
   const { t } = useTranslation();
@@ -396,12 +397,7 @@ function ProductionIndicator({ m2, date, beforeStockout, coversGap }: Production
   // Format date if available
   let dateText = '';
   if (date) {
-    try {
-      const d = new Date(date);
-      dateText = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    } catch {
-      dateText = date;
-    }
+    dateText = formatDateUTC(date, 'en-US');
   }
 
   return (

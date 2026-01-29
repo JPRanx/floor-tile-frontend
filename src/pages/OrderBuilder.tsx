@@ -22,6 +22,10 @@ import { ExpectedDemandSection } from '../components/ExpectedDemandSection';
 import { CustomersDueList } from '../components/CustomersDueList';
 import { CallBeforeOrderingAlert } from '../components/CallBeforeOrderingAlert';
 import { BLAllocationView } from '../components/BLAllocationView';
+import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
+import { AddToProductionSection } from '../components/AddToProductionSection';
+import { FactoryRequestSection } from '../components/FactoryRequestSection';
+import { RecalculateBar } from '../components/RecalculateBar';
 import {
   M2_PER_PALLET,
   CONTAINER_MAX_PALLETS,
@@ -69,6 +73,13 @@ export function OrderBuilder() {
   const [showBLView, setShowBLView] = useState(false);
   const [blLoading, setBLLoading] = useState(false);
   const [blExporting, setBLExporting] = useState(false);
+
+  // View mode: 'priority' (original) vs 'sections' (three-section view)
+  const [viewMode, setViewMode] = useState<'priority' | 'sections'>('sections');
+
+  // Removed products tracking (for recalculate feature)
+  const [removedSkus, setRemovedSkus] = useState<Set<string>>(new Set());
+  const [recalculating, setRecalculating] = useState(false);
 
   // Fetch available boats on mount
   useEffect(() => {
@@ -203,7 +214,80 @@ export function OrderBuilder() {
     // Reset BL allocation view when products are reset
     setBLAllocationReport(null);
     setShowBLView(false);
+    // Clear removed products on reset
+    setRemovedSkus(new Set());
   };
+
+  // Remove product from order (for recalculate)
+  const handleRemoveProduct = (sku: string) => {
+    setRemovedSkus((prev) => new Set([...prev, sku]));
+    // Also deselect the product locally
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.sku === sku
+          ? { ...p, is_selected: false, selected_pallets: 0, selected_m2: 0 }
+          : p
+      )
+    );
+  };
+
+  // Restore a removed product
+  const handleRestoreProduct = (sku: string) => {
+    setRemovedSkus((prev) => {
+      const next = new Set(prev);
+      next.delete(sku);
+      return next;
+    });
+  };
+
+  // Recalculate order with excluded products
+  const handleRecalculate = async () => {
+    if (removedSkus.size === 0) return;
+
+    setRecalculating(true);
+    try {
+      const result = await orderBuilderApi.recalculate({
+        boat_id: selectedBoatId,
+        num_bls: numBLs,
+        excluded_skus: Array.from(removedSkus),
+      });
+      setData(result);
+      // Reset local state with new products
+      const allProducts: OrderBuilderProductWithM2[] = [
+        ...result.high_priority,
+        ...result.consider,
+        ...result.well_covered,
+        ...result.your_call,
+      ].map((p) => ({
+        ...p,
+        selected_m2: p.selected_pallets * M2_PER_PALLET,
+      }));
+      setProducts(allProducts);
+      // Clear removed products after successful recalculate
+      setRemovedSkus(new Set());
+      // Reset BL allocation
+      setBLAllocationReport(null);
+      setShowBLView(false);
+    } catch (err) {
+      console.error('Recalculate failed:', err);
+      alert(t('orderBuilder.recalculateError', 'Failed to recalculate order'));
+    } finally {
+      setRecalculating(false);
+    }
+  };
+
+  // Calculate freed capacity from removed products
+  const freedCapacity = (() => {
+    if (removedSkus.size === 0) return { m2: 0, pallets: 0, containers: 0 };
+
+    // Find removed products in original data
+    const removedProducts = products.filter((p) => removedSkus.has(p.sku));
+    const freedPallets = removedProducts.reduce((sum, p) => sum + (p.coverage_gap_pallets || 0), 0);
+    const freedM2 = freedPallets * M2_PER_PALLET;
+    const freedContainers = Math.ceil(freedPallets / CONTAINER_MAX_PALLETS);
+
+    return { m2: freedM2, pallets: freedPallets, containers: freedContainers };
+  })();
 
   // BL count change handler - triggers reload via useEffect
   const handleNumBLsChange = (newNumBLs: number) => {
@@ -568,6 +652,55 @@ export function OrderBuilder() {
           />
         )}
 
+        {/* View Mode Toggle */}
+        {!showBLView && (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1 border border-slate-700/50">
+              <button
+                onClick={() => setViewMode('sections')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'sections'
+                    ? 'bg-slate-700 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {t('orderBuilder.threeSectionView', 'Three-Section View')}
+              </button>
+              <button
+                onClick={() => setViewMode('priority')}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                  viewMode === 'priority'
+                    ? 'bg-slate-700 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {t('orderBuilder.priorityView', 'Priority View')}
+              </button>
+            </div>
+
+            {/* Section summary badges */}
+            {viewMode === 'sections' && (
+              <div className="flex items-center gap-3">
+                {data.warehouse_order_summary && data.warehouse_order_summary.product_count > 0 && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    {t('orderBuilder.warehouseOrder', 'Warehouse')}: {data.warehouse_order_summary.product_count}
+                  </span>
+                )}
+                {data.add_to_production_summary && data.add_to_production_summary.product_count > 0 && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {t('orderBuilder.addToProduction', 'Add to Production')}: {data.add_to_production_summary.product_count}
+                  </span>
+                )}
+                {data.factory_request_summary && data.factory_request_summary.product_count > 0 && (
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
+                    {t('orderBuilder.factoryRequest', 'Factory Request')}: {data.factory_request_summary.product_count}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Main content: Products and Summary side by side on desktop */}
         {!showBLView && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -588,7 +721,53 @@ export function OrderBuilder() {
               />
             </div>
 
-            {sectionConfig.map(({ key, titleKey, subtitleKey, bgColor, accentColor }) => {
+            {/* Recalculate Bar - Show when products are removed */}
+            {removedSkus.size > 0 && (
+              <RecalculateBar
+                removedProducts={products
+                  .filter((p) => removedSkus.has(p.sku))
+                  .map((p) => ({
+                    sku: p.sku,
+                    pallets: p.coverage_gap_pallets || 0,
+                    m2: (p.coverage_gap_pallets || 0) * M2_PER_PALLET,
+                  }))}
+                freedCapacity={freedCapacity}
+                onRecalculate={handleRecalculate}
+                onRestore={handleRestoreProduct}
+                isRecalculating={recalculating}
+              />
+            )}
+
+            {/* === THREE-SECTION VIEW === */}
+            {viewMode === 'sections' && (
+              <div className="space-y-6">
+                {/* Section 1: Warehouse Order — Ship from SIESA now */}
+                <WarehouseOrderSection
+                  summary={data.warehouse_order_summary}
+                  products={products}
+                  onToggleSelect={handleToggleSelect}
+                  onQuantityChange={handleQuantityChange}
+                  onM2Change={handleM2Change}
+                  onAllocateToBLs={handleAllocateToBLs}
+                  blLoading={blLoading}
+                  onRemove={handleRemoveProduct}
+                  removedSkus={removedSkus}
+                />
+
+                {/* Section 2: Add to Production — Piggyback on scheduled items */}
+                <AddToProductionSection
+                  summary={data.add_to_production_summary}
+                />
+
+                {/* Section 3: Factory Request — New production requests */}
+                <FactoryRequestSection
+                  summary={data.factory_request_summary}
+                />
+              </div>
+            )}
+
+            {/* === PRIORITY VIEW (Original) === */}
+            {viewMode === 'priority' && sectionConfig.map(({ key, titleKey, subtitleKey, bgColor, accentColor }) => {
               const sectionProducts = productsByPriority[key];
               const selectedCount = sectionProducts.filter((p) => p.is_selected).length;
               const isExpanded = expandedSections[key];
@@ -632,6 +811,8 @@ export function OrderBuilder() {
                             key={`${key}-${product.product_id}`}
                             product={product}
                             onToggleSelect={handleToggleSelect}
+                            onRemove={handleRemoveProduct}
+                            isRemoved={removedSkus.has(product.sku)}
                             onQuantityChange={handleQuantityChange}
                             onM2Change={handleM2Change}
                           />

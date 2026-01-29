@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { OrderBuilderBoat } from '../requests/orderBuilder';
 import type { BoatSchedule } from '../requests/boats';
+import { formatDateUTC } from '../utils/dateUtils';
 
 interface OrderBuilderHeaderProps {
   boat: OrderBuilderBoat;
@@ -30,11 +31,8 @@ export function OrderBuilderHeader({
   // Check if we have a real boat or are in no-boat mode
   const hasBoat = availableBoats.length > 0 && boat.departure_date;
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '—';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
+  // Use timezone-safe date formatting
+  const formatDate = (dateStr: string) => formatDateUTC(dateStr, 'en-US');
 
   // Calculate "In Warehouse" date from days_until_warehouse
   const getInWarehouseDate = () => {

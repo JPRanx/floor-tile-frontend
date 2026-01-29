@@ -7,6 +7,7 @@ import { ShipmentUploadModal } from '../components/ShipmentUploadModal';
 import { ShipmentDetailPanel } from '../components/ShipmentDetailPanel';
 import { PendingDocumentsBadge } from '../components/PendingDocumentsBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+import { formatDateUTC } from '../utils/dateUtils';
 
 type SortField = 'shp_number' | 'etd' | 'eta' | 'status';
 type SortDirection = 'asc' | 'desc';
@@ -126,15 +127,7 @@ export function Shipments() {
 
   const formatDate = (dateString?: string): string => {
     if (!dateString) return '-';
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return dateString;
-    }
+    return formatDateUTC(dateString, 'en-US');
   };
 
   const getDaysUntilArrival = (eta?: string, status?: string): { text: string; color: string } => {
