@@ -237,7 +237,8 @@
     "addToProductionDesc2": "Añadir a items programados",
     "actBy": "Actuar antes de",
     "canAddBeforeProduction": "Puede añadir antes de iniciar producción",
-    "factoryRequestDesc2": "Para productos no en producción actualmente"
+    "factoryRequestDesc2": "Para productos no en producción actualmente",
+    "minimumApplied": "1 CTN MÍN"
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",

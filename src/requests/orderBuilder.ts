@@ -389,6 +389,10 @@ export interface FactoryRequestItem {
   urgency: Urgency;
   score: number;
 
+  // Minimum enforcement (1 container = 14 pallets = 1,881.6 m²)
+  minimum_applied: boolean;
+  minimum_note: string | null;
+
   // Selection (pre-selected by default)
   is_selected: boolean;
 }

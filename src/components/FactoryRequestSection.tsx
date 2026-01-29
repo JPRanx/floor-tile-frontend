@@ -253,6 +253,11 @@ function FactoryRequestCard({
                 <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${urgency.bg} ${urgency.color}`}>
                   {urgency.label}
                 </span>
+                {item.minimum_applied && (
+                  <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    {t('orderBuilder.minimumApplied', '1 CTN MIN')}
+                  </span>
+                )}
               </div>
               <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>
@@ -323,6 +328,15 @@ function FactoryRequestCard({
                 </span>
               </div>
             </div>
+            {/* Minimum Note */}
+            {item.minimum_applied && item.minimum_note && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-blue-400">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{item.minimum_note}</span>
+              </div>
+            )}
           </div>
         )}
 
