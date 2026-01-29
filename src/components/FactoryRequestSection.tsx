@@ -33,7 +33,7 @@ export function FactoryRequestSection({
     summary.items
       .filter((item) => item.is_selected)
       .forEach((item) => {
-        quantities[item.product_id] = item.gap_pallets;
+        quantities[item.product_id] = item.request_pallets;
       });
     return quantities;
   });
@@ -52,7 +52,7 @@ export function FactoryRequestSection({
       if (!itemQuantities[item.product_id]) {
         setItemQuantities((prev) => ({
           ...prev,
-          [item.product_id]: item.gap_pallets,
+          [item.product_id]: item.request_pallets,
         }));
       }
     }
@@ -72,7 +72,7 @@ export function FactoryRequestSection({
   // Calculate totals for selected items
   const selectedTotalPallets = summary.items
     .filter((item) => selectedItems.has(item.product_id))
-    .reduce((sum, item) => sum + (itemQuantities[item.product_id] || item.gap_pallets), 0);
+    .reduce((sum, item) => sum + (itemQuantities[item.product_id] || item.request_pallets), 0);
   const selectedTotalM2 = selectedTotalPallets * 134.4;
 
   // Calculate progress toward limit
@@ -151,7 +151,7 @@ export function FactoryRequestSection({
                 key={item.product_id}
                 item={item}
                 isSelected={selectedItems.has(item.product_id)}
-                quantity={itemQuantities[item.product_id] || item.gap_pallets}
+                quantity={itemQuantities[item.product_id] || item.request_pallets}
                 onToggle={() => handleToggleItem(item)}
                 onQuantityChange={(pallets) => handleQuantityChange(item, pallets)}
               />
