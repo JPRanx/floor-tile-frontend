@@ -97,11 +97,9 @@ export function AddToProductionSection({
             </h2>
             <p className="text-sm text-amber-400/80 mt-0.5">
               {t('orderBuilder.addToProductionDesc2', 'Piggyback on scheduled items')}
-              {summary.action_deadline_display && (
-                <span className="ml-1 font-medium text-amber-300">
-                  · {t('orderBuilder.actBy', 'Act by')} {summary.action_deadline_display}
-                </span>
-              )}
+              <span className="ml-1 text-emerald-400">
+                · {t('orderBuilder.canAddBeforeProduction', 'Can add before production starts')}
+              </span>
             </p>
           </div>
         </div>
@@ -271,11 +269,20 @@ function AddToProductionCard({
               </div>
 
               {/* Timing */}
-              {item.target_boat && (
+              {(item.target_boat || item.target_boat_departure) && (
                 <div className="text-sm text-slate-400">
-                  <span className="text-emerald-400">{t('orderBuilder.ready', 'Ready')}: ~{item.estimated_ready_date}</span>
-                  <span className="mx-1">→</span>
-                  <span className="text-blue-400">{t('orderBuilder.ships', 'Ships')}: {item.target_boat}</span>
+                  {item.estimated_ready_date && (
+                    <>
+                      <span className="text-emerald-400">{t('orderBuilder.ready', 'Ready')}: ~{item.estimated_ready_date}</span>
+                      <span className="mx-1">→</span>
+                    </>
+                  )}
+                  <span className="text-blue-400">
+                    {t('orderBuilder.ships', 'Ships')}:{' '}
+                    {item.target_boat_departure
+                      ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` — ${item.target_boat}` : ''}`
+                      : item.target_boat || 'TBD'}
+                  </span>
                 </div>
               )}
             </div>
@@ -291,9 +298,12 @@ function AddToProductionCard({
             <span className="text-amber-400">
               +{item.suggested_additional_m2.toLocaleString()} m² ({item.suggested_additional_pallets}p)
             </span>
-            {item.target_boat && (
+            {(item.target_boat || item.target_boat_departure) && (
               <span className="text-emerald-400">
-                → {item.target_boat}
+                →{' '}
+                {item.target_boat_departure
+                  ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` — ${item.target_boat}` : ''}`
+                  : item.target_boat || 'TBD'}
               </span>
             )}
           </div>

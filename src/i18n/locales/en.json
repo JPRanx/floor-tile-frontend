@@ -236,6 +236,7 @@
     "actionRequired": "ACTION REQUIRED",
     "addToProductionDesc2": "Piggyback on scheduled items",
     "actBy": "Act by",
+    "canAddBeforeProduction": "Can add before production starts",
     "factoryRequestDesc2": "For products not currently in production"
   },
   "recommendations": {
