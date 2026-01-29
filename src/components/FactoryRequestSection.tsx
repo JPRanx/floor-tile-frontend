@@ -283,11 +283,11 @@ function FactoryRequestCard({
               </div>
               <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>
-                  {t('orderBuilder.need', 'Need')}: {item.suggested_m2.toLocaleString()} m²
+                  {t('orderBuilder.need', 'Need')}: {Number(item.suggested_m2 || 0).toLocaleString()} m²
                 </span>
                 <span className="text-slate-600">·</span>
                 <span>
-                  {t('orderBuilder.velocity', 'Velocity')}: {item.velocity_m2_day?.toFixed(1) || '0'} m²/d
+                  {t('orderBuilder.velocity', 'Velocity')}: {Number(item.velocity_m2_day || 0).toFixed(1)} m²/d
                 </span>
                 {item.days_to_consume_container && (
                   <>
