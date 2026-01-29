@@ -382,8 +382,30 @@ export interface FactoryRequestItem {
   request_m2: number;
   request_pallets: number;
 
-  // Timing
+  // Timing (legacy + dynamic)
   estimated_ready: string;
+  avg_production_days: number;
+  estimated_ready_date: string | null;
+  target_boat: string | null;
+  target_boat_departure: string | null;
+  arrival_date: string | null;
+  days_until_arrival: number | null;
+
+  // Velocity and consumption
+  velocity_m2_day: number;
+  consumption_until_arrival_m2: number;
+
+  // Projection
+  pipeline_m2: number;
+  projected_stock_at_arrival_m2: number;
+  calculated_need_m2: number;
+
+  // Low-volume detection
+  days_to_consume_container: number | null;
+  is_low_volume: boolean;
+  low_volume_reason: string | null;
+  should_request: boolean;
+  skip_reason: string | null;
 
   // Priority
   urgency: Urgency;

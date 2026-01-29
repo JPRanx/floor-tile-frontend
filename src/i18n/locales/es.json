@@ -238,7 +238,11 @@
     "actBy": "Actuar antes de",
     "canAddBeforeProduction": "Puede añadir antes de iniciar producción",
     "factoryRequestDesc2": "Para productos no en producción actualmente",
-    "minimumApplied": "1 CTN MÍN"
+    "minimumApplied": "1 CTN MÍN",
+    "lowVolume": "BAJO VOLUMEN",
+    "notRecommended": "NO RECOMENDADO",
+    "velocity": "Velocidad",
+    "minPerProduct": "Mín: 1 contenedor por producto"
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",

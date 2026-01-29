@@ -98,6 +98,9 @@ export function FactoryRequestSection({
             </h2>
             <p className="text-sm text-slate-400 mt-0.5">
               {t('orderBuilder.factoryRequestDesc2', 'For products not currently in production')}
+              <span className="ml-1 text-blue-400">
+                · {t('orderBuilder.minPerProduct', 'Min: 1 container per product')}
+              </span>
               {summary.submit_deadline_display && (
                 <span className="ml-1 font-medium text-slate-300">
                   · {summary.submit_deadline_display}
@@ -214,28 +217,36 @@ function FactoryRequestCard({
   };
   const urgency = urgencyStyles[item.urgency] || urgencyStyles.ok;
 
+  // Low-volume products get special styling
+  const isLowVolume = item.is_low_volume;
+
   return (
     <div
       className={`rounded-lg border transition-all duration-200 ${
-        isSelected
-          ? 'border-blue-500 bg-blue-500/10'
-          : 'border-slate-700/50 bg-slate-800/50 hover:border-slate-600/50'
+        isLowVolume
+          ? 'border-amber-500/50 bg-amber-500/5'
+          : isSelected
+            ? 'border-blue-500 bg-blue-500/10'
+            : 'border-slate-700/50 bg-slate-800/50 hover:border-slate-600/50'
       }`}
     >
       <div className="p-4">
         {/* Header Row */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Checkbox */}
+            {/* Checkbox - disabled for low-volume */}
             <button
               onClick={onToggle}
+              disabled={isLowVolume}
               className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                isSelected
-                  ? 'bg-blue-500 border-blue-500'
-                  : 'border-slate-500 hover:border-blue-500'
+                isLowVolume
+                  ? 'border-amber-500/50 bg-amber-500/10 cursor-not-allowed'
+                  : isSelected
+                    ? 'bg-blue-500 border-blue-500'
+                    : 'border-slate-500 hover:border-blue-500'
               }`}
             >
-              {isSelected && (
+              {isSelected && !isLowVolume && (
                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
@@ -244,19 +255,30 @@ function FactoryRequestCard({
                   />
                 </svg>
               )}
+              {isLowVolume && (
+                <span className="text-amber-500 text-xs">!</span>
+              )}
             </button>
 
             {/* Product Info */}
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-white font-medium truncate">{item.sku}</h3>
-                <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${urgency.bg} ${urgency.color}`}>
-                  {urgency.label}
-                </span>
-                {item.minimum_applied && (
-                  <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                    {t('orderBuilder.minimumApplied', '1 CTN MIN')}
+                {isLowVolume ? (
+                  <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    {t('orderBuilder.lowVolume', 'LOW VOLUME')}
                   </span>
+                ) : (
+                  <>
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${urgency.bg} ${urgency.color}`}>
+                      {urgency.label}
+                    </span>
+                    {item.minimum_applied && (
+                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                        {t('orderBuilder.minimumApplied', '1 CTN MIN')}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
               <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
@@ -265,13 +287,13 @@ function FactoryRequestCard({
                 </span>
                 <span className="text-slate-600">·</span>
                 <span>
-                  {t('orderBuilder.siesa', 'SIESA')}: {item.factory_available_m2.toLocaleString()} m²
+                  {t('orderBuilder.velocity', 'Velocity')}: {item.velocity_m2_day?.toFixed(1) || '0'} m²/d
                 </span>
-                {item.in_production_m2 > 0 && (
+                {item.days_to_consume_container && (
                   <>
                     <span className="text-slate-600">·</span>
-                    <span className="text-blue-400">
-                      {t('orderBuilder.inProduction', 'In Production')}: {item.in_production_m2.toLocaleString()} m²
+                    <span className={item.is_low_volume ? 'text-amber-400' : 'text-slate-400'}>
+                      1 CTN = {item.days_to_consume_container}d
                     </span>
                   </>
                 )}
@@ -279,19 +301,64 @@ function FactoryRequestCard({
             </div>
           </div>
 
-          {/* Gap Badge */}
+          {/* Request / Gap Badge */}
           <div className="flex-shrink-0 text-right">
-            <div className="text-sm text-slate-400">
-              {t('orderBuilder.gap', 'Gap')}
-            </div>
-            <div className={`text-lg font-bold ${urgency.color}`}>
-              {item.gap_m2.toLocaleString()} m²
-            </div>
+            {isLowVolume ? (
+              <>
+                <div className="text-sm text-amber-400">
+                  {t('orderBuilder.notRecommended', 'NOT RECOMMENDED')}
+                </div>
+                <div className="text-xs text-slate-500">
+                  Special order only
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-sm text-slate-400">
+                  {t('orderBuilder.request', 'Request')}
+                </div>
+                <div className="text-lg font-bold text-emerald-400">
+                  {item.request_pallets} p
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Quantity Controls - Only show when selected */}
-        {isSelected && (
+        {/* Low-volume warning */}
+        {isLowVolume && item.low_volume_reason && (
+          <div className="mt-3 p-2 rounded bg-amber-500/10 border border-amber-500/20">
+            <div className="flex items-start gap-2 text-xs text-amber-400">
+              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>{item.low_volume_reason}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Target Boat Info - for non-low-volume items */}
+        {!isLowVolume && item.target_boat && (
+          <div className="mt-2 text-sm text-slate-400 flex items-center gap-2">
+            <span className="text-slate-500">Target:</span>
+            <span className="text-emerald-400">
+              {item.target_boat_departure
+                ? new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                : ''} — {item.target_boat}
+            </span>
+            {item.arrival_date && (
+              <>
+                <span className="text-slate-600">→</span>
+                <span>
+                  Arrives {new Date(item.arrival_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Quantity Controls - Only show when selected and not low-volume */}
+        {isSelected && !isLowVolume && (
           <div className="mt-4 pt-4 border-t border-slate-700/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -321,12 +388,14 @@ function FactoryRequestCard({
                 </span>
               </div>
 
-              {/* Timing */}
-              <div className="text-sm text-slate-400">
-                <span className="text-slate-500">
-                  {t('orderBuilder.estimatedReady', 'Estimated ready')}: ~{item.estimated_ready}
-                </span>
-              </div>
+              {/* Consumption info */}
+              {item.days_to_consume_container && (
+                <div className="text-sm text-slate-400">
+                  <span className="text-slate-500">
+                    Will consume in ~{item.days_to_consume_container} days
+                  </span>
+                </div>
+              )}
             </div>
             {/* Minimum Note */}
             {item.minimum_applied && item.minimum_note && (
@@ -340,12 +409,12 @@ function FactoryRequestCard({
           </div>
         )}
 
-        {/* Compact Info - Show when not selected */}
-        {!isSelected && (
+        {/* Compact Info - Show when not selected and not low-volume */}
+        {!isSelected && !isLowVolume && (
           <div className="mt-2 text-sm text-slate-500">
             {t('orderBuilder.gapPallets', 'Gap')}: {item.gap_pallets} {t('common.pallets', 'pallets')}
             <span className="mx-2">·</span>
-            {t('orderBuilder.ready', 'Ready')}: ~{item.estimated_ready}
+            {t('orderBuilder.ready', 'Ready')}: {item.estimated_ready}
           </div>
         )}
       </div>
