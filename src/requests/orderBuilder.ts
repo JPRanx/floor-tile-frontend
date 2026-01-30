@@ -131,6 +131,17 @@ export interface OrderSummaryReasoning {
   reasoning: OrderReasoning | null; // NEW: Structured narrative
 }
 
+// Availability breakdown for this boat
+export interface AvailabilityBreakdown {
+  siesa_now_m2: number;              // Current SIESA finished goods
+  production_completing_m2: number;   // Production ready before deadline
+  total_available_m2: number;         // siesa + production
+  suggested_order_m2: number;         // What system recommends
+  shortfall_m2: number;               // Gap if available < suggested
+  can_fulfill: boolean;               // True if available >= suggested
+  shortfall_note: string | null;      // Human-readable explanation
+}
+
 export interface OrderBuilderProduct {
   // Product info
   product_id: string;
@@ -220,6 +231,9 @@ export interface OrderBuilderProduct {
   // Selection state
   is_selected: boolean;
   selected_pallets: number;
+
+  // Availability breakdown (what's available for this boat)
+  availability_breakdown: AvailabilityBreakdown | null;
 }
 
 export interface OrderBuilderBoat {

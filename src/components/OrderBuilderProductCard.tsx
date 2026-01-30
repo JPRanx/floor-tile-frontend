@@ -623,6 +623,51 @@ export function OrderBuilderProductCard({
               </div>
             )}
 
+            {/* Availability Breakdown */}
+            {product.availability_breakdown && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {t('orderBuilderProduct.availability', 'Availability for This Boat')}
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">SIESA (factory stock)</span>
+                    <span className="text-slate-300">{Math.round(product.availability_breakdown.siesa_now_m2).toLocaleString()} m²</span>
+                  </div>
+                  {product.availability_breakdown.production_completing_m2 > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">+ Production completing</span>
+                      <span className="text-emerald-400">+{Math.round(product.availability_breakdown.production_completing_m2).toLocaleString()} m²</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between border-t border-slate-700/50 pt-1 mt-1">
+                    <span className="text-slate-300 font-medium">Total available</span>
+                    <span className="text-slate-200 font-medium">{Math.round(product.availability_breakdown.total_available_m2).toLocaleString()} m²</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Suggested order</span>
+                    <span className="text-slate-300">{Math.round(product.availability_breakdown.suggested_order_m2).toLocaleString()} m²</span>
+                  </div>
+                  {product.availability_breakdown.shortfall_m2 > 0 ? (
+                    <div className="flex justify-between text-red-400">
+                      <span>Shortfall</span>
+                      <span>-{Math.round(product.availability_breakdown.shortfall_m2).toLocaleString()} m²</span>
+                    </div>
+                  ) : (
+                    <div className="flex justify-between text-emerald-400">
+                      <span>Status</span>
+                      <span>✓ Can fulfill</span>
+                    </div>
+                  )}
+                  {product.availability_breakdown.shortfall_note && (
+                    <div className="text-[10px] text-slate-500 italic mt-1">
+                      {product.availability_breakdown.shortfall_note}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Weight + Confidence */}
             <div className="p-3 flex flex-wrap gap-4 text-xs text-slate-400">
               {/* Weight */}
