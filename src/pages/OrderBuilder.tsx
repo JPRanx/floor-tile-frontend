@@ -19,6 +19,7 @@ import { OrderBuilderStrategy } from '../components/OrderBuilderStrategy';
 import { OrderBuilderProductCard } from '../components/OrderBuilderProductCard';
 import { OrderBuilderSummary } from '../components/OrderBuilderSummary';
 import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
+import { UnableToShipAlert } from '../components/UnableToShipAlert';
 import { ExpectedDemandSection } from '../components/ExpectedDemandSection';
 import { CustomersDueList } from '../components/CustomersDueList';
 import { CallBeforeOrderingAlert } from '../components/CallBeforeOrderingAlert';
@@ -919,6 +920,7 @@ export function OrderBuilder() {
 
             <OrderBuilderSummary summary={summary} />
             <OrderBuilderAlerts alerts={alerts} />
+            <UnableToShipAlert unableToShip={data?.unable_to_ship || null} />
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3">

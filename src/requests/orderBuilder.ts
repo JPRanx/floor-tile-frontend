@@ -523,6 +523,33 @@ export interface OrderBuilderResponse {
 
   // Reasoning (explains WHY this order strategy)
   summary_reasoning: OrderSummaryReasoning | null;
+
+  // Unable to Ship alerts (products that need ordering but can't ship now)
+  unable_to_ship: UnableToShipSummary | null;
+}
+
+// Unable to Ship items (products that need ordering but can't ship)
+export interface UnableToShipItem {
+  sku: string;
+  description: string | null;
+  coverage_gap_m2: number;
+  coverage_gap_pallets: number;
+  days_of_stock: number | null;
+  stockout_date: string | null;
+  reason: string;
+  production_status: string | null;
+  production_estimated_ready: string | null;
+  suggested_action: string;
+  priority: string;
+  priority_score: number;
+}
+
+export interface UnableToShipSummary {
+  count: number;
+  total_gap_m2: number;
+  total_gap_pallets: number;
+  message: string;
+  items: UnableToShipItem[];
 }
 
 export interface OrderBuilderParams {
