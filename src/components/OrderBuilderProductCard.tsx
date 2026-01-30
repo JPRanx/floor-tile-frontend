@@ -67,6 +67,7 @@ export function OrderBuilderProductCard({
     single_lot: { icon: '✓', color: 'text-emerald-400', textColor: 'text-emerald-400' },
     mixed_lots: { icon: '⚠', color: 'text-amber-400', textColor: 'text-amber-400' },
     needs_production: { icon: '🔴', color: 'text-red-400', textColor: 'text-red-400' },
+    partial_available: { icon: '⚡', color: 'text-amber-400', textColor: 'text-amber-400' },
     no_stock: { icon: '—', color: 'text-slate-500', textColor: 'text-slate-500' },
     not_needed: { icon: '', color: '', textColor: 'text-slate-400' },
     unknown: { icon: '?', color: 'text-slate-500', textColor: 'text-slate-500' },
