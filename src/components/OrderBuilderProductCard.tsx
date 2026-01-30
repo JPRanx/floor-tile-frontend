@@ -66,6 +66,7 @@ export function OrderBuilderProductCard({
   const factoryFillStyles: Record<FactoryFillStatus, { icon: string; color: string; textColor: string }> = {
     single_lot: { icon: '✓', color: 'text-emerald-400', textColor: 'text-emerald-400' },
     mixed_lots: { icon: '⚠', color: 'text-amber-400', textColor: 'text-amber-400' },
+    available: { icon: '✓', color: 'text-emerald-400', textColor: 'text-emerald-400' },
     needs_production: { icon: '🔴', color: 'text-red-400', textColor: 'text-red-400' },
     partial_available: { icon: '⚡', color: 'text-amber-400', textColor: 'text-amber-400' },
     no_stock: { icon: '—', color: 'text-slate-500', textColor: 'text-slate-500' },

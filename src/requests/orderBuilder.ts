@@ -7,7 +7,7 @@ export type Urgency = 'critical' | 'urgent' | 'soon' | 'ok';
 export type TrendDirection = 'up' | 'down' | 'stable';
 export type TrendStrength = 'strong' | 'moderate' | 'weak';
 export type FactoryStatus = 'in_production' | 'not_scheduled';
-export type FactoryFillStatus = 'single_lot' | 'mixed_lots' | 'needs_production' | 'partial_available' | 'no_stock' | 'not_needed' | 'unknown';
+export type FactoryFillStatus = 'single_lot' | 'mixed_lots' | 'available' | 'needs_production' | 'partial_available' | 'no_stock' | 'not_needed' | 'unknown';
 export type VelocityTrendSignal = 'growing' | 'stable' | 'declining';
 export type ProductionStatus = 'scheduled' | 'in_progress' | 'completed' | 'not_scheduled';
 
