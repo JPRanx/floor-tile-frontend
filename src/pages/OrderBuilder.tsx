@@ -785,6 +785,21 @@ export function OrderBuilder() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Products Column (2/3 width on desktop) */}
           <div className="lg:col-span-2 space-y-4">
+            {/* Order Strategy Summary */}
+            <OrderBuilderStrategy reasoning={data.summary_reasoning} />
+
+            {/* Expected Demand Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <ExpectedDemandSection
+                forecast={demandForecast}
+                loading={demandLoading}
+              />
+              <CustomersDueList
+                customers={demandForecast?.customers_due_soon || []}
+                loading={demandLoading}
+              />
+            </div>
+
             {/* Recalculate Bar - Show when products are removed */}
             {removedSkus.size > 0 && (
               <RecalculateBar
@@ -895,75 +910,56 @@ export function OrderBuilder() {
             })}
           </div>
 
-          {/* Context Column (1/3 width on desktop) */}
+          {/* Summary Column (1/3 width on desktop) */}
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-            {/* Demand Forecast */}
-            <ExpectedDemandSection
-              forecast={demandForecast}
-              loading={demandLoading}
-            />
-
-            {/* Customers Due Soon */}
-            <CustomersDueList
-              customers={demandForecast?.customers_due_soon || []}
-              loading={demandLoading}
-            />
-
-            {/* Order Summary with Progress Bars */}
-            <OrderBuilderSummary summary={summary} />
-
-            {/* Order Strategy - Compact reasoning */}
-            <OrderBuilderStrategy reasoning={data.summary_reasoning} />
-
-            {/* Alerts Section */}
-            <OrderBuilderAlerts alerts={alerts} />
-
-            {/* Call Before Ordering */}
+            {/* Call Before Ordering Alerts */}
             <CallBeforeOrderingAlert
               alerts={demandForecast?.overdue_alerts || []}
               loading={demandLoading}
             />
 
-            {/* Unable to Ship */}
+            <OrderBuilderSummary summary={summary} />
+            <OrderBuilderAlerts alerts={alerts} />
             <UnableToShipAlert unableToShip={data?.unable_to_ship || null} />
 
             {/* Action Buttons */}
-            <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-5 shadow-xl">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                  ⚡
-                </span>
-                {t('orderBuilder.actions', 'Actions')}
-              </h3>
-              <div className="space-y-3">
-                <button
-                  onClick={handleGenerateReport}
-                  disabled={generatingReport}
-                  className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {generatingReport ? t('common.generating', 'Generating...') : t('orderBuilder.generateReport', 'Generate Report')}
-                </button>
-                <button
-                  onClick={handleAllocateToBLs}
-                  disabled={blLoading || products.filter((p) => p.is_selected && p.selected_pallets > 0).length === 0}
-                  className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {blLoading ? t('common.allocating', 'Allocating...') : t('orderBuilder.allocateBLs', 'Allocate to BLs')}
-                </button>
-                <button
-                  onClick={handleExport}
-                  disabled={exporting || products.filter((p) => p.is_selected && p.selected_pallets > 0).length === 0}
-                  className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {exporting ? t('common.exporting', 'Exporting...') : t('orderBuilder.export', 'Export Order')}
-                </button>
-                <button
-                  onClick={handleReset}
-                  className="w-full px-4 py-3 bg-slate-700 hover:bg-slate-600 text-slate-300 font-medium rounded-lg transition-colors"
-                >
-                  {t('orderBuilder.reset', 'Reset')}
-                </button>
-              </div>
+            <div className="flex flex-col gap-3">
+              {/* Generate Report Button */}
+              <button
+                onClick={handleGenerateReport}
+                disabled={generatingReport}
+                className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-blue-400 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                {generatingReport
+                  ? t('orderBuilder.generatingReport', 'Generating Report...')
+                  : t('orderBuilder.generateReport', 'Generate Report')}
+              </button>
+
+              {/* Allocate to BLs Button */}
+              <button
+                onClick={handleAllocateToBLs}
+                disabled={blLoading || products.filter((p) => p.is_selected && p.selected_pallets > 0).length === 0}
+                className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                {blLoading
+                  ? t('blAllocation.allocating', 'Allocating...')
+                  : t('blAllocation.allocateToBLs', 'Allocate to BLs')}
+              </button>
+
+              {/* Quick Export (single BL) */}
+              <button
+                onClick={handleExport}
+                disabled={exporting}
+                className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+              >
+                {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
+              </button>
+              <button
+                onClick={handleReset}
+                className="w-full px-4 py-2.5 bg-slate-800/50 text-slate-300 font-medium rounded-xl border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-all duration-300"
+              >
+                {t('orderBuilder.resetToSuggested')}
+              </button>
             </div>
 
             {/* Success Message */}
