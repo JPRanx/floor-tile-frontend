@@ -912,13 +912,14 @@ export function OrderBuilder() {
 
           {/* Summary Column (1/3 width on desktop) */}
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <OrderBuilderSummary summary={summary} />
+
             {/* Call Before Ordering Alerts */}
             <CallBeforeOrderingAlert
               alerts={demandForecast?.overdue_alerts || []}
               loading={demandLoading}
             />
 
-            <OrderBuilderSummary summary={summary} />
             <OrderBuilderAlerts alerts={alerts} />
             <UnableToShipAlert unableToShip={data?.unable_to_ship || null} />
 
