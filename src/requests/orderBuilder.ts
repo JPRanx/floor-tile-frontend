@@ -595,6 +595,9 @@ export interface OrderBuilderResponse {
 
   // Unable to Ship alerts (products that need ordering but can't ship now)
   unable_to_ship: UnableToShipSummary | null;
+
+  // Stability forecast (when cycle will be stable)
+  stability_forecast: StabilityForecast | null;
 }
 
 // Unable to Ship items (products that need ordering but can't ship)
@@ -619,6 +622,83 @@ export interface UnableToShipSummary {
   total_gap_pallets: number;
   message: string;
   items: UnableToShipItem[];
+}
+
+// ===================
+// STABILITY FORECAST TYPES
+// ===================
+
+export type StabilityStatus = 'stable' | 'recovering' | 'unstable' | 'blocked';
+export type SupplySource = 'siesa' | 'production' | 'none';
+export type RecoveryStatus = 'shipping' | 'in_production' | 'blocked';
+
+/** Recovery plan for a single unstable product */
+export interface ProductRecovery {
+  sku: string;
+  product_name: string | null;
+  current_coverage_days: number;
+  stockout_date: string | null;
+
+  // Supply info
+  supply_source: SupplySource;
+  supply_amount_m2: number;
+  supply_ready_date: string | null;
+
+  // Shipping info
+  ship_boat_name: string | null;
+  ship_boat_departure: string | null;
+  arrival_date: string | null;
+
+  // Status
+  status: RecoveryStatus;
+  status_note: string;
+}
+
+/** Product blocking stability (no supply scheduled) */
+export interface StabilityBlocker {
+  sku: string;
+  product_name: string | null;
+  current_coverage_days: number;
+  stockout_date: string | null;
+  velocity_m2_per_day: number;
+  reason: string;
+  suggested_action: string;
+}
+
+/** Snapshot of stability at a point in time */
+export interface StabilityTimeline {
+  date: string;
+  event: string;
+  resolved_count: number;
+  remaining_unstable: number;
+  resolved_skus: string[];
+}
+
+/** Complete stability forecast for the cycle */
+export interface StabilityForecast {
+  // Overall status
+  status: StabilityStatus;
+  status_message: string;
+
+  // Counts
+  total_products: number;
+  stable_count: number;
+  unstable_count: number;
+  blocker_count: number;
+
+  // Recovery info
+  stable_date: string | null;
+  stable_date_note: string | null;
+
+  // Timeline
+  timeline: StabilityTimeline[];
+
+  // Product details
+  recovering_products: ProductRecovery[];
+  blockers: StabilityBlocker[];
+
+  // Progress (for progress bar)
+  recovery_progress_pct: number;
 }
 
 export interface OrderBuilderParams {

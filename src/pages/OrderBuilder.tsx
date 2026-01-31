@@ -28,6 +28,8 @@ import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
 import { AddToProductionSection } from '../components/AddToProductionSection';
 import { FactoryRequestSection } from '../components/FactoryRequestSection';
 import { RecalculateBar } from '../components/RecalculateBar';
+import { StabilityForecastCard } from '../components/StabilityForecastCard';
+import { StabilityForecastModal } from '../components/StabilityForecastModal';
 import {
   M2_PER_PALLET,
   CONTAINER_MAX_PALLETS,
@@ -379,6 +381,9 @@ export function OrderBuilder() {
   const [exporting, setExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState<string | null>(null);
   const [generatingReport, setGeneratingReport] = useState(false);
+
+  // Stability forecast modal state
+  const [showStabilityModal, setShowStabilityModal] = useState(false);
 
   const handleExport = async () => {
     const selected = products.filter((p) => p.is_selected && p.selected_pallets > 0);
@@ -914,6 +919,14 @@ export function OrderBuilder() {
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             <OrderBuilderSummary summary={summary} />
 
+            {/* Stability Forecast */}
+            {data.stability_forecast && (
+              <StabilityForecastCard
+                forecast={data.stability_forecast}
+                onViewDetails={() => setShowStabilityModal(true)}
+              />
+            )}
+
             {/* Call Before Ordering Alerts */}
             <CallBeforeOrderingAlert
               alerts={demandForecast?.overdue_alerts || []}
@@ -976,6 +989,15 @@ export function OrderBuilder() {
         </div>
         )}
       </div>
+
+      {/* Stability Forecast Modal */}
+      {data?.stability_forecast && (
+        <StabilityForecastModal
+          forecast={data.stability_forecast}
+          isOpen={showStabilityModal}
+          onClose={() => setShowStabilityModal(false)}
+        />
+      )}
     </div>
   );
 }
