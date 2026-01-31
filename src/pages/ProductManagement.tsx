@@ -1,13 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import {
-  productsApi,
-  Product,
-  InactiveReason,
-  INACTIVE_REASON_LABELS,
-  Category,
-} from '../requests/products';
+import { productsApi, INACTIVE_REASON_LABELS } from '../requests/products';
+import type { Product, InactiveReason, Category } from '../requests/products';
 
 // Category display labels
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -21,8 +15,6 @@ const CATEGORY_LABELS: Record<Category, string> = {
 };
 
 export function ProductManagement() {
-  const { t } = useTranslation();
-
   // Data state
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
