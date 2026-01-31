@@ -668,6 +668,149 @@ export function OrderBuilderProductCard({
               </div>
             )}
 
+            {/* Full Calculation Breakdown — Shows all math behind selection */}
+            {product.full_calculation_breakdown && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  {t('orderBuilderProduct.fullBreakdown', 'Full Calculation Breakdown')}
+                </div>
+
+                {/* Summary sentence */}
+                <div className="text-sm text-indigo-300 font-medium mb-3 flex items-center gap-2">
+                  <span>📊</span>
+                  <span>{product.full_calculation_breakdown.summary_sentence}</span>
+                </div>
+
+                {/* Three-column breakdown */}
+                <div className="grid grid-cols-3 gap-2">
+                  {/* Coverage Calculation */}
+                  <div className="bg-slate-800/50 rounded-lg p-2">
+                    <div className="text-[9px] font-semibold text-blue-400 uppercase mb-1">
+                      1. Coverage Gap
+                    </div>
+                    <div className="space-y-0.5 text-[10px]">
+                      <div className="flex justify-between text-slate-400">
+                        <span>Target</span>
+                        <span className="text-slate-300">{product.full_calculation_breakdown.coverage.target_coverage_days}d</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Velocity</span>
+                        <span className="text-slate-300">{Number(product.full_calculation_breakdown.coverage.velocity_m2_per_day).toFixed(1)}/d</span>
+                      </div>
+                      {product.full_calculation_breakdown.coverage.velocity_change_pct !== 0 && (
+                        <div className={`flex justify-between ${Number(product.full_calculation_breakdown.coverage.velocity_change_pct) > 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                          <span>Trend</span>
+                          <span>{Number(product.full_calculation_breakdown.coverage.velocity_change_pct) > 0 ? '+' : ''}{Number(product.full_calculation_breakdown.coverage.velocity_change_pct).toFixed(0)}%</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-400">
+                        <span>Need</span>
+                        <span className="text-slate-300">{Math.round(product.full_calculation_breakdown.coverage.adjusted_need_m2).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>- Stock</span>
+                        <span className="text-red-400">-{Math.round(product.full_calculation_breakdown.coverage.warehouse_m2).toLocaleString()}</span>
+                      </div>
+                      {product.full_calculation_breakdown.coverage.in_transit_m2 > 0 && (
+                        <div className="flex justify-between text-slate-400">
+                          <span>- Transit</span>
+                          <span className="text-amber-400">-{Math.round(product.full_calculation_breakdown.coverage.in_transit_m2).toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-slate-700/50 pt-1 mt-1 font-medium">
+                        <span className="text-blue-400">Gap</span>
+                        <span className="text-blue-300">{product.full_calculation_breakdown.coverage.suggested_pallets}p</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Customer Demand */}
+                  <div className="bg-slate-800/50 rounded-lg p-2">
+                    <div className="text-[9px] font-semibold text-purple-400 uppercase mb-1">
+                      2. Customer Demand
+                    </div>
+                    <div className="space-y-0.5 text-[10px]">
+                      <div className="flex justify-between text-slate-400">
+                        <span>Expecting</span>
+                        <span className="text-purple-300">{product.full_calculation_breakdown.customer_demand.customers_expecting_count}</span>
+                      </div>
+                      {product.full_calculation_breakdown.customer_demand.customers_list.length > 0 && (
+                        <div className="text-slate-500 text-[9px] truncate">
+                          {product.full_calculation_breakdown.customer_demand.customers_list.slice(0, 2).join(', ')}
+                          {product.full_calculation_breakdown.customer_demand.customers_list.length > 2 && '...'}
+                        </div>
+                      )}
+                      <div className="flex justify-between text-slate-400">
+                        <span>Expected</span>
+                        <span className="text-slate-300">{Math.round(product.full_calculation_breakdown.customer_demand.expected_orders_m2).toLocaleString()} m²</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Score</span>
+                        <span className="text-amber-400">{product.full_calculation_breakdown.customer_demand.customer_demand_score}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-slate-700/50 pt-1 mt-1 font-medium">
+                        <span className="text-purple-400">Need</span>
+                        <span className="text-purple-300">{product.full_calculation_breakdown.customer_demand.suggested_pallets}p</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Selection Logic */}
+                  <div className="bg-slate-800/50 rounded-lg p-2">
+                    <div className="text-[9px] font-semibold text-emerald-400 uppercase mb-1">
+                      3. Selection
+                    </div>
+                    <div className="space-y-0.5 text-[10px]">
+                      <div className="flex justify-between text-slate-400">
+                        <span>Coverage</span>
+                        <span className="text-blue-300">{product.full_calculation_breakdown.selection.coverage_suggested_pallets}p</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Customer</span>
+                        <span className="text-purple-300">{product.full_calculation_breakdown.selection.customer_suggested_pallets}p</span>
+                      </div>
+                      <div className="flex justify-between text-slate-400">
+                        <span>Combined</span>
+                        <span className="text-slate-300">{product.full_calculation_breakdown.selection.combined_pallets}p</span>
+                      </div>
+                      {product.full_calculation_breakdown.selection.minimum_container_applied && (
+                        <div className="flex justify-between text-amber-400">
+                          <span>Min 1 cont</span>
+                          <span>→ {product.full_calculation_breakdown.selection.after_minimum_pallets}p</span>
+                        </div>
+                      )}
+                      {product.full_calculation_breakdown.selection.siesa_limited && (
+                        <div className="flex justify-between text-red-400">
+                          <span>SIESA cap</span>
+                          <span>→ {product.full_calculation_breakdown.selection.siesa_available_pallets}p</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between border-t border-slate-700/50 pt-1 mt-1 font-medium">
+                        <span className="text-emerald-400">Final</span>
+                        <span className="text-emerald-300">{product.full_calculation_breakdown.selection.final_selected_pallets}p</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Selection reason */}
+                <div className="mt-2 text-[10px] text-slate-500 italic">
+                  💡 {product.full_calculation_breakdown.selection.selection_reason}
+                </div>
+
+                {/* Constraint notes */}
+                {product.full_calculation_breakdown.selection.constraint_notes.length > 0 && (
+                  <div className="mt-1 space-y-0.5">
+                    {product.full_calculation_breakdown.selection.constraint_notes.map((note, idx) => (
+                      <div key={idx} className="text-[9px] text-amber-500">
+                        ⚠️ {note}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Weight + Confidence */}
             <div className="p-3 flex flex-wrap gap-4 text-xs text-slate-400">
               {/* Weight */}

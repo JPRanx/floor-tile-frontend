@@ -142,6 +142,72 @@ export interface AvailabilityBreakdown {
   shortfall_note: string | null;      // Human-readable explanation
 }
 
+// ===================
+// FULL CALCULATION BREAKDOWN (Transparency Layer)
+// ===================
+
+/** Coverage gap calculation — shows how we determine m² needed */
+export interface CoverageCalculation {
+  target_coverage_days: number;      // Target days of coverage (days_to_warehouse + buffer)
+  days_to_warehouse: number;         // Days until product in warehouse
+  buffer_days: number;               // Safety buffer days (default 30)
+  velocity_m2_per_day: number;       // Daily velocity in m²
+  velocity_source: string;           // Which velocity used: '90d', '180d', 'blended'
+  need_for_target_m2: number;        // velocity × target_days = raw need
+  trend_direction: string;           // up, down, stable
+  velocity_change_pct: number;       // Raw velocity change: (90d - 180d) / 180d × 100 (e.g., -52%)
+  trend_adjustment_pct: number;      // Order quantity adjustment (capped at ±20%)
+  trend_adjustment_m2: number;       // trend_pct × need
+  adjusted_need_m2: number;          // need + trend_adjustment
+  warehouse_m2: number;              // Current warehouse stock
+  in_transit_m2: number;             // Stock in transit
+  coverage_gap_m2: number;           // adjusted_need - warehouse - in_transit
+  coverage_gap_pallets: number;      // Gap converted to pallets
+  suggested_pallets: number;         // Pallets suggested by coverage gap
+  suggested_m2: number;              // m² suggested by coverage gap
+}
+
+/** Customer demand calculation — shows expected orders from customers due soon */
+export interface CustomerDemandCalculation {
+  customers_expecting_count: number;    // Number of customers due to order
+  customers_list: string[];             // Names of customers expecting this product
+  expected_orders_m2: number;           // Sum of expected m² from all customers
+  expected_orders_pallets: number;      // Expected orders in pallets
+  customer_breakdown: Array<{           // Per-customer breakdown
+    name: string;
+    tier?: string;
+    days_overdue?: number;
+  }>;
+  suggested_pallets: number;            // Pallets suggested by customer demand
+  customer_demand_score: number;        // Priority score from customer demand (0-300)
+}
+
+/** Selection calculation — shows how final selected_pallets was determined */
+export interface SelectionCalculation {
+  coverage_suggested_pallets: number;    // From CoverageCalculation
+  customer_suggested_pallets: number;    // From CustomerDemandCalculation
+  combined_pallets: number;              // max(coverage, customer) = base selection
+  combination_reason: 'coverage_driven' | 'customer_driven' | 'equal';
+  minimum_container_applied: boolean;    // Was minimum applied?
+  minimum_container_pallets: number;     // 1 container = 14 pallets
+  after_minimum_pallets: number;         // After applying minimum
+  siesa_available_m2: number;            // Factory finished goods available
+  siesa_available_pallets: number;       // SIESA in pallets
+  siesa_limited: boolean;                // Was selection capped by SIESA?
+  final_selected_pallets: number;        // Final selected_pallets value
+  final_selected_m2: number;             // Final in m²
+  selection_reason: string;              // E.g., 'Customer demand (18 expecting) + minimum container rule'
+  constraint_notes: string[];            // Any constraints applied
+}
+
+/** Complete calculation transparency for a product */
+export interface FullCalculationBreakdown {
+  coverage: CoverageCalculation;
+  customer_demand: CustomerDemandCalculation;
+  selection: SelectionCalculation;
+  summary_sentence: string;              // One-line summary
+}
+
 export interface OrderBuilderProduct {
   // Product info
   product_id: string;
@@ -234,6 +300,9 @@ export interface OrderBuilderProduct {
 
   // Availability breakdown (what's available for this boat)
   availability_breakdown: AvailabilityBreakdown | null;
+
+  // Full calculation breakdown (transparency layer)
+  full_calculation_breakdown: FullCalculationBreakdown | null;
 }
 
 export interface OrderBuilderBoat {
