@@ -32,7 +32,8 @@
     "shipments": "Shipments",
     "pipeline": "Pipeline",
     "analytics": "Financial",
-    "intelligence": "Intelligence"
+    "intelligence": "Intelligence",
+    "products": "Products"
   },
   "dashboard": {
     "title": "Dashboard",

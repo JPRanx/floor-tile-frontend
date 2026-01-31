@@ -17,6 +17,7 @@ const navItems = [
   { path: '/pipeline', labelKey: 'nav.pipeline' },
   { path: '/analytics', labelKey: 'nav.analytics' },
   { path: '/intelligence', labelKey: 'nav.intelligence' },
+  { path: '/products', labelKey: 'nav.products' },
 ];
 
 export function Layout({ children }: LayoutProps) {
@@ -24,8 +25,8 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Dark theme for Dashboard, Analytics, Pipeline, Intelligence, and Order Builder pages
-  const isDarkPage = ['/', '/analytics', '/pipeline', '/intelligence', '/order-builder'].includes(location.pathname);
+  // Dark theme for Dashboard, Analytics, Pipeline, Intelligence, Order Builder, and Products pages
+  const isDarkPage = ['/', '/analytics', '/pipeline', '/intelligence', '/order-builder', '/products'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);

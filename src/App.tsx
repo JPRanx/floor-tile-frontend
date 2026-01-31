@@ -11,6 +11,7 @@ import { Shipments } from './pages/Shipments';
 import { Analytics } from './pages/Analytics';
 import { Pipeline } from './pages/Pipeline';
 import { Intelligence } from './pages/Intelligence';
+import { ProductManagement } from './pages/ProductManagement';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/intelligence" element={<Intelligence />} />
+          <Route path="/products" element={<ProductManagement />} />
         </Routes>
       </Layout>
     </BrowserRouter>

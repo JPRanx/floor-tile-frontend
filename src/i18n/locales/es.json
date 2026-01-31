@@ -32,7 +32,8 @@
     "shipments": "Embarques",
     "pipeline": "Pipeline",
     "analytics": "Financiero",
-    "intelligence": "Inteligencia"
+    "intelligence": "Inteligencia",
+    "products": "Productos"
   },
   "dashboard": {
     "title": "Panel",
