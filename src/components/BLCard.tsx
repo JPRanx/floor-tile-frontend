@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { BLAllocation, BLProductAllocation } from '../requests/orderBuilder';
 import { CRITICAL_THRESHOLD } from '../requests/orderBuilder';
+import { formatM2 } from '../utils/formatters';
 
 interface BLCardProps {
   bl: BLAllocation;
@@ -102,7 +103,7 @@ export function BLCard({ bl, isExpanded = false, onToggleExpand }: BLCardProps) 
             <div className="col-span-5 text-slate-300">{t('blAllocation.subtotal', 'SUBTOTAL')}</div>
             <div className="col-span-2 text-center text-white">{bl.total_pallets}</div>
             <div className="col-span-2 text-center text-white">
-              {Math.round(bl.total_m2).toLocaleString()}
+              {formatM2(bl.total_m2)}
             </div>
             <div className="col-span-3"></div>
           </div>
@@ -152,7 +153,7 @@ function BLProductRow({ product }: BLProductRowProps) {
 
       {/* M2 */}
       <div className="col-span-2 text-center text-slate-300">
-        {Math.round(product.m2).toLocaleString()}
+        {formatM2(product.m2)}
       </div>
 
       {/* Customer */}

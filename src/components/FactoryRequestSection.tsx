@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { FactoryRequestSummary, FactoryRequestItem } from '../requests/orderBuilder';
+import { formatM2 } from '../utils/formatters';
 
 interface FactoryRequestSectionProps {
   summary: FactoryRequestSummary | null;
@@ -124,7 +125,7 @@ export function FactoryRequestSection({
                 {t('orderBuilder.monthlyQuota', 'Monthly Quota')}
               </span>
               <span className={`font-medium ${isOverLimit ? 'text-red-400' : isNearLimit ? 'text-amber-400' : 'text-slate-300'}`}>
-                {totalRequestM2.toLocaleString()} / {limitM2.toLocaleString()} m²
+                {formatM2(totalRequestM2)} / {formatM2(limitM2)} m²
               </span>
             </div>
             <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
@@ -142,7 +143,7 @@ export function FactoryRequestSection({
             <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
               <span>{utilizationPct.toFixed(0)}% {t('orderBuilder.used', 'used')}</span>
               <span>
-                {t('orderBuilder.remaining', 'Remaining')}: {(limitM2 - totalRequestM2).toLocaleString()} m²
+                {t('orderBuilder.remaining', 'Remaining')}: {formatM2(limitM2 - totalRequestM2)} m²
               </span>
             </div>
           </div>
@@ -169,7 +170,7 @@ export function FactoryRequestSection({
                   {t('orderBuilder.totalRequest', 'Total request')}:
                 </span>
                 <span className="ml-2">
-                  {selectedTotalM2.toLocaleString()} m² ({selectedTotalPallets} {t('common.pallets', 'pallets')})
+                  {formatM2(selectedTotalM2)} m² ({selectedTotalPallets} {t('common.pallets', 'pallets')})
                 </span>
               </div>
               {selectedItems.size > 0 && (
@@ -283,7 +284,7 @@ function FactoryRequestCard({
               </div>
               <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>
-                  {t('orderBuilder.need', 'Need')}: {Number(item.suggested_m2 || 0).toLocaleString()} m²
+                  {t('orderBuilder.need', 'Need')}: {formatM2(Number(item.suggested_m2 || 0))} m²
                 </span>
                 <span className="text-slate-600">·</span>
                 <span>
@@ -384,7 +385,7 @@ function FactoryRequestCard({
                   </button>
                 </div>
                 <span className="text-sm text-slate-400">
-                  {t('common.pallets', 'pallets')} = {m2.toLocaleString()} m²
+                  {t('common.pallets', 'pallets')} = {formatM2(m2)} m²
                 </span>
               </div>
 

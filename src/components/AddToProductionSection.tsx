@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AddToProductionSummary, AddToProductionItem } from '../requests/orderBuilder';
+import { formatM2 } from '../utils/formatters';
 
 interface AddToProductionSectionProps {
   summary: AddToProductionSummary | null;
@@ -132,7 +133,7 @@ export function AddToProductionSection({
                   {t('orderBuilder.totalToAdd', 'Total to add')}:
                 </span>
                 <span className="ml-2">
-                  {selectedTotalM2.toLocaleString()} m² ({selectedTotalPallets} {t('common.pallets', 'pallets')})
+                  {formatM2(selectedTotalM2)} m² ({selectedTotalPallets} {t('common.pallets', 'pallets')})
                 </span>
               </div>
               {selectedItems.size > 0 && (
@@ -216,7 +217,7 @@ function AddToProductionCard({
               </div>
               <p className="text-sm text-slate-400 mt-0.5">
                 {t('orderBuilder.currentlyScheduled', 'Currently scheduled')}:{' '}
-                <span className="text-slate-300">{item.current_requested_m2.toLocaleString()} m²</span>
+                <span className="text-slate-300">{formatM2(item.current_requested_m2)} m²</span>
               </p>
             </div>
           </div>
@@ -264,7 +265,7 @@ function AddToProductionCard({
                   </button>
                 </div>
                 <span className="text-sm text-slate-400">
-                  {t('common.pallets', 'pallets')} = {m2.toLocaleString()} m²
+                  {t('common.pallets', 'pallets')} = {formatM2(m2)} m²
                 </span>
               </div>
 
@@ -293,10 +294,10 @@ function AddToProductionCard({
         {!isSelected && (
           <div className="mt-2 flex items-center gap-4 text-sm text-slate-400">
             <span>
-              {t('orderBuilder.systemSuggests', 'System suggests')}: {item.suggested_total_m2.toLocaleString()} m²
+              {t('orderBuilder.systemSuggests', 'System suggests')}: {formatM2(item.suggested_total_m2)} m²
             </span>
             <span className="text-amber-400">
-              +{item.suggested_additional_m2.toLocaleString()} m² ({item.suggested_additional_pallets}p)
+              +{formatM2(item.suggested_additional_m2)} m² ({item.suggested_additional_pallets}p)
             </span>
             {(item.target_boat || item.target_boat_departure) && (
               <span className="text-emerald-400">

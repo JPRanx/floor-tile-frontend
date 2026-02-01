@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { OrderBuilderSummary as SummaryType } from '../requests/orderBuilder';
 import { CONTAINER_MAX_WEIGHT_KG, WEIGHT_PER_M2_KG } from '../constants/inventory';
+import { formatM2 } from '../utils/formatters';
 
 interface OrderBuilderSummaryProps {
   summary: SummaryType;
@@ -136,7 +137,7 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
             </span>
             {remainingWeightKg > 0 && summary.total_containers > 0 && (
               <span className="text-emerald-400">
-                {t('orderBuilderSummary.remaining')}: {Math.round(remainingWeightKg).toLocaleString()} kg ({Math.round(remainingM2).toLocaleString()} m²)
+                {t('orderBuilderSummary.remaining')}: {Math.round(remainingWeightKg).toLocaleString()} kg ({formatM2(remainingM2)} m²)
               </span>
             )}
           </div>
@@ -171,7 +172,7 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
           <div className="flex justify-between items-center">
             <span className="text-slate-400 font-medium">{t('orderBuilderSummary.totalOrder')}</span>
             <span className="text-2xl font-bold bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent">
-              {Math.round(summary.total_m2).toLocaleString()} m²
+              {formatM2(summary.total_m2)} m²
             </span>
           </div>
         </div>

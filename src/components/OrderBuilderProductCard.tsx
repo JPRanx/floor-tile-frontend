@@ -10,6 +10,7 @@ import type {
 } from '../requests/orderBuilder';
 import { WEIGHT_PER_M2_KG } from '../constants/inventory';
 import { formatDateUTC } from '../utils/dateUtils';
+import { formatM2 } from '../utils/formatters';
 
 // Extended product type with selected_m2 for two-way input sync
 interface OrderBuilderProductWithM2 extends OrderBuilderProduct {
@@ -107,7 +108,7 @@ export function OrderBuilderProductCard({
   const formatTransitArrival = () => {
     // If we have boat arrival info, use that
     // Otherwise just show the quantity
-    return product.in_transit_m2 > 0 ? `${Math.round(product.in_transit_m2).toLocaleString()} m²` : null;
+    return product.in_transit_m2 > 0 ? `${formatM2(product.in_transit_m2)} m²` : null;
   };
 
   // Build consolidated reasoning sentence
@@ -121,7 +122,7 @@ export function OrderBuilderProductCard({
         : 0;
       parts.push(t('orderBuilderProduct.coveredByTransit',
         'Covered by {{m2}} m² in transit ({{days}}d)',
-        { m2: Math.round(product.in_transit_m2).toLocaleString(), days: transitDays }));
+        { m2: formatM2(product.in_transit_m2), days: transitDays }));
       return parts.join(' · ');
     }
 
@@ -165,7 +166,7 @@ export function OrderBuilderProductCard({
           <div className="flex items-center gap-3">
             <span className="text-slate-500 text-lg line-through">{product.sku}</span>
             <span className="text-slate-600 text-sm">
-              ({product.coverage_gap_pallets || 0}p = {Math.round((product.coverage_gap_pallets || 0) * 134.4).toLocaleString()} m²)
+              ({product.coverage_gap_pallets || 0}p = {formatM2((product.coverage_gap_pallets || 0) * 134.4)} m²)
             </span>
             <span className="px-2 py-0.5 rounded text-xs font-medium bg-slate-700/50 text-slate-500">
               {t('orderBuilder.removed', 'REMOVED')}
@@ -267,7 +268,7 @@ export function OrderBuilderProductCard({
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-500">📦</span>
             <span className="text-slate-200 font-medium">
-              {Math.round(Number(product.current_stock_m2)).toLocaleString()} m²
+              {formatM2(Number(product.current_stock_m2))} m²
             </span>
             {product.days_of_stock !== null && (
               <span className={`text-xs ${currentDays <= 7 ? 'text-red-400' : currentDays <= 14 ? 'text-amber-400' : 'text-slate-500'}`}>
@@ -292,7 +293,7 @@ export function OrderBuilderProductCard({
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-500">🏭</span>
               <span className="text-purple-300 font-medium">
-                {Math.round(product.factory_available_m2).toLocaleString()} m²
+                {formatM2(product.factory_available_m2)} m²
               </span>
               <span className="text-xs text-slate-500">{t('orderBuilderProduct.atFactory', 'at factory')}</span>
               {product.factory_fill_status && product.factory_fill_status !== 'not_needed' && product.factory_fill_status !== 'unknown' && (
@@ -313,13 +314,13 @@ export function OrderBuilderProductCard({
               <span className="text-slate-500">{productionStatusStyles[product.production_status].icon}</span>
               <span className={`font-medium ${productionStatusStyles[product.production_status].color}`}>
                 {product.production_status === 'completed' && (
-                  <>{Math.round(product.production_completed_m2).toLocaleString()} m² {t('orderBuilderProduct.readyToShip', 'ready to ship')}</>
+                  <>{formatM2(product.production_completed_m2)} m² {t('orderBuilderProduct.readyToShip', 'ready to ship')}</>
                 )}
                 {product.production_status === 'in_progress' && (
-                  <>{Math.round(product.production_requested_m2).toLocaleString()} m² {t('orderBuilderProduct.inProduction', 'in production')}</>
+                  <>{formatM2(product.production_requested_m2)} m² {t('orderBuilderProduct.inProduction', 'in production')}</>
                 )}
                 {product.production_status === 'scheduled' && (
-                  <>{Math.round(product.production_requested_m2).toLocaleString()} m² {t('orderBuilderProduct.scheduled', 'scheduled')}</>
+                  <>{formatM2(product.production_requested_m2)} m² {t('orderBuilderProduct.scheduled', 'scheduled')}</>
                 )}
               </span>
               {product.production_can_add_more && (
@@ -465,7 +466,7 @@ export function OrderBuilderProductCard({
               </div>
               <div className="text-amber-400/70 text-xs mt-1">
                 {t('orderBuilderProduct.productionScheduledNotStarted', 'Production scheduled but not started yet')} ·{' '}
-                {t('orderBuilderProduct.currentRequest', 'Current request')}: {Math.round(product.production_requested_m2).toLocaleString()} m²
+                {t('orderBuilderProduct.currentRequest', 'Current request')}: {formatM2(product.production_requested_m2)} m²
               </div>
             </div>
           </div>
@@ -543,27 +544,27 @@ export function OrderBuilderProductCard({
                 <div className="space-y-1 text-xs text-slate-400">
                   <div className="flex justify-between">
                     <span>{t('orderBuilderProduct.baseQuantity', 'Base')}: {Number(breakdown.daily_velocity_m2).toFixed(1)} m²/d × {breakdown.lead_time_days + breakdown.ordering_cycle_days}d</span>
-                    <span className="text-slate-300">{Math.round(Number(breakdown.base_quantity_m2)).toLocaleString()} m²</span>
+                    <span className="text-slate-300">{formatM2(Number(breakdown.base_quantity_m2))} m²</span>
                   </div>
                   {Number(breakdown.trend_adjustment_m2) !== 0 && (
                     <div className="flex justify-between text-emerald-400">
                       <span>{t('orderBuilderProduct.trendAdjustment', 'Trend')} (+{Number(breakdown.trend_adjustment_pct).toFixed(0)}%)</span>
-                      <span>+{Math.round(Number(breakdown.trend_adjustment_m2)).toLocaleString()} m²</span>
+                      <span>+{formatM2(Number(breakdown.trend_adjustment_m2))} m²</span>
                     </div>
                   )}
                   <div className="flex justify-between text-red-400">
                     <span>- {t('orderBuilderProduct.warehouse', 'Warehouse')}</span>
-                    <span>-{Math.round(Number(breakdown.minus_current_stock_m2)).toLocaleString()} m²</span>
+                    <span>-{formatM2(Number(breakdown.minus_current_stock_m2))} m²</span>
                   </div>
                   {Number(breakdown.minus_incoming_m2) > 0 && (
                     <div className="flex justify-between text-amber-400">
                       <span>- {t('orderBuilderProduct.inTransitLabel', 'In transit')}</span>
-                      <span>-{Math.round(Number(breakdown.minus_incoming_m2)).toLocaleString()} m²</span>
+                      <span>-{formatM2(Number(breakdown.minus_incoming_m2))} m²</span>
                     </div>
                   )}
                   <div className="flex justify-between font-semibold text-white pt-1 border-t border-slate-700/50 mt-1">
                     <span>= {t('orderBuilderProduct.suggestion', 'Suggestion')}</span>
-                    <span>{Math.round(Number(breakdown.final_suggestion_m2)).toLocaleString()} m²</span>
+                    <span>{formatM2(Number(breakdown.final_suggestion_m2))} m²</span>
                   </div>
                 </div>
               </div>
@@ -604,7 +605,7 @@ export function OrderBuilderProductCard({
                   </span>
                   {product.factory_production_m2 && (
                     <span className="text-slate-400">
-                      ({Math.round(Number(product.factory_production_m2)).toLocaleString()} m²)
+                      ({formatM2(Number(product.factory_production_m2))} m²)
                     </span>
                   )}
                 </div>
@@ -632,26 +633,26 @@ export function OrderBuilderProductCard({
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
                     <span className="text-slate-400">SIESA (factory stock)</span>
-                    <span className="text-slate-300">{Math.round(product.availability_breakdown.siesa_now_m2).toLocaleString()} m²</span>
+                    <span className="text-slate-300">{formatM2(product.availability_breakdown.siesa_now_m2)} m²</span>
                   </div>
                   {product.availability_breakdown.production_completing_m2 > 0 && (
                     <div className="flex justify-between">
                       <span className="text-slate-400">+ Production completing</span>
-                      <span className="text-emerald-400">+{Math.round(product.availability_breakdown.production_completing_m2).toLocaleString()} m²</span>
+                      <span className="text-emerald-400">+{formatM2(product.availability_breakdown.production_completing_m2)} m²</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t border-slate-700/50 pt-1 mt-1">
                     <span className="text-slate-300 font-medium">Total available</span>
-                    <span className="text-slate-200 font-medium">{Math.round(product.availability_breakdown.total_available_m2).toLocaleString()} m²</span>
+                    <span className="text-slate-200 font-medium">{formatM2(product.availability_breakdown.total_available_m2)} m²</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Suggested order</span>
-                    <span className="text-slate-300">{Math.round(product.availability_breakdown.suggested_order_m2).toLocaleString()} m²</span>
+                    <span className="text-slate-300">{formatM2(product.availability_breakdown.suggested_order_m2)} m²</span>
                   </div>
                   {product.availability_breakdown.shortfall_m2 > 0 ? (
                     <div className="flex justify-between text-red-400">
                       <span>Shortfall</span>
-                      <span>-{Math.round(product.availability_breakdown.shortfall_m2).toLocaleString()} m²</span>
+                      <span>-{formatM2(product.availability_breakdown.shortfall_m2)} m²</span>
                     </div>
                   ) : (
                     <div className="flex justify-between text-emerald-400">
@@ -695,7 +696,7 @@ export function OrderBuilderProductCard({
               <div className="flex items-center gap-1.5">
                 <span>{t('orderBuilderProduct.gap', 'Gap')}:</span>
                 <span className="text-slate-300 font-medium">
-                  {Math.round(product.coverage_gap_m2).toLocaleString()} m²
+                  {formatM2(product.coverage_gap_m2)} m²
                 </span>
                 <span className="text-slate-500">({product.coverage_gap_pallets}p)</span>
               </div>

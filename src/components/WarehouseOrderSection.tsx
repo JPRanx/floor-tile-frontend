@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { WarehouseOrderSummary, OrderBuilderProduct } from '../requests/orderBuilder';
 import { OrderBuilderProductCard } from './OrderBuilderProductCard';
+import { formatM2 } from '../utils/formatters';
 
 // Extended product type with selected_m2 for two-way input sync
 interface OrderBuilderProductWithM2 extends OrderBuilderProduct {
@@ -134,7 +135,7 @@ export function WarehouseOrderSection({
                 <div className="text-xs text-slate-400">{t('common.containers', 'containers')}</div>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-lg font-bold text-emerald-400">{totalM2.toLocaleString()}</div>
+                <div className="text-lg font-bold text-emerald-400">{formatM2(totalM2)}</div>
                 <div className="text-xs text-slate-400">m²</div>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-3">
@@ -191,7 +192,7 @@ export function WarehouseOrderSection({
                 <div className="text-sm text-emerald-300">
                   <span className="font-medium">{t('orderBuilder.readyToShip', 'Ready to ship')}:</span>
                   <span className="ml-2">
-                    {totalM2.toLocaleString()} m² ({totalPallets} {t('common.pallets', 'pallets')})
+                    {formatM2(totalM2)} m² ({totalPallets} {t('common.pallets', 'pallets')})
                   </span>
                 </div>
                 {onAllocateToBLs && (
