@@ -11,11 +11,7 @@ const navItems = [
   { path: '/', labelKey: 'nav.dashboard' },
   { path: '/data-hub', labelKey: 'nav.dataHub' },
   { path: '/order-builder', labelKey: 'nav.orderBuilder' },
-  { path: '/recommendations', labelKey: 'nav.recommendations' },
   { path: '/boats', labelKey: 'nav.boats' },
-  { path: '/shipments', labelKey: 'nav.shipments' },
-  { path: '/pipeline', labelKey: 'nav.pipeline' },
-  { path: '/analytics', labelKey: 'nav.analytics' },
   { path: '/intelligence', labelKey: 'nav.intelligence' },
   { path: '/products', labelKey: 'nav.products' },
 ];
@@ -25,8 +21,8 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Dark theme for Dashboard, Analytics, Pipeline, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/analytics', '/pipeline', '/intelligence', '/order-builder', '/products'].includes(location.pathname);
+  // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
+  const isDarkPage = ['/', '/intelligence', '/order-builder', '/products'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
