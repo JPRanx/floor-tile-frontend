@@ -16,8 +16,6 @@ interface OrderBuilderHeaderProps {
   recommendedBLs: number;
   // Available BL count (what can ship now based on factory stock)
   availableBLs: number;
-  // Message explaining both need and available
-  recommendedBLsReason: string;
   // Shippable BLs (what can actually fill gaps)
   shippableBLs: number;
   shippableM2: number;
@@ -33,7 +31,6 @@ export function OrderBuilderHeader({
   onNumBLsChange,
   recommendedBLs,
   availableBLs,
-  recommendedBLsReason,
   shippableBLs,
   shippableM2,
 }: OrderBuilderHeaderProps) {

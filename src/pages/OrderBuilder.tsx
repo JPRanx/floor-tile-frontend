@@ -723,7 +723,6 @@ export function OrderBuilder() {
           onNumBLsChange={handleNumBLsChange}
           recommendedBLs={data.recommended_bls}
           availableBLs={data.available_bls}
-          recommendedBLsReason={data.recommended_bls_reason}
           shippableBLs={data.shippable_bls}
           shippableM2={data.shippable_m2}
         />
