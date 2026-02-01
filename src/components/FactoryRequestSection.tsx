@@ -220,40 +220,33 @@ function FactoryRequestCard({
   // Low-volume products get special styling
   const isLowVolume = item.is_low_volume;
 
-  // Well-stocked products (no request needed)
-  const isWellStocked = !item.should_request && item.skip_reason?.includes('Well stocked');
-
   return (
     <div
       className={`rounded-lg border transition-all duration-200 ${
-        isWellStocked
-          ? 'border-emerald-500/30 bg-emerald-500/5'
-          : isLowVolume
-            ? 'border-amber-500/50 bg-amber-500/5'
-            : isSelected
-              ? 'border-blue-500 bg-blue-500/10'
-              : 'border-slate-700/50 bg-slate-800/50 hover:border-slate-600/50'
+        isLowVolume
+          ? 'border-amber-500/50 bg-amber-500/5'
+          : isSelected
+            ? 'border-blue-500 bg-blue-500/10'
+            : 'border-slate-700/50 bg-slate-800/50 hover:border-slate-600/50'
       }`}
     >
       <div className="p-4">
         {/* Header Row */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            {/* Checkbox - disabled for low-volume and well-stocked */}
+            {/* Checkbox - disabled for low-volume */}
             <button
               onClick={onToggle}
-              disabled={isLowVolume || isWellStocked}
+              disabled={isLowVolume}
               className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
-                isWellStocked
-                  ? 'border-emerald-500/50 bg-emerald-500/10 cursor-not-allowed'
-                  : isLowVolume
-                    ? 'border-amber-500/50 bg-amber-500/10 cursor-not-allowed'
-                    : isSelected
-                      ? 'bg-blue-500 border-blue-500'
-                      : 'border-slate-500 hover:border-blue-500'
+                isLowVolume
+                  ? 'border-amber-500/50 bg-amber-500/10 cursor-not-allowed'
+                  : isSelected
+                    ? 'bg-blue-500 border-blue-500'
+                    : 'border-slate-500 hover:border-blue-500'
               }`}
             >
-              {isSelected && !isLowVolume && !isWellStocked && (
+              {isSelected && !isLowVolume && (
                 <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
@@ -265,26 +258,13 @@ function FactoryRequestCard({
               {isLowVolume && (
                 <span className="text-amber-500 text-xs">!</span>
               )}
-              {isWellStocked && (
-                <svg className="w-3 h-3 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              )}
             </button>
 
             {/* Product Info */}
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-white font-medium truncate">{item.sku}</h3>
-                {isWellStocked ? (
-                  <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    {t('orderBuilder.wellStocked', 'WELL STOCKED')}
-                  </span>
-                ) : isLowVolume ? (
+                {isLowVolume ? (
                   <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
                     {t('orderBuilder.lowVolume', 'LOW VOLUME')}
                   </span>
@@ -302,33 +282,19 @@ function FactoryRequestCard({
                 )}
               </div>
               <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                {isWellStocked ? (
+                <span>
+                  {t('orderBuilder.need', 'Need')}: {Number(item.suggested_m2 || 0).toLocaleString()} m²
+                </span>
+                <span className="text-slate-600">·</span>
+                <span>
+                  {t('orderBuilder.velocity', 'Velocity')}: {Number(item.velocity_m2_day || 0).toFixed(1)} m²/d
+                </span>
+                {item.days_to_consume_container && (
                   <>
-                    <span className="text-emerald-400/80">
-                      {t('orderBuilder.projected', 'Projected')}: {Number(item.projected_stock_at_arrival_m2 || 0).toLocaleString()} m² at arrival
-                    </span>
                     <span className="text-slate-600">·</span>
-                    <span>
-                      {t('orderBuilder.velocity', 'Velocity')}: {Number(item.velocity_m2_day || 0).toFixed(1)} m²/d
+                    <span className={item.is_low_volume ? 'text-amber-400' : 'text-slate-400'}>
+                      1 CTN = {item.days_to_consume_container}d
                     </span>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      {t('orderBuilder.need', 'Need')}: {Number(item.suggested_m2 || 0).toLocaleString()} m²
-                    </span>
-                    <span className="text-slate-600">·</span>
-                    <span>
-                      {t('orderBuilder.velocity', 'Velocity')}: {Number(item.velocity_m2_day || 0).toFixed(1)} m²/d
-                    </span>
-                    {item.days_to_consume_container && (
-                      <>
-                        <span className="text-slate-600">·</span>
-                        <span className={item.is_low_volume ? 'text-amber-400' : 'text-slate-400'}>
-                          1 CTN = {item.days_to_consume_container}d
-                        </span>
-                      </>
-                    )}
                   </>
                 )}
               </div>
@@ -337,16 +303,7 @@ function FactoryRequestCard({
 
           {/* Request / Gap Badge */}
           <div className="flex-shrink-0 text-right">
-            {isWellStocked ? (
-              <>
-                <div className="text-sm text-emerald-400">
-                  {t('orderBuilder.noRequestNeeded', 'NO REQUEST NEEDED')}
-                </div>
-                <div className="text-xs text-slate-500">
-                  Pipeline covers demand
-                </div>
-              </>
-            ) : isLowVolume ? (
+            {isLowVolume ? (
               <>
                 <div className="text-sm text-amber-400">
                   {t('orderBuilder.notRecommended', 'NOT RECOMMENDED')}
@@ -452,19 +409,12 @@ function FactoryRequestCard({
           </div>
         )}
 
-        {/* Compact Info - Show when not selected and not low-volume and not well-stocked */}
-        {!isSelected && !isLowVolume && !isWellStocked && (
+        {/* Compact Info - Show when not selected and not low-volume */}
+        {!isSelected && !isLowVolume && (
           <div className="mt-2 text-sm text-slate-500">
             {t('orderBuilder.gapPallets', 'Gap')}: {item.gap_pallets} {t('common.pallets', 'pallets')}
             <span className="mx-2">·</span>
             {t('orderBuilder.ready', 'Ready')}: {item.estimated_ready}
-          </div>
-        )}
-
-        {/* Well-stocked Info */}
-        {isWellStocked && item.buffer_note && (
-          <div className="mt-2 text-sm text-emerald-400/80">
-            {item.buffer_note}
           </div>
         )}
       </div>

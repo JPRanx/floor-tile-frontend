@@ -34,25 +34,22 @@ export function WarehouseOrderSection({
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
 
-  // Show ALL products - this is the main inventory view
-  const allProducts = products;
-
-  // Products that can be shipped (have factory stock)
-  const shippableProducts = products.filter(
+  // Filter products that have factory stock available
+  const warehouseProducts = products.filter(
     (p) => p.factory_available_m2 && p.factory_available_m2 > 0
   );
 
-  const selectedProducts = allProducts.filter((p) => p.is_selected);
+  const selectedProducts = warehouseProducts.filter((p) => p.is_selected);
   const selectedCount = selectedProducts.length;
   const totalPallets = selectedProducts.reduce((sum, p) => sum + p.selected_pallets, 0);
   const totalM2 = totalPallets * 134.4;
 
-  // Group ALL products by priority for display
+  // Group warehouse products by priority for display
   const productsByPriority = {
-    high_priority: allProducts.filter((p) => p.priority === 'HIGH_PRIORITY'),
-    consider: allProducts.filter((p) => p.priority === 'CONSIDER'),
-    well_covered: allProducts.filter((p) => p.priority === 'WELL_COVERED'),
-    your_call: allProducts.filter((p) => p.priority === 'YOUR_CALL'),
+    high_priority: warehouseProducts.filter((p) => p.priority === 'HIGH_PRIORITY'),
+    consider: warehouseProducts.filter((p) => p.priority === 'CONSIDER'),
+    well_covered: warehouseProducts.filter((p) => p.priority === 'WELL_COVERED'),
+    your_call: warehouseProducts.filter((p) => p.priority === 'YOUR_CALL'),
   };
 
   const priorityConfig = [
@@ -86,7 +83,7 @@ export function WarehouseOrderSection({
     },
   ];
 
-  if (allProducts.length === 0) {
+  if (warehouseProducts.length === 0) {
     return null;
   }
 
@@ -101,21 +98,16 @@ export function WarehouseOrderSection({
           <div className="w-2 h-10 rounded-full bg-emerald-500" />
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              {t('orderBuilder.inventoryStatus', 'Inventory Status')}
-              <span className="text-slate-500 font-normal">({allProducts.length})</span>
-              {shippableProducts.length > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  {shippableProducts.length} {t('orderBuilder.canShip', 'can ship')}
-                </span>
-              )}
+              {t('orderBuilder.warehouseOrder', 'Warehouse Order')}
+              <span className="text-slate-500 font-normal">({warehouseProducts.length})</span>
               {selectedCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
                   {selectedCount} {t('common.selected', 'selected')}
                 </span>
               )}
             </h2>
             <p className="text-sm text-emerald-400/80 mt-0.5">
-              {t('orderBuilder.inventoryStatusDesc', 'All products with stock levels and shipping status')}
+              {t('orderBuilder.warehouseOrderDesc', 'Ship from SIESA stock on selected boat')}
               {summary?.boat_name && (
                 <span className="ml-1 text-slate-400">· {summary.boat_name}</span>
               )}
