@@ -18,6 +18,9 @@ interface OrderBuilderHeaderProps {
   availableBLs: number;
   // Message explaining both need and available
   recommendedBLsReason: string;
+  // Shippable BLs (what can actually fill gaps)
+  shippableBLs: number;
+  shippableM2: number;
 }
 
 export function OrderBuilderHeader({
@@ -31,6 +34,8 @@ export function OrderBuilderHeader({
   recommendedBLs,
   availableBLs,
   recommendedBLsReason,
+  shippableBLs,
+  shippableM2,
 }: OrderBuilderHeaderProps) {
   const { t } = useTranslation();
 
@@ -242,28 +247,40 @@ export function OrderBuilderHeader({
             </div>
           </div>
 
-          {/* BL Recommendation - shows both need and available */}
-          {recommendedBLsReason && (
-            <div className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm">
-              <div className="flex items-center gap-2">
-                <span className={availableBLs >= recommendedBLs ? 'text-emerald-400' : 'text-amber-400'}>
-                  {availableBLs >= recommendedBLs ? '✓' : '⚠️'}
+          {/* BL Recommendation - shows need and can ship */}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Need indicator */}
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-slate-300">
+                  {t('blAllocation.need', 'Need')}: {recommendedBLs} BLs
                 </span>
-                <span className="text-slate-300">{recommendedBLsReason}</span>
-              </div>
-              {/* Legend */}
-              <div className="flex items-center gap-3 text-xs text-slate-500 sm:ml-auto">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                  {t('blAllocation.needIndicator', 'Need')}
+              </span>
+              <span className="text-slate-600">•</span>
+              {/* Can Ship indicator */}
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 bg-cyan-400 rounded-full" />
+                <span className="text-slate-300">
+                  {t('blAllocation.canShip', 'Can Ship')}: {shippableBLs} BLs ({shippableM2.toLocaleString()} m²)
                 </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-                  {t('blAllocation.availableIndicator', 'Available')}
-                </span>
-              </div>
+                {shippableBLs >= numBLs && (
+                  <span className="text-emerald-400">✓</span>
+                )}
+              </span>
             </div>
-          )}
+            {/* Legend */}
+            <div className="flex items-center gap-3 text-xs text-slate-500 sm:ml-auto">
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full" />
+                {t('blAllocation.needIndicator', 'Need')}
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="w-2 h-2 bg-cyan-400 rounded-full" />
+                {t('blAllocation.canShipIndicator', 'Can Ship')}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

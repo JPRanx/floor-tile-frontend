@@ -573,6 +573,10 @@ export interface OrderBuilderResponse {
   // Message showing both need and available
   recommended_bls_reason: string;
 
+  // Shippable BLs (what can actually fill gaps = min(gap, available) per product)
+  shippable_bls: number;
+  shippable_m2: number;
+
   // Products grouped by priority
   high_priority: OrderBuilderProduct[];
   consider: OrderBuilderProduct[];
