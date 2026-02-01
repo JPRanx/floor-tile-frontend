@@ -34,10 +34,8 @@ export function WarehouseOrderSection({
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
 
-  // Filter products that have factory stock available
-  const warehouseProducts = products.filter(
-    (p) => p.factory_available_m2 && p.factory_available_m2 > 0
-  );
+  // Show ALL products in this section
+  const warehouseProducts = products;
 
   const selectedProducts = warehouseProducts.filter((p) => p.is_selected);
   const selectedCount = selectedProducts.length;
@@ -83,7 +81,7 @@ export function WarehouseOrderSection({
     },
   ];
 
-  if (warehouseProducts.length === 0) {
+  if (products.length === 0) {
     return null;
   }
 
