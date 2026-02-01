@@ -258,10 +258,18 @@ export function Dashboard() {
             </thead>
             <tbody className="divide-y divide-slate-700/30">
               {products.map((product) => (
-                <tr key={product.product_id} className="hover:bg-slate-800/30 group transition-colors">
+                <tr
+                  key={product.product_id}
+                  className={`hover:bg-slate-800/30 group transition-colors ${!product.active ? 'opacity-60' : ''}`}
+                >
                   <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-slate-900/95 group-hover:bg-slate-800/30 transition-colors">
-                    <div className="text-sm font-medium text-white">
+                    <div className="text-sm font-medium text-white flex items-center gap-2">
                       {product.sku}
+                      {!product.active && (
+                        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-600/50 text-slate-400 border border-slate-500/30">
+                          {t('dashboard.inactive', 'INACTIVE')}
+                        </span>
+                      )}
                     </div>
                     <div className="text-xs text-slate-500">
                       {product.rotation}

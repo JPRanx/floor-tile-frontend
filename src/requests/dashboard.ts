@@ -22,6 +22,7 @@ export interface ProductStockout {
   sku: string;
   category: string;
   rotation: string;
+  active: boolean;  // Whether product is active in catalog
   warehouse_qty: number;
   in_transit_qty: number;
   total_qty: number;
