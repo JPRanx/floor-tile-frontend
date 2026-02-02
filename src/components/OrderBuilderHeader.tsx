@@ -29,8 +29,8 @@ export function OrderBuilderHeader({
   onBoatChange,
   numBLs,
   onNumBLsChange,
-  recommendedBLs,
-  availableBLs,
+  recommendedBLs: _recommendedBLs,
+  availableBLs: _availableBLs,
   shippableBLs,
   shippableM2,
 }: OrderBuilderHeaderProps) {
