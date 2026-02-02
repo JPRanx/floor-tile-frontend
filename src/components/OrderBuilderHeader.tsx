@@ -56,6 +56,7 @@ export function OrderBuilderHeader({
 
   // Timeline milestones
   const milestones = [
+    { label: 'Order by', date: boat.order_deadline, days: boat.days_until_order_deadline, color: 'rose', isPast: boat.past_order_deadline },
     { label: 'Book by', date: boat.booking_deadline, days: boat.days_until_deadline, color: 'orange' },
     { label: 'Departs', date: boat.departure_date, days: boat.days_until_departure, color: 'indigo' },
     { label: 'Arrives Port', date: boat.arrival_date, days: boat.days_until_arrival, color: 'indigo' },
@@ -132,66 +133,82 @@ export function OrderBuilderHeader({
           <div className="hidden sm:block">
             <div className="relative flex items-center justify-between">
               {/* Connecting line */}
-              <div className="absolute top-4 left-8 right-8 h-0.5 bg-gradient-to-r from-orange-500/30 via-indigo-500/30 to-emerald-500/30" />
+              <div className="absolute top-4 left-6 right-6 h-0.5 bg-gradient-to-r from-rose-500/30 via-orange-500/30 via-indigo-500/30 to-emerald-500/30" />
 
-              {milestones.map((m, idx) => (
-                <div key={idx} className="relative flex flex-col items-center z-10">
-                  {/* Dot with glow */}
-                  <div
-                    className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold shadow-lg ${
-                      m.color === 'orange'
-                        ? 'bg-orange-500/20 border-orange-500 text-orange-400 shadow-orange-500/20'
-                        : m.color === 'emerald'
-                        ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-emerald-500/20'
-                        : 'bg-indigo-500/20 border-indigo-500 text-indigo-400 shadow-indigo-500/20'
-                    }`}
-                  >
-                    {idx + 1}
+              {milestones.map((m, idx) => {
+                const isPast = 'isPast' in m && m.isPast;
+                return (
+                  <div key={idx} className={`relative flex flex-col items-center z-10 ${isPast ? 'opacity-50' : ''}`}>
+                    {/* Dot with glow */}
+                    <div
+                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold shadow-lg ${
+                        m.color === 'rose'
+                          ? 'bg-rose-500/20 border-rose-500 text-rose-400 shadow-rose-500/20'
+                          : m.color === 'orange'
+                          ? 'bg-orange-500/20 border-orange-500 text-orange-400 shadow-orange-500/20'
+                          : m.color === 'emerald'
+                          ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-emerald-500/20'
+                          : 'bg-indigo-500/20 border-indigo-500 text-indigo-400 shadow-indigo-500/20'
+                      }`}
+                    >
+                      {idx + 1}
+                    </div>
+                    {/* Date */}
+                    <div className={`mt-2 text-sm font-semibold ${isPast ? 'text-slate-500 line-through' : 'text-white'}`}>
+                      {formatDate(m.date)}
+                    </div>
+                    {/* Label */}
+                    <div className="text-xs text-slate-400">{m.label}</div>
+                    {/* Days badge */}
+                    <div className={`mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      isPast
+                        ? 'bg-rose-500/20 text-rose-300'
+                        : m.days <= 7 && (m.color === 'orange' || m.color === 'rose')
+                        ? 'bg-orange-500/20 text-orange-300'
+                        : 'bg-slate-700/50 text-slate-400'
+                    }`}>
+                      {isPast ? 'PAST' : `${m.days}d`}
+                    </div>
                   </div>
-                  {/* Date */}
-                  <div className="mt-2 text-sm font-semibold text-white">
-                    {formatDate(m.date)}
-                  </div>
-                  {/* Label */}
-                  <div className="text-xs text-slate-400">{m.label}</div>
-                  {/* Days badge */}
-                  <div className={`mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                    m.days <= 7 && m.color === 'orange'
-                      ? 'bg-orange-500/20 text-orange-300'
-                      : 'bg-slate-700/50 text-slate-400'
-                  }`}>
-                    {m.days}d
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Mobile: Compact list */}
           <div className="sm:hidden grid grid-cols-2 gap-2">
-            {milestones.map((m, idx) => (
-              <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-slate-800/30">
-                <span
-                  className={`w-2.5 h-2.5 rounded-full ${
-                    m.color === 'orange'
-                      ? 'bg-orange-500'
-                      : m.color === 'emerald'
-                      ? 'bg-emerald-500'
-                      : 'bg-indigo-500'
-                  }`}
-                />
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs text-slate-500">{m.label}</div>
-                  <div className="text-sm font-medium text-white truncate">{formatDate(m.date)}</div>
+            {milestones.map((m, idx) => {
+              const isPast = 'isPast' in m && m.isPast;
+              return (
+                <div key={idx} className={`flex items-center gap-2 p-2 rounded-lg bg-slate-800/30 ${isPast ? 'opacity-50' : ''}`}>
+                  <span
+                    className={`w-2.5 h-2.5 rounded-full ${
+                      m.color === 'rose'
+                        ? 'bg-rose-500'
+                        : m.color === 'orange'
+                        ? 'bg-orange-500'
+                        : m.color === 'emerald'
+                        ? 'bg-emerald-500'
+                        : 'bg-indigo-500'
+                    }`}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs text-slate-500">{m.label}</div>
+                    <div className={`text-sm font-medium truncate ${isPast ? 'text-slate-500 line-through' : 'text-white'}`}>
+                      {formatDate(m.date)}
+                    </div>
+                  </div>
+                  <span className={`text-xs ${isPast ? 'text-rose-400' : 'text-slate-500'}`}>
+                    {isPast ? 'PAST' : `${m.days}d`}
+                  </span>
                 </div>
-                <span className="text-xs text-slate-500">{m.days}d</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {nextBoat && (
             <div className="mt-3 pt-3 border-t border-slate-700/30 text-xs text-slate-500">
-              Next boat: <span className="text-slate-400">{formatDate(nextBoat.departure_date)}</span> ({nextBoat.days_until_departure} days)
+              Following boat: <span className="text-slate-400">{formatDate(nextBoat.departure_date)}</span> ({nextBoat.days_until_departure}d)
             </div>
           )}
         </div>
