@@ -161,7 +161,8 @@ export interface CoverageCalculation {
   adjusted_need_m2: number;          // need + trend_adjustment
   warehouse_m2: number;              // Current warehouse stock
   in_transit_m2: number;             // Stock in transit
-  coverage_gap_m2: number;           // adjusted_need - warehouse - in_transit
+  pending_order_m2: number;          // Pending warehouse orders (awaiting shipment)
+  coverage_gap_m2: number;           // adjusted_need - warehouse - in_transit - pending_orders
   coverage_gap_pallets: number;      // Gap converted to pallets
   suggested_pallets: number;         // Pallets suggested by coverage gap
   suggested_m2: number;              // m² suggested by coverage gap
@@ -221,6 +222,12 @@ export interface OrderBuilderProduct {
   // Coverage gap
   current_stock_m2: number;
   in_transit_m2: number;
+
+  // Pending orders (already ordered, awaiting shipment)
+  pending_order_m2: number;
+  pending_order_pallets: number;
+  pending_order_boat: string | null;
+
   days_to_cover: number;
   total_demand_m2: number;
   coverage_gap_m2: number;

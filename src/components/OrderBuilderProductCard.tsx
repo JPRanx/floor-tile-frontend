@@ -126,6 +126,17 @@ export function OrderBuilderProductCard({
       return parts.join(' · ');
     }
 
+    // If covered by pending order, mention that
+    if (product.suggested_pallets === 0 && product.pending_order_m2 > 0) {
+      parts.push(t('orderBuilderProduct.coveredByPending',
+        'Covered by {{m2}} m² pending order',
+        { m2: formatM2(product.pending_order_m2) }));
+      if (product.pending_order_boat) {
+        parts.push(`(${product.pending_order_boat})`);
+      }
+      return parts.join(' ');
+    }
+
     // Stock urgency
     if (currentDays !== null && currentDays <= 7) {
       parts.push(currentDays === 0
@@ -285,6 +296,20 @@ export function OrderBuilderProductCard({
                 {formatTransitArrival()}
               </span>
               <span className="text-xs text-slate-500">{t('orderBuilderProduct.inTransit', 'in transit')}</span>
+            </div>
+          )}
+
+          {/* Pending Orders (already ordered, awaiting shipment) */}
+          {product.pending_order_m2 > 0 && (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">📋</span>
+              <span className="text-teal-300 font-medium">
+                {formatM2(product.pending_order_m2)} m²
+              </span>
+              <span className="text-xs text-slate-500">
+                {t('orderBuilderProduct.pendingOrder', 'pending')}
+                {product.pending_order_boat && ` (${product.pending_order_boat})`}
+              </span>
             </div>
           )}
 

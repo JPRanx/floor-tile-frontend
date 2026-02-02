@@ -12,6 +12,8 @@ import type {
 } from '../requests/orderBuilder';
 import { boatsApi } from '../requests/boats';
 import { factoryOrdersApi } from '../requests/factoryOrders';
+import { warehouseOrdersApi } from '../requests/warehouseOrders';
+import type { WarehouseOrderItemCreate, WarehouseOrder } from '../requests/warehouseOrders';
 import type { BoatSchedule } from '../requests/boats';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
@@ -30,6 +32,7 @@ import { FactoryRequestSection } from '../components/FactoryRequestSection';
 import { RecalculateBar } from '../components/RecalculateBar';
 import { StabilityForecastCard } from '../components/StabilityForecastCard';
 import { StabilityForecastModal } from '../components/StabilityForecastModal';
+import { PendingOrdersCard } from '../components/PendingOrdersCard';
 import {
   M2_PER_PALLET,
   CONTAINER_MAX_PALLETS,
@@ -87,6 +90,39 @@ export function OrderBuilder() {
 
   // Track if initial load has happened (for auto-selecting recommended BLs)
   const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
+
+  // Pending warehouse orders state
+  const [pendingOrders, setPendingOrders] = useState<WarehouseOrder[]>([]);
+  const [pendingOrdersLoading, setPendingOrdersLoading] = useState(false);
+
+  // Fetch pending orders
+  const fetchPendingOrders = useCallback(async () => {
+    setPendingOrdersLoading(true);
+    try {
+      const response = await warehouseOrdersApi.list(1, 100, 'pending');
+      setPendingOrders(response.data || []);
+    } catch (error) {
+      console.error('Failed to fetch pending orders:', error);
+    } finally {
+      setPendingOrdersLoading(false);
+    }
+  }, []);
+
+  // Fetch pending orders on mount
+  useEffect(() => {
+    fetchPendingOrders();
+  }, [fetchPendingOrders]);
+
+  // Handle cancel pending order
+  const handleCancelPendingOrder = async (orderId: string) => {
+    try {
+      await warehouseOrdersApi.cancel(orderId);
+      setPendingOrders((prev) => prev.filter((o) => o.id !== orderId));
+    } catch (error) {
+      console.error('Failed to cancel order:', error);
+      alert(t('pendingOrders.cancelError', 'Failed to cancel order'));
+    }
+  };
 
   // Fetch available boats on mount
   useEffect(() => {
@@ -396,6 +432,7 @@ export function OrderBuilder() {
     const defaultDeparture = new Date();
     defaultDeparture.setDate(defaultDeparture.getDate() + 45);
     const departureDateStr = data?.boat.departure_date || defaultDeparture.toISOString().split('T')[0];
+    const arrivalDateStr = data?.boat.arrival_date || null;
 
     setExporting(true);
     setExportSuccess(null);
@@ -415,7 +452,36 @@ export function OrderBuilder() {
 
       const pvNumber = factoryOrder.pv_number || 'Unknown';
 
-      // 2. Export Excel (existing functionality)
+      // 2. Create WarehouseOrder (tracks SIESA stock committed to this boat)
+      // Re-export logic: If a pending order exists for same boat, it gets cancelled automatically
+      // BLOCKING: Export fails if warehouse order can't be saved - tracking is the whole point
+      if (selectedBoatId) {
+        const warehouseItems: WarehouseOrderItemCreate[] = selected.map((p) => ({
+          product_id: p.product_id,
+          sku: p.sku,
+          description: p.description || undefined,
+          pallets: p.selected_pallets,
+          m2: p.selected_m2,
+          weight_kg: p.total_weight_kg,
+          score: p.score?.total,
+          priority: p.priority,
+          is_critical: (p.score?.total || 0) >= 85,
+          primary_customer: p.top_customer_name || undefined,
+        }));
+
+        await warehouseOrdersApi.create({
+          boat_id: selectedBoatId,
+          items: warehouseItems,
+          exported_by: 'Ashley', // TODO: Get from user context when auth is added
+          excel_filename: `PEDIDO_${pvNumber}.xlsx`,
+          boat_departure_date: departureDateStr,
+          boat_arrival_date: arrivalDateStr || undefined,
+          boat_name: data?.boat.name,
+          notes: `PV: ${pvNumber}`,
+        });
+      }
+
+      // 3. Export Excel (existing functionality)
       const blob = await orderBuilderApi.exportOrder({
         products: selected.map((p) => ({
           sku: p.sku,
@@ -424,7 +490,7 @@ export function OrderBuilder() {
         boat_departure: departureDateStr,
       });
 
-      // 3. Create download link with PV number in filename
+      // 4. Create download link with PV number in filename
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -432,15 +498,32 @@ export function OrderBuilder() {
       a.click();
       URL.revokeObjectURL(url);
 
-      // 4. Show success message
+      // 5. Show success message
       setExportSuccess(t('orderBuilder.exportSuccess', { pvNumber }));
+
+      // 6. Refresh pending orders list
+      fetchPendingOrders();
 
       // Clear success message after 5 seconds
       setTimeout(() => setExportSuccess(null), 5000);
 
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Export failed:', err);
-      alert(t('orderBuilder.exportError'));
+
+      // Provide specific error message based on failure type
+      const axiosError = err as { config?: { url?: string }; response?: { data?: { error?: { message?: string } } } };
+      const failedUrl = axiosError?.config?.url || '';
+      const apiMessage = axiosError?.response?.data?.error?.message;
+
+      if (failedUrl.includes('warehouse-orders')) {
+        alert(t('orderBuilder.warehouseOrderSaveError', 'Failed to save order. Export cancelled.'));
+      } else if (failedUrl.includes('factory-orders')) {
+        alert(t('orderBuilder.factoryOrderError', 'Failed to create factory order.'));
+      } else if (apiMessage) {
+        alert(apiMessage);
+      } else {
+        alert(t('orderBuilder.exportError'));
+      }
     } finally {
       setExporting(false);
     }
@@ -918,9 +1001,7 @@ export function OrderBuilder() {
 
           {/* Summary Column (1/3 width on desktop) */}
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-            <OrderBuilderSummary summary={summary} />
-
-            {/* Stability Forecast */}
+            {/* 1. Stability Forecast - TOP */}
             {data.stability_forecast && (
               <StabilityForecastCard
                 forecast={data.stability_forecast}
@@ -928,16 +1009,26 @@ export function OrderBuilder() {
               />
             )}
 
-            {/* Call Before Ordering Alerts */}
+            {/* 2. Order Summary Card */}
+            <OrderBuilderSummary summary={summary} />
+
+            {/* 3. Alerts */}
             <CallBeforeOrderingAlert
               alerts={demandForecast?.overdue_alerts || []}
               loading={demandLoading}
             />
-
             <OrderBuilderAlerts alerts={alerts} />
             <UnableToShipAlert unableToShip={data?.unable_to_ship || null} />
 
-            {/* Action Buttons */}
+            {/* 4. Pending Orders - Shows existing orders for visibility */}
+            <PendingOrdersCard
+              orders={pendingOrders}
+              currentBoatId={selectedBoatId}
+              onCancel={handleCancelPendingOrder}
+              onRefresh={fetchPendingOrders}
+            />
+
+            {/* 5. Action Buttons */}
             <div className="flex flex-col gap-3">
               {/* Generate Report Button */}
               <button
