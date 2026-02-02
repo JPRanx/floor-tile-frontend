@@ -208,8 +208,7 @@ export function OrderBuilderHeader({
             <div className="flex gap-2">
               {blOptions.map((num) => {
                 const isSelected = numBLs === num;
-                const isRecommended = recommendedBLs === num;
-                const isAvailable = availableBLs >= num && availableBLs > 0;
+                const isShippable = shippableBLs === num;  // Highlight what can actually ship
                 return (
                   <button
                     key={num}
@@ -218,20 +217,16 @@ export function OrderBuilderHeader({
                       relative w-12 h-12 rounded-xl text-sm font-bold transition-all duration-300
                       ${isSelected
                         ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
-                        : isRecommended
-                          ? 'bg-emerald-500/10 text-emerald-400 border-2 border-emerald-500/50 hover:bg-emerald-500/20'
+                        : isShippable
+                          ? 'bg-cyan-500/10 text-cyan-400 border-2 border-cyan-500/50 hover:bg-cyan-500/20'
                           : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
                       }
                     `}
                   >
                     {num}
-                    {/* Recommended indicator (need) */}
-                    {isRecommended && !isSelected && (
-                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse" />
-                    )}
-                    {/* Available indicator (cyan dot on bottom) */}
-                    {isAvailable && !isSelected && num <= availableBLs && (
-                      <span className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-cyan-400 rounded-full" />
+                    {/* Shippable indicator (what you can actually ship) */}
+                    {isShippable && !isSelected && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
                     )}
                   </button>
                 );
@@ -244,39 +239,17 @@ export function OrderBuilderHeader({
             </div>
           </div>
 
-          {/* BL Recommendation - shows need and can ship */}
-          <div className="flex flex-col sm:flex-row sm:items-start gap-2 text-sm">
-            <div className="flex items-center gap-2 flex-wrap">
-              {/* Need indicator */}
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-slate-300">
-                  {t('blAllocation.need', 'Need')}: {recommendedBLs} BLs
-                </span>
+          {/* BL Shippable indicator */}
+          <div className="flex items-center gap-2 text-sm">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
+              <span className="text-slate-300 font-medium">
+                {t('blAllocation.canShip', 'Can Ship')}: {shippableBLs} BLs ({shippableM2.toLocaleString()} m²)
               </span>
-              <span className="text-slate-600">•</span>
-              {/* Can Ship indicator */}
-              <span className="flex items-center gap-1.5">
-                <span className="w-2 h-2 bg-cyan-400 rounded-full" />
-                <span className="text-slate-300">
-                  {t('blAllocation.canShip', 'Can Ship')}: {shippableBLs} BLs ({shippableM2.toLocaleString()} m²)
-                </span>
-                {shippableBLs >= numBLs && (
-                  <span className="text-emerald-400">✓</span>
-                )}
-              </span>
-            </div>
-            {/* Legend */}
-            <div className="flex items-center gap-3 text-xs text-slate-500 sm:ml-auto">
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-emerald-500 rounded-full" />
-                {t('blAllocation.needIndicator', 'Need')}
-              </span>
-              <span className="flex items-center gap-1">
-                <span className="w-2 h-2 bg-cyan-400 rounded-full" />
-                {t('blAllocation.canShipIndicator', 'Can Ship')}
-              </span>
-            </div>
+              {shippableBLs >= numBLs && (
+                <span className="text-emerald-400">✓</span>
+              )}
+            </span>
           </div>
         </div>
       </div>
