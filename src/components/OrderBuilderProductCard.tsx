@@ -139,9 +139,14 @@ export function OrderBuilderProductCard({
 
     // Stock urgency
     if (currentDays !== null && currentDays <= 7) {
-      parts.push(currentDays === 0
-        ? t('orderBuilderProduct.outOfStock', 'Out of stock')
-        : t('orderBuilderProduct.daysLeft', '{{days}}d left', { days: currentDays }));
+      if (currentDays === 0 && product.daily_velocity_m2 === 0) {
+        // No sales data - don't say "Out of stock" which is misleading
+        parts.push(t('orderBuilderProduct.noSalesHistory', 'No sales history'));
+      } else if (currentDays === 0) {
+        parts.push(t('orderBuilderProduct.outOfStock', 'Out of stock'));
+      } else {
+        parts.push(t('orderBuilderProduct.daysLeft', '{{days}}d left', { days: currentDays }));
+      }
     }
 
     // Customer count
@@ -275,13 +280,26 @@ export function OrderBuilderProductCard({
             {t('orderBuilderProduct.inventory', 'Inventory')}
           </div>
 
+          {/* No inventory data warning */}
+          {Number(product.current_stock_m2) === 0 &&
+           product.in_transit_m2 === 0 &&
+           product.factory_available_m2 === 0 &&
+           product.daily_velocity_m2 === 0 && (
+            <div className="flex items-center gap-2 text-sm bg-amber-500/10 border border-amber-500/30 rounded-lg px-2 py-1.5 mb-1">
+              <span className="text-amber-400">⚠️</span>
+              <span className="text-amber-400 text-xs">
+                {t('orderBuilderProduct.noInventoryData', 'No inventory data')}
+              </span>
+            </div>
+          )}
+
           {/* Warehouse */}
           <div className="flex items-center gap-2 text-sm">
             <span className="text-slate-500">📦</span>
             <span className="text-slate-200 font-medium">
               {formatM2(Number(product.current_stock_m2))} m²
             </span>
-            {product.days_of_stock !== null && (
+            {product.days_of_stock !== null && product.daily_velocity_m2 > 0 && (
               <span className={`text-xs ${currentDays <= 7 ? 'text-red-400' : currentDays <= 14 ? 'text-amber-400' : 'text-slate-500'}`}>
                 ({currentDays}d)
               </span>
@@ -314,7 +332,7 @@ export function OrderBuilderProductCard({
           )}
 
           {/* Factory Available (SIESA) */}
-          {product.factory_available_m2 > 0 && (
+          {product.factory_available_m2 > 0 ? (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-500">🏭</span>
               <span className="text-purple-300 font-medium">
@@ -331,7 +349,14 @@ export function OrderBuilderProductCard({
                 </span>
               )}
             </div>
-          )}
+          ) : product.suggested_pallets > 0 ? (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">🏭</span>
+              <span className="text-orange-400 font-medium">
+                {t('orderBuilderProduct.siesaNoStock', 'SIESA: No stock')}
+              </span>
+            </div>
+          ) : null}
 
           {/* Production Schedule Status (from Programa de Produccion) */}
           {product.production_status && product.production_status !== 'not_scheduled' && (
@@ -357,7 +382,7 @@ export function OrderBuilderProductCard({
           )}
 
           {/* Velocity with Trend Signal */}
-          {product.daily_velocity_m2 > 0 && (
+          {product.daily_velocity_m2 > 0 ? (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-500">⚡</span>
               <span className="text-slate-400">
@@ -375,6 +400,13 @@ export function OrderBuilderProductCard({
                   {product.velocity_trend_signal === 'stable' && t('orderBuilderProduct.stable', 'Stable')}
                 </span>
               )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-slate-500">⚡</span>
+              <span className="text-slate-500 italic">
+                {t('orderBuilderProduct.noVelocityData', 'No velocity data')}
+              </span>
             </div>
           )}
         </div>
