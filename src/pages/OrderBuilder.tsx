@@ -93,18 +93,14 @@ export function OrderBuilder() {
 
   // Pending warehouse orders state
   const [pendingOrders, setPendingOrders] = useState<WarehouseOrder[]>([]);
-  const [pendingOrdersLoading, setPendingOrdersLoading] = useState(false);
 
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
-    setPendingOrdersLoading(true);
     try {
       const response = await warehouseOrdersApi.list(1, 100, 'pending');
       setPendingOrders(response.data || []);
     } catch (error) {
       console.error('Failed to fetch pending orders:', error);
-    } finally {
-      setPendingOrdersLoading(false);
     }
   }, []);
 
