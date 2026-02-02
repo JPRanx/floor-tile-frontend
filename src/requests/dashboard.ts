@@ -26,6 +26,8 @@ export interface ProductStockout {
   warehouse_qty: number;
   in_transit_qty: number;
   total_qty: number;
+  factory_available_m2: number;  // SIESA factory inventory
+  factory_lot_count: number;     // Number of lots at factory
   avg_daily_sales: number;
   weekly_sales: number;
   weeks_of_data: number;

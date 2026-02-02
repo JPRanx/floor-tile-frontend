@@ -254,6 +254,9 @@ export function Dashboard() {
                 <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {t('dashboard.columns.inTransit')}
                 </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  {t('dashboard.columns.siesa', 'SIESA')}
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/30">
@@ -313,6 +316,15 @@ export function Dashboard() {
                     {Number(product.in_transit_qty) > 0 ? (
                       <span className="text-sky-400 font-medium">
                         🚢 {Number(product.in_transit_qty).toLocaleString()}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                    {Number(product.factory_available_m2) > 0 ? (
+                      <span className="text-purple-400 font-medium" title={t('dashboard.factoryLots', { count: product.factory_lot_count || 0 })}>
+                        🏭 {Number(product.factory_available_m2).toLocaleString()}
                       </span>
                     ) : (
                       <span className="text-slate-600">—</span>
