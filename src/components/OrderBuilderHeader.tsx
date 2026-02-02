@@ -56,8 +56,7 @@ export function OrderBuilderHeader({
 
   // Timeline milestones
   const milestones = [
-    { label: 'Order by', date: boat.order_deadline, days: boat.days_until_order_deadline, color: 'rose', isPast: boat.past_order_deadline },
-    { label: 'Book by', date: boat.booking_deadline, days: boat.days_until_deadline, color: 'orange' },
+    { label: 'Deadline', date: boat.order_deadline, days: boat.days_until_order_deadline, color: 'rose', isPast: boat.past_order_deadline },
     { label: 'Departs', date: boat.departure_date, days: boat.days_until_departure, color: 'indigo' },
     { label: 'Arrives Port', date: boat.arrival_date, days: boat.days_until_arrival, color: 'indigo' },
     { label: 'In Warehouse', date: inWarehouseDate, days: boat.days_until_warehouse, color: 'emerald' },
@@ -79,11 +78,11 @@ export function OrderBuilderHeader({
                 <p className="text-slate-400">
                   {formatDate(boat.departure_date)} departure • Arrives {formatDate(boat.arrival_date)}
                 </p>
-                {boat.days_until_deadline <= 7 && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                    <span className="text-orange-400">⏰</span>
-                    <span className="text-orange-300 text-sm font-medium">
-                      Booking deadline in {boat.days_until_deadline} days
+                {boat.days_until_order_deadline <= 7 && !boat.past_order_deadline && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30">
+                    <span className="text-rose-400">⏰</span>
+                    <span className="text-rose-300 text-sm font-medium">
+                      Order deadline in {boat.days_until_order_deadline} days
                     </span>
                   </div>
                 )}
@@ -133,7 +132,7 @@ export function OrderBuilderHeader({
           <div className="hidden sm:block">
             <div className="relative flex items-center justify-between">
               {/* Connecting line */}
-              <div className="absolute top-4 left-6 right-6 h-0.5 bg-gradient-to-r from-rose-500/30 via-orange-500/30 via-indigo-500/30 to-emerald-500/30" />
+              <div className="absolute top-4 left-6 right-6 h-0.5 bg-gradient-to-r from-rose-500/30 via-indigo-500/30 to-emerald-500/30" />
 
               {milestones.map((m, idx) => {
                 const isPast = 'isPast' in m && m.isPast;
@@ -144,8 +143,6 @@ export function OrderBuilderHeader({
                       className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold shadow-lg ${
                         m.color === 'rose'
                           ? 'bg-rose-500/20 border-rose-500 text-rose-400 shadow-rose-500/20'
-                          : m.color === 'orange'
-                          ? 'bg-orange-500/20 border-orange-500 text-orange-400 shadow-orange-500/20'
                           : m.color === 'emerald'
                           ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 shadow-emerald-500/20'
                           : 'bg-indigo-500/20 border-indigo-500 text-indigo-400 shadow-indigo-500/20'
@@ -163,8 +160,8 @@ export function OrderBuilderHeader({
                     <div className={`mt-1 px-2 py-0.5 rounded-full text-xs font-medium ${
                       isPast
                         ? 'bg-rose-500/20 text-rose-300'
-                        : m.days <= 7 && (m.color === 'orange' || m.color === 'rose')
-                        ? 'bg-orange-500/20 text-orange-300'
+                        : m.days <= 7 && m.color === 'rose'
+                        ? 'bg-rose-500/20 text-rose-300'
                         : 'bg-slate-700/50 text-slate-400'
                     }`}>
                       {isPast ? 'PAST' : `${m.days}d`}
@@ -185,8 +182,6 @@ export function OrderBuilderHeader({
                     className={`w-2.5 h-2.5 rounded-full ${
                       m.color === 'rose'
                         ? 'bg-rose-500'
-                        : m.color === 'orange'
-                        ? 'bg-orange-500'
                         : m.color === 'emerald'
                         ? 'bg-emerald-500'
                         : 'bg-indigo-500'
