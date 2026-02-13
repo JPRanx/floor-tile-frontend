@@ -5,7 +5,6 @@ import { dashboardApi } from '../requests/dashboard';
 import type { StockoutSummary } from '../requests/dashboard';
 import { inventoryApi } from '../requests/inventory';
 import { productsApi } from '../requests/products';
-import type { LiquidationProduct } from '../requests/products';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { InventoryUploadModal } from '../components/InventoryUploadModal';
 import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
