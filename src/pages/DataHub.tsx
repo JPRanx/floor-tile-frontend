@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { DataFreshnessBar } from '../components/DataFreshnessBar';
+import { SalesUploadCard } from '../components/SalesUploadCard';
 import { SACUploadCard } from '../components/SACUploadCard';
 import { SIESAUploadCard } from '../components/SIESAUploadCard';
 import { dataHubApi } from '../requests/dataHub';
@@ -42,7 +43,12 @@ export function DataHub() {
       <DataFreshnessBar key={refreshKey} />
 
       {/* Main Upload Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <SalesUploadCard
+          lastUpdated={freshness?.sales.last_updated}
+          recordCount={freshness?.sales.record_count}
+          onUploadSuccess={handleUploadSuccess}
+        />
         <SACUploadCard
           lastUpdated={freshness?.sales.last_updated}
           recordCount={freshness?.sales.record_count}

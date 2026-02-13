@@ -69,6 +69,55 @@ export interface SIESAUploadResponse {
   }>;
 }
 
+export interface SalesPreviewRow {
+  sku: string;
+  week_start: string;
+  quantity_m2: number;
+  customer: string | null;
+}
+
+export interface SalesPreview {
+  preview_id: string;
+  row_count: number;
+  product_count: number;
+  total_m2: number;
+  date_range_start: string;
+  date_range_end: string;
+  warnings: string[];
+  sample_rows: SalesPreviewRow[];
+  expires_in_minutes: number;
+}
+
+export interface VerificationCheck {
+  excel: number;
+  db: number;
+  match: boolean;
+}
+
+export interface SalesMismatch {
+  sku: string;
+  excel_m2: number;
+  db_m2: number;
+  diff: number;
+}
+
+export interface SalesVerification {
+  status: string;
+  row_count: VerificationCheck;
+  total_m2: VerificationCheck;
+  products: VerificationCheck;
+  mismatches: SalesMismatch[];
+}
+
+export interface OwnerSalesUploadResponse {
+  success: boolean;
+  inserted: number;
+  deleted: number;
+  date_range: { start: string; end: string } | null;
+  verification: SalesVerification | null;
+  warnings: string[];
+}
+
 export const dataHubApi = {
   getFreshness: async (): Promise<DataFreshnessResponse> => {
     const response = await api.get('/data-freshness');
@@ -81,6 +130,20 @@ export const dataHubApi = {
     const response = await api.post('/sales/upload-sac', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return response.data;
+  },
+
+  previewSalesUpload: async (file: File): Promise<SalesPreview> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/sales/upload/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  confirmSalesUpload: async (previewId: string): Promise<OwnerSalesUploadResponse> => {
+    const response = await api.post(`/sales/upload/confirm/${previewId}`);
     return response.data;
   },
 
