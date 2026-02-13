@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { dashboardApi } from '../requests/dashboard';
 import type { StockoutSummary } from '../requests/dashboard';
 import { inventoryApi } from '../requests/inventory';
+import { productsApi } from '../requests/products';
+import type { LiquidationProduct } from '../requests/products';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { InventoryUploadModal } from '../components/InventoryUploadModal';
 import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
@@ -17,9 +19,23 @@ export function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
   const [lastInventoryUpdate, setLastInventoryUpdate] = useState<string | null>(null);
+  const [liquidationIds, setLiquidationIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Fetch liquidation IDs
+  useEffect(() => {
+    const fetchLiquidationIds = async () => {
+      try {
+        const products = await productsApi.getLiquidationProducts();
+        setLiquidationIds(new Set(products.map(p => p.id)));
+      } catch {
+        // Non-critical
+      }
+    };
+    fetchLiquidationIds();
   }, []);
 
   const loadData = async () => {
@@ -271,6 +287,11 @@ export function Dashboard() {
                       {!product.active && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-600/50 text-slate-400 border border-slate-500/30">
                           {t('dashboard.inactive', 'INACTIVE')}
+                        </span>
+                      )}
+                      {liquidationIds.has(product.product_id) && (
+                        <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                          LIQUIDATION
                         </span>
                       )}
                     </div>

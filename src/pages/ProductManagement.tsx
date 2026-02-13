@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { productsApi, INACTIVE_REASON_LABELS } from '../requests/products';
-import type { Product, InactiveReason, Category } from '../requests/products';
+import type { Product, InactiveReason, Category, LiquidationProduct } from '../requests/products';
+import { LiquidationSection } from '../components/products/LiquidationSection';
 
 // Category display labels
 const CATEGORY_LABELS: Record<Category, string> = {
@@ -17,6 +18,7 @@ const CATEGORY_LABELS: Record<Category, string> = {
 export function ProductManagement() {
   // Data state
   const [products, setProducts] = useState<Product[]>([]);
+  const [liquidationProducts, setLiquidationProducts] = useState<LiquidationProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +66,19 @@ export function ProductManagement() {
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  // Fetch liquidation products
+  useEffect(() => {
+    const fetchLiquidation = async () => {
+      try {
+        const data = await productsApi.getLiquidationProducts();
+        setLiquidationProducts(data);
+      } catch (err) {
+        console.error('Failed to load liquidation products:', err);
+      }
+    };
+    fetchLiquidation();
+  }, []);
 
   // Filter products by search
   const filteredProducts = products.filter((p) =>
@@ -377,6 +392,13 @@ export function ProductManagement() {
                 Next
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Liquidation Section */}
+        {liquidationProducts.length > 0 && (
+          <div className="mt-6">
+            <LiquidationSection products={liquidationProducts} />
           </div>
         )}
 

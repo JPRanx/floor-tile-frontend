@@ -50,6 +50,17 @@ export interface ProductFilters {
   include_inactive?: boolean;
 }
 
+export interface LiquidationProduct {
+  id: string;
+  sku: string;
+  category: Category;
+  rotation: Rotation | null;
+  inactive_reason: InactiveReason | null;
+  inactive_date: string | null;
+  warehouse_m2: number;
+  days_since_last_sale: number | null;
+}
+
 // API functions
 export const productsApi = {
   /**
@@ -112,6 +123,11 @@ export const productsApi = {
     return this.updateProduct(id, {
       active: true,
     } as Partial<Product>);
+  },
+
+  async getLiquidationProducts(): Promise<LiquidationProduct[]> {
+    const response = await api.get<LiquidationProduct[]>('/products/liquidation');
+    return response.data;
   },
 };
 
