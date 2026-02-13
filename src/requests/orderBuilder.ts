@@ -565,6 +565,20 @@ export interface FactoryRequestSummary {
   submit_deadline_display: string;
 }
 
+export interface LiquidationClearanceProduct {
+  product_id: string;
+  sku: string;
+  description: string | null;
+  factory_available_m2: number;
+  factory_lot_count: number;
+  warehouse_m2: number;
+  suggested_pallets: number;
+  suggested_m2: number;
+  days_since_last_sale: number | null;
+  inactive_reason: string | null;
+  inactive_date: string | null;
+}
+
 export interface OrderBuilderResponse {
   // Boat info
   boat: OrderBuilderBoat;
@@ -609,6 +623,9 @@ export interface OrderBuilderResponse {
 
   // Stability forecast (when cycle will be stable)
   stability_forecast: StabilityForecast | null;
+
+  // Liquidation clearance (deactivated products with factory stock)
+  liquidation_clearance: LiquidationClearanceProduct[];
 }
 
 // Unable to Ship items (products that need ordering but can't ship)

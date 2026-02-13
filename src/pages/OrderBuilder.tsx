@@ -29,6 +29,7 @@ import { BLAllocationView } from '../components/BLAllocationView';
 import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
 import { AddToProductionSection } from '../components/AddToProductionSection';
 import { FactoryRequestSection } from '../components/FactoryRequestSection';
+import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
 import { RecalculateBar } from '../components/RecalculateBar';
 import { StabilityForecastCard } from '../components/StabilityForecastCard';
 import { StabilityForecastModal } from '../components/StabilityForecastModal';
@@ -993,6 +994,11 @@ export function OrderBuilder() {
                 </div>
               );
             })}
+
+            {/* Liquidation Clearance — deactivated products with factory stock */}
+            {data.liquidation_clearance && data.liquidation_clearance.length > 0 && (
+              <LiquidationClearanceSection products={data.liquidation_clearance} />
+            )}
           </div>
 
           {/* Summary Column (1/3 width on desktop) */}
