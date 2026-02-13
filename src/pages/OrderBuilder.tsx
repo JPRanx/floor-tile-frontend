@@ -37,6 +37,7 @@ import { PendingOrdersCard } from '../components/PendingOrdersCard';
 import {
   M2_PER_PALLET,
   CONTAINER_MAX_PALLETS,
+  CONTAINER_MAX_WEIGHT_KG,
   WAREHOUSE_MAX_PALLETS,
   WEIGHT_PER_M2_KG,
 } from '../constants/inventory';
@@ -602,7 +603,7 @@ export function OrderBuilder() {
     // Calculate weight from actual m² entered (not from pallets)
     const totalWeightKg = totalM2 * WEIGHT_PER_M2_KG;
     const containersByPallets = totalContainers;
-    const containersByWeight = Math.ceil(totalWeightKg / 27500); // 27.5 tons per container
+    const containersByWeight = Math.ceil(totalWeightKg / CONTAINER_MAX_WEIGHT_KG);
     const weightIsLimiting = containersByWeight > containersByPallets;
 
     return {

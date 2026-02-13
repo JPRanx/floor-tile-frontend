@@ -10,6 +10,7 @@ import { InventoryUploadModal } from '../components/InventoryUploadModal';
 import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
 import { StockCoverage } from '../components/shared';
 import { formatDateUTC } from '../utils/dateUtils';
+import { WAREHOUSE_MAX_M2 } from '../constants/inventory';
 
 export function Dashboard() {
   const { t } = useTranslation();
@@ -87,7 +88,7 @@ export function Dashboard() {
   // Calculate warehouse totals from products (convert from string/Decimal to number)
   const totalWarehouseM2 = products.reduce((sum, p) => sum + Number(p.warehouse_qty), 0);
   const totalInTransitM2 = products.reduce((sum, p) => sum + Number(p.in_transit_qty), 0);
-  const utilizationPct = Math.round((totalWarehouseM2 / 99900) * 100);
+  const utilizationPct = Math.round((totalWarehouseM2 / WAREHOUSE_MAX_M2) * 100);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
