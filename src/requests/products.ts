@@ -58,6 +58,7 @@ export interface LiquidationProduct {
   inactive_reason: InactiveReason | null;
   inactive_date: string | null;
   warehouse_m2: number;
+  factory_m2: number;
   days_since_last_sale: number | null;
 }
 

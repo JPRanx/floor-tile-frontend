@@ -55,7 +55,10 @@ export function LiquidationSection({ products }: LiquidationSectionProps) {
                   Category
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Remaining m²
+                  Warehouse m²
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  SIESA m²
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                   Days Since Last Sale
@@ -76,6 +79,9 @@ export function LiquidationSection({ products }: LiquidationSectionProps) {
                   </td>
                   <td className="px-4 py-3 text-right text-sm text-amber-400 font-medium">
                     {product.warehouse_m2.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3 text-right text-sm text-blue-400 font-medium">
+                    {product.factory_m2 > 0 ? product.factory_m2.toLocaleString() : '—'}
                   </td>
                   <td className="px-4 py-3 text-right text-sm text-slate-400">
                     {product.days_since_last_sale !== null
