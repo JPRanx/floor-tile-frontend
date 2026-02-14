@@ -213,112 +213,6 @@ export function ConfigPage() {
         )}
 
         {/* ========================= */}
-        {/* GLOBAL SETTINGS            */}
-        {/* ========================= */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">{t('config.globalSettings')}</h2>
-
-          <div className="space-y-3">
-            {CATEGORY_ORDER.map(cat => {
-              const settings = groups[cat];
-              if (!settings || settings.length === 0) return null;
-              const isCollapsed = collapsedCategories.has(cat);
-
-              return (
-                <div key={cat} className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-                  <button
-                    onClick={() => toggleCategory(cat)}
-                    className="w-full px-5 py-3 flex items-center justify-between text-left hover:bg-slate-750 transition-colors"
-                  >
-                    <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-                      {t(`config.categories.${cat}`, cat)}
-                      <span className="text-slate-500 font-normal ml-2">({settings.length})</span>
-                    </h3>
-                    <span className={`text-slate-500 text-xs transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
-                      ▼
-                    </span>
-                  </button>
-
-                  {!isCollapsed && (
-                    <div className="border-t border-slate-700">
-                      {settings.map(([key, value]) => (
-                        <div key={key} className="px-5 py-3 flex items-center justify-between border-b border-slate-700/50 last:border-b-0">
-                          <div className="flex-1 min-w-0 mr-4">
-                            <span className="text-sm text-slate-300 font-mono">{key}</span>
-                          </div>
-                          <div className="flex-shrink-0">
-                            {editingKey === key ? (
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="text"
-                                  value={editValue}
-                                  onChange={(e) => setEditValue(e.target.value)}
-                                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveSetting(key); if (e.key === 'Escape') setEditingKey(null); }}
-                                  className="px-3 py-1.5 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none w-32 text-sm font-mono"
-                                  autoFocus
-                                />
-                                <button
-                                  onClick={() => handleSaveSetting(key)}
-                                  disabled={saving}
-                                  className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
-                                >
-                                  {t('config.save')}
-                                </button>
-                                <button
-                                  onClick={() => setEditingKey(null)}
-                                  className="px-3 py-1 text-xs bg-slate-700 text-slate-300 rounded hover:bg-slate-600"
-                                >
-                                  {t('config.cancel')}
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm text-white font-mono">{value}</span>
-                                <button
-                                  onClick={() => { setEditingKey(key); setEditValue(value); }}
-                                  className="px-2 py-0.5 text-xs text-slate-400 hover:text-white bg-slate-700 rounded hover:bg-slate-600 transition-colors"
-                                >
-                                  {t('config.edit')}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {/* Uncategorized */}
-            {groups['other'] && groups['other'].length > 0 && (
-              <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
-                <div className="px-5 py-3">
-                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">{t('config.other')}</h3>
-                </div>
-                <div className="border-t border-slate-700">
-                  {groups['other'].map(([key, value]) => (
-                    <div key={key} className="px-5 py-3 flex items-center justify-between border-b border-slate-700/50 last:border-b-0">
-                      <span className="text-sm text-slate-300 font-mono">{key}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-white font-mono">{value}</span>
-                        <button
-                          onClick={() => { setEditingKey(key); setEditValue(value); }}
-                          className="px-2 py-0.5 text-xs text-slate-400 hover:text-white bg-slate-700 rounded hover:bg-slate-600"
-                        >
-                          {t('config.edit')}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ========================= */}
         {/* PRODUCT TYPES              */}
         {/* ========================= */}
         <div className="mb-8">
@@ -446,6 +340,112 @@ export function ConfigPage() {
             >
               {t('config.addNewProductType')}
             </button>
+          </div>
+        </div>
+
+        {/* ========================= */}
+        {/* GLOBAL SETTINGS            */}
+        {/* ========================= */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-white mb-4">{t('config.globalSettings')}</h2>
+
+          <div className="space-y-3">
+            {CATEGORY_ORDER.map(cat => {
+              const settings = groups[cat];
+              if (!settings || settings.length === 0) return null;
+              const isCollapsed = collapsedCategories.has(cat);
+
+              return (
+                <div key={cat} className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+                  <button
+                    onClick={() => toggleCategory(cat)}
+                    className="w-full px-5 py-3 flex items-center justify-between text-left hover:bg-slate-750 transition-colors"
+                  >
+                    <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
+                      {t(`config.categories.${cat}`, cat)}
+                      <span className="text-slate-500 font-normal ml-2">({settings.length})</span>
+                    </h3>
+                    <span className={`text-slate-500 text-xs transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
+                      ▼
+                    </span>
+                  </button>
+
+                  {!isCollapsed && (
+                    <div className="border-t border-slate-700">
+                      {settings.map(([key, value]) => (
+                        <div key={key} className="px-5 py-3 flex items-center justify-between border-b border-slate-700/50 last:border-b-0">
+                          <div className="flex-1 min-w-0 mr-4">
+                            <span className="text-sm text-slate-300 font-mono">{key}</span>
+                          </div>
+                          <div className="flex-shrink-0">
+                            {editingKey === key ? (
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onKeyDown={(e) => { if (e.key === 'Enter') handleSaveSetting(key); if (e.key === 'Escape') setEditingKey(null); }}
+                                  className="px-3 py-1.5 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none w-32 text-sm font-mono"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => handleSaveSetting(key)}
+                                  disabled={saving}
+                                  className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                                >
+                                  {t('config.save')}
+                                </button>
+                                <button
+                                  onClick={() => setEditingKey(null)}
+                                  className="px-3 py-1 text-xs bg-slate-700 text-slate-300 rounded hover:bg-slate-600"
+                                >
+                                  {t('config.cancel')}
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-white font-mono">{value}</span>
+                                <button
+                                  onClick={() => { setEditingKey(key); setEditValue(value); }}
+                                  className="px-2 py-0.5 text-xs text-slate-400 hover:text-white bg-slate-700 rounded hover:bg-slate-600 transition-colors"
+                                >
+                                  {t('config.edit')}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Uncategorized */}
+            {groups['other'] && groups['other'].length > 0 && (
+              <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
+                <div className="px-5 py-3">
+                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">{t('config.other')}</h3>
+                </div>
+                <div className="border-t border-slate-700">
+                  {groups['other'].map(([key, value]) => (
+                    <div key={key} className="px-5 py-3 flex items-center justify-between border-b border-slate-700/50 last:border-b-0">
+                      <span className="text-sm text-slate-300 font-mono">{key}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-white font-mono">{value}</span>
+                        <button
+                          onClick={() => { setEditingKey(key); setEditValue(value); }}
+                          className="px-2 py-0.5 text-xs text-slate-400 hover:text-white bg-slate-700 rounded hover:bg-slate-600"
+                        >
+                          {t('config.edit')}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
