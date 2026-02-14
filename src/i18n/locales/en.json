@@ -33,7 +33,8 @@
     "pipeline": "Pipeline",
     "analytics": "Financial",
     "intelligence": "Intelligence",
-    "products": "Products"
+    "products": "Products",
+    "config": "Configuration"
   },
   "dashboard": {
     "title": "Dashboard",

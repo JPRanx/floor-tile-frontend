@@ -33,7 +33,8 @@
     "pipeline": "Pipeline",
     "analytics": "Financiero",
     "intelligence": "Inteligencia",
-    "products": "Productos"
+    "products": "Productos",
+    "config": "Configuración"
   },
   "dashboard": {
     "title": "Panel",

@@ -14,6 +14,7 @@ const navItems = [
   { path: '/boats', labelKey: 'nav.boats' },
   { path: '/intelligence', labelKey: 'nav.intelligence' },
   { path: '/products', labelKey: 'nav.products' },
+  { path: '/config', labelKey: 'nav.config' },
 ];
 
 export function Layout({ children }: LayoutProps) {
@@ -22,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/intelligence', '/order-builder', '/products'].includes(location.pathname);
+  const isDarkPage = ['/', '/intelligence', '/order-builder', '/products', '/config'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
