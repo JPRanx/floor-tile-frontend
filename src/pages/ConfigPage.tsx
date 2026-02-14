@@ -6,15 +6,6 @@ import { LoadingSpinner } from '../components/LoadingSpinner';
 
 const CATEGORY_ORDER = ['shipping', 'warehouse', 'inventory', 'liquidation', 'production', 'container'];
 
-const CATEGORY_LABELS: Record<string, string> = {
-  shipping: 'Shipping',
-  warehouse: 'Warehouse',
-  inventory: 'Inventory & Alerts',
-  liquidation: 'Liquidation',
-  production: 'Production',
-  container: 'Container',
-};
-
 const EMPTY_NEW_TYPE: ProductTypeCreate = {
   category_group: '',
   display_name: '',
@@ -56,7 +47,7 @@ export function ConfigPage() {
       const data = await configApi.getConfig();
       setConfig(data);
     } catch {
-      setError('Failed to load configuration');
+      setError(t('config.loadError'));
     } finally {
       setLoading(false);
     }
@@ -77,9 +68,9 @@ export function ConfigPage() {
       const fresh = await configApi.getConfig();
       setConfig(fresh);
       setEditingKey(null);
-      showSuccess(`Updated ${key}`);
+      showSuccess(t('config.updated', { key }));
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to save setting');
+      setError(err.response?.data?.detail || t('config.saveSettingError'));
     } finally {
       setSaving(false);
     }
@@ -96,9 +87,9 @@ export function ConfigPage() {
       setConfig(fresh);
       setEditingType(null);
       setTypeForm({});
-      showSuccess(`Updated ${categoryGroup}`);
+      showSuccess(t('config.updated', { key: categoryGroup }));
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to save product type');
+      setError(err.response?.data?.detail || t('config.saveTypeError'));
     } finally {
       setSaving(false);
     }
@@ -124,9 +115,9 @@ export function ConfigPage() {
       setConfig(fresh);
       setShowNewTypeModal(false);
       setNewType({ ...EMPTY_NEW_TYPE });
-      showSuccess(`Created ${newType.category_group}`);
+      showSuccess(t('config.created', { key: newType.category_group }));
     } catch (err: any) {
-      setError(err.response?.data?.detail || 'Failed to create product type');
+      setError(err.response?.data?.detail || t('config.createTypeError'));
     } finally {
       setSaving(false);
     }
@@ -191,7 +182,7 @@ export function ConfigPage() {
   if (!config) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <p className="text-red-400">{error || 'Failed to load configuration'}</p>
+        <p className="text-red-400">{error || t('config.loadError')}</p>
       </div>
     );
   }
@@ -204,8 +195,8 @@ export function ConfigPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">{t('config.title', 'System Configuration')}</h1>
-          <p className="text-slate-400 mt-1">{t('config.subtitle', 'Manage global settings and product types')}</p>
+          <h1 className="text-3xl font-bold text-white">{t('config.title')}</h1>
+          <p className="text-slate-400 mt-1">{t('config.subtitle')}</p>
         </div>
 
         {/* Notifications */}
@@ -225,7 +216,7 @@ export function ConfigPage() {
         {/* GLOBAL SETTINGS            */}
         {/* ========================= */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">Global Settings</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">{t('config.globalSettings')}</h2>
 
           <div className="space-y-3">
             {CATEGORY_ORDER.map(cat => {
@@ -240,7 +231,7 @@ export function ConfigPage() {
                     className="w-full px-5 py-3 flex items-center justify-between text-left hover:bg-slate-750 transition-colors"
                   >
                     <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-                      {CATEGORY_LABELS[cat] || cat}
+                      {t(`config.categories.${cat}`, cat)}
                       <span className="text-slate-500 font-normal ml-2">({settings.length})</span>
                     </h3>
                     <span className={`text-slate-500 text-xs transition-transform duration-200 ${isCollapsed ? '' : 'rotate-180'}`}>
@@ -271,13 +262,13 @@ export function ConfigPage() {
                                   disabled={saving}
                                   className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                                 >
-                                  Save
+                                  {t('config.save')}
                                 </button>
                                 <button
                                   onClick={() => setEditingKey(null)}
                                   className="px-3 py-1 text-xs bg-slate-700 text-slate-300 rounded hover:bg-slate-600"
                                 >
-                                  Cancel
+                                  {t('config.cancel')}
                                 </button>
                               </div>
                             ) : (
@@ -287,7 +278,7 @@ export function ConfigPage() {
                                   onClick={() => { setEditingKey(key); setEditValue(value); }}
                                   className="px-2 py-0.5 text-xs text-slate-400 hover:text-white bg-slate-700 rounded hover:bg-slate-600 transition-colors"
                                 >
-                                  Edit
+                                  {t('config.edit')}
                                 </button>
                               </div>
                             )}
@@ -304,7 +295,7 @@ export function ConfigPage() {
             {groups['other'] && groups['other'].length > 0 && (
               <div className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden">
                 <div className="px-5 py-3">
-                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Other</h3>
+                  <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">{t('config.other')}</h3>
                 </div>
                 <div className="border-t border-slate-700">
                   {groups['other'].map(([key, value]) => (
@@ -316,7 +307,7 @@ export function ConfigPage() {
                           onClick={() => { setEditingKey(key); setEditValue(value); }}
                           className="px-2 py-0.5 text-xs text-slate-400 hover:text-white bg-slate-700 rounded hover:bg-slate-600"
                         >
-                          Edit
+                          {t('config.edit')}
                         </button>
                       </div>
                     </div>
@@ -331,7 +322,7 @@ export function ConfigPage() {
         {/* PRODUCT TYPES              */}
         {/* ========================= */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">Product Types</h2>
+          <h2 className="text-xl font-semibold text-white mb-4">{t('config.productTypes')}</h2>
 
           <div className="space-y-4">
             {productTypes.map(pt => (
@@ -347,19 +338,19 @@ export function ConfigPage() {
                           disabled={saving}
                           className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
                         >
-                          Save
+                          {t('config.save')}
                         </button>
                         <button
                           onClick={() => { setEditingType(null); setTypeForm({}); }}
                           className="px-3 py-1 text-sm bg-slate-700 text-slate-300 rounded hover:bg-slate-600"
                         >
-                          Cancel
+                          {t('config.cancel')}
                         </button>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="text-xs text-slate-400 block mb-1">Display Name</label>
+                        <label className="text-xs text-slate-400 block mb-1">{t('config.displayName')}</label>
                         <input
                           type="text"
                           value={typeForm.display_name || ''}
@@ -368,7 +359,7 @@ export function ConfigPage() {
                         />
                       </div>
                       <div>
-                        <label className="text-xs text-slate-400 block mb-1">Unit Label</label>
+                        <label className="text-xs text-slate-400 block mb-1">{t('config.unitLabel')}</label>
                         <input
                           type="text"
                           value={typeForm.unit_label || ''}
@@ -378,7 +369,7 @@ export function ConfigPage() {
                       </div>
                       <div>
                         <label className="text-xs text-slate-400 block mb-1">
-                          {pt.is_m2_based ? 'm² per Pallet' : 'Units per Pallet'}
+                          {pt.is_m2_based ? t('config.m2PerPallet') : t('config.unitsPerPallet')}
                         </label>
                         <input
                           type="number"
@@ -390,7 +381,7 @@ export function ConfigPage() {
                       </div>
                       <div>
                         <label className="text-xs text-slate-400 block mb-1">
-                          {pt.is_m2_based ? 'Weight per m² (kg)' : 'Weight per Unit (kg)'}
+                          {pt.is_m2_based ? t('config.weightPerM2Kg') : t('config.weightPerUnitKg')}
                         </label>
                         <input
                           type="number"
@@ -416,27 +407,27 @@ export function ConfigPage() {
                             ? 'bg-blue-500/20 text-blue-400'
                             : 'bg-purple-500/20 text-purple-400'
                         }`}>
-                          {pt.is_m2_based ? 'Area-based' : 'Unit-based'}
+                          {pt.is_m2_based ? t('config.areaBased') : t('config.unitBased')}
                         </span>
                         <button
                           onClick={() => startEditType(pt)}
                           className="px-3 py-1 text-xs text-slate-400 hover:text-white bg-slate-700 rounded hover:bg-slate-600 transition-colors"
                         >
-                          Edit
+                          {t('config.edit')}
                         </button>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-3 text-sm">
                       <div>
-                        <span className="text-slate-400 block">{pt.is_m2_based ? 'm² per Pallet' : 'Units per Pallet'}</span>
+                        <span className="text-slate-400 block">{pt.is_m2_based ? t('config.m2PerPallet') : t('config.unitsPerPallet')}</span>
                         <p className="text-white font-mono">{pt.m2_per_pallet}</p>
                       </div>
                       <div>
-                        <span className="text-slate-400 block">{pt.is_m2_based ? 'Weight per m²' : 'Weight per Unit'}</span>
+                        <span className="text-slate-400 block">{pt.is_m2_based ? t('config.weightPerM2') : t('config.weightPerUnit')}</span>
                         <p className="text-white font-mono">{pt.weight_per_m2_kg} kg</p>
                       </div>
                       <div>
-                        <span className="text-slate-400 block">Unit</span>
+                        <span className="text-slate-400 block">{t('config.unit')}</span>
                         <p className="text-white font-mono">{pt.unit_label}</p>
                       </div>
                     </div>
@@ -453,7 +444,7 @@ export function ConfigPage() {
               onClick={() => setShowNewTypeModal(true)}
               className="w-full py-4 border-2 border-dashed border-slate-700 rounded-lg text-slate-400 hover:text-white hover:border-slate-500 transition-colors text-sm font-medium"
             >
-              + Add New Product Type
+              {t('config.addNewProductType')}
             </button>
           </div>
         </div>
@@ -465,11 +456,11 @@ export function ConfigPage() {
       {showNewTypeModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-slate-800 rounded-xl p-6 w-full max-w-md border border-slate-700">
-            <h2 className="text-xl font-semibold text-white mb-4">New Product Type</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('config.newProductType')}</h2>
 
             <div className="space-y-3">
               <div>
-                <label className="text-sm text-slate-400 block mb-1">Category Group</label>
+                <label className="text-sm text-slate-400 block mb-1">{t('config.categoryGroup')}</label>
                 <input
                   type="text"
                   placeholder="MUEBLES"
@@ -480,7 +471,7 @@ export function ConfigPage() {
               </div>
 
               <div>
-                <label className="text-sm text-slate-400 block mb-1">Display Name</label>
+                <label className="text-sm text-slate-400 block mb-1">{t('config.displayName')}</label>
                 <input
                   type="text"
                   placeholder="Bathroom Furniture"
@@ -491,7 +482,7 @@ export function ConfigPage() {
               </div>
 
               <div>
-                <label className="text-sm text-slate-400 block mb-1">Measurement Type</label>
+                <label className="text-sm text-slate-400 block mb-1">{t('config.measurementType')}</label>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setNewType({ ...newType, is_m2_based: true, unit_label: 'm²' })}
@@ -499,7 +490,7 @@ export function ConfigPage() {
                       newType.is_m2_based ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-400'
                     }`}
                   >
-                    Area-based (m²)
+                    {t('config.areaBasedM2')}
                   </button>
                   <button
                     onClick={() => setNewType({ ...newType, is_m2_based: false, unit_label: 'units' })}
@@ -507,7 +498,7 @@ export function ConfigPage() {
                       !newType.is_m2_based ? 'bg-purple-600 text-white' : 'bg-slate-700 text-slate-400'
                     }`}
                   >
-                    Unit-based
+                    {t('config.unitBased')}
                   </button>
                 </div>
               </div>
@@ -515,7 +506,7 @@ export function ConfigPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-sm text-slate-400 block mb-1">
-                    {newType.is_m2_based ? 'm² per Pallet' : 'Units per Pallet'}
+                    {newType.is_m2_based ? t('config.m2PerPallet') : t('config.unitsPerPallet')}
                   </label>
                   <input
                     type="number"
@@ -527,7 +518,7 @@ export function ConfigPage() {
                 </div>
                 <div>
                   <label className="text-sm text-slate-400 block mb-1">
-                    {newType.is_m2_based ? 'Weight per m² (kg)' : 'Weight per Unit (kg)'}
+                    {newType.is_m2_based ? t('config.weightPerM2Kg') : t('config.weightPerUnitKg')}
                   </label>
                   <input
                     type="number"
@@ -545,14 +536,14 @@ export function ConfigPage() {
                 onClick={() => { setShowNewTypeModal(false); setNewType({ ...EMPTY_NEW_TYPE }); }}
                 className="px-4 py-2 text-sm bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600"
               >
-                Cancel
+                {t('config.cancel')}
               </button>
               <button
                 onClick={handleCreateType}
                 disabled={!newType.category_group || !newType.display_name || saving}
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
-                Create
+                {t('config.create')}
               </button>
             </div>
           </div>
