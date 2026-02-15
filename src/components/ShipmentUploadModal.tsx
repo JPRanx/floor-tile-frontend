@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shipmentsApi } from '../requests/shipments';
-import type { IngestResponse, CandidateShipment } from '../requests/shipments';
+import type { IngestResponse, IngestPreviewResponse, CandidateShipment } from '../requests/shipments';
 import { pendingDocumentsApi } from '../requests/pendingDocuments';
 import type { PendingDocument } from '../requests/pendingDocuments';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -16,7 +16,7 @@ interface ShipmentUploadModalProps {
   onPendingResolved?: () => void;
 }
 
-type UploadState = 'idle' | 'uploading' | 'reviewing' | 'confirming' | 'selecting_shipment' | 'success' | 'error';
+type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'selecting_shipment' | 'success' | 'error';
 
 export function ShipmentUploadModal({
   isOpen,
@@ -31,6 +31,7 @@ export function ShipmentUploadModal({
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [parseResult, setParseResult] = useState<IngestResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   // Manual assignment state
   const [candidateShipments, setCandidateShipments] = useState<CandidateShipment[]>([]);
@@ -104,7 +105,7 @@ export function ShipmentUploadModal({
 
       // Fetch candidates and go directly to selection
       const loadCandidates = async () => {
-        setUploadState('uploading');
+        setUploadState('parsing');
         try {
           const candidates = await pendingDocumentsApi.getCandidates(pendingDocument.id, 50);
           // Convert to CandidateShipment format (they should be compatible)
@@ -144,8 +145,9 @@ export function ShipmentUploadModal({
 
     setFile(selectedFile);
     setErrorMessage(null);
-    setUploadState('uploading');
+    setUploadState('parsing');
     setParseResult(null);
+    setPreviewId(null);
 
     // Create timeout promise (2 minutes for Claude Vision PDF parsing)
     const timeoutMs = 120000;
@@ -156,10 +158,11 @@ export function ShipmentUploadModal({
     try {
       // Race between API call and timeout
       const result = await Promise.race([
-        shipmentsApi.uploadPdf(selectedFile),
+        shipmentsApi.previewPdf(selectedFile),
         timeoutPromise,
       ]);
       setParseResult(result);
+      setPreviewId(result.preview_id);
 
       if (result.action === 'parsed_pending_confirmation' && result.parsed_data) {
         const data = result.parsed_data;
@@ -178,7 +181,7 @@ export function ShipmentUploadModal({
           voyage: data.voyage?.value || '',
           factory_order_id: null,
         });
-        setUploadState('reviewing');
+        setUploadState('preview');
       } else {
         setUploadState('error');
         setErrorMessage('Unexpected response from server');
@@ -268,7 +271,7 @@ export function ShipmentUploadModal({
   };
 
   const handleConfirm = async () => {
-    if (!parseResult?.parsed_data) return;
+    if (!parseResult?.parsed_data || !previewId) return;
 
     setUploadState('confirming');
     setErrorMessage(null);
@@ -295,7 +298,7 @@ export function ShipmentUploadModal({
         factory_order_id: editedData.factory_order_id || undefined,
       };
 
-      const result = await shipmentsApi.confirmIngest(confirmData);
+      const result = await shipmentsApi.confirmPreview(previewId, confirmData);
 
       if (result.success) {
         setParseResult(result);
@@ -391,6 +394,7 @@ export function ShipmentUploadModal({
     setUploadState('idle');
     setParseResult(null);
     setErrorMessage(null);
+    setPreviewId(null);
     setCandidateShipments([]);
     setSelectedShipmentId(null);
     setEditedData({
@@ -418,7 +422,7 @@ export function ShipmentUploadModal({
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-        onClick={uploadState !== 'confirming' && uploadState !== 'uploading' ? handleClose : undefined}
+        onClick={uploadState !== 'confirming' && uploadState !== 'parsing' ? handleClose : undefined}
       />
 
       {/* Modal */}
@@ -431,7 +435,7 @@ export function ShipmentUploadModal({
             </h2>
             <button
               onClick={handleClose}
-              disabled={uploadState === 'confirming' || uploadState === 'uploading'}
+              disabled={uploadState === 'confirming' || uploadState === 'parsing'}
               className="text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -500,25 +504,108 @@ export function ShipmentUploadModal({
             </>
           )}
 
-          {uploadState === 'uploading' && (
+          {uploadState === 'parsing' && (
             <div className="py-8 text-center">
               <LoadingSpinner size="lg" />
               <p className="mt-4 text-gray-600">{t('shipmentUpload.parsing')}</p>
             </div>
           )}
 
-          {uploadState === 'reviewing' && parseResult?.parsed_data && (
+          {uploadState === 'preview' && parseResult?.parsed_data && (
             <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded p-3">
-                <p className="text-sm text-blue-800">
-                  <strong>{t('shipmentUpload.documentType')}:</strong> {parseResult.parsed_data.document_type}
-                  <span className="ml-2 text-xs">
-                    ({Math.round(parseResult.parsed_data.document_type_confidence * 100)}% {t('shipmentUpload.confidence')})
-                  </span>
-                </p>
-                <p className="text-sm text-blue-800 mt-1">
-                  <strong>{t('shipmentUpload.overallConfidence')}:</strong> {Math.round(parseResult.parsed_data.overall_confidence * 100)}%
-                </p>
+              {/* Summary Stats Section */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                  {t('shipmentUpload.documentSummary', 'Document Summary')}
+                </h3>
+
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {/* Document Type */}
+                  <div>
+                    <span className="text-gray-600">{t('shipmentUpload.documentType')}:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-medium text-gray-900 uppercase">
+                        {parseResult.parsed_data.document_type}
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.document_type_confidence)}`}>
+                        {Math.round(parseResult.parsed_data.document_type_confidence * 100)}%
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Overall Confidence */}
+                  <div>
+                    <span className="text-gray-600">{t('shipmentUpload.overallConfidence')}:</span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-medium text-gray-900">
+                        {Math.round(parseResult.parsed_data.overall_confidence * 100)}%
+                      </span>
+                      <span className={`text-xs px-2 py-0.5 rounded ${getConfidenceColor(parseResult.parsed_data.overall_confidence)}`}>
+                        {getConfidenceBadge(parseResult.parsed_data.overall_confidence)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Vessel */}
+                  {parseResult.parsed_data.vessel && (
+                    <div>
+                      <span className="text-gray-600">{t('shipmentUpload.vesselName')}:</span>
+                      <div className="font-medium text-gray-900 mt-1">
+                        {parseResult.parsed_data.vessel.value}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Container Count */}
+                  {parseResult.parsed_data.containers.length > 0 && (
+                    <div>
+                      <span className="text-gray-600">{t('shipmentUpload.containers')}:</span>
+                      <div className="font-medium text-gray-900 mt-1">
+                        {parseResult.parsed_data.containers.length} {t('shipmentUpload.containerUnit', 'container(s)')}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* BL Number */}
+                  {parseResult.parsed_data.shp_number && (
+                    <div>
+                      <span className="text-gray-600">{t('shipmentUpload.blNumber', 'B/L Number')}:</span>
+                      <div className="font-medium text-gray-900 mt-1">
+                        {parseResult.parsed_data.shp_number.value}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Booking Number */}
+                  {parseResult.parsed_data.booking_number && (
+                    <div>
+                      <span className="text-gray-600">{t('shipmentUpload.bookingNumber')}:</span>
+                      <div className="font-medium text-gray-900 mt-1">
+                        {parseResult.parsed_data.booking_number.value}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ETD */}
+                  {parseResult.parsed_data.etd && (
+                    <div>
+                      <span className="text-gray-600">{t('shipmentUpload.etd')}:</span>
+                      <div className="font-medium text-gray-900 mt-1">
+                        {parseResult.parsed_data.etd.value}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ETA */}
+                  {parseResult.parsed_data.eta && (
+                    <div>
+                      <span className="text-gray-600">{t('shipmentUpload.eta')}:</span>
+                      <div className="font-medium text-gray-900 mt-1">
+                        {parseResult.parsed_data.eta.value}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <p className="text-sm text-gray-600">
@@ -818,7 +905,7 @@ export function ShipmentUploadModal({
                 ) : (
                   <button
                     onClick={() => {
-                      setUploadState('reviewing');
+                      setUploadState('preview');
                       setCandidateShipments([]);
                       setSelectedShipmentId(null);
                       setErrorMessage(null);

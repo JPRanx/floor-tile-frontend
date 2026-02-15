@@ -23,6 +23,27 @@ export interface UploadError {
   error: string;
 }
 
+export interface InventoryPreviewRow {
+  sku: string;
+  warehouse_qty: number;
+  in_transit_qty: number;
+  snapshot_date: string;
+}
+
+export interface InventoryPreview {
+  preview_id: string;
+  row_count: number;
+  product_count: number;
+  snapshot_date: string;
+  auto_created_products: string[];
+  auto_created_count: number;
+  zero_filled_count: number;
+  zero_filled_products: string[];
+  warnings: string[];
+  sample_rows: InventoryPreviewRow[];
+  expires_in_minutes: number;
+}
+
 export const uploadApi = {
   uploadInventory: async (file: File): Promise<InventoryUploadResponse> => {
     const formData = new FormData();
@@ -45,6 +66,20 @@ export const uploadApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  },
+
+  previewInventory: async (file: File): Promise<InventoryPreview> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/inventory/upload/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  confirmInventory: async (previewId: string): Promise<InventoryUploadResponse> => {
+    const response = await api.post(`/inventory/upload/confirm/${previewId}`);
     return response.data;
   },
 };

@@ -29,11 +29,32 @@ export interface BoatUploadResult {
   imported: number;
   updated: number;
   skipped: number;
-  errors: Array<{
-    row: number;
-    field: string;
-    error: string;
-  }>;
+  skipped_rows: Array<{ row: number; reason: string }>;
+  errors: string[];
+}
+
+export interface BoatPreviewRow {
+  vessel_name: string | null;
+  departure_date: string;
+  arrival_date: string;
+  transit_days: number;
+  origin_port: string;
+  destination_port: string;
+  action: string;
+}
+
+export interface BoatPreview {
+  preview_id: string;
+  total_rows: number;
+  new_boats: number;
+  updated_boats: number;
+  skipped_boats: number;
+  earliest_departure: string | null;
+  latest_departure: string | null;
+  skipped_rows: Array<{ row: number; reason: string }>;
+  warnings: string[];
+  sample_rows: BoatPreviewRow[];
+  expires_in_minutes: number;
 }
 
 export interface BoatListResponse {
@@ -90,6 +111,29 @@ export const boatsApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return response.data;
+  },
+
+  /**
+   * Preview TIBA Excel file upload
+   */
+  preview: async (file: File): Promise<BoatPreview> => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/boats/upload/preview', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Confirm previewed boat upload
+   */
+  confirmUpload: async (previewId: string): Promise<BoatUploadResult> => {
+    const response = await api.post(`/boats/upload/confirm/${previewId}`);
     return response.data;
   },
 

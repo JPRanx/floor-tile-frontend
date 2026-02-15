@@ -59,6 +59,11 @@ export interface IngestResponse {
   candidate_shipments?: CandidateShipment[];
 }
 
+export interface IngestPreviewResponse extends IngestResponse {
+  preview_id: string;
+  expires_in_minutes: number;
+}
+
 export interface ConfirmIngestRequest {
   document_type: string;
   shp_number?: string;
@@ -173,8 +178,27 @@ export const shipmentsApi = {
     return response.data;
   },
 
+  async previewPdf(file: File): Promise<IngestPreviewResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/shipments/ingest/pdf/preview', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 120000,  // 2 minutes for Claude Vision PDF parsing
+    });
+
+    return response.data;
+  },
+
   async confirmIngest(data: ConfirmIngestRequest): Promise<IngestResponse> {
     const response = await api.post('/shipments/ingest/confirm', data);
+    return response.data;
+  },
+
+  async confirmPreview(previewId: string, data: ConfirmIngestRequest): Promise<IngestResponse> {
+    const response = await api.post(`/shipments/ingest/pdf/confirm/${previewId}`, data);
     return response.data;
   },
 

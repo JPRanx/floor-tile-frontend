@@ -36,6 +36,35 @@ export interface SACUploadResponse {
   non_tile_products: string[];
 }
 
+export interface SACPreviewRow {
+  sku: string;
+  sale_date: string;
+  quantity_m2: number;
+  customer: string | null;
+  matched_by: string;
+}
+
+export interface SACPreview {
+  preview_id: string;
+  row_count: number;
+  total_m2: number;
+  date_range_start: string | null;
+  date_range_end: string | null;
+  matched_by_sac_sku: number;
+  matched_by_name: number;
+  unmatched_count: number;
+  match_rate_pct: number;
+  unmatched_products: string[];
+  unique_customers: number;
+  unique_products: number;
+  top_product: string | null;
+  skipped_non_tile: number;
+  skipped_products: string[];
+  warnings: string[];
+  sample_rows: SACPreviewRow[];
+  expires_in_minutes: number;
+}
+
 export interface SIESAUploadResponse {
   success: boolean;
   snapshot_date: string;
@@ -118,6 +147,41 @@ export interface OwnerSalesUploadResponse {
   warnings: string[];
 }
 
+export interface SIESAPreviewLot {
+  sku: string;
+  warehouse_name: string | null;
+  lot_number: string;
+  quantity_m2: number;
+  weight_kg: number | null;
+}
+
+export interface SIESAPreview {
+  preview_id: string;
+  snapshot_date: string;
+  total_rows: number;
+  lots_count: number;
+  unique_products: number;
+  total_m2_available: number;
+  total_weight_kg: number;
+  containers_needed: number;
+  container_utilization_pct: number;
+  matched_by_siesa_item: number;
+  matched_by_name: number;
+  unmatched_count: number;
+  match_rate_pct: number;
+  unmatched_products: string[];
+  warehouses: Array<{
+    code: string;
+    name: string;
+    total_m2: number;
+    total_weight_kg: number;
+    lot_count: number;
+  }>;
+  warnings: string[];
+  sample_lots: SIESAPreviewLot[];
+  expires_in_minutes: number;
+}
+
 export const dataHubApi = {
   getFreshness: async (): Promise<DataFreshnessResponse> => {
     const response = await api.get('/data-freshness');
@@ -130,6 +194,20 @@ export const dataHubApi = {
     const response = await api.post('/sales/upload-sac', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return response.data;
+  },
+
+  previewSACUpload: async (file: File): Promise<SACPreview> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/sales/upload-sac/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  confirmSACUpload: async (previewId: string): Promise<SACUploadResponse> => {
+    const response = await api.post(`/sales/upload-sac/confirm/${previewId}`);
     return response.data;
   },
 
@@ -155,6 +233,22 @@ export const dataHubApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
       params,
     });
+    return response.data;
+  },
+
+  previewSIESA: async (file: File, snapshotDate?: string): Promise<SIESAPreview> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const params = snapshotDate ? { snapshot_date: snapshotDate } : {};
+    const response = await api.post('/inventory/siesa/upload/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      params,
+    });
+    return response.data;
+  },
+
+  confirmSIESA: async (previewId: string): Promise<SIESAUploadResponse> => {
+    const response = await api.post(`/inventory/siesa/upload/confirm/${previewId}`);
     return response.data;
   },
 };
