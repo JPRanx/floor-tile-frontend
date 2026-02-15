@@ -65,6 +65,16 @@ export interface LiquidationProduct {
 // API functions
 export const productsApi = {
   /**
+   * Search products by SKU substring (for manual resolution dropdowns)
+   */
+  async searchProducts(query: string, limit: number = 10): Promise<Product[]> {
+    const response = await api.get<Product[]>('/products/search', {
+      params: { q: query, limit },
+    });
+    return response.data;
+  },
+
+  /**
    * Get list of products with optional filters
    */
   async getProducts(filters: ProductFilters = {}): Promise<ProductListResponse> {

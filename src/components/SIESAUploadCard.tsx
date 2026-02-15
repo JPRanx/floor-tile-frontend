@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { dataHubApi } from '../requests/dataHub';
 import type { SIESAPreview, SIESAUploadResponse } from '../requests/dataHub';
 import { LoadingSpinner } from './LoadingSpinner';
+import { ProductSearchDropdown } from './ProductSearchDropdown';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -21,6 +22,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
   const [result, setResult] = useState<SIESAUploadResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUnmatchedList, setShowUnmatchedList] = useState(false);
+  const [manualMappings, setManualMappings] = useState<Record<string, { productId: string; sku: string }>>({});
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -89,7 +91,10 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setUploadState('confirming');
 
     try {
-      const uploadResult = await dataHubApi.confirmSIESA(preview.preview_id);
+      const mappings = Object.entries(manualMappings)
+        .filter(([, v]) => v.productId)
+        .map(([key, v]) => ({ original_key: key, mapped_product_id: v.productId }));
+      const uploadResult = await dataHubApi.confirmSIESA(preview.preview_id, mappings.length > 0 ? mappings : undefined);
       setResult(uploadResult);
       setUploadState('success');
       onUploadSuccess?.();
@@ -265,12 +270,23 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                   </button>
                 </div>
                 {showUnmatchedList && (
-                  <div className="mt-2 max-h-32 overflow-auto">
-                    <div className="text-xs text-red-700 space-y-1">
-                      {preview.unmatched_products.map((prod, i) => (
-                        <div key={i}>• {prod}</div>
-                      ))}
-                    </div>
+                  <div className="mt-2 space-y-2 max-h-48 overflow-auto">
+                    <p className="text-xs text-red-600">{t('dataHub.inventory.mapToProduct', 'Map to an existing product:')}</p>
+                    {preview.unmatched_products.map((prod, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        <span className="text-xs text-red-700 flex-1 truncate" title={prod}>• {prod}</span>
+                        <ProductSearchDropdown
+                          onSelect={(productId, sku) =>
+                            setManualMappings((prev) => ({
+                              ...prev,
+                              [prod]: { productId, sku },
+                            }))
+                          }
+                          selectedSku={manualMappings[prod]?.sku || null}
+                          placeholder={t('dataHub.inventory.searchProduct', 'Search...')}
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

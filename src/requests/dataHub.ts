@@ -247,8 +247,12 @@ export const dataHubApi = {
     return response.data;
   },
 
-  confirmSIESA: async (previewId: string): Promise<SIESAUploadResponse> => {
-    const response = await api.post(`/inventory/siesa/upload/confirm/${previewId}`);
+  confirmSIESA: async (
+    previewId: string,
+    manualMappings?: Array<{ original_key: string; mapped_product_id: string }>,
+  ): Promise<SIESAUploadResponse> => {
+    const body = manualMappings?.length ? { manual_mappings: manualMappings } : undefined;
+    const response = await api.post(`/inventory/siesa/upload/confirm/${previewId}`, body);
     return response.data;
   },
 };

@@ -56,8 +56,12 @@ export const productionScheduleApi = {
     return response.data;
   },
 
-  confirmUpload: async (previewId: string): Promise<ProductionImportResult> => {
-    const response = await api.post(`/production-schedule/upload-replace/confirm/${previewId}`);
+  confirmUpload: async (
+    previewId: string,
+    manualMappings?: Array<{ original_key: string; mapped_product_id: string }>,
+  ): Promise<ProductionImportResult> => {
+    const body = manualMappings?.length ? { manual_mappings: manualMappings } : undefined;
+    const response = await api.post(`/production-schedule/upload-replace/confirm/${previewId}`, body);
     return response.data;
   },
 };

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { productionScheduleApi } from '../requests/productionSchedule';
 import type { ProductionPreview, ProductionImportResult } from '../requests/productionSchedule';
 import { LoadingSpinner } from './LoadingSpinner';
+import { ProductSearchDropdown } from './ProductSearchDropdown';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -21,6 +22,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
   const [result, setResult] = useState<ProductionImportResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUnmatched, setShowUnmatched] = useState(false);
+  const [manualMappings, setManualMappings] = useState<Record<string, { productId: string; sku: string }>>({});
 
   const isValidFile = (f: File): boolean => {
     return f.name.endsWith('.xlsx') || f.name.endsWith('.xls') ||
@@ -83,7 +85,10 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
     if (!preview) return;
     setUploadState('confirming');
     try {
-      const res = await productionScheduleApi.confirmUpload(preview.preview_id);
+      const mappings = Object.entries(manualMappings)
+        .filter(([, v]) => v.productId)
+        .map(([key, v]) => ({ original_key: key, mapped_product_id: v.productId }));
+      const res = await productionScheduleApi.confirmUpload(preview.preview_id, mappings.length > 0 ? mappings : undefined);
       setResult(res);
       setUploadState('success');
       onUploadSuccess?.();
@@ -254,7 +259,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
             </div>
           </div>
 
-          {/* Unmatched Referencias Expandable List */}
+          {/* Unmatched Referencias — Interactive Mapping */}
           {preview.unmatched_referencias.length > 0 && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
               <button
@@ -264,9 +269,22 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
                 {showUnmatched ? '▼' : '▶'} {preview.unmatched_referencias.length} {t('dataHub.production.unmatchedItems', 'unmatched items')}
               </button>
               {showUnmatched && (
-                <div className="mt-2 max-h-32 overflow-y-auto bg-white rounded p-2 text-xs text-gray-700">
+                <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                  <p className="text-xs text-red-600">{t('dataHub.production.mapToProduct', 'Map to an existing product:')}</p>
                   {preview.unmatched_referencias.map((ref, i) => (
-                    <div key={i} className="py-0.5">• {ref}</div>
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="text-xs text-red-700 flex-1 truncate" title={ref}>• {ref}</span>
+                      <ProductSearchDropdown
+                        onSelect={(productId, sku) =>
+                          setManualMappings((prev) => ({
+                            ...prev,
+                            [ref]: { productId, sku },
+                          }))
+                        }
+                        selectedSku={manualMappings[ref]?.sku || null}
+                        placeholder={t('dataHub.production.searchProduct', 'Search...')}
+                      />
+                    </div>
                   ))}
                 </div>
               )}
