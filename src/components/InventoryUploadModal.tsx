@@ -261,7 +261,7 @@ export function InventoryUploadModal({
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-medium text-amber-800">
-                        {t('inventory.autoCreatedWarning', { count: preview.auto_created_count }, `${preview.auto_created_count} products will be auto-created`)}
+                        {t('inventory.autoCreatedWarning', { count: preview.auto_created_count, defaultValue: '{{count}} products will be auto-created' })}
                       </div>
                       <button
                         onClick={() => setShowAutoCreatedList(!showAutoCreatedList)}
@@ -287,7 +287,7 @@ export function InventoryUploadModal({
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-medium text-blue-800">
-                        {t('inventory.zeroFilledInfo', { count: preview.zero_filled_count }, `${preview.zero_filled_count} products will get zero-quantity records`)}
+                        {t('inventory.zeroFilledInfo', { count: preview.zero_filled_count, defaultValue: '{{count}} products will get zero-quantity records' })}
                       </div>
                       <button
                         onClick={() => setShowZeroFilledList(!showZeroFilledList)}

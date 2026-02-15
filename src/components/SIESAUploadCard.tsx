@@ -243,19 +243,19 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
           <div className="space-y-2">
             <div className="bg-green-50 border border-green-200 rounded-lg p-3">
               <div className="text-sm font-medium text-green-800">
-                {t('dataHub.inventory.matchedBySIESA', { count: preview.matched_by_siesa_item }, `${preview.matched_by_siesa_item} matched by SIESA item`)}
+                {t('dataHub.inventory.matchedBySIESA', { count: preview.matched_by_siesa_item, defaultValue: '{{count}} matched by SIESA item' })}
               </div>
             </div>
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
               <div className="text-sm font-medium text-amber-800">
-                {t('dataHub.inventory.matchedByName', { count: preview.matched_by_name }, `${preview.matched_by_name} matched by name`)}
+                {t('dataHub.inventory.matchedByName', { count: preview.matched_by_name, defaultValue: '{{count}} matched by name' })}
               </div>
             </div>
             {preview.unmatched_count > 0 && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium text-red-800">
-                    {t('dataHub.inventory.unmatched', { count: preview.unmatched_count }, `${preview.unmatched_count} unmatched`)}
+                    {t('dataHub.inventory.unmatched', { count: preview.unmatched_count, defaultValue: '{{count}} unmatched' })}
                   </div>
                   <button
                     onClick={() => setShowUnmatchedList(!showUnmatchedList)}
@@ -276,7 +276,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
               </div>
             )}
             <div className="text-sm text-gray-600 text-center">
-              {t('dataHub.inventory.matchRate', { rate: preview.match_rate_pct.toFixed(1) }, `Match rate: ${preview.match_rate_pct.toFixed(1)}%`)}
+              {t('dataHub.inventory.matchRate', { rate: preview.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
             </div>
           </div>
 
@@ -380,7 +380,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                   <p>{result.unique_products} {t('dataHub.inventory.productsUpdated', 'products updated')}</p>
                   <p>{result.total_m2_available.toLocaleString()} m² {t('dataHub.inventory.available', 'available')}</p>
                   <p className="text-green-800 font-medium">
-                    {t('dataHub.inventory.matchRate', { rate: result.match_rate_pct.toFixed(1) }, `Match rate: ${result.match_rate_pct.toFixed(1)}%`)}
+                    {t('dataHub.inventory.matchRate', { rate: result.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
                   </p>
                 </div>
               </div>

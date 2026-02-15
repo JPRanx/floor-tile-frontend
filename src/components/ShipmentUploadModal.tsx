@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { shipmentsApi } from '../requests/shipments';
-import type { IngestResponse, IngestPreviewResponse, CandidateShipment } from '../requests/shipments';
+import type { IngestResponse, CandidateShipment } from '../requests/shipments';
 import { pendingDocumentsApi } from '../requests/pendingDocuments';
 import type { PendingDocument } from '../requests/pendingDocuments';
 import { LoadingSpinner } from './LoadingSpinner';

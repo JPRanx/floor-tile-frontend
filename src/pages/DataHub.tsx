@@ -5,6 +5,7 @@ import { DataFreshnessBar } from '../components/DataFreshnessBar';
 import { SalesUploadCard } from '../components/SalesUploadCard';
 import { SACUploadCard } from '../components/SACUploadCard';
 import { SIESAUploadCard } from '../components/SIESAUploadCard';
+import { ProductionUploadCard } from '../components/ProductionUploadCard';
 import { dataHubApi } from '../requests/dataHub';
 import type { DataFreshnessResponse } from '../requests/dataHub';
 
@@ -57,6 +58,9 @@ export function DataHub() {
         <SIESAUploadCard
           lastUpdated={freshness?.inventory.last_updated}
           recordCount={freshness?.inventory.record_count}
+          onUploadSuccess={handleUploadSuccess}
+        />
+        <ProductionUploadCard
           onUploadSuccess={handleUploadSuccess}
         />
       </div>
