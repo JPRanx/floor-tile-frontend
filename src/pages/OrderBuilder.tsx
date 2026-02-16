@@ -165,12 +165,12 @@ export function OrderBuilder() {
       }));
       setProducts(allProducts);
 
-      // Auto-select recommended BLs on initial load
-      if (isInitialLoad && result.recommended_bls && result.recommended_bls !== blCount) {
-        setNumBLs(result.recommended_bls);
-        setHasInitiallyLoaded(true);
-        // Reload will happen automatically via useEffect
-      } else if (isInitialLoad) {
+      // Auto-select recommended BLs on initial load (no re-fetch needed —
+      // the response already reflects recommended_bls)
+      if (isInitialLoad) {
+        if (result.recommended_bls && result.recommended_bls !== blCount) {
+          setNumBLs(result.recommended_bls);
+        }
         setHasInitiallyLoaded(true);
       }
     } catch (err) {
@@ -195,6 +195,7 @@ export function OrderBuilder() {
     }
   }, []);
 
+  // numBLs intentionally excluded — manual changes go through handleNumBLsChange
   useEffect(() => {
     // Load data even without a boat - backend will use defaults
     if (boatsLoaded) {
@@ -202,7 +203,8 @@ export function OrderBuilder() {
       loadData(numBLs, selectedBoatId, !hasInitiallyLoaded);
       loadDemandForecast(selectedBoatId);
     }
-  }, [numBLs, selectedBoatId, loadData, loadDemandForecast, boatsLoaded, hasInitiallyLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedBoatId, loadData, loadDemandForecast, boatsLoaded, hasInitiallyLoaded]);
 
   const handleBoatChange = (boatId: string) => {
     setSelectedBoatId(boatId);
@@ -341,12 +343,13 @@ export function OrderBuilder() {
     return { m2: freedM2, pallets: freedPallets, containers: freedContainers };
   })();
 
-  // BL count change handler - triggers reload via useEffect
+  // BL count change handler - explicitly reloads (numBLs removed from useEffect deps)
   const handleNumBLsChange = (newNumBLs: number) => {
     setNumBLs(newNumBLs);
     // Invalidate existing allocation when BL count changes
     setBLAllocationReport(null);
     setShowBLView(false);  // Return to product view when capacity changes
+    loadData(newNumBLs, selectedBoatId);
   };
 
   const handleAllocateToBLs = async () => {
