@@ -105,8 +105,15 @@ export function BoatTable({ boats, onStatusChange }: BoatTableProps) {
                     <div className="text-sm font-medium text-gray-900">
                       {boat.vessel_name || '—'}
                     </div>
-                    {boat.shipping_line && (
-                      <div className="text-xs text-gray-500">{boat.shipping_line}</div>
+                    {(boat.shipping_line || boat.carrier) && (
+                      <div className="text-xs text-gray-500">
+                        {boat.shipping_line}
+                        {boat.carrier && (
+                          <span className="ml-1 px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 text-[10px] font-medium uppercase">
+                            {boat.carrier}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="px-3 py-2 sm:px-4 sm:py-3 whitespace-nowrap">

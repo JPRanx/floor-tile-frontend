@@ -326,6 +326,7 @@ export interface OrderBuilderBoat {
   booking_deadline: string;
   days_until_deadline: number;
   max_containers: number;
+  carrier: string | null;
 }
 
 export interface OrderBuilderAlert {

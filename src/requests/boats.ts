@@ -17,6 +17,7 @@ export interface BoatSchedule {
   booking_deadline: string;
   status: BoatStatus;
   source_file: string | null;
+  carrier: string | null;
   created_at: string;
   updated_at: string;
   // Computed fields from backend

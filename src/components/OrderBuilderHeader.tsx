@@ -76,6 +76,8 @@ export function OrderBuilderHeader({
             {hasBoat ? (
               <div className="space-y-2">
                 <p className="text-slate-400">
+                  {boat.carrier && <span className="text-indigo-400 font-medium">{boat.carrier}</span>}
+                  {boat.carrier && ' • '}
                   {formatDate(boat.departure_date)} departure • Arrives {formatDate(boat.arrival_date)}
                 </p>
                 {boat.days_until_order_deadline <= 7 && !boat.past_order_deadline && (
@@ -113,7 +115,10 @@ export function OrderBuilderHeader({
               >
                 {availableBoats.map((b, idx) => (
                   <option key={b.id} value={b.id}>
-                    {formatDate(b.departure_date)} — {b.days_until_departure ?? '?'}d to departure
+                    {formatDate(b.departure_date)}
+                    {b.vessel_name ? ` — ${b.vessel_name}` : ''}
+                    {b.carrier ? ` (${b.carrier})` : ''}
+                    {' '}— {b.days_until_departure ?? '?'}d
                     {idx === 0 ? ' (next)' : ''}
                   </option>
                 ))}
