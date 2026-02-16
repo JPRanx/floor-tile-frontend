@@ -13,63 +13,59 @@ export function UnableToShipAlert({ unableToShip }: UnableToShipAlertProps) {
   }
 
   return (
-    <div className="bg-red-900/20 backdrop-blur-sm rounded-xl border border-red-500/30 p-4">
+    <div className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4">
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between text-left"
       >
         <div className="flex items-center gap-3">
-          <span className="text-2xl">🚫</span>
+          <span className="w-8 h-8 rounded-lg bg-slate-600/30 flex items-center justify-center text-lg">⏳</span>
           <div>
-            <h3 className="text-lg font-semibold text-red-300">
-              Unable to Ship ({unableToShip.count} products)
+            <h3 className="text-sm font-semibold text-slate-300">
+              Awaiting Production ({unableToShip.count})
             </h3>
-            <p className="text-sm text-red-400/80">
-              {Math.round(unableToShip.total_gap_m2).toLocaleString()} m² needed but no SIESA stock
+            <p className="text-xs text-slate-500">
+              {Math.round(unableToShip.total_gap_m2).toLocaleString()} m² pending
             </p>
           </div>
         </div>
-        <span className="text-red-400 text-xl">
+        <span className="text-slate-500 text-sm">
           {expanded ? '▼' : '▶'}
         </span>
       </button>
 
       {expanded && (
-        <div className="mt-4 space-y-3">
-          <p className="text-sm text-red-300/80 italic">
-            {unableToShip.message}
-          </p>
+        <div className="mt-3 space-y-2">
+          {unableToShip.message && (
+            <p className="text-xs text-slate-500 italic">
+              {unableToShip.message}
+            </p>
+          )}
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {unableToShip.items.map((item, index) => (
               <div
                 key={index}
-                className="bg-slate-800/50 rounded-lg p-3 border border-slate-700/50"
+                className="bg-slate-900/40 rounded-lg px-3 py-2.5"
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium text-white truncate">{item.sku}</div>
-                    <div className="text-sm text-slate-400 mt-1">
-                      Gap: {Math.round(item.coverage_gap_m2).toLocaleString()} m² ({item.coverage_gap_pallets}p)
-                    </div>
-                    {item.days_of_stock !== null && (
-                      <div className="text-sm text-amber-400 mt-1">
-                        {item.days_of_stock} days of stock left
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-xs text-red-400">{item.reason}</div>
-                    {item.production_status && (
-                      <div className="text-xs text-slate-500 mt-1">
-                        Production: {item.production_status}
-                      </div>
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium text-white text-sm">{item.sku}</span>
+                  <span className="text-xs text-slate-400">
+                    {Math.round(item.coverage_gap_m2).toLocaleString()} m²
+                  </span>
                 </div>
-                <div className="mt-2 text-xs text-blue-400 flex items-center gap-1">
-                  <span>💡</span>
-                  <span>{item.suggested_action}</span>
+                {item.days_of_stock !== null && item.days_of_stock <= 14 && (
+                  <div className="text-xs text-amber-400 mt-1">
+                    {item.days_of_stock}d of stock left
+                  </div>
+                )}
+                {item.production_status && (
+                  <div className="text-xs text-slate-500 mt-1">
+                    {item.production_status}
+                  </div>
+                )}
+                <div className="text-xs text-blue-400/80 mt-1">
+                  {item.suggested_action}
                 </div>
               </div>
             ))}
