@@ -702,6 +702,11 @@
   "dataHub": {
     "title": "Centro de Datos",
     "subtitle": "Sube los datos diarios de ventas e inventario",
+    "sections": {
+      "sales": "Ventas",
+      "inventory": "Inventario",
+      "logistics": "Logística"
+    },
     "systemHealth": "Estado del Sistema",
     "fresh": "Actualizado",
     "stale": "Necesita actualización",

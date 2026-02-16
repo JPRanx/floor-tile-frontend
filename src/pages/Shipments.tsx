@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { shipmentsApi } from '../requests/shipments';
 import type { Shipment } from '../requests/shipments';
 import type { PendingDocument } from '../requests/pendingDocuments';
-import { ShipmentUploadModal } from '../components/ShipmentUploadModal';
+import { ShipmentUploadModal } from '../components/ShipmentUploadModal.original';
 import { ShipmentDetailPanel } from '../components/ShipmentDetailPanel';
 import { PendingDocumentsBadge } from '../components/PendingDocumentsBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -215,17 +216,17 @@ export function Shipments() {
             refreshTrigger={pendingRefreshTrigger}
           />
 
-          <button
-            onClick={() => setUploadModalOpen(true)}
+          <Link
+            to="/data-hub"
             className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
           >
             <span className="flex items-center gap-2">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              {t('common.uploadDocument')}
+              {t('common.uploadDocument')} →
             </span>
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -326,12 +327,12 @@ export function Shipments() {
             {t('shipments.emptyDescription')}
           </p>
           <div className="mt-6">
-            <button
-              onClick={() => setUploadModalOpen(true)}
+            <Link
+              to="/data-hub"
               className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
             >
-              {t('common.uploadDocument')}
-            </button>
+              {t('common.uploadDocument')} →
+            </Link>
           </div>
         </div>
       ) : filteredShipments.length === 0 ? (

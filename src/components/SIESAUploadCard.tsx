@@ -4,6 +4,7 @@ import { dataHubApi } from '../requests/dataHub';
 import type { SIESAPreview, SIESAUploadResponse } from '../requests/dataHub';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ProductSearchDropdown } from './ProductSearchDropdown';
+import { UploadPreviewModal } from './UploadPreviewModal';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -17,6 +18,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
   const { t, i18n } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [preview, setPreview] = useState<SIESAPreview | null>(null);
   const [result, setResult] = useState<SIESAUploadResponse | null>(null);
@@ -70,6 +72,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
 
   const handleUpload = async (fileToUpload: File) => {
     setUploadState('parsing');
+    setModalOpen(true);
     setErrorMessage(null);
     setResult(null);
     setPreview(null);
@@ -110,6 +113,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setPreview(null);
     setFile(null);
     setUploadState('idle');
+    setModalOpen(false);
   };
 
   const handleReset = () => {
@@ -119,6 +123,11 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setResult(null);
     setErrorMessage(null);
     setShowUnmatchedList(false);
+    setModalOpen(false);
+  };
+
+  const handleModalClose = () => {
+    handleReset();
   };
 
   const formatLastUpdated = (): string => {
@@ -146,286 +155,290 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
         {t('dataHub.inventory.title')}
       </h3>
 
-      {/* Idle State */}
-      {uploadState === 'idle' && (
-        <>
-          <div
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-              dragOver
-                ? 'border-blue-500 bg-blue-50'
-                : file
-                ? 'border-green-500 bg-green-50'
-                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-            }`}
+      {/* Idle State - Card Content */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
+          dragOver
+            ? 'border-blue-500 bg-blue-50'
+            : file
+            ? 'border-green-500 bg-green-50'
+            : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+        }`}
+      >
+        <label className="cursor-pointer block">
+          <svg
+            className="mx-auto h-10 w-10 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
           >
-            <label className="cursor-pointer block">
-              <svg
-                className="mx-auto h-10 w-10 text-gray-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-              <p className="mt-2 text-sm text-gray-600">
-                {t('dataHub.inventory.dropzone')}
-              </p>
-              <p className="mt-1 text-xs text-gray-500">XLS / XLSX</p>
-              <input
-                type="file"
-                className="hidden"
-                accept=".xls,.xlsx"
-                onChange={handleFileSelect}
-              />
-            </label>
-          </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+            />
+          </svg>
+          <p className="mt-2 text-sm text-gray-600">
+            {t('dataHub.inventory.dropzone')}
+          </p>
+          <p className="mt-1 text-xs text-gray-500">XLS / XLSX</p>
+          <input
+            type="file"
+            className="hidden"
+            accept=".xls,.xlsx"
+            onChange={handleFileSelect}
+          />
+        </label>
+      </div>
 
-          {errorMessage && (
-            <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
-              {errorMessage}
-            </div>
-          )}
-
-          <div className="mt-4 text-sm text-gray-500">
-            <p>{t('dataHub.inventory.lastUpload')}: {formatLastUpdated()}</p>
-            {recordCount !== undefined && recordCount > 0 && (
-              <p>{recordCount.toLocaleString()} {t('dataHub.inventory.lotsCount')}</p>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Parsing State */}
-      {uploadState === 'parsing' && (
-        <div className="py-8 text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">{t('dataHub.inventory.parsing', 'Parsing file...')}</p>
+      {/* Inline error for invalid file type (not in modal) */}
+      {errorMessage && uploadState === 'idle' && (
+        <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm text-red-800">
+          {errorMessage}
         </div>
       )}
 
-      {/* Preview State */}
-      {uploadState === 'preview' && preview && (
-        <div className="space-y-4">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="text-sm text-gray-500">{t('dataHub.inventory.totalRows', 'Total Rows')}</div>
-              <div className="text-lg font-bold text-gray-900">{preview.total_rows}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="text-sm text-gray-500">{t('dataHub.inventory.lotsCount', 'Lots')}</div>
-              <div className="text-lg font-bold text-gray-900">{preview.lots_count}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="text-sm text-gray-500">{t('dataHub.inventory.products', 'Products')}</div>
-              <div className="text-lg font-bold text-gray-900">{preview.unique_products}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="text-sm text-gray-500">{t('dataHub.inventory.totalM2', 'Total m²')}</div>
-              <div className="text-lg font-bold text-gray-900">{preview.total_m2_available.toLocaleString()}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="text-sm text-gray-500">{t('dataHub.inventory.totalWeight', 'Total Weight (kg)')}</div>
-              <div className="text-lg font-bold text-gray-900">{preview.total_weight_kg.toLocaleString()}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="text-sm text-gray-500">{t('dataHub.inventory.containers', 'Containers')}</div>
-              <div className="text-lg font-bold text-gray-900">
-                {preview.containers_needed} ({preview.container_utilization_pct.toFixed(1)}%)
-              </div>
-            </div>
-          </div>
+      <div className="mt-4 text-sm text-gray-500">
+        <p>{t('dataHub.inventory.lastUpload')}: {formatLastUpdated()}</p>
+        {recordCount !== undefined && recordCount > 0 && (
+          <p>{recordCount.toLocaleString()} {t('dataHub.inventory.lotsCount')}</p>
+        )}
+      </div>
 
-          {/* Match Stats Section */}
-          <div className="space-y-2">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <div className="text-sm font-medium text-green-800">
-                {t('dataHub.inventory.matchedBySIESA', { count: preview.matched_by_siesa_item, defaultValue: '{{count}} matched by SIESA item' })}
+      {/* Upload Preview Modal */}
+      <UploadPreviewModal
+        isOpen={modalOpen}
+        onClose={handleModalClose}
+        title={t('dataHub.inventory.title')}
+      >
+        {/* Parsing State */}
+        {uploadState === 'parsing' && (
+          <div className="py-8 text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-600">{t('dataHub.inventory.parsing', 'Parsing file...')}</p>
+          </div>
+        )}
+
+        {/* Preview State */}
+        {uploadState === 'preview' && preview && (
+          <div className="space-y-4">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-500">{t('dataHub.inventory.totalRows', 'Total Rows')}</div>
+                <div className="text-lg font-bold text-gray-900">{preview.total_rows}</div>
               </div>
-            </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <div className="text-sm font-medium text-amber-800">
-                {t('dataHub.inventory.matchedByName', { count: preview.matched_by_name, defaultValue: '{{count}} matched by name' })}
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-500">{t('dataHub.inventory.lotsCount', 'Lots')}</div>
+                <div className="text-lg font-bold text-gray-900">{preview.lots_count}</div>
               </div>
-            </div>
-            {preview.unmatched_count > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-red-800">
-                    {t('dataHub.inventory.unmatched', { count: preview.unmatched_count, defaultValue: '{{count}} unmatched' })}
-                  </div>
-                  <button
-                    onClick={() => setShowUnmatchedList(!showUnmatchedList)}
-                    className="text-xs text-red-700 hover:text-red-900"
-                  >
-                    {showUnmatchedList ? t('common.hide', 'Hide') : t('common.show', 'Show')}
-                  </button>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-500">{t('dataHub.inventory.products', 'Products')}</div>
+                <div className="text-lg font-bold text-gray-900">{preview.unique_products}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-500">{t('dataHub.inventory.totalM2', 'Total m²')}</div>
+                <div className="text-lg font-bold text-gray-900">{preview.total_m2_available.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-500">{t('dataHub.inventory.totalWeight', 'Total Weight (kg)')}</div>
+                <div className="text-lg font-bold text-gray-900">{preview.total_weight_kg.toLocaleString()}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm text-gray-500">{t('dataHub.inventory.containers', 'Containers')}</div>
+                <div className="text-lg font-bold text-gray-900">
+                  {preview.containers_needed} ({preview.container_utilization_pct.toFixed(1)}%)
                 </div>
-                {showUnmatchedList && (
-                  <div className="mt-2 space-y-2 max-h-48 overflow-auto">
-                    <p className="text-xs text-red-600">{t('dataHub.inventory.mapToProduct', 'Map to an existing product:')}</p>
-                    {preview.unmatched_products.map((prod, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-red-700 flex-1 truncate" title={prod}>• {prod}</span>
-                        <ProductSearchDropdown
-                          onSelect={(productId, sku) =>
-                            setManualMappings((prev) => ({
-                              ...prev,
-                              [prod]: { productId, sku },
-                            }))
-                          }
-                          selectedSku={manualMappings[prod]?.sku || null}
-                          placeholder={t('dataHub.inventory.searchProduct', 'Search...')}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
-            )}
-            <div className="text-sm text-gray-600 text-center">
-              {t('dataHub.inventory.matchRate', { rate: preview.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
             </div>
-          </div>
 
-          {/* Warehouse Breakdown */}
-          {preview.warehouses.length > 0 && (
-            <div className="bg-gray-50 rounded-lg p-3">
-              <div className="text-sm font-medium text-gray-700 mb-2">
-                {t('dataHub.inventory.warehouseBreakdown', 'Warehouse Breakdown')}
+            {/* Match Stats Section */}
+            <div className="space-y-2">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                <div className="text-sm font-medium text-green-800">
+                  {t('dataHub.inventory.matchedBySIESA', { count: preview.matched_by_siesa_item, defaultValue: '{{count}} matched by SIESA item' })}
+                </div>
               </div>
-              <div className="overflow-auto max-h-32">
-                <table className="w-full text-xs">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="px-2 py-1 text-left">{t('dataHub.inventory.warehouse', 'Warehouse')}</th>
-                      <th className="px-2 py-1 text-right">m²</th>
-                      <th className="px-2 py-1 text-right">kg</th>
-                      <th className="px-2 py-1 text-right">{t('dataHub.inventory.lots', 'Lots')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {preview.warehouses.map((wh, i) => (
-                      <tr key={i}>
-                        <td className="px-2 py-1">{wh.name}</td>
-                        <td className="px-2 py-1 text-right">{wh.total_m2.toLocaleString()}</td>
-                        <td className="px-2 py-1 text-right">{wh.total_weight_kg.toLocaleString()}</td>
-                        <td className="px-2 py-1 text-right">{wh.lot_count}</td>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                <div className="text-sm font-medium text-amber-800">
+                  {t('dataHub.inventory.matchedByName', { count: preview.matched_by_name, defaultValue: '{{count}} matched by name' })}
+                </div>
+              </div>
+              {preview.unmatched_count > 0 && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-medium text-red-800">
+                      {t('dataHub.inventory.unmatched', { count: preview.unmatched_count, defaultValue: '{{count}} unmatched' })}
+                    </div>
+                    <button
+                      onClick={() => setShowUnmatchedList(!showUnmatchedList)}
+                      className="text-xs text-red-700 hover:text-red-900"
+                    >
+                      {showUnmatchedList ? t('common.hide', 'Hide') : t('common.show', 'Show')}
+                    </button>
+                  </div>
+                  {showUnmatchedList && (
+                    <div className="mt-2 space-y-2 max-h-48 overflow-auto">
+                      <p className="text-xs text-red-600">{t('dataHub.inventory.mapToProduct', 'Map to an existing product:')}</p>
+                      {preview.unmatched_products.map((prod, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-xs text-red-700 flex-1 truncate" title={prod}>• {prod}</span>
+                          <ProductSearchDropdown
+                            onSelect={(productId, sku) =>
+                              setManualMappings((prev) => ({
+                                ...prev,
+                                [prod]: { productId, sku },
+                              }))
+                            }
+                            selectedSku={manualMappings[prod]?.sku || null}
+                            placeholder={t('dataHub.inventory.searchProduct', 'Search...')}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <div className="text-sm text-gray-600 text-center">
+                {t('dataHub.inventory.matchRate', { rate: preview.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
+              </div>
+            </div>
+
+            {/* Warehouse Breakdown */}
+            {preview.warehouses.length > 0 && (
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm font-medium text-gray-700 mb-2">
+                  {t('dataHub.inventory.warehouseBreakdown', 'Warehouse Breakdown')}
+                </div>
+                <div className="overflow-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-2 py-1 text-left">{t('dataHub.inventory.warehouse', 'Warehouse')}</th>
+                        <th className="px-2 py-1 text-right">m²</th>
+                        <th className="px-2 py-1 text-right">kg</th>
+                        <th className="px-2 py-1 text-right">{t('dataHub.inventory.lots', 'Lots')}</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {preview.warehouses.map((wh, i) => (
+                        <tr key={i}>
+                          <td className="px-2 py-1">{wh.name}</td>
+                          <td className="px-2 py-1 text-right">{wh.total_m2.toLocaleString()}</td>
+                          <td className="px-2 py-1 text-right">{wh.total_weight_kg.toLocaleString()}</td>
+                          <td className="px-2 py-1 text-right">{wh.lot_count}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Sample Lots Table */}
-          <div className="overflow-auto max-h-48">
-            <div className="text-sm font-medium text-gray-700 mb-2">
-              {t('dataHub.inventory.sampleLots', 'Sample Lots')}
-            </div>
-            <table className="w-full text-sm">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="px-2 py-1 text-left">SKU</th>
-                  <th className="px-2 py-1 text-left">{t('dataHub.inventory.warehouse', 'Warehouse')}</th>
-                  <th className="px-2 py-1 text-left">{t('dataHub.inventory.lot', 'Lot')}</th>
-                  <th className="px-2 py-1 text-right">m²</th>
-                  <th className="px-2 py-1 text-right">kg</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {preview.sample_lots.map((lot, i) => (
-                  <tr key={i}>
-                    <td className="px-2 py-1">{lot.sku}</td>
-                    <td className="px-2 py-1 text-gray-500">{lot.warehouse_name || '—'}</td>
-                    <td className="px-2 py-1">{lot.lot_number}</td>
-                    <td className="px-2 py-1 text-right">{lot.quantity_m2}</td>
-                    <td className="px-2 py-1 text-right">{lot.weight_kg || '—'}</td>
+            {/* Sample Lots Table */}
+            <div className="overflow-auto">
+              <div className="text-sm font-medium text-gray-700 mb-2">
+                {t('dataHub.inventory.sampleLots', 'Sample Lots')}
+              </div>
+              <table className="w-full text-sm">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="px-2 py-1 text-left">SKU</th>
+                    <th className="px-2 py-1 text-left">{t('dataHub.inventory.warehouse', 'Warehouse')}</th>
+                    <th className="px-2 py-1 text-left">{t('dataHub.inventory.lot', 'Lot')}</th>
+                    <th className="px-2 py-1 text-right">m²</th>
+                    <th className="px-2 py-1 text-right">kg</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {preview.sample_lots.map((lot, i) => (
+                    <tr key={i}>
+                      <td className="px-2 py-1">{lot.sku}</td>
+                      <td className="px-2 py-1 text-gray-500">{lot.warehouse_name || '—'}</td>
+                      <td className="px-2 py-1">{lot.lot_number}</td>
+                      <td className="px-2 py-1 text-right">{lot.quantity_m2}</td>
+                      <td className="px-2 py-1 text-right">{lot.weight_kg || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Confirm / Cancel Buttons */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleConfirm}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+              >
+                {t('dataHub.inventory.confirmUpload', 'Confirm Upload')}
+              </button>
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                {t('common.cancel', 'Cancel')}
+              </button>
+            </div>
           </div>
+        )}
 
-          {/* Confirm / Cancel Buttons */}
-          <div className="flex gap-3">
-            <button
-              onClick={handleConfirm}
-              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-            >
-              {t('dataHub.inventory.confirmUpload', 'Confirm Upload')}
-            </button>
-            <button
-              onClick={handleCancel}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-            >
-              {t('common.cancel', 'Cancel')}
-            </button>
+        {/* Confirming State */}
+        {uploadState === 'confirming' && (
+          <div className="py-8 text-center">
+            <LoadingSpinner size="lg" />
+            <p className="mt-4 text-gray-600">{t('dataHub.inventory.saving', 'Saving...')}</p>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Confirming State */}
-      {uploadState === 'confirming' && (
-        <div className="py-8 text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">{t('dataHub.inventory.saving', 'Saving...')}</p>
-        </div>
-      )}
-
-      {/* Success State */}
-      {uploadState === 'success' && result && (
-        <>
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="flex-1">
-                <h4 className="font-medium text-green-800">
-                  {t('dataHub.inventory.successTitle', 'Upload Successful')}
-                </h4>
-                <div className="mt-2 space-y-1 text-sm text-green-700">
-                  <p>{result.lots_created} {t('dataHub.inventory.lotsCreated', 'lots created')}</p>
-                  <p>{result.unique_products} {t('dataHub.inventory.productsUpdated', 'products updated')}</p>
-                  <p>{result.total_m2_available.toLocaleString()} m² {t('dataHub.inventory.available', 'available')}</p>
-                  <p className="text-green-800 font-medium">
-                    {t('dataHub.inventory.matchRate', { rate: result.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
-                  </p>
+        {/* Success State */}
+        {uploadState === 'success' && result && (
+          <>
+            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-1">
+                  <h4 className="font-medium text-green-800">
+                    {t('dataHub.inventory.successTitle', 'Upload Successful')}
+                  </h4>
+                  <div className="mt-2 space-y-1 text-sm text-green-700">
+                    <p>{result.lots_created} {t('dataHub.inventory.lotsCreated', 'lots created')}</p>
+                    <p>{result.unique_products} {t('dataHub.inventory.productsUpdated', 'products updated')}</p>
+                    <p>{result.total_m2_available.toLocaleString()} m² {t('dataHub.inventory.available', 'available')}</p>
+                    <p className="text-green-800 font-medium">
+                      {t('dataHub.inventory.matchRate', { rate: result.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <button
-            onClick={handleReset}
-            className="mt-4 w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
-          >
-            {t('dataHub.uploadAnother')}
-          </button>
-        </>
-      )}
+            <button
+              onClick={handleModalClose}
+              className="mt-4 w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+            >
+              {t('dataHub.uploadAnother')}
+            </button>
+          </>
+        )}
 
-      {/* Error State */}
-      {uploadState === 'error' && (
-        <>
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <h4 className="font-medium text-red-800">{t('dataHub.uploadFailed', 'Upload Failed')}</h4>
-            <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
-          </div>
-          <button
-            onClick={handleReset}
-            className="mt-4 w-full px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-          >
-            {t('common.tryAgain', 'Try Again')}
-          </button>
-        </>
-      )}
+        {/* Error State */}
+        {uploadState === 'error' && (
+          <>
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <h4 className="font-medium text-red-800">{t('dataHub.uploadFailed', 'Upload Failed')}</h4>
+              <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
+            </div>
+            <button
+              onClick={handleReset}
+              className="mt-4 w-full px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              {t('common.tryAgain', 'Try Again')}
+            </button>
+          </>
+        )}
+      </UploadPreviewModal>
     </div>
   );
 }

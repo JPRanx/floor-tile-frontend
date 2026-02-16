@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { boatsApi } from '../requests/boats';
 import type { BoatSchedule, BoatStatus } from '../requests/boats';
 import { BoatTable } from '../components/BoatTable';
-import { BoatUploadModal } from '../components/BoatUploadModal';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function Boats() {
@@ -11,7 +11,6 @@ export function Boats() {
   const [boats, setBoats] = useState<BoatSchedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
     loadBoats();
@@ -90,25 +89,12 @@ export function Boats() {
             {t('boats.subtitle')}
           </p>
         </div>
-        <button
-          onClick={() => setShowUploadModal(true)}
+        <Link
+          to="/data-hub"
           className="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
         >
-          <svg
-            className="w-5 h-5 mr-2"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-            />
-          </svg>
-          {t('boats.uploadTiba')}
-        </button>
+          {t('boats.uploadTiba')} →
+        </Link>
       </div>
 
       {/* Summary Cards */}
@@ -140,12 +126,6 @@ export function Boats() {
         <BoatTable boats={boats} onStatusChange={handleStatusChange} />
       </div>
 
-      {/* Upload Modal */}
-      <BoatUploadModal
-        isOpen={showUploadModal}
-        onClose={() => setShowUploadModal(false)}
-        onSuccess={handleUploadSuccess}
-      />
     </div>
   );
 }

@@ -6,7 +6,6 @@ import type { StockoutSummary } from '../requests/dashboard';
 import { inventoryApi } from '../requests/inventory';
 import { productsApi } from '../requests/products';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { InventoryUploadModal } from '../components/InventoryUploadModal';
 import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
 import { StockCoverage } from '../components/shared';
 import { formatDateUTC } from '../utils/dateUtils';
@@ -17,7 +16,6 @@ export function Dashboard() {
   const [data, setData] = useState<StockoutSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
   const [lastInventoryUpdate, setLastInventoryUpdate] = useState<string | null>(null);
   const [liquidationIds, setLiquidationIds] = useState<Set<string>>(new Set());
 
@@ -168,12 +166,12 @@ export function Dashboard() {
             <span className="text-lg">📦</span>
             {t('dashboard.warehouseStatus')}
           </h2>
-          <button
-            onClick={() => setInventoryModalOpen(true)}
+          <Link
+            to="/data-hub"
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/20 transition-colors"
           >
-            {t('inventory.uploadTitle')}
-          </button>
+            {t('inventory.uploadTitle')} →
+          </Link>
         </div>
         <div className="flex flex-col md:flex-row md:items-center gap-4">
           <div className="flex-1">
@@ -358,14 +356,6 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* Inventory Upload Modal */}
-      <InventoryUploadModal
-        isOpen={inventoryModalOpen}
-        onClose={() => setInventoryModalOpen(false)}
-        onSuccess={() => {
-          loadData(); // Refresh dashboard data after inventory upload
-        }}
-      />
     </div>
   );
 }

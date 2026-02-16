@@ -702,6 +702,11 @@
   "dataHub": {
     "title": "Data Hub",
     "subtitle": "Upload daily sales and inventory data",
+    "sections": {
+      "sales": "Sales",
+      "inventory": "Inventory",
+      "logistics": "Logistics"
+    },
     "systemHealth": "System Health",
     "fresh": "Fresh",
     "stale": "Needs update",
