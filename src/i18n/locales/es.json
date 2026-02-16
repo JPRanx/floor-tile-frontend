@@ -899,7 +899,24 @@
       "inventory": "Inventario y Alertas",
       "liquidation": "Liquidación",
       "production": "Producción",
-      "container": "Contenedor"
+      "container": "Contenedor",
+      "shipping_costs": "Costos de Envío"
     }
+  },
+  "shippingEstimate": {
+    "title": "Estimación de Envío",
+    "containers": "Contenedores",
+    "full": "llenos",
+    "at": "al",
+    "containerCosts": "Costos por contenedor",
+    "blCosts": "Costos por BL",
+    "totalCost": "Costo total estimado",
+    "overheadPerM2": "Overhead por m²",
+    "wellUtilized": "Contenedores bien aprovechados",
+    "partialFill": "Parcialmente lleno",
+    "lowFill": "Desperdicio significativo",
+    "containerPartial": "Contenedor {{num}} está al {{pct}}%",
+    "addToOptimize": "Agrega {{m2}} m² para llenar → reduce overhead a ${{savings}}/m²",
+    "save": "ahorro"
   }
 }

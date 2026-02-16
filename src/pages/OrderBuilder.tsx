@@ -20,6 +20,7 @@ import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
 import { OrderBuilderStrategy } from '../components/OrderBuilderStrategy';
 import { OrderBuilderProductCard } from '../components/OrderBuilderProductCard';
 import { OrderBuilderSummary } from '../components/OrderBuilderSummary';
+import { ShippingEstimate } from '../components/ShippingEstimate';
 import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
 import { UnableToShipAlert } from '../components/UnableToShipAlert';
 import { ExpectedDemandSection } from '../components/ExpectedDemandSection';
@@ -1014,6 +1015,15 @@ export function OrderBuilder() {
 
             {/* 2. Order Summary Card */}
             <OrderBuilderSummary summary={summary} />
+
+            {/* 2b. Shipping Estimate */}
+            {data?.shipping_cost_config && (
+              <ShippingEstimate
+                totalM2={Number(summary.total_m2)}
+                costConfig={data.shipping_cost_config}
+                numBLs={numBLs}
+              />
+            )}
 
             {/* 3. Alerts */}
             <CallBeforeOrderingAlert

@@ -4,7 +4,7 @@ import { configApi } from '../requests/config';
 import type { ConfigResponse, ProductTypeConfig, ProductTypeCreate } from '../requests/config';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
-const CATEGORY_ORDER = ['shipping', 'warehouse', 'inventory', 'liquidation', 'production', 'container'];
+const CATEGORY_ORDER = ['shipping', 'shipping_costs', 'warehouse', 'inventory', 'liquidation', 'production', 'container'];
 
 const EMPTY_NEW_TYPE: ProductTypeCreate = {
   category_group: '',
@@ -156,6 +156,12 @@ export function ConfigPage() {
       liquidation_no_sales_days: 'liquidation', liquidation_extreme_days_min: 'liquidation',
       production_buffer_days: 'production', monthly_production_limit_m2: 'production',
       container_unload_hours: 'container',
+      freight_per_container_usd: 'shipping_costs',
+      destination_per_container_usd: 'shipping_costs',
+      trucking_per_container_usd: 'shipping_costs',
+      other_per_container_usd: 'shipping_costs',
+      bl_fixed_costs_usd: 'shipping_costs',
+      m2_per_container: 'shipping_costs',
     };
 
     for (const [key, value] of Object.entries(config.global)) {

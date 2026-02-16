@@ -579,6 +579,16 @@ export interface LiquidationClearanceProduct {
   inactive_date: string | null;
 }
 
+export interface ShippingCostConfig {
+  freight_per_container_usd: number;
+  destination_per_container_usd: number;
+  trucking_per_container_usd: number;
+  other_per_container_usd: number;
+  bl_fixed_costs_usd: number;
+  m2_per_container: number;
+  per_container_total_usd: number;
+}
+
 export interface OrderBuilderResponse {
   // Boat info
   boat: OrderBuilderBoat;
@@ -626,6 +636,9 @@ export interface OrderBuilderResponse {
 
   // Liquidation clearance (deactivated products with factory stock)
   liquidation_clearance: LiquidationClearanceProduct[];
+
+  // Shipping cost config (for shipping estimate calculations)
+  shipping_cost_config?: ShippingCostConfig;
 }
 
 // Unable to Ship items (products that need ordering but can't ship)
