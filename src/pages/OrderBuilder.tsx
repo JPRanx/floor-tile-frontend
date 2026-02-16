@@ -153,7 +153,7 @@ export function OrderBuilder() {
       const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId });
       setData(result);
       // Flatten all products into a single array for local state
-      // Initialize selected_m2 from selected_pallets for two-way sync
+      // Initialize selected_m2 from backend Decimal value (avoids JS float drift)
       const allProducts: OrderBuilderProductWithM2[] = [
         ...result.high_priority,
         ...result.consider,
@@ -161,7 +161,7 @@ export function OrderBuilder() {
         ...result.your_call,
       ].map((p) => ({
         ...p,
-        selected_m2: p.selected_pallets * M2_PER_PALLET,
+        selected_m2: p.final_selected_m2,
       }));
       setProducts(allProducts);
 
@@ -306,7 +306,7 @@ export function OrderBuilder() {
         excluded_skus: Array.from(removedSkus),
       });
       setData(result);
-      // Reset local state with new products
+      // Reset local state with new products (use backend Decimal value)
       const allProducts: OrderBuilderProductWithM2[] = [
         ...result.high_priority,
         ...result.consider,
@@ -314,7 +314,7 @@ export function OrderBuilder() {
         ...result.your_call,
       ].map((p) => ({
         ...p,
-        selected_m2: p.selected_pallets * M2_PER_PALLET,
+        selected_m2: p.final_selected_m2,
       }));
       setProducts(allProducts);
       // Clear removed products after successful recalculate
