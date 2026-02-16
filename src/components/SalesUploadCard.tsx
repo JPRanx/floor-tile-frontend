@@ -15,7 +15,7 @@ interface SalesUploadCardProps {
 
 export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SalesUploadCardProps) {
   const { t, i18n } = useTranslation();
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [preview, setPreview] = useState<SalesPreview | null>(null);

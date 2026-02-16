@@ -1,6 +1,4 @@
 import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-
 interface UploadPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -9,7 +7,6 @@ interface UploadPreviewModalProps {
 }
 
 export function UploadPreviewModal({ isOpen, onClose, title, children }: UploadPreviewModalProps) {
-  const { t } = useTranslation();
 
   // Lock body scroll when modal is open
   useEffect(() => {

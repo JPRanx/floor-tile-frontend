@@ -46,10 +46,6 @@ export function Boats() {
     }
   };
 
-  const handleUploadSuccess = () => {
-    loadBoats();
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">

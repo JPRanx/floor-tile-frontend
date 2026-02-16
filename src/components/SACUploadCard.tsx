@@ -15,7 +15,7 @@ interface SACUploadCardProps {
 
 export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SACUploadCardProps) {
   const { t, i18n } = useTranslation();
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [preview, setPreview] = useState<SACPreview | null>(null);
