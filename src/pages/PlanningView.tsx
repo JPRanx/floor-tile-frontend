@@ -121,7 +121,7 @@ export function PlanningView() {
 
   return (
     <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         {/* Page header */}
         <div>
           <h1 className="text-2xl font-bold text-white">
@@ -174,7 +174,7 @@ export function PlanningView() {
 
         {/* Boat cards grid */}
         {!horizonLoading && !horizonError && horizon && horizon.projections.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {horizon.projections.map((projection) => (
               <BoatCard
                 key={projection.boat_id}

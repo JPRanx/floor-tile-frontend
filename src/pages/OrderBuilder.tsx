@@ -203,7 +203,7 @@ export function OrderBuilder() {
         ...result.your_call,
       ].map((p) => ({
         ...p,
-        selected_m2: p.full_calculation_breakdown?.selection?.final_selected_m2 ?? p.selected_pallets * M2_PER_PALLET,
+        selected_m2: Number(p.full_calculation_breakdown?.selection?.final_selected_m2 ?? p.selected_pallets * M2_PER_PALLET),
       }));
       setProducts(allProducts);
 
@@ -356,7 +356,7 @@ export function OrderBuilder() {
         ...result.your_call,
       ].map((p) => ({
         ...p,
-        selected_m2: p.full_calculation_breakdown?.selection?.final_selected_m2 ?? p.selected_pallets * M2_PER_PALLET,
+        selected_m2: Number(p.full_calculation_breakdown?.selection?.final_selected_m2 ?? p.selected_pallets * M2_PER_PALLET),
       }));
       setProducts(allProducts);
       // Clear removed products after successful recalculate

@@ -47,13 +47,15 @@ export function StickyShipmentBar({
   return (
     <div
       className={`
-        fixed bottom-0 left-0 right-0 z-40
-        bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50
-        transition-transform duration-300 ease-in-out
-        ${isVisible ? 'translate-y-0' : 'translate-y-full'}
+        fixed bottom-4 left-1/2 -translate-x-1/2 z-40
+        w-[calc(100%-2rem)] max-w-7xl
+        bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-2xl
+        shadow-2xl shadow-black/40
+        transition-all duration-300 ease-in-out
+        ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-[calc(100%+2rem)] opacity-0'}
       `}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+      <div className="px-4 sm:px-6 lg:px-8 py-3">
         <div className="flex items-center justify-between gap-4">
           {/* Stats section */}
           <div className="flex items-center flex-wrap gap-y-1 text-sm text-slate-300 min-w-0">

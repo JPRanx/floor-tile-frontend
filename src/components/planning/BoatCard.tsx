@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoatProjection, DraftStatus } from '../../requests/planning';
+import type { BoatProjection, DraftStatus, ProductProjection } from '../../requests/planning';
 import { ConfidenceDots } from './ConfidenceDots';
 
 interface BoatCardProps {
@@ -34,8 +35,103 @@ const DRAFT_BADGE_CONFIG: Record<DraftStatus, { label: string; classes: string }
   },
 };
 
+const MAX_VISIBLE_PRODUCTS = 4;
+
+function ProductList({
+  products,
+  showAll,
+  onToggle,
+}: {
+  products: ProductProjection[];
+  showAll: boolean;
+  onToggle: () => void;
+}) {
+  // Show critical + urgent always; rest behind toggle
+  const priorityProducts = products.filter(
+    (p) => p.urgency === 'critical' || p.urgency === 'urgent'
+  );
+  const otherProducts = products.filter(
+    (p) => p.urgency !== 'critical' && p.urgency !== 'urgent'
+  );
+
+  const visiblePriority = priorityProducts;
+  const visibleOthers = showAll ? otherProducts : otherProducts.slice(0, Math.max(0, MAX_VISIBLE_PRODUCTS - priorityProducts.length));
+  const hiddenCount = showAll ? 0 : otherProducts.length - visibleOthers.length;
+
+  return (
+    <div className="space-y-1">
+      <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">
+        Productos
+      </div>
+      <div className="space-y-0.5">
+        {visiblePriority.map((p) => (
+          <ProductRow key={p.product_id} product={p} />
+        ))}
+        {visibleOthers.map((p) => (
+          <ProductRow key={p.product_id} product={p} />
+        ))}
+      </div>
+      {hiddenCount > 0 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          + {hiddenCount} mas...
+        </button>
+      )}
+      {showAll && otherProducts.length > MAX_VISIBLE_PRODUCTS - priorityProducts.length && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+          className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+        >
+          Ver menos
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ProductRow({ product }: { product: ProductProjection }) {
+  return (
+    <div className="flex items-center justify-between gap-2 py-0.5">
+      <div className="flex items-center gap-1.5 min-w-0">
+        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${URGENCY_DOT[product.urgency] || 'bg-slate-500'}`} />
+        <span className={`text-xs truncate ${URGENCY_TEXT[product.urgency] || 'text-slate-400'}`}>
+          {product.sku}
+        </span>
+      </div>
+      {product.suggested_pallets > 0 && (
+        <span className="text-[11px] text-slate-500 flex-shrink-0">
+          {product.suggested_pallets}p
+        </span>
+      )}
+    </div>
+  );
+}
+
+const URGENCY_DOT: Record<string, string> = {
+  critical: 'bg-red-400',
+  urgent: 'bg-orange-400',
+  soon: 'bg-amber-400',
+  ok: 'bg-emerald-400',
+};
+
+const URGENCY_TEXT: Record<string, string> = {
+  critical: 'text-red-300',
+  urgent: 'text-orange-300',
+  soon: 'text-amber-300',
+  ok: 'text-slate-400',
+};
+
 export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
   const { t } = useTranslation();
+  const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
   const urgency = projection.urgency_breakdown;
 
@@ -90,32 +186,14 @@ export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
           {!isActive && <ConfidenceDots level={projection.confidence} />}
         </div>
 
-        {/* Urgency breakdown */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-          <span className="text-slate-500 font-medium">
-            {t('planning.urgency', 'Urgencia')}:
-          </span>
-          {urgency.critical > 0 && (
-            <span className="text-red-400">
-              {'\u{1F534}'} {urgency.critical} {t('planning.critical', 'critico')}
-            </span>
-          )}
-          {urgency.urgent > 0 && (
-            <span className="text-orange-400">
-              {'\u{1F7E0}'} {urgency.urgent} {t('planning.urgent', 'urgente')}
-            </span>
-          )}
-          {urgency.soon > 0 && (
-            <span className="text-amber-400">
-              {'\u{1F7E1}'} {urgency.soon} {t('planning.soon', 'pronto')}
-            </span>
-          )}
-          {urgency.ok > 0 && (
-            <span className="text-emerald-400">
-              {'\u{1F7E2}'} {urgency.ok} {t('planning.ok', 'ok')}
-            </span>
-          )}
-        </div>
+        {/* Product list */}
+        {projection.product_details.length > 0 && (
+          <ProductList
+            products={projection.product_details}
+            showAll={showAllProducts}
+            onToggle={() => setShowAllProducts(!showAllProducts)}
+          />
+        )}
       </div>
 
       {/* Footer: draft status + drill-in */}

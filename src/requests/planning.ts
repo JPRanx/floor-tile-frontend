@@ -10,6 +10,18 @@ export interface UrgencyBreakdown {
   ok: number;
 }
 
+export interface ProductProjection {
+  product_id: string;
+  sku: string;
+  daily_velocity_m2: number;
+  current_stock_m2: number;
+  projected_stock_m2: number;
+  days_of_stock_at_arrival: number;
+  urgency: 'critical' | 'urgent' | 'soon' | 'ok';
+  coverage_gap_m2: number;
+  suggested_pallets: number;
+}
+
 export interface BoatProjection {
   boat_id: string;
   boat_name: string;
@@ -24,6 +36,7 @@ export interface BoatProjection {
   draft_status: DraftStatus | null;
   draft_id: string | null;
   is_active: boolean;
+  product_details: ProductProjection[];
 }
 
 export interface PlanningHorizonResponse {
