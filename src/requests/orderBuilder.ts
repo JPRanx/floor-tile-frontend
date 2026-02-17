@@ -640,6 +640,20 @@ export interface OrderBuilderResponse {
 
   // Shipping cost config (for shipping estimate calculations)
   shipping_cost_config?: ShippingCostConfig;
+
+  // V2: Factory-scoped fields (present when factory_id query param is used)
+  factory_id?: string;
+  factory_name?: string;
+  factory_timeline?: {
+    milestones: Array<{
+      key: string;
+      label: string;
+      date: string;
+      passed: boolean;
+      is_current: boolean;
+    }>;
+    current_milestone: string;
+  };
 }
 
 // Unable to Ship items (products that need ordering but can't ship)

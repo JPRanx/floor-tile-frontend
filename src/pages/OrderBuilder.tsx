@@ -193,8 +193,8 @@ export function OrderBuilder() {
       const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId, factory_id: selectedFactoryId || undefined });
       setData(result);
       // V2: Extract factory timeline if present
-      if ((result as Record<string, unknown>).factory_timeline) {
-        setFactoryTimeline((result as Record<string, unknown>).factory_timeline as typeof factoryTimeline);
+      if (result.factory_timeline) {
+        setFactoryTimeline(result.factory_timeline);
       }
       // Flatten all products into a single array for local state
       // Initialize selected_m2 from backend Decimal value (avoids JS float drift)
