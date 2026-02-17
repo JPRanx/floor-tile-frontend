@@ -17,7 +17,7 @@ import type { WarehouseOrderItemCreate, WarehouseOrder } from '../requests/wareh
 import type { BoatSchedule } from '../requests/boats';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
-import { OrderBuilderProductCard } from '../components/OrderBuilderProductCard';
+
 import { OrderBuilderSummary } from '../components/OrderBuilderSummary';
 import { ShippingEstimate } from '../components/ShippingEstimate';
 import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
@@ -70,13 +70,8 @@ export function OrderBuilder() {
   // Uses extended type with selected_m2 for two-way pallet/m² sync
   const [products, setProducts] = useState<OrderBuilderProductWithM2[]>([]);
 
-  // Expanded state for sections
-  const [expandedSections, setExpandedSections] = useState({
-    high_priority: true,
-    consider: true,
-    well_covered: false,
-    your_call: false,
-  });
+
+
 
   // Track if boats have been loaded
   const [boatsLoaded, setBoatsLoaded] = useState(false);
@@ -92,8 +87,6 @@ export function OrderBuilder() {
   const [blLoading, setBLLoading] = useState(false);
   const [blExporting, setBLExporting] = useState(false);
 
-  // View mode: 'priority' (original) vs 'sections' (three-section view)
-  const [viewMode, setViewMode] = useState<'priority' | 'sections'>('sections');
 
   // Removed products tracking (for recalculate feature)
   const [removedSkus, setRemovedSkus] = useState<Set<string>>(new Set());
@@ -847,13 +840,6 @@ export function OrderBuilder() {
     return alertList;
   })();
 
-  // Group products by priority for display
-  const productsByPriority = {
-    high_priority: products.filter((p) => p.priority === 'HIGH_PRIORITY'),
-    consider: products.filter((p) => p.priority === 'CONSIDER'),
-    well_covered: products.filter((p) => p.priority === 'WELL_COVERED'),
-    your_call: products.filter((p) => p.priority === 'YOUR_CALL'),
-  };
 
   // V2: Show Planning View if no factory_id in URL
   if (!isDetailView) {
@@ -890,49 +876,6 @@ export function OrderBuilder() {
 
   if (!data) return null;
 
-  const toggleSection = (section: keyof typeof expandedSections) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
-  const sectionConfig: {
-    key: keyof typeof productsByPriority;
-    titleKey: string;
-    subtitleKey: string;
-    bgColor: string;
-    accentColor: string;
-  }[] = [
-    {
-      key: 'high_priority',
-      titleKey: 'orderBuilder.highPriority',
-      subtitleKey: 'orderBuilder.highPriorityDesc',
-      bgColor: 'bg-red-900/30 border-red-500/50',
-      accentColor: 'text-red-400',
-    },
-    {
-      key: 'consider',
-      titleKey: 'orderBuilder.consider',
-      subtitleKey: 'orderBuilder.considerDesc',
-      bgColor: 'bg-orange-900/30 border-orange-500/50',
-      accentColor: 'text-orange-400',
-    },
-    {
-      key: 'well_covered',
-      titleKey: 'orderBuilder.wellCovered',
-      subtitleKey: 'orderBuilder.wellCoveredDesc',
-      bgColor: 'bg-green-900/30 border-green-500/50',
-      accentColor: 'text-green-400',
-    },
-    {
-      key: 'your_call',
-      titleKey: 'orderBuilder.yourCall',
-      subtitleKey: 'orderBuilder.yourCallDesc',
-      bgColor: 'bg-slate-800/50 border-slate-600/50',
-      accentColor: 'text-slate-400',
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
@@ -989,51 +932,23 @@ export function OrderBuilder() {
           />
         )}
 
-        {/* View Mode Toggle */}
+        {/* Section summary badges */}
         {!showBLView && (
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 bg-slate-800/50 rounded-lg p-1 border border-slate-700/50">
-              <button
-                onClick={() => setViewMode('sections')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'sections'
-                    ? 'bg-slate-700 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {t('orderBuilder.threeSectionView', 'Three-Section View')}
-              </button>
-              <button
-                onClick={() => setViewMode('priority')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                  viewMode === 'priority'
-                    ? 'bg-slate-700 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                {t('orderBuilder.priorityView', 'Priority View')}
-              </button>
-            </div>
-
-            {/* Section summary badges */}
-            {viewMode === 'sections' && (
-              <div className="flex items-center gap-3">
-                {data.warehouse_order_summary && data.warehouse_order_summary.product_count > 0 && (
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    {t('orderBuilder.warehouseOrder', 'Warehouse')}: {data.warehouse_order_summary.product_count}
-                  </span>
-                )}
-                {data.add_to_production_summary && data.add_to_production_summary.product_count > 0 && (
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                    {t('orderBuilder.addToProduction', 'Add to Production')}: {data.add_to_production_summary.product_count}
-                  </span>
-                )}
-                {data.factory_request_summary && data.factory_request_summary.product_count > 0 && (
-                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
-                    {t('orderBuilder.factoryRequest', 'Factory Request')}: {data.factory_request_summary.product_count}
-                  </span>
-                )}
-              </div>
+          <div className="flex items-center gap-3">
+            {data.warehouse_order_summary && data.warehouse_order_summary.product_count > 0 && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                {t('orderBuilder.warehouseOrder', 'Warehouse')}: {data.warehouse_order_summary.product_count}
+              </span>
+            )}
+            {data.add_to_production_summary && data.add_to_production_summary.product_count > 0 && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                {t('orderBuilder.addToProduction', 'Add to Production')}: {data.add_to_production_summary.product_count}
+              </span>
+            )}
+            {data.factory_request_summary && data.factory_request_summary.product_count > 0 && (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
+                {t('orderBuilder.factoryRequest', 'Factory Request')}: {data.factory_request_summary.product_count}
+              </span>
             )}
           </div>
         )}
@@ -1109,96 +1024,31 @@ export function OrderBuilder() {
             )}
 
             {/* === THREE-SECTION VIEW === */}
-            {viewMode === 'sections' && (
-              <div className="space-y-6">
-                {/* Section 1: Warehouse Order — Ship from SIESA now */}
-                <WarehouseOrderSection
-                  summary={data.warehouse_order_summary}
-                  products={products}
-                  onToggleSelect={handleToggleSelect}
-                  onQuantityChange={handleQuantityChange}
-                  onM2Change={handleM2Change}
-                  onAllocateToBLs={handleAllocateToBLs}
-                  blLoading={blLoading}
-                  onRemove={handleRemoveProduct}
-                  removedSkus={removedSkus}
-                />
+            <div className="space-y-6">
+              {/* Section 1: Warehouse Order — Ship from SIESA now */}
+              <WarehouseOrderSection
+                summary={data.warehouse_order_summary}
+                products={products}
+                onToggleSelect={handleToggleSelect}
+                onQuantityChange={handleQuantityChange}
+                onM2Change={handleM2Change}
+                onAllocateToBLs={handleAllocateToBLs}
+                blLoading={blLoading}
+                onRemove={handleRemoveProduct}
+                removedSkus={removedSkus}
+              />
 
-                {/* Section 2: Add to Production — Piggyback on scheduled items */}
-                <AddToProductionSection
-                  summary={data.add_to_production_summary}
-                />
+              {/* Section 2: Add to Production — Piggyback on scheduled items */}
+              <AddToProductionSection
+                summary={data.add_to_production_summary}
+              />
 
-                {/* Section 3: Factory Request — New production requests */}
-                <FactoryRequestSection
-                  summary={data.factory_request_summary}
-                />
-              </div>
-            )}
+              {/* Section 3: Factory Request — New production requests */}
+              <FactoryRequestSection
+                summary={data.factory_request_summary}
+              />
+            </div>
 
-            {/* === PRIORITY VIEW (Original) === */}
-            {viewMode === 'priority' && sectionConfig.map(({ key, titleKey, subtitleKey, bgColor, accentColor }) => {
-              const sectionProducts = productsByPriority[key];
-              const selectedCount = sectionProducts.filter((p) => p.is_selected).length;
-              const isExpanded = expandedSections[key];
-
-              return (
-                <div
-                  key={key}
-                  className={`rounded-xl border backdrop-blur-xl transition-all duration-300 ${bgColor}`}
-                >
-                  {/* Section Header */}
-                  <button
-                    onClick={() => toggleSection(key)}
-                    className="w-full px-5 py-4 flex items-center justify-between text-left hover:bg-white/5 transition-colors rounded-t-xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-8 rounded-full ${accentColor.replace('text-', 'bg-')}`} />
-                      <div>
-                        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-                          {t(titleKey)}
-                          <span className="text-slate-500 font-normal">({sectionProducts.length})</span>
-                          {selectedCount > 0 && (
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${accentColor} bg-white/10`}>
-                              {selectedCount} {t('common.selected')}
-                            </span>
-                          )}
-                        </h2>
-                        <p className="text-sm text-slate-400 mt-0.5">{t(subtitleKey)}</p>
-                      </div>
-                    </div>
-                    <span className={`text-slate-400 text-sm transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
-                      ▼
-                    </span>
-                  </button>
-
-                  {/* Section Content */}
-                  {isExpanded && sectionProducts.length > 0 && (
-                    <div className="px-5 pb-5 space-y-3 border-t border-slate-700/30">
-                      <div className="pt-4 space-y-3">
-                        {sectionProducts.map((product) => (
-                          <OrderBuilderProductCard
-                            key={`${key}-${product.product_id}`}
-                            product={product}
-                            onToggleSelect={handleToggleSelect}
-                            onRemove={handleRemoveProduct}
-                            isRemoved={removedSkus.has(product.sku)}
-                            onQuantityChange={handleQuantityChange}
-                            onM2Change={handleM2Change}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {isExpanded && sectionProducts.length === 0 && (
-                    <div className="px-5 pb-5 text-sm text-slate-500 border-t border-slate-700/30 pt-4">
-                      {t('common.noProductsCategory')}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
 
             {/* Liquidation Clearance — deactivated products with factory stock */}
             {data.liquidation_clearance && data.liquidation_clearance.length > 0 && (
