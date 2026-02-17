@@ -129,7 +129,8 @@ export function PlanningView() {
           </h1>
           {selectedFactory && (
             <p className="mt-1 text-slate-400">
-              {t('planning.subtitle', 'Horizonte de 3 meses para {{factory}}', {
+              {t('planning.subtitle', 'Horizonte de {{months}} meses para {{factory}}', {
+                months: horizon?.horizon_months ?? 3,
                 factory: selectedFactory.name,
               })}
             </p>
