@@ -464,7 +464,9 @@
     "warehouseAfter": "Almacén (después de entrega)",
     "current": "Actual",
     "after": "Después",
-    "totalOrder": "Pedido Total"
+    "totalOrder": "Pedido Total",
+    "expectedDemand": "Demanda esperada",
+    "customersDueSoon": "Clientes próximos"
   },
   "orderBuilderProduct": {
     "pallets": "paletas",
@@ -937,6 +939,12 @@
       "low": "Baja",
       "very_low": "Muy baja"
     },
+    "previewModal": {
+      "banner": "PROYECCIÓN — Datos estimados basados en velocidad actual de ventas",
+      "close": "Cerrar",
+      "goToDetail": "Ir al Detalle →"
+    },
+    "comingSoonTooltip": "Próximamente — Esta fábrica aún no está activa en el sistema",
     "backToPlanning": "Volver a Planificación",
     "draftSaving": "Guardando borrador...",
     "draftSaved": "✓ Borrador guardado",
@@ -949,6 +957,30 @@
       "arrival": "Llegada",
       "inWarehouse": "En Almacén",
       "youAreHere": "AQUÍ"
+    },
+    "shipmentBar": {
+      "pallets": "paletas",
+      "containers": "cont.",
+      "estimated": "est.",
+      "allocateBLs": "Asignar BLs",
+      "allocating": "Asignando...",
+      "export": "Exportar",
+      "exporting": "Exportando..."
+    },
+    "draftChanges": {
+      "title": "{{count}} cambios desde tu ultima visita",
+      "quantities": "cantidades",
+      "new": "nuevo",
+      "removed": "eliminado",
+      "urgency": "urgencia",
+      "acceptAll": "Aceptar todos",
+      "keepDraft": "Mantener borrador",
+      "quantityBadge": "Seleccionaste: {{draft}}, Sistema recomienda: {{current}}",
+      "newLabel": "NUEVO",
+      "newDescription": "No estaba en tu borrador",
+      "removedLabel": "ELIMINADO",
+      "removedDescription": "Ya no recomendado",
+      "urgencyBadge": "Urgencia: {{old}} \u2192 {{new}}"
     }
   },
   "shippingEstimate": {

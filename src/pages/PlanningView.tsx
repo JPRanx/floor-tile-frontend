@@ -4,9 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { factoriesApi } from '../requests/factories';
 import type { Factory } from '../requests/factories';
 import { planningApi } from '../requests/planning';
-import type { PlanningHorizonResponse } from '../requests/planning';
+import type { PlanningHorizonResponse, BoatProjection } from '../requests/planning';
 import { FactoryPills } from '../components/planning/FactoryPills';
 import { BoatCard } from '../components/planning/BoatCard';
+import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function PlanningView() {
@@ -22,6 +23,9 @@ export function PlanningView() {
 
   const [factoriesError, setFactoriesError] = useState<string | null>(null);
   const [horizonError, setHorizonError] = useState<string | null>(null);
+
+  // Projected boat preview modal
+  const [previewBoat, setPreviewBoat] = useState<BoatProjection | null>(null);
 
   // Fetch active factories on mount
   useEffect(() => {
@@ -74,6 +78,11 @@ export function PlanningView() {
     if (selectedFactoryId) {
       navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}`);
     }
+  };
+
+  const handlePreview = (boatId: string) => {
+    const projection = horizon?.projections.find((p) => p.boat_id === boatId);
+    if (projection) setPreviewBoat(projection);
   };
 
   const selectedFactory = factories.find((f) => f.id === selectedFactoryId);
@@ -170,6 +179,7 @@ export function PlanningView() {
                 key={projection.boat_id}
                 projection={projection}
                 onDrillIn={handleDrillIn}
+                onPreview={handlePreview}
               />
             ))}
           </div>
@@ -191,6 +201,19 @@ export function PlanningView() {
           </div>
         )}
       </div>
+
+      {/* Projected Boat Preview Modal */}
+      {previewBoat && (
+        <ProjectedBoatPreview
+          isOpen={!!previewBoat}
+          onClose={() => setPreviewBoat(null)}
+          onDrillIn={(boatId) => {
+            setPreviewBoat(null);
+            handleDrillIn(boatId);
+          }}
+          boatProjection={previewBoat}
+        />
+      )}
     </div>
   );
 }

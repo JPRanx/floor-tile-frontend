@@ -17,14 +17,11 @@ import type { WarehouseOrderItemCreate, WarehouseOrder } from '../requests/wareh
 import type { BoatSchedule } from '../requests/boats';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
-import { OrderBuilderStrategy } from '../components/OrderBuilderStrategy';
 import { OrderBuilderProductCard } from '../components/OrderBuilderProductCard';
 import { OrderBuilderSummary } from '../components/OrderBuilderSummary';
 import { ShippingEstimate } from '../components/ShippingEstimate';
 import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
 import { UnableToShipAlert } from '../components/UnableToShipAlert';
-import { ExpectedDemandSection } from '../components/ExpectedDemandSection';
-import { CustomersDueList } from '../components/CustomersDueList';
 import { CallBeforeOrderingAlert } from '../components/CallBeforeOrderingAlert';
 import { BLAllocationView } from '../components/BLAllocationView';
 import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
@@ -42,6 +39,10 @@ import { RecalculateBar } from '../components/RecalculateBar';
 import { StabilityForecastCard } from '../components/StabilityForecastCard';
 import { StabilityForecastModal } from '../components/StabilityForecastModal';
 import { PendingOrdersCard } from '../components/PendingOrdersCard';
+import { StickyShipmentBar } from '../components/planning/StickyShipmentBar';
+import { DraftChangeBanner } from '../components/planning/DraftChangeBanner';
+import { computeDraftDiff } from '../utils/draftDiff';
+import type { DraftChange } from '../utils/draftDiff';
 import {
   M2_PER_PALLET,
   CONTAINER_MAX_PALLETS,
@@ -123,6 +124,10 @@ export function OrderBuilder() {
   // V2: Draft auto-save state
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // V2: Draft change detection
+  const [draftChanges, setDraftChanges] = useState<DraftChange[]>([]);
+  const [draftChangesDismissed, setDraftChangesDismissed] = useState(false);
 
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
@@ -416,18 +421,35 @@ export function OrderBuilder() {
         const draft = await draftsApi.getDraft(selectedBoatId, selectedFactoryId);
         if (draft && draft.items.length > 0) {
           // Restore selections from draft
-          setProducts(prev => prev.map(p => {
-            const draftItem = draft.items.find(d => d.product_id === p.product_id);
-            if (draftItem) {
-              return {
-                ...p,
-                is_selected: true,
-                selected_pallets: draftItem.selected_pallets,
-                selected_m2: draftItem.selected_pallets * M2_PER_PALLET,
-              };
+          setProducts(prev => {
+            const updated = prev.map(p => {
+              const draftItem = draft.items.find(d => d.product_id === p.product_id);
+              if (draftItem) {
+                return {
+                  ...p,
+                  is_selected: true,
+                  selected_pallets: draftItem.selected_pallets,
+                  selected_m2: draftItem.selected_pallets * M2_PER_PALLET,
+                };
+              }
+              return p;
+            });
+
+            // Compute draft changes (diff between draft selections and current OB recommendations)
+            const recommendations = prev.map(p => ({
+              product_id: p.product_id,
+              sku: p.sku,
+              suggested_pallets: p.coverage_gap_pallets || 0,
+              urgency: p.urgency,
+            }));
+            const changes = computeDraftDiff(draft.items, recommendations);
+            if (changes.length > 0) {
+              setDraftChanges(changes);
+              setDraftChangesDismissed(false);
             }
-            return p;
-          }));
+
+            return updated;
+          });
         }
       } catch (err) {
         console.error('Failed to load draft:', err);
@@ -1021,20 +1043,53 @@ export function OrderBuilder() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Products Column (2/3 width on desktop) */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Order Strategy Summary */}
-            <OrderBuilderStrategy reasoning={data.summary_reasoning} />
+            {/* Compact Strategy One-Liner (dissolved from full card) */}
+            {data.summary_reasoning && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-slate-800/30 backdrop-blur-xl rounded-xl border border-slate-700/50">
+                <span className="text-lg">
+                  {data.summary_reasoning.strategy === 'STOCKOUT_PREVENTION' && '\u{1F6E1}\u{FE0F}'}
+                  {data.summary_reasoning.strategy === 'DEMAND_CAPTURE' && '\u{1F4C8}'}
+                  {data.summary_reasoning.strategy === 'BALANCED' && '\u{2696}\u{FE0F}'}
+                </span>
+                <span className="text-sm text-slate-300 flex-1">
+                  {data.summary_reasoning.reasoning?.strategy_sentence || t(`orderBuilder.strategy.${data.summary_reasoning.strategy}`)}
+                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {data.summary_reasoning.critical_count > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                      {data.summary_reasoning.critical_count} {t('orderBuilder.critical')}
+                    </span>
+                  )}
+                  {data.summary_reasoning.urgent_count > 0 && (
+                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400 border border-orange-500/30">
+                      {data.summary_reasoning.urgent_count} {t('orderBuilder.urgent')}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
-            {/* Expected Demand Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <ExpectedDemandSection
-                forecast={demandForecast}
-                loading={demandLoading}
+            {/* Draft Change Flags Banner */}
+            {draftChanges.length > 0 && !draftChangesDismissed && (
+              <DraftChangeBanner
+                changes={draftChanges}
+                onAcceptAll={() => {
+                  // Accept all: reset selections to current OB recommendations
+                  setProducts(prev => prev.map(p => ({
+                    ...p,
+                    selected_pallets: p.coverage_gap_pallets || 0,
+                    selected_m2: (p.coverage_gap_pallets || 0) * M2_PER_PALLET,
+                    is_selected: (p.coverage_gap_pallets || 0) > 0,
+                  })));
+                  setDraftChanges([]);
+                  setDraftChangesDismissed(true);
+                }}
+                onDismiss={() => {
+                  setDraftChangesDismissed(true);
+                }}
               />
-              <CustomersDueList
-                customers={demandForecast?.customers_due_soon || []}
-                loading={demandLoading}
-              />
-            </div>
+            )}
 
             {/* Recalculate Bar - Show when products are removed */}
             {removedSkus.size > 0 && (
@@ -1161,8 +1216,12 @@ export function OrderBuilder() {
               />
             )}
 
-            {/* 2. Order Summary Card */}
-            <OrderBuilderSummary summary={summary} />
+            {/* 2. Order Summary Card (with absorbed demand + customer data) */}
+            <OrderBuilderSummary
+              summary={summary}
+              recommendedDemandM2={demandForecast?.recommended_demand_m2}
+              customersDueSoonCount={demandForecast?.customers_due_soon?.length}
+            />
 
             {/* 2b. Shipping Estimate */}
             {data?.shipping_cost_config && (
@@ -1264,6 +1323,21 @@ export function OrderBuilder() {
           onClose={() => setShowStabilityModal(false)}
         />
       )}
+
+      {/* Sticky Shipment Summary Bar */}
+      <StickyShipmentBar
+        totalPallets={summary.total_pallets}
+        totalM2={summary.total_m2}
+        totalContainers={summary.total_containers}
+        maxContainers={summary.boat_max_containers}
+        totalWeightKg={summary.total_weight_kg}
+        estimatedCostUsd={data?.shipping_cost_config ? Math.round(summary.total_containers * data.shipping_cost_config.per_container_total_usd + numBLs * data.shipping_cost_config.bl_fixed_costs_usd) : null}
+        selectedCount={products.filter(p => p.is_selected && p.selected_pallets > 0).length}
+        onAllocateBLs={handleAllocateToBLs}
+        onExport={handleExport}
+        isExporting={exporting}
+        isBLLoading={blLoading}
+      />
     </div>
   );
 }

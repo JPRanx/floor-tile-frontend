@@ -5,6 +5,7 @@ import { ConfidenceDots } from './ConfidenceDots';
 interface BoatCardProps {
   projection: BoatProjection;
   onDrillIn: (boatId: string) => void;
+  onPreview?: (boatId: string) => void;
 }
 
 function formatDateShort(dateStr: string): string {
@@ -33,7 +34,7 @@ const DRAFT_BADGE_CONFIG: Record<DraftStatus, { label: string; classes: string }
   },
 };
 
-export function BoatCard({ projection, onDrillIn }: BoatCardProps) {
+export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
   const { t } = useTranslation();
   const isActive = projection.is_active;
   const urgency = projection.urgency_breakdown;
@@ -136,7 +137,13 @@ export function BoatCard({ projection, onDrillIn }: BoatCardProps) {
           )}
         </div>
         <button
-          onClick={() => onDrillIn(projection.boat_id)}
+          onClick={() => {
+            if (!isActive && onPreview) {
+              onPreview(projection.boat_id);
+            } else {
+              onDrillIn(projection.boat_id);
+            }
+          }}
           className="
             px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
             bg-indigo-600/20 text-indigo-300 border border-indigo-500/30

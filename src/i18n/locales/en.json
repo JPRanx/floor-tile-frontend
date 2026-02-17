@@ -464,7 +464,9 @@
     "warehouseAfter": "Warehouse (after delivery)",
     "current": "Current",
     "after": "After",
-    "totalOrder": "Total Order"
+    "totalOrder": "Total Order",
+    "expectedDemand": "Expected Demand",
+    "customersDueSoon": "Customers Due Soon"
   },
   "orderBuilderProduct": {
     "pallets": "pallets",
@@ -937,6 +939,12 @@
       "low": "Low",
       "very_low": "Very low"
     },
+    "previewModal": {
+      "banner": "PROJECTION — Estimated data based on current sales velocity",
+      "close": "Close",
+      "goToDetail": "Go to Detail →"
+    },
+    "comingSoonTooltip": "Coming Soon — This factory is not yet active in the system",
     "backToPlanning": "Back to Planning",
     "draftSaving": "Saving draft...",
     "draftSaved": "✓ Draft saved",
@@ -949,6 +957,30 @@
       "arrival": "Arrival",
       "inWarehouse": "In Warehouse",
       "youAreHere": "HERE"
+    },
+    "shipmentBar": {
+      "pallets": "pallets",
+      "containers": "cont.",
+      "estimated": "est.",
+      "allocateBLs": "Allocate BLs",
+      "allocating": "Allocating...",
+      "export": "Export",
+      "exporting": "Exporting..."
+    },
+    "draftChanges": {
+      "title": "{{count}} changes since your last visit",
+      "quantities": "quantities",
+      "new": "new",
+      "removed": "removed",
+      "urgency": "urgency",
+      "acceptAll": "Accept all",
+      "keepDraft": "Keep draft",
+      "quantityBadge": "You selected: {{draft}}, System recommends: {{current}}",
+      "newLabel": "NEW",
+      "newDescription": "Was not in your draft",
+      "removedLabel": "REMOVED",
+      "removedDescription": "No longer recommended",
+      "urgencyBadge": "Urgency: {{old}} \u2192 {{new}}"
     }
   },
   "shippingEstimate": {

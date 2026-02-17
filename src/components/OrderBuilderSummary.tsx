@@ -5,9 +5,11 @@ import { formatM2 } from '../utils/formatters';
 
 interface OrderBuilderSummaryProps {
   summary: SummaryType;
+  recommendedDemandM2?: number;
+  customersDueSoonCount?: number;
 }
 
-export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
+export function OrderBuilderSummary({ summary, recommendedDemandM2, customersDueSoonCount }: OrderBuilderSummaryProps) {
   const { t } = useTranslation();
   const maxPallets = summary.boat_max_containers * 14; // 14 pallets per container
 
@@ -176,6 +178,34 @@ export function OrderBuilderSummary({ summary }: OrderBuilderSummaryProps) {
             </span>
           </div>
         </div>
+
+        {/* Absorbed: Expected Demand + Customers Due */}
+        {(recommendedDemandM2 != null || customersDueSoonCount != null) && (
+          <div className="pt-4 border-t border-slate-700/50 space-y-2">
+            {recommendedDemandM2 != null && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-400 flex items-center gap-1.5">
+                  <span>📈</span>
+                  {t('orderBuilderSummary.expectedDemand', 'Demanda esperada')}
+                </span>
+                <span className="font-semibold text-amber-400">
+                  {formatM2(recommendedDemandM2)} m²
+                </span>
+              </div>
+            )}
+            {customersDueSoonCount != null && customersDueSoonCount > 0 && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-400 flex items-center gap-1.5">
+                  <span>👥</span>
+                  {t('orderBuilderSummary.customersDueSoon', 'Clientes próximos')}
+                </span>
+                <span className="font-semibold text-indigo-400">
+                  {customersDueSoonCount}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
