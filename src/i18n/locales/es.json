@@ -903,6 +903,54 @@
       "shipping_costs": "Costos de Envío"
     }
   },
+  "planning": {
+    "title": "Planificación de Pedidos",
+    "subtitle": "Horizonte de {{months}} meses para {{factory}}",
+    "comingSoon": "Próximamente",
+    "loadError": "Error al cargar datos de planificación",
+    "noFactories": "No hay fábricas configuradas",
+    "noBoats": "Sin barcos en el horizonte",
+    "noBoatsDescription": "No hay barcos programados para los próximos {{months}} meses.",
+    "activeBoat": "Barco activo",
+    "projectedBoat": "Barco proyectado",
+    "departs": "Zarpa",
+    "arrives": "Llega",
+    "pallets": "paletas",
+    "confidence": "Confianza",
+    "urgency": "Urgencia",
+    "critical": "crítico",
+    "urgent": "urgente",
+    "soon": "pronto",
+    "ok": "ok",
+    "drillIn": "Ver detalle",
+    "preview": "Vista previa",
+    "draftStatus": {
+      "drafting": "Borrador",
+      "action_needed": "Acción requerida",
+      "ordered": "Pedido enviado",
+      "confirmed": "Confirmado"
+    },
+    "confidenceLevel": {
+      "very_high": "Muy alta",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja",
+      "very_low": "Muy baja"
+    },
+    "backToPlanning": "Volver a Planificación",
+    "draftSaving": "Guardando borrador...",
+    "draftSaved": "✓ Borrador guardado",
+    "draftError": "Error al guardar borrador",
+    "timeline": {
+      "factoryRequestCutoff": "Solicitud Fábrica",
+      "piggybackCutoff": "Cierre Piggyback",
+      "orderDeadline": "Límite de Pedido",
+      "departure": "Zarpe",
+      "arrival": "Llegada",
+      "inWarehouse": "En Almacén",
+      "youAreHere": "AQUÍ"
+    }
+  },
   "shippingEstimate": {
     "title": "Estimación de Envío",
     "containers": "Contenedores",

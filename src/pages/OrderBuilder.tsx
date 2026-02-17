@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { orderBuilderApi } from '../requests/orderBuilder';
 import type {
@@ -31,6 +31,13 @@ import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
 import { AddToProductionSection } from '../components/AddToProductionSection';
 import { FactoryRequestSection } from '../components/FactoryRequestSection';
 import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { factoriesApi } from '../requests/factories';
+import type { Factory } from '../requests/factories';
+import { draftsApi } from '../requests/drafts';
+import { FactoryPills } from '../components/planning/FactoryPills';
+import { FactoryTimeline } from '../components/planning/FactoryTimeline';
+import { PlanningView } from './PlanningView';
 import { RecalculateBar } from '../components/RecalculateBar';
 import { StabilityForecastCard } from '../components/StabilityForecastCard';
 import { StabilityForecastModal } from '../components/StabilityForecastModal';
@@ -97,6 +104,26 @@ export function OrderBuilder() {
   // Pending warehouse orders state
   const [pendingOrders, setPendingOrders] = useState<WarehouseOrder[]>([]);
 
+  // V2: URL params for factory-scoped mode
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const urlFactoryId = searchParams.get('factory_id');
+  const urlBoatId = searchParams.get('boat_id');
+
+  // V2: If no factory_id in URL, show Planning View
+  const isDetailView = !!urlFactoryId;
+
+  // V2: Factory state
+  const [factories, setFactories] = useState<Factory[]>([]);
+  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(urlFactoryId);
+
+  // V2: Factory timeline from OB response
+  const [factoryTimeline, setFactoryTimeline] = useState<{ milestones: Array<{ key: string; label: string; date: string; passed: boolean; is_current: boolean }>; current_milestone: string } | null>(null);
+
+  // V2: Draft auto-save state
+  const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
     try {
@@ -111,6 +138,19 @@ export function OrderBuilder() {
   useEffect(() => {
     fetchPendingOrders();
   }, [fetchPendingOrders]);
+
+  // V2: Fetch factories on mount
+  useEffect(() => {
+    const fetchFactories = async () => {
+      try {
+        const all = await factoriesApi.getAll();
+        setFactories(all);
+      } catch (err) {
+        console.error('Failed to fetch factories:', err);
+      }
+    };
+    fetchFactories();
+  }, []);
 
   // Handle cancel pending order
   const handleCancelPendingOrder = async (orderId: string) => {
@@ -133,7 +173,7 @@ export function OrderBuilder() {
         setAvailableBoats(boats);
         // Default to first boat if none selected
         if (boats.length > 0 && !selectedBoatId) {
-          setSelectedBoatId(boats[0].id);
+          setSelectedBoatId(urlBoatId || boats[0].id);
         }
       } catch (err) {
         console.error('Failed to fetch boats:', err);
@@ -150,8 +190,12 @@ export function OrderBuilder() {
     try {
       setLoading(true);
       setError(null);
-      const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId });
+      const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId, factory_id: selectedFactoryId || undefined });
       setData(result);
+      // V2: Extract factory timeline if present
+      if ((result as Record<string, unknown>).factory_timeline) {
+        setFactoryTimeline((result as Record<string, unknown>).factory_timeline as typeof factoryTimeline);
+      }
       // Flatten all products into a single array for local state
       // Initialize selected_m2 from backend Decimal value (avoids JS float drift)
       const allProducts: OrderBuilderProductWithM2[] = [
@@ -328,6 +372,75 @@ export function OrderBuilder() {
     } finally {
       setRecalculating(false);
     }
+  };
+
+  // V2: Auto-save draft when products change (debounced)
+  useEffect(() => {
+    if (!isDetailView || !selectedFactoryId || !selectedBoatId || products.length === 0) return;
+
+    if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+
+    draftSaveTimerRef.current = setTimeout(async () => {
+      try {
+        setDraftSaveStatus('saving');
+        const items = products
+          .filter(p => p.is_selected && p.selected_pallets > 0)
+          .map(p => ({
+            product_id: p.product_id,
+            selected_pallets: p.selected_pallets,
+          }));
+        await draftsApi.save({
+          boat_id: selectedBoatId,
+          factory_id: selectedFactoryId,
+          items,
+        });
+        setDraftSaveStatus('saved');
+        setTimeout(() => setDraftSaveStatus('idle'), 2000);
+      } catch {
+        setDraftSaveStatus('error');
+        setTimeout(() => setDraftSaveStatus('idle'), 3000);
+      }
+    }, 1500);
+
+    return () => {
+      if (draftSaveTimerRef.current) clearTimeout(draftSaveTimerRef.current);
+    };
+  }, [products, isDetailView, selectedFactoryId, selectedBoatId]);
+
+  // V2: Load existing draft on detail view mount
+  useEffect(() => {
+    if (!isDetailView || !selectedFactoryId || !selectedBoatId) return;
+
+    const loadDraft = async () => {
+      try {
+        const draft = await draftsApi.getDraft(selectedBoatId, selectedFactoryId);
+        if (draft && draft.items.length > 0) {
+          // Restore selections from draft
+          setProducts(prev => prev.map(p => {
+            const draftItem = draft.items.find(d => d.product_id === p.product_id);
+            if (draftItem) {
+              return {
+                ...p,
+                is_selected: true,
+                selected_pallets: draftItem.selected_pallets,
+                selected_m2: draftItem.selected_pallets * M2_PER_PALLET,
+              };
+            }
+            return p;
+          }));
+        }
+      } catch (err) {
+        console.error('Failed to load draft:', err);
+      }
+    };
+    loadDraft();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDetailView, selectedFactoryId, selectedBoatId, data]); // data dependency ensures products are loaded first
+
+  // V2: Handle factory change from pills
+  const handleFactoryChange = (factoryId: string) => {
+    setSelectedFactoryId(factoryId);
+    navigate(`/order-builder?factory_id=${factoryId}&boat_id=${selectedBoatId || ''}`);
   };
 
   // Calculate freed capacity from removed products
@@ -720,6 +833,11 @@ export function OrderBuilder() {
     your_call: products.filter((p) => p.priority === 'YOUR_CALL'),
   };
 
+  // V2: Show Planning View if no factory_id in URL
+  if (!isDetailView) {
+    return <PlanningView />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
@@ -797,6 +915,33 @@ export function OrderBuilder() {
   return (
     <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
+        {/* V2: Back to Planning */}
+        <button
+          onClick={() => navigate('/order-builder')}
+          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4"
+        >
+          <span>&larr;</span>
+          <span className="text-sm">{t('planning.backToPlanning', 'Volver a Planificaci\u00f3n')}</span>
+        </button>
+
+        {/* V2: Factory Pills */}
+        {factories.length > 0 && (
+          <div className="mb-6">
+            <FactoryPills
+              factories={factories}
+              selectedFactoryId={selectedFactoryId}
+              onSelect={handleFactoryChange}
+            />
+          </div>
+        )}
+
+        {/* V2: Factory Timeline */}
+        {factoryTimeline && (
+          <div className="mb-6">
+            <FactoryTimeline timeline={factoryTimeline} />
+          </div>
+        )}
+
         {/* Header with boat info and BL selector */}
         <OrderBuilderHeader
           boat={data.boat}
@@ -1043,6 +1188,19 @@ export function OrderBuilder() {
               onCancel={handleCancelPendingOrder}
               onRefresh={fetchPendingOrders}
             />
+
+            {/* V2: Draft Status */}
+            {draftSaveStatus !== 'idle' && (
+              <div className={`text-xs px-3 py-1.5 rounded-full ${
+                draftSaveStatus === 'saving' ? 'bg-slate-700/50 text-slate-400' :
+                draftSaveStatus === 'saved' ? 'bg-emerald-500/10 text-emerald-400' :
+                'bg-red-500/10 text-red-400'
+              }`}>
+                {draftSaveStatus === 'saving' && t('planning.draftSaving', 'Guardando borrador...')}
+                {draftSaveStatus === 'saved' && t('planning.draftSaved', '\u2713 Borrador guardado')}
+                {draftSaveStatus === 'error' && t('planning.draftError', 'Error al guardar borrador')}
+              </div>
+            )}
 
             {/* 5. Action Buttons */}
             <div className="flex flex-col gap-3">

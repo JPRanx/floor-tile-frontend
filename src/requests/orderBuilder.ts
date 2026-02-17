@@ -746,6 +746,7 @@ export interface StabilityForecast {
 export interface OrderBuilderParams {
   boat_id?: string;
   num_bls?: number;  // 1-5, determines capacity: num_bls × 5 × 14 pallets
+  factory_id?: string;  // Factory UUID — filters products/boats to this factory
 }
 
 export interface ExportProductItem {
@@ -933,6 +934,9 @@ export const orderBuilderApi = {
     const queryParams = new URLSearchParams();
     if (params?.boat_id) {
       queryParams.append('boat_id', params.boat_id);
+    }
+    if (params?.factory_id) {
+      queryParams.append('factory_id', params.factory_id);
     }
     // Always send num_bls (default to 1 if not provided)
     // This ensures the backend uses BL capacity, not boat capacity

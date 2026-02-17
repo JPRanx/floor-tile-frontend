@@ -903,6 +903,54 @@
       "shipping_costs": "Shipping Costs"
     }
   },
+  "planning": {
+    "title": "Order Planning",
+    "subtitle": "{{months}}-month horizon for {{factory}}",
+    "comingSoon": "Coming Soon",
+    "loadError": "Error loading planning data",
+    "noFactories": "No factories configured",
+    "noBoats": "No boats in horizon",
+    "noBoatsDescription": "No boats scheduled for the next {{months}} months.",
+    "activeBoat": "Active boat",
+    "projectedBoat": "Projected boat",
+    "departs": "Departs",
+    "arrives": "Arrives",
+    "pallets": "pallets",
+    "confidence": "Confidence",
+    "urgency": "Urgency",
+    "critical": "critical",
+    "urgent": "urgent",
+    "soon": "soon",
+    "ok": "ok",
+    "drillIn": "View detail",
+    "preview": "Preview",
+    "draftStatus": {
+      "drafting": "Draft",
+      "action_needed": "Action needed",
+      "ordered": "Order sent",
+      "confirmed": "Confirmed"
+    },
+    "confidenceLevel": {
+      "very_high": "Very high",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low",
+      "very_low": "Very low"
+    },
+    "backToPlanning": "Back to Planning",
+    "draftSaving": "Saving draft...",
+    "draftSaved": "✓ Draft saved",
+    "draftError": "Error saving draft",
+    "timeline": {
+      "factoryRequestCutoff": "Factory Request",
+      "piggybackCutoff": "Piggyback Cutoff",
+      "orderDeadline": "Order Deadline",
+      "departure": "Departure",
+      "arrival": "Arrival",
+      "inWarehouse": "In Warehouse",
+      "youAreHere": "HERE"
+    }
+  },
   "shippingEstimate": {
     "title": "Shipping Estimate",
     "containers": "Containers",

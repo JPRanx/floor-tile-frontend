@@ -1,0 +1,55 @@
+import api from './api';
+
+export type ConfidenceLevel = 'very_high' | 'high' | 'medium' | 'low' | 'very_low';
+export type DraftStatus = 'drafting' | 'action_needed' | 'ordered' | 'confirmed';
+
+export interface UrgencyBreakdown {
+  critical: number;
+  urgent: number;
+  soon: number;
+  ok: number;
+}
+
+export interface BoatProjection {
+  boat_id: string;
+  boat_name: string;
+  departure_date: string;
+  arrival_date: string;
+  days_until_departure: number;
+  origin_port: string;
+  confidence: ConfidenceLevel;
+  projected_pallets_min: number;
+  projected_pallets_max: number;
+  urgency_breakdown: UrgencyBreakdown;
+  draft_status: DraftStatus | null;
+  draft_id: string | null;
+  is_active: boolean;
+}
+
+export interface PlanningHorizonResponse {
+  factory_id: string;
+  factory_name: string;
+  horizon_months: number;
+  generated_at: string;
+  projections: BoatProjection[];
+}
+
+export const planningApi = {
+  getHorizon: async (factoryId: string, months?: number): Promise<PlanningHorizonResponse> => {
+    const params = months ? { months } : undefined;
+    const response = await api.get<PlanningHorizonResponse>(
+      `/planning/horizon/${factoryId}`,
+      { params }
+    );
+    return response.data;
+  },
+
+  getDefaultHorizon: async (months?: number): Promise<PlanningHorizonResponse> => {
+    const params = months ? { months } : undefined;
+    const response = await api.get<PlanningHorizonResponse>(
+      '/planning/horizon',
+      { params }
+    );
+    return response.data;
+  },
+};
