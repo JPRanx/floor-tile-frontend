@@ -6,8 +6,9 @@ import type { Factory } from '../requests/factories';
 import { planningApi } from '../requests/planning';
 import type { PlanningHorizonResponse, BoatProjection } from '../requests/planning';
 import { draftsApi } from '../requests/drafts';
-import { FactoryPills } from '../components/planning/FactoryPills';
+import { FactoryLane } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
+import { Briefing } from '../components/planning/Briefing';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
@@ -16,32 +17,29 @@ export function PlanningView() {
   const navigate = useNavigate();
 
   const [factories, setFactories] = useState<Factory[]>([]);
-  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
-  const [horizon, setHorizon] = useState<PlanningHorizonResponse | null>(null);
-
   const [factoriesLoading, setFactoriesLoading] = useState(true);
-  const [horizonLoading, setHorizonLoading] = useState(false);
-
   const [factoriesError, setFactoriesError] = useState<string | null>(null);
-  const [horizonError, setHorizonError] = useState<string | null>(null);
 
-  // Projected boat preview modal
+  // Horizon data per factory
+  const [horizons, setHorizons] = useState<Map<string, PlanningHorizonResponse>>(new Map());
+  const [horizonLoading, setHorizonLoading] = useState<Set<string>>(new Set());
+
+  // Selected factory for detail view
+  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
+
+  // Preview modal
   const [previewBoat, setPreviewBoat] = useState<BoatProjection | null>(null);
 
   // Quick accept state
   const [acceptingBoatId, setAcceptingBoatId] = useState<string | null>(null);
 
-  // Fetch active factories on mount
+  // Fetch factories on mount
   useEffect(() => {
     const fetchFactories = async () => {
       try {
         setFactoriesError(null);
         const result = await factoriesApi.getAll();
         setFactories(result);
-        const firstActive = result.find((f) => f.active);
-        if (firstActive) {
-          setSelectedFactoryId(firstActive.id);
-        }
       } catch (err) {
         console.error('Failed to load factories:', err);
         setFactoriesError(t('planning.factoriesError', 'Error al cargar fabricas'));
@@ -52,29 +50,46 @@ export function PlanningView() {
     fetchFactories();
   }, [t]);
 
-  // Fetch horizon when factory changes
+  // Fetch horizons for all active factories
   const fetchHorizon = useCallback(async (factoryId: string) => {
+    setHorizonLoading((prev) => new Set(prev).add(factoryId));
     try {
-      setHorizonLoading(true);
-      setHorizonError(null);
       const result = await planningApi.getHorizon(factoryId, 3);
-      setHorizon(result);
+      setHorizons((prev) => {
+        const next = new Map(prev);
+        next.set(factoryId, result);
+        return next;
+      });
     } catch (err) {
-      console.error('Failed to load planning horizon:', err);
-      setHorizonError(t('planning.horizonError', 'Error al cargar el horizonte de planificacion'));
+      console.error(`Failed to load horizon for factory ${factoryId}:`, err);
     } finally {
-      setHorizonLoading(false);
+      setHorizonLoading((prev) => {
+        const next = new Set(prev);
+        next.delete(factoryId);
+        return next;
+      });
     }
-  }, [t]);
+  }, []);
 
   useEffect(() => {
-    if (selectedFactoryId) {
-      fetchHorizon(selectedFactoryId);
+    const activeFactories = factories.filter((f) => f.active);
+    for (const factory of activeFactories) {
+      fetchHorizon(factory.id);
     }
-  }, [selectedFactoryId, fetchHorizon]);
+    // Auto-select first active factory
+    if (activeFactories.length > 0 && !selectedFactoryId) {
+      setSelectedFactoryId(activeFactories[0].id);
+    }
+  }, [factories, fetchHorizon, selectedFactoryId]);
 
   const handleFactorySelect = (factoryId: string) => {
+    setSelectedFactoryId((prev) => (prev === factoryId ? null : factoryId));
+  };
+
+  const handleBoatClick = (factoryId: string, boatId: string) => {
+    // Select the factory and scroll to detail
     setSelectedFactoryId(factoryId);
+    // Could also navigate to OB, but keeping on planning page for now
   };
 
   const handleDrillIn = (boatId: string) => {
@@ -84,6 +99,7 @@ export function PlanningView() {
   };
 
   const handlePreview = (boatId: string) => {
+    const horizon = selectedFactoryId ? horizons.get(selectedFactoryId) : null;
     const projection = horizon?.projections.find((p) => p.boat_id === boatId);
     if (projection) setPreviewBoat(projection);
   };
@@ -106,7 +122,7 @@ export function PlanningView() {
         items,
       });
 
-      // Refresh horizon to reflect new draft
+      // Refresh horizon for this factory
       await fetchHorizon(selectedFactoryId);
     } catch (err) {
       console.error('Quick accept failed:', err);
@@ -115,22 +131,23 @@ export function PlanningView() {
     }
   };
 
+  // Selected factory's data
+  const selectedHorizon = selectedFactoryId ? horizons.get(selectedFactoryId) : null;
   const selectedFactory = factories.find((f) => f.id === selectedFactoryId);
 
-  // Split projections into action-needed vs completed
+  // Split into action vs completed for detail view
   const { actionBoats, completedBoats, healthStats } = useMemo(() => {
-    if (!horizon) return { actionBoats: [], completedBoats: [], healthStats: null };
+    if (!selectedHorizon) return { actionBoats: [], completedBoats: [], healthStats: null };
 
     const action: BoatProjection[] = [];
     const completed: BoatProjection[] = [];
-
     let totalCritical = 0;
     let totalUrgent = 0;
     let totalSoon = 0;
     let totalOk = 0;
     let totalProducts = 0;
 
-    for (const p of horizon.projections) {
+    for (const p of selectedHorizon.projections) {
       if (p.draft_status === 'ordered' || p.draft_status === 'confirmed') {
         completed.push(p);
       } else {
@@ -143,7 +160,6 @@ export function PlanningView() {
       totalProducts += p.product_details.length;
     }
 
-    // Sort action boats by order deadline (soonest first)
     action.sort((a, b) => (a.days_until_order_deadline ?? 999) - (b.days_until_order_deadline ?? 999));
 
     return {
@@ -151,9 +167,9 @@ export function PlanningView() {
       completedBoats: completed,
       healthStats: { totalCritical, totalUrgent, totalSoon, totalOk, totalProducts },
     };
-  }, [horizon]);
+  }, [selectedHorizon]);
 
-  // Full-page loading state for factories
+  // Full-page loading
   if (factoriesLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
@@ -162,16 +178,13 @@ export function PlanningView() {
     );
   }
 
-  // Factories fetch error
   if (factoriesError) {
     return (
       <div className="min-h-screen bg-slate-950 p-8 -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
         <div className="max-w-md mx-auto bg-rose-500/10 border border-rose-500/30 rounded-xl p-6 backdrop-blur-xl">
           <div className="flex items-center gap-3 mb-4">
             <span className="text-2xl">{'\u26A0\uFE0F'}</span>
-            <h2 className="text-lg font-semibold text-rose-300">
-              {t('common.error', 'Error')}
-            </h2>
+            <h2 className="text-lg font-semibold text-rose-300">{t('common.error', 'Error')}</h2>
           </div>
           <p className="text-rose-200/80 mb-4">{factoriesError}</p>
           <button
@@ -185,159 +198,133 @@ export function PlanningView() {
     );
   }
 
-  const hasProjections = horizon && horizon.projections.length > 0;
-
   return (
     <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Page header */}
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Page header + briefing */}
         <div>
-          <h1 className="text-2xl font-bold text-white">
-            {t('planning.title', 'Planificacion de Pedidos')}
+          <h1 className="text-2xl font-bold text-white mb-1">
+            {t('planning.title', 'Tus Pedidos Preparados')}
           </h1>
-          {selectedFactory && (
-            <p className="mt-1 text-slate-400">
-              {t('planning.subtitle', 'Horizonte de {{months}} meses para {{factory}}', {
-                months: horizon?.horizon_months ?? 3,
-                factory: selectedFactory.name,
-              })}
-            </p>
-          )}
+          <div className="flex items-center justify-between">
+            <Briefing horizons={horizons} factoryCount={factories.filter((f) => f.active).length} />
+            <span className="text-xs text-slate-600">
+              {t('planning.horizon', 'proximos 3 meses')}
+            </span>
+          </div>
         </div>
 
-        {/* Factory pills */}
-        <FactoryPills
-          factories={factories}
-          selectedFactoryId={selectedFactoryId}
-          onSelect={handleFactorySelect}
-        />
+        {/* Factory swimlanes */}
+        <div className="space-y-3">
+          {factories.map((factory) => (
+            <FactoryLane
+              key={factory.id}
+              factory={factory}
+              horizon={horizons.get(factory.id) ?? null}
+              loading={horizonLoading.has(factory.id)}
+              isSelected={selectedFactoryId === factory.id}
+              onSelect={() => handleFactorySelect(factory.id)}
+              onBoatClick={(boatId) => handleBoatClick(factory.id, boatId)}
+            />
+          ))}
+        </div>
 
-        {/* Stock health summary bar */}
-        {!horizonLoading && healthStats && healthStats.totalProducts > 0 && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 bg-slate-800/30 rounded-xl border border-slate-700/30 px-5 py-3">
-            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider mr-1">
-              {t('planning.health', 'Salud')}
-            </span>
-            {healthStats.totalCritical > 0 && (
-              <span className="flex items-center gap-1.5 text-sm text-red-400">
-                <span className="w-2 h-2 rounded-full bg-red-400" />
-                <span className="font-semibold">{healthStats.totalCritical}</span>
-                <span className="text-xs">{t('planning.critical', 'critico')}</span>
-              </span>
-            )}
-            {healthStats.totalUrgent > 0 && (
-              <span className="flex items-center gap-1.5 text-sm text-orange-400">
-                <span className="w-2 h-2 rounded-full bg-orange-400" />
-                <span className="font-semibold">{healthStats.totalUrgent}</span>
-                <span className="text-xs">{t('planning.urgent', 'urgente')}</span>
-              </span>
-            )}
-            {healthStats.totalSoon > 0 && (
-              <span className="flex items-center gap-1.5 text-sm text-amber-400">
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span className="font-semibold">{healthStats.totalSoon}</span>
-                <span className="text-xs">{t('planning.soon', 'pronto')}</span>
-              </span>
-            )}
-            {healthStats.totalOk > 0 && (
-              <span className="flex items-center gap-1.5 text-sm text-emerald-400">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="font-semibold">{healthStats.totalOk}</span>
-                <span className="text-xs">{t('planning.ok', 'ok')}</span>
-              </span>
-            )}
-            <span className="text-slate-600 ml-auto text-xs">
-              {healthStats.totalProducts} {t('planning.productsTracked', 'productos')}
-            </span>
-          </div>
-        )}
-
-        {/* Divider */}
-        <div className="border-t border-slate-700/50" />
-
-        {/* Horizon content */}
-        {horizonLoading && (
-          <div className="flex items-center justify-center py-16">
-            <LoadingSpinner size="lg" />
-          </div>
-        )}
-
-        {horizonError && !horizonLoading && (
-          <div className="max-w-md mx-auto bg-rose-500/10 border border-rose-500/30 rounded-xl p-6 backdrop-blur-xl">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">{'\u26A0\uFE0F'}</span>
-              <h2 className="text-lg font-semibold text-rose-300">
-                {t('common.error', 'Error')}
-              </h2>
+        {/* Detail view for selected factory */}
+        {selectedFactoryId && selectedHorizon && (
+          <>
+            {/* Divider */}
+            <div className="border-t border-slate-700/50 pt-2">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                  {selectedFactory?.name} — {t('planning.detail', 'Detalle')}
+                </h2>
+                {/* Health stats */}
+                {healthStats && healthStats.totalProducts > 0 && (
+                  <div className="flex items-center gap-3 text-xs">
+                    {healthStats.totalCritical > 0 && (
+                      <span className="flex items-center gap-1 text-red-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                        {healthStats.totalCritical}
+                      </span>
+                    )}
+                    {healthStats.totalUrgent > 0 && (
+                      <span className="flex items-center gap-1 text-orange-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-400" />
+                        {healthStats.totalUrgent}
+                      </span>
+                    )}
+                    {healthStats.totalSoon > 0 && (
+                      <span className="flex items-center gap-1 text-amber-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                        {healthStats.totalSoon}
+                      </span>
+                    )}
+                    {healthStats.totalOk > 0 && (
+                      <span className="flex items-center gap-1 text-emerald-400">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        {healthStats.totalOk}
+                      </span>
+                    )}
+                    <span className="text-slate-600">{healthStats.totalProducts} prod</span>
+                  </div>
+                )}
+              </div>
             </div>
-            <p className="text-rose-200/80 mb-4">{horizonError}</p>
-            <button
-              onClick={() => selectedFactoryId && fetchHorizon(selectedFactoryId)}
-              className="px-4 py-2 bg-rose-500/20 text-rose-300 rounded-lg hover:bg-rose-500/30 transition-colors font-medium"
-            >
-              {t('common.retry', 'Reintentar')}
-            </button>
-          </div>
-        )}
 
-        {/* Action-needed boats */}
-        {!horizonLoading && !horizonError && hasProjections && actionBoats.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-              {t('planning.actionNeeded', 'Requiere accion')} ({actionBoats.length})
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {actionBoats.map((projection) => (
-                <BoatCard
-                  key={projection.boat_id}
-                  projection={projection}
-                  onDrillIn={handleDrillIn}
-                  onPreview={handlePreview}
-                  onQuickAccept={handleQuickAccept}
-                  isAccepting={acceptingBoatId === projection.boat_id}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+            {/* Action-needed boats */}
+            {actionBoats.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  {t('planning.actionNeeded', 'Requiere accion')} ({actionBoats.length})
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {actionBoats.map((projection) => (
+                    <BoatCard
+                      key={projection.boat_id}
+                      projection={projection}
+                      onDrillIn={handleDrillIn}
+                      onPreview={handlePreview}
+                      onQuickAccept={handleQuickAccept}
+                      isAccepting={acceptingBoatId === projection.boat_id}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Completed boats */}
-        {!horizonLoading && !horizonError && hasProjections && completedBoats.length > 0 && (
-          <div className="space-y-3">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-              {t('planning.completed', 'Completados')} ({completedBoats.length})
-            </h2>
-            <div className="space-y-2">
-              {completedBoats.map((projection) => (
-                <BoatCard
-                  key={projection.boat_id}
-                  projection={projection}
-                  onDrillIn={handleDrillIn}
-                  compact
-                />
-              ))}
-            </div>
-          </div>
-        )}
+            {/* Completed boats */}
+            {completedBoats.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                  {t('planning.completed', 'Completados')} ({completedBoats.length})
+                </h3>
+                <div className="space-y-2">
+                  {completedBoats.map((projection) => (
+                    <BoatCard
+                      key={projection.boat_id}
+                      projection={projection}
+                      onDrillIn={handleDrillIn}
+                      compact
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
 
-        {/* Empty state */}
-        {!horizonLoading && !horizonError && horizon && horizon.projections.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-5xl mb-4">{'\u{1F6A2}'}</span>
-            <h3 className="text-lg font-semibold text-slate-300 mb-2">
-              {t('planning.noBoats', 'Sin barcos en el horizonte')}
-            </h3>
-            <p className="text-slate-500 max-w-md">
-              {t(
-                'planning.noBoatsDesc',
-                'No hay barcos programados en los proximos 3 meses para esta fabrica. Agrega barcos desde la pagina de Barcos.'
-              )}
-            </p>
-          </div>
+            {/* Empty state */}
+            {actionBoats.length === 0 && completedBoats.length === 0 && (
+              <div className="text-center py-12">
+                <span className="text-4xl">{'\u{1F6A2}'}</span>
+                <p className="text-slate-500 mt-3">
+                  {t('planning.noBoatsDesc', 'No hay barcos programados para esta fabrica.')}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Projected Boat Preview Modal */}
+      {/* Preview modal */}
       {previewBoat && (
         <ProjectedBoatPreview
           isOpen={!!previewBoat}
