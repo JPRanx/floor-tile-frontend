@@ -63,7 +63,26 @@ export interface BoatListResponse {
   total: number;
 }
 
+export interface BoatScheduleCreate {
+  vessel_name?: string;
+  shipping_line?: string;
+  departure_date: string;
+  arrival_date: string;
+  transit_days: number;
+  origin_port?: string;
+  destination_port?: string;
+  carrier?: string;
+}
+
 export const boatsApi = {
+  /**
+   * Create a new boat schedule (used to materialize estimated boats)
+   */
+  create: async (data: BoatScheduleCreate): Promise<BoatSchedule> => {
+    const response = await api.post('/boats', data);
+    return response.data;
+  },
+
   /**
    * Get all boat schedules with optional filters
    */

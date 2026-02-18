@@ -6,6 +6,7 @@ import type { Factory } from '../requests/factories';
 import { planningApi } from '../requests/planning';
 import type { PlanningHorizonResponse, BoatProjection } from '../requests/planning';
 import { draftsApi } from '../requests/drafts';
+import { boatsApi } from '../requests/boats';
 import { FactoryLane } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
@@ -93,15 +94,57 @@ export function PlanningView() {
     setSelectedFactoryId(factoryId);
   };
 
-  const handleDrillIn = (boatId: string) => {
-    if (selectedFactoryId) {
+  // Materialize an estimated boat into a real DB record, returns the real boat ID
+  const materializeEstimatedBoat = async (projection: BoatProjection): Promise<string> => {
+    const dep = new Date(projection.departure_date);
+    const arr = new Date(projection.arrival_date);
+    const transitDays = Math.max(1, Math.round((arr.getTime() - dep.getTime()) / (1000 * 60 * 60 * 24)));
+
+    const realBoat = await boatsApi.create({
+      vessel_name: projection.boat_name.replace(/\s*\(est\.\)\s*$/, ''),
+      shipping_line: projection.carrier || undefined,
+      departure_date: projection.departure_date,
+      arrival_date: projection.arrival_date,
+      transit_days: transitDays,
+      origin_port: projection.origin_port,
+      carrier: projection.carrier || undefined,
+    });
+    return realBoat.id;
+  };
+
+  const findProjection = (boatId: string): BoatProjection | undefined => {
+    const horizon = selectedFactoryId ? horizons.get(selectedFactoryId) : null;
+    return horizon?.projections.find((p) => p.boat_id === boatId);
+  };
+
+  const handleDrillIn = async (boatId: string) => {
+    if (!selectedFactoryId) return;
+
+    const projection = findProjection(boatId);
+    if (projection?.is_estimated) {
+      try {
+        const realId = await materializeEstimatedBoat(projection);
+        navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${realId}`);
+      } catch (err) {
+        console.error('Failed to create estimated boat:', err);
+      }
+    } else {
       navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}`);
     }
   };
 
-  const handleExportFromCard = (boatId: string) => {
-    // Navigate to OB with export flag — OB will auto-allocate BLs and trigger export
-    if (selectedFactoryId) {
+  const handleExportFromCard = async (boatId: string) => {
+    if (!selectedFactoryId) return;
+
+    const projection = findProjection(boatId);
+    if (projection?.is_estimated) {
+      try {
+        const realId = await materializeEstimatedBoat(projection);
+        navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${realId}&action=export`);
+      } catch (err) {
+        console.error('Failed to create estimated boat:', err);
+      }
+    } else {
       navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}&action=export`);
     }
   };
@@ -116,6 +159,12 @@ export function PlanningView() {
     if (!selectedFactoryId) return;
     setAcceptingBoatId(projection.boat_id);
     try {
+      // Materialize estimated boats before saving draft (FK constraint)
+      let boatId = projection.boat_id;
+      if (projection.is_estimated) {
+        boatId = await materializeEstimatedBoat(projection);
+      }
+
       const items = projection.product_details
         .filter((p) => p.suggested_pallets > 0)
         .map((p) => ({
@@ -124,14 +173,14 @@ export function PlanningView() {
         }));
 
       await draftsApi.save({
-        boat_id: projection.boat_id,
+        boat_id: boatId,
         factory_id: selectedFactoryId,
         notes: 'Creado desde aceptar sugerido',
         items,
       });
 
       // Navigate to Order Builder detail for BL allocation
-      navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${projection.boat_id}`);
+      navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}`);
     } catch (err) {
       console.error('Quick accept failed:', err);
     } finally {
