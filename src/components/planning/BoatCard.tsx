@@ -164,37 +164,19 @@ const URGENCY_TEXT: Record<string, string> = {
   ok: 'text-slate-400',
 };
 
-function getDeadlineBanner(daysLeft: number | null, orderByDate: string | null, t: (k: string, d: string, o?: Record<string, unknown>) => string) {
-  if (daysLeft == null || orderByDate == null) return null;
+function getUrgencyStyle(daysLeft: number): { classes: string; level: 'overdue' | 'now' | 'thisWeek' | 'soon' | 'onTrack' } {
+  if (daysLeft < 0) return { classes: 'bg-red-500/15 border-red-500/30 text-red-300', level: 'overdue' };
+  if (daysLeft <= 3) return { classes: 'bg-red-500/15 border-red-500/30 text-red-300', level: 'now' };
+  if (daysLeft <= 7) return { classes: 'bg-orange-500/15 border-orange-500/30 text-orange-300', level: 'thisWeek' };
+  if (daysLeft <= 14) return { classes: 'bg-amber-500/10 border-amber-500/20 text-amber-300', level: 'soon' };
+  return { classes: 'bg-slate-500/10 border-slate-500/20 text-slate-400', level: 'onTrack' };
+}
 
-  if (daysLeft < 0) {
-    return {
-      text: t('planning.deadline.overdue', 'Vencido hace {{days}} dias', { days: Math.abs(daysLeft) }),
-      classes: 'bg-red-500/15 border-red-500/30 text-red-300',
-    };
-  }
-  if (daysLeft <= 3) {
-    return {
-      text: t('planning.deadline.now', 'Pedir ahora — {{date}}', { date: formatDateShort(orderByDate) }),
-      classes: 'bg-red-500/15 border-red-500/30 text-red-300',
-    };
-  }
-  if (daysLeft <= 7) {
-    return {
-      text: t('planning.deadline.thisWeek', 'Pedir antes del {{date}}', { date: formatDateShort(orderByDate) }),
-      classes: 'bg-orange-500/15 border-orange-500/30 text-orange-300',
-    };
-  }
-  if (daysLeft <= 14) {
-    return {
-      text: t('planning.deadline.soon', 'Pedir antes del {{date}}', { date: formatDateShort(orderByDate) }),
-      classes: 'bg-amber-500/10 border-amber-500/20 text-amber-300',
-    };
-  }
-  return {
-    text: t('planning.deadline.onTrack', 'Pedir antes del {{date}}', { date: formatDateShort(orderByDate) }),
-    classes: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
-  };
+function formatDeadlineText(daysLeft: number, dateStr: string, label: string, t: (k: string, d: string, o?: Record<string, unknown>) => string): string {
+  const date = formatDateShort(dateStr);
+  if (daysLeft < 0) return `${label}: ${t('planning.deadline.overdue', 'Vencido hace {{days}}d', { days: Math.abs(daysLeft) })}`;
+  if (daysLeft <= 3) return `${label}: ${t('planning.deadline.now', 'Ahora — {{date}}', { date })}`;
+  return `${label}: ${date} (${daysLeft}d)`;
 }
 
 export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, compact }: BoatCardProps) {
@@ -214,7 +196,11 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
     ? `${projection.projected_pallets_min}`
     : `~${projection.projected_pallets_min}-${projection.projected_pallets_max}`;
 
-  const deadline = getDeadlineBanner(projection.days_until_order_deadline, projection.order_by_date, t);
+  // Pick most urgent deadline for card border/banner styling
+  const factoryDays = projection.days_until_order_deadline;
+  const shippingDays = projection.days_until_shipping_deadline;
+  const mostUrgentDays = factoryDays != null ? factoryDays : shippingDays;
+  const urgencyStyle = mostUrgentDays != null ? getUrgencyStyle(mostUrgentDays) : null;
 
   const canQuickAccept = onQuickAccept
     && !isCompleted
@@ -268,15 +254,18 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         flex flex-col
       `}
     >
-      {/* Deadline banner */}
-      {deadline && !isCompleted && (
-        <div className={`mx-5 mt-4 px-3 py-1.5 rounded-lg border text-xs font-medium ${deadline.classes}`}>
-          {deadline.text}
+      {/* Deadline banners */}
+      {urgencyStyle && !isCompleted && factoryDays != null && projection.order_by_date && (
+        <div className={`mx-5 mt-4 px-3 py-1.5 rounded-lg border text-xs font-medium space-y-0.5 ${urgencyStyle.classes}`}>
+          <div>{formatDeadlineText(factoryDays, projection.order_by_date, t('planning.factoryOrder', 'Pedir a fabrica'), t)}</div>
+          {shippingDays != null && projection.shipping_book_by_date && (
+            <div className="opacity-70">{formatDeadlineText(shippingDays, projection.shipping_book_by_date, t('planning.siesaShipment', 'Enviar de SIESA'), t)}</div>
+          )}
         </div>
       )}
 
       {/* Header: vessel name + dates */}
-      <div className={`px-5 ${deadline && !isCompleted ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
+      <div className={`px-5 ${urgencyStyle && !isCompleted && factoryDays != null ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg flex-shrink-0">
             {isActive ? '\u{1F6A2}' : isEstimated ? '\u{1F4C5}' : '\u{1F310}'}

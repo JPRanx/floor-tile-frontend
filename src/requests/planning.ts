@@ -45,6 +45,8 @@ export interface BoatProjection {
   is_active: boolean;
   order_by_date: string | null;
   days_until_order_deadline: number | null;
+  shipping_book_by_date: string | null;
+  days_until_shipping_deadline: number | null;
   product_details: ProductProjection[];
   draft_bl_items: DraftBLItem[];
   has_bl_allocation: boolean;
