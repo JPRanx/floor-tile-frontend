@@ -33,6 +33,9 @@ export function PlanningView() {
   // Quick accept state
   const [acceptingBoatId, setAcceptingBoatId] = useState<string | null>(null);
 
+  // Estimated boats visibility
+  const [showAllEstimated, setShowAllEstimated] = useState(false);
+
   // Fetch factories on mount
   useEffect(() => {
     const fetchFactories = async () => {
@@ -277,26 +280,52 @@ export function PlanningView() {
             </div>
 
             {/* Action-needed boats */}
-            {actionBoats.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  {t('planning.actionNeeded', 'Requiere accion')} ({actionBoats.length})
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {actionBoats.map((projection) => (
-                    <BoatCard
-                      key={projection.boat_id}
-                      projection={projection}
-                      onDrillIn={handleDrillIn}
-                      onPreview={handlePreview}
-                      onQuickAccept={handleQuickAccept}
-                      onExport={handleExportFromCard}
-                      isAccepting={acceptingBoatId === projection.boat_id}
-                    />
-                  ))}
+            {actionBoats.length > 0 && (() => {
+              const realAction = actionBoats.filter((p) => !p.is_estimated);
+              const estimatedAction = actionBoats.filter((p) => p.is_estimated);
+              const visibleEstimated = showAllEstimated ? estimatedAction : estimatedAction.slice(0, 3);
+              const hiddenEstimatedCount = estimatedAction.length - visibleEstimated.length;
+              const visibleAction = [...realAction, ...visibleEstimated].sort(
+                (a, b) => (a.days_until_order_deadline ?? 999) - (b.days_until_order_deadline ?? 999)
+              );
+
+              return (
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    {t('planning.actionNeeded', 'Requiere accion')} ({visibleAction.length}{hiddenEstimatedCount > 0 ? `+${hiddenEstimatedCount}` : ''})
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    {visibleAction.map((projection) => (
+                      <BoatCard
+                        key={projection.boat_id}
+                        projection={projection}
+                        onDrillIn={handleDrillIn}
+                        onPreview={handlePreview}
+                        onQuickAccept={handleQuickAccept}
+                        onExport={handleExportFromCard}
+                        isAccepting={acceptingBoatId === projection.boat_id}
+                      />
+                    ))}
+                  </div>
+                  {hiddenEstimatedCount > 0 && (
+                    <button
+                      onClick={() => setShowAllEstimated(true)}
+                      className="w-full py-2.5 text-sm text-slate-500 hover:text-slate-300 border border-dashed border-slate-700/50 hover:border-slate-600/50 rounded-xl transition-colors"
+                    >
+                      +{hiddenEstimatedCount} barcos estimados
+                    </button>
+                  )}
+                  {showAllEstimated && estimatedAction.length > 3 && (
+                    <button
+                      onClick={() => setShowAllEstimated(false)}
+                      className="w-full py-2 text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                    >
+                      ver menos
+                    </button>
+                  )}
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Completed boats */}
             {completedBoats.length > 0 && (

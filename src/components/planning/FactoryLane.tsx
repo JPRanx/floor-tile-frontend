@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PlanningHorizonResponse } from '../../requests/planning';
 import type { Factory } from '../../requests/factories';
@@ -21,6 +22,7 @@ export function FactoryLane({
   onBoatClick,
 }: FactoryLaneProps) {
   const { t } = useTranslation();
+  const [showAllEstimated, setShowAllEstimated] = useState(false);
 
   // Locked factory
   if (!factory.active) {
@@ -95,19 +97,45 @@ export function FactoryLane({
       </button>
 
       {/* Boat nodes (always visible, scrollable) */}
-      {!loading && horizon && horizon.projections.length > 0 && (
-        <div className="px-5 pb-4 pt-1">
-          <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-            {horizon.projections.map((projection) => (
-              <BoatNode
-                key={projection.boat_id}
-                projection={projection}
-                onClick={() => onBoatClick(projection.boat_id)}
-              />
-            ))}
+      {!loading && horizon && horizon.projections.length > 0 && (() => {
+        const real = horizon.projections.filter((p) => !p.is_estimated);
+        const estimated = horizon.projections.filter((p) => p.is_estimated);
+        const visibleEstimated = showAllEstimated ? estimated : estimated.slice(0, 3);
+        const hiddenCount = estimated.length - visibleEstimated.length;
+        const visible = [...real, ...visibleEstimated].sort(
+          (a, b) => a.departure_date.localeCompare(b.departure_date)
+        );
+
+        return (
+          <div className="px-5 pb-4 pt-1">
+            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+              {visible.map((projection) => (
+                <BoatNode
+                  key={projection.boat_id}
+                  projection={projection}
+                  onClick={() => onBoatClick(projection.boat_id)}
+                />
+              ))}
+              {hiddenCount > 0 && (
+                <button
+                  onClick={() => setShowAllEstimated(true)}
+                  className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
+                >
+                  +{hiddenCount} estimados
+                </button>
+              )}
+              {showAllEstimated && estimated.length > 3 && (
+                <button
+                  onClick={() => setShowAllEstimated(false)}
+                  className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
+                >
+                  ver menos
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Empty state */}
       {!loading && horizon && horizon.projections.length === 0 && (
