@@ -1,10 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { factoriesApi } from '../requests/factories';
 import type { Factory } from '../requests/factories';
 import { planningApi } from '../requests/planning';
 import type { PlanningHorizonResponse, BoatProjection } from '../requests/planning';
+import { draftsApi } from '../requests/drafts';
 import { FactoryPills } from '../components/planning/FactoryPills';
 import { BoatCard } from '../components/planning/BoatCard';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
@@ -27,6 +28,9 @@ export function PlanningView() {
   // Projected boat preview modal
   const [previewBoat, setPreviewBoat] = useState<BoatProjection | null>(null);
 
+  // Quick accept state
+  const [acceptingBoatId, setAcceptingBoatId] = useState<string | null>(null);
+
   // Fetch active factories on mount
   useEffect(() => {
     const fetchFactories = async () => {
@@ -34,7 +38,6 @@ export function PlanningView() {
         setFactoriesError(null);
         const result = await factoriesApi.getAll();
         setFactories(result);
-        // Default to first active factory
         const firstActive = result.find((f) => f.active);
         if (firstActive) {
           setSelectedFactoryId(firstActive.id);
@@ -85,7 +88,70 @@ export function PlanningView() {
     if (projection) setPreviewBoat(projection);
   };
 
+  const handleQuickAccept = async (projection: BoatProjection) => {
+    if (!selectedFactoryId) return;
+    setAcceptingBoatId(projection.boat_id);
+    try {
+      const items = projection.product_details
+        .filter((p) => p.suggested_pallets > 0)
+        .map((p) => ({
+          product_id: p.product_id,
+          selected_pallets: p.suggested_pallets,
+        }));
+
+      await draftsApi.save({
+        boat_id: projection.boat_id,
+        factory_id: selectedFactoryId,
+        notes: 'Creado desde aceptar sugerido',
+        items,
+      });
+
+      // Refresh horizon to reflect new draft
+      await fetchHorizon(selectedFactoryId);
+    } catch (err) {
+      console.error('Quick accept failed:', err);
+    } finally {
+      setAcceptingBoatId(null);
+    }
+  };
+
   const selectedFactory = factories.find((f) => f.id === selectedFactoryId);
+
+  // Split projections into action-needed vs completed
+  const { actionBoats, completedBoats, healthStats } = useMemo(() => {
+    if (!horizon) return { actionBoats: [], completedBoats: [], healthStats: null };
+
+    const action: BoatProjection[] = [];
+    const completed: BoatProjection[] = [];
+
+    let totalCritical = 0;
+    let totalUrgent = 0;
+    let totalSoon = 0;
+    let totalOk = 0;
+    let totalProducts = 0;
+
+    for (const p of horizon.projections) {
+      if (p.draft_status === 'ordered' || p.draft_status === 'confirmed') {
+        completed.push(p);
+      } else {
+        action.push(p);
+      }
+      totalCritical += p.urgency_breakdown.critical;
+      totalUrgent += p.urgency_breakdown.urgent;
+      totalSoon += p.urgency_breakdown.soon;
+      totalOk += p.urgency_breakdown.ok;
+      totalProducts += p.product_details.length;
+    }
+
+    // Sort action boats by order deadline (soonest first)
+    action.sort((a, b) => (a.days_until_order_deadline ?? 999) - (b.days_until_order_deadline ?? 999));
+
+    return {
+      actionBoats: action,
+      completedBoats: completed,
+      healthStats: { totalCritical, totalUrgent, totalSoon, totalOk, totalProducts },
+    };
+  }, [horizon]);
 
   // Full-page loading state for factories
   if (factoriesLoading) {
@@ -119,6 +185,8 @@ export function PlanningView() {
     );
   }
 
+  const hasProjections = horizon && horizon.projections.length > 0;
+
   return (
     <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -143,6 +211,46 @@ export function PlanningView() {
           selectedFactoryId={selectedFactoryId}
           onSelect={handleFactorySelect}
         />
+
+        {/* Stock health summary bar */}
+        {!horizonLoading && healthStats && healthStats.totalProducts > 0 && (
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 bg-slate-800/30 rounded-xl border border-slate-700/30 px-5 py-3">
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider mr-1">
+              {t('planning.health', 'Salud')}
+            </span>
+            {healthStats.totalCritical > 0 && (
+              <span className="flex items-center gap-1.5 text-sm text-red-400">
+                <span className="w-2 h-2 rounded-full bg-red-400" />
+                <span className="font-semibold">{healthStats.totalCritical}</span>
+                <span className="text-xs">{t('planning.critical', 'critico')}</span>
+              </span>
+            )}
+            {healthStats.totalUrgent > 0 && (
+              <span className="flex items-center gap-1.5 text-sm text-orange-400">
+                <span className="w-2 h-2 rounded-full bg-orange-400" />
+                <span className="font-semibold">{healthStats.totalUrgent}</span>
+                <span className="text-xs">{t('planning.urgent', 'urgente')}</span>
+              </span>
+            )}
+            {healthStats.totalSoon > 0 && (
+              <span className="flex items-center gap-1.5 text-sm text-amber-400">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="font-semibold">{healthStats.totalSoon}</span>
+                <span className="text-xs">{t('planning.soon', 'pronto')}</span>
+              </span>
+            )}
+            {healthStats.totalOk > 0 && (
+              <span className="flex items-center gap-1.5 text-sm text-emerald-400">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="font-semibold">{healthStats.totalOk}</span>
+                <span className="text-xs">{t('planning.ok', 'ok')}</span>
+              </span>
+            )}
+            <span className="text-slate-600 ml-auto text-xs">
+              {healthStats.totalProducts} {t('planning.productsTracked', 'productos')}
+            </span>
+          </div>
+        )}
 
         {/* Divider */}
         <div className="border-t border-slate-700/50" />
@@ -172,17 +280,43 @@ export function PlanningView() {
           </div>
         )}
 
-        {/* Boat cards grid */}
-        {!horizonLoading && !horizonError && horizon && horizon.projections.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {horizon.projections.map((projection) => (
-              <BoatCard
-                key={projection.boat_id}
-                projection={projection}
-                onDrillIn={handleDrillIn}
-                onPreview={handlePreview}
-              />
-            ))}
+        {/* Action-needed boats */}
+        {!horizonLoading && !horizonError && hasProjections && actionBoats.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+              {t('planning.actionNeeded', 'Requiere accion')} ({actionBoats.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {actionBoats.map((projection) => (
+                <BoatCard
+                  key={projection.boat_id}
+                  projection={projection}
+                  onDrillIn={handleDrillIn}
+                  onPreview={handlePreview}
+                  onQuickAccept={handleQuickAccept}
+                  isAccepting={acceptingBoatId === projection.boat_id}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Completed boats */}
+        {!horizonLoading && !horizonError && hasProjections && completedBoats.length > 0 && (
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+              {t('planning.completed', 'Completados')} ({completedBoats.length})
+            </h2>
+            <div className="space-y-2">
+              {completedBoats.map((projection) => (
+                <BoatCard
+                  key={projection.boat_id}
+                  projection={projection}
+                  onDrillIn={handleDrillIn}
+                  compact
+                />
+              ))}
+            </div>
           </div>
         )}
 

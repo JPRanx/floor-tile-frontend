@@ -36,6 +36,8 @@ export interface BoatProjection {
   draft_status: DraftStatus | null;
   draft_id: string | null;
   is_active: boolean;
+  order_by_date: string | null;
+  days_until_order_deadline: number | null;
   product_details: ProductProjection[];
 }
 

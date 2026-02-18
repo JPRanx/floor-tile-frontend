@@ -7,6 +7,10 @@ interface BoatCardProps {
   projection: BoatProjection;
   onDrillIn: (boatId: string) => void;
   onPreview?: (boatId: string) => void;
+  onQuickAccept?: (projection: BoatProjection) => void;
+  isAccepting?: boolean;
+  /** Render in compact mode for completed/ordered boats */
+  compact?: boolean;
 }
 
 function formatDateShort(dateStr: string): string {
@@ -46,7 +50,6 @@ function ProductList({
   showAll: boolean;
   onToggle: () => void;
 }) {
-  // Show critical + urgent always; rest behind toggle
   const priorityProducts = products.filter(
     (p) => p.urgency === 'critical' || p.urgency === 'urgent'
   );
@@ -54,7 +57,6 @@ function ProductList({
     (p) => p.urgency !== 'critical' && p.urgency !== 'urgent'
   );
 
-  const visiblePriority = priorityProducts;
   const visibleOthers = showAll ? otherProducts : otherProducts.slice(0, Math.max(0, MAX_VISIBLE_PRODUCTS - priorityProducts.length));
   const hiddenCount = showAll ? 0 : otherProducts.length - visibleOthers.length;
 
@@ -64,7 +66,7 @@ function ProductList({
         Productos
       </div>
       <div className="space-y-0.5">
-        {visiblePriority.map((p) => (
+        {priorityProducts.map((p) => (
           <ProductRow key={p.product_id} product={p} />
         ))}
         {visibleOthers.map((p) => (
@@ -129,11 +131,44 @@ const URGENCY_TEXT: Record<string, string> = {
   ok: 'text-slate-400',
 };
 
-export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
+function getDeadlineBanner(daysLeft: number | null, orderByDate: string | null, t: (k: string, d: string, o?: Record<string, unknown>) => string) {
+  if (daysLeft == null || orderByDate == null) return null;
+
+  if (daysLeft < 0) {
+    return {
+      text: t('planning.deadline.overdue', 'Vencido hace {{days}} dias', { days: Math.abs(daysLeft) }),
+      classes: 'bg-red-500/15 border-red-500/30 text-red-300',
+    };
+  }
+  if (daysLeft <= 3) {
+    return {
+      text: t('planning.deadline.now', 'Pedir ahora — {{date}}', { date: formatDateShort(orderByDate) }),
+      classes: 'bg-red-500/15 border-red-500/30 text-red-300',
+    };
+  }
+  if (daysLeft <= 7) {
+    return {
+      text: t('planning.deadline.thisWeek', 'Pedir antes del {{date}}', { date: formatDateShort(orderByDate) }),
+      classes: 'bg-orange-500/15 border-orange-500/30 text-orange-300',
+    };
+  }
+  if (daysLeft <= 14) {
+    return {
+      text: t('planning.deadline.soon', 'Pedir antes del {{date}}', { date: formatDateShort(orderByDate) }),
+      classes: 'bg-amber-500/10 border-amber-500/20 text-amber-300',
+    };
+  }
+  return {
+    text: t('planning.deadline.onTrack', 'Pedir antes del {{date}}', { date: formatDateShort(orderByDate) }),
+    classes: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
+  };
+}
+
+export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, isAccepting, compact }: BoatCardProps) {
   const { t } = useTranslation();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
-  const urgency = projection.urgency_breakdown;
+  const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
 
   const borderStyle = isActive
     ? 'border-slate-700/50'
@@ -143,6 +178,44 @@ export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
     ? `${projection.projected_pallets_min}`
     : `~${projection.projected_pallets_min}-${projection.projected_pallets_max}`;
 
+  const deadline = getDeadlineBanner(projection.days_until_order_deadline, projection.order_by_date, t);
+
+  const canQuickAccept = onQuickAccept
+    && !isCompleted
+    && !isActive
+    && projection.product_details.some((p) => p.suggested_pallets > 0);
+
+  // Compact mode for ordered/confirmed boats
+  if (compact && isCompleted) {
+    return (
+      <div className="bg-slate-800/20 rounded-xl border border-slate-700/30 px-5 py-3 flex items-center justify-between opacity-70">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-sm">{'\u{2705}'}</span>
+          <span className="text-white font-medium truncate">{projection.boat_name}</span>
+          <span className="text-slate-500 text-sm">{formatDateShort(projection.departure_date)}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {projection.draft_status && (
+            <span
+              className={`
+                inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border
+                ${DRAFT_BADGE_CONFIG[projection.draft_status].classes}
+              `}
+            >
+              {t(DRAFT_BADGE_CONFIG[projection.draft_status].label)}
+            </span>
+          )}
+          <button
+            onClick={() => onDrillIn(projection.boat_id)}
+            className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            {t('planning.viewDetails', 'Ver')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`
@@ -151,8 +224,15 @@ export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
         flex flex-col
       `}
     >
+      {/* Deadline banner */}
+      {deadline && !isCompleted && (
+        <div className={`mx-5 mt-4 px-3 py-1.5 rounded-lg border text-xs font-medium ${deadline.classes}`}>
+          {deadline.text}
+        </div>
+      )}
+
       {/* Header: vessel name + dates */}
-      <div className="px-5 pt-5 pb-3 flex items-start justify-between">
+      <div className={`px-5 ${deadline && !isCompleted ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg flex-shrink-0">
             {isActive ? '\u{1F6A2}' : '\u{1F310}'}
@@ -196,8 +276,8 @@ export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
         )}
       </div>
 
-      {/* Footer: draft status + drill-in */}
-      <div className="px-5 pb-5 pt-1 flex items-center justify-between">
+      {/* Footer: draft status + actions */}
+      <div className="px-5 pb-5 pt-1 flex items-center justify-between gap-2">
         <div>
           {projection.draft_status && (
             <span
@@ -214,24 +294,42 @@ export function BoatCard({ projection, onDrillIn, onPreview }: BoatCardProps) {
             </span>
           )}
         </div>
-        <button
-          onClick={() => {
-            if (!isActive && onPreview) {
-              onPreview(projection.boat_id);
-            } else {
-              onDrillIn(projection.boat_id);
-            }
-          }}
-          className="
-            px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
-            bg-indigo-600/20 text-indigo-300 border border-indigo-500/30
-            hover:bg-indigo-600/30 hover:text-indigo-200 hover:border-indigo-500/50
-          "
-        >
-          {isActive
-            ? t('planning.goToDetail', 'Detalle \u2192')
-            : t('planning.preview', 'Vista previa')}
-        </button>
+        <div className="flex items-center gap-2">
+          {canQuickAccept && (
+            <button
+              onClick={() => onQuickAccept(projection)}
+              disabled={isAccepting}
+              className="
+                px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
+                bg-emerald-600/20 text-emerald-300 border border-emerald-500/30
+                hover:bg-emerald-600/30 hover:text-emerald-200 hover:border-emerald-500/50
+                disabled:opacity-50 disabled:cursor-not-allowed
+              "
+            >
+              {isAccepting
+                ? t('planning.accepting', 'Guardando...')
+                : t('planning.quickAccept', 'Aceptar sugerido')}
+            </button>
+          )}
+          <button
+            onClick={() => {
+              if (!isActive && onPreview) {
+                onPreview(projection.boat_id);
+              } else {
+                onDrillIn(projection.boat_id);
+              }
+            }}
+            className="
+              px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200
+              bg-indigo-600/20 text-indigo-300 border border-indigo-500/30
+              hover:bg-indigo-600/30 hover:text-indigo-200 hover:border-indigo-500/50
+            "
+          >
+            {isActive
+              ? t('planning.goToDetail', 'Detalle \u2192')
+              : t('planning.preview', 'Vista previa')}
+          </button>
+        </div>
       </div>
     </div>
   );
