@@ -61,8 +61,8 @@ export function Briefing({ horizons }: BriefingProps) {
     }
   }
 
-  // Sort by deadline (most urgent first), show top 4
-  factoryOrderLines.sort((a, b) => a.daysLeft - b.daysLeft);
+  // Sort by boat departure (next boat first)
+  factoryOrderLines.sort((a, b) => a.departureDate.localeCompare(b.departureDate));
   const visibleLines = factoryOrderLines.slice(0, 4);
 
   const actionBoats = totalBoats - completedBoats;
@@ -146,7 +146,8 @@ export function Briefing({ horizons }: BriefingProps) {
 }
 
 function countProductsNeedingOrder(projection: BoatProjection): number {
+  // Match factory request logic: any product with projected stockout (suggested_pallets > 0)
   return projection.product_details.filter(
-    (p) => p.urgency === 'critical' || p.urgency === 'urgent'
+    (p) => p.suggested_pallets > 0
   ).length;
 }
