@@ -86,6 +86,7 @@ export function OrderBuilder() {
   const [showBLView, setShowBLView] = useState(false);
   const [blLoading, setBLLoading] = useState(false);
   const [blExporting, setBLExporting] = useState(false);
+  const [blDraftSaved, setBLDraftSaved] = useState(false);
 
 
   // Removed products tracking (for recalculate feature)
@@ -488,6 +489,7 @@ export function OrderBuilder() {
     }
 
     setBLLoading(true);
+    setBLDraftSaved(false);
     try {
       const response = await orderBuilderApi.generateBLAllocation({
         num_bls: numBLs,
@@ -500,28 +502,30 @@ export function OrderBuilder() {
 
       setBLAllocationReport(response.allocation);
       setShowBLView(true);
-
-      // Save draft with BL assignments so planning view can show them
-      if (selectedFactoryId && selectedBoatId) {
-        const blItems = response.allocation.allocations.flatMap((bl) =>
-          bl.products.map((p) => ({
-            product_id: p.product_id,
-            selected_pallets: p.pallets,
-            bl_number: bl.bl_number,
-          }))
-        );
-        draftsApi.save({
-          boat_id: selectedBoatId,
-          factory_id: selectedFactoryId,
-          items: blItems,
-        }).catch((err) => console.error('Draft save with BLs failed:', err));
-      }
     } catch (err) {
       console.error('BL allocation failed:', err);
       alert(t('blAllocation.allocationError', 'Failed to generate BL allocation'));
     } finally {
       setBLLoading(false);
     }
+  };
+
+  const handleSaveBLDraft = async () => {
+    if (!blAllocationReport || !selectedFactoryId || !selectedBoatId) return;
+
+    const blItems = blAllocationReport.allocations.flatMap((bl) =>
+      bl.products.map((p) => ({
+        product_id: p.product_id,
+        selected_pallets: p.pallets,
+        bl_number: bl.bl_number,
+      }))
+    );
+    await draftsApi.save({
+      boat_id: selectedBoatId,
+      factory_id: selectedFactoryId,
+      items: blItems,
+    });
+    setBLDraftSaved(true);
   };
 
   const handleExportBLs = async () => {
@@ -558,6 +562,7 @@ export function OrderBuilder() {
 
   const handleBackToProducts = () => {
     setShowBLView(false);
+    setBLDraftSaved(false);
   };
 
   const [exporting, setExporting] = useState(false);
@@ -944,7 +949,9 @@ export function OrderBuilder() {
             report={blAllocationReport}
             onBack={handleBackToProducts}
             onExport={handleExportBLs}
+            onSaveDraft={handleSaveBLDraft}
             isExporting={blExporting}
+            draftSaved={blDraftSaved}
           />
         )}
 

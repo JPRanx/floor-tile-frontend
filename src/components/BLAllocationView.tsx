@@ -8,7 +8,9 @@ interface BLAllocationViewProps {
   report: BLAllocationReport;
   onBack: () => void;
   onExport: () => void;
+  onSaveDraft: () => Promise<void>;
   isExporting?: boolean;
+  draftSaved?: boolean;
 }
 
 /**
@@ -19,9 +21,12 @@ export function BLAllocationView({
   report,
   onBack,
   onExport,
+  onSaveDraft,
   isExporting = false,
+  draftSaved = false,
 }: BLAllocationViewProps) {
   const { t } = useTranslation();
+  const [saving, setSaving] = useState(false);
 
   // Track which BLs are expanded (first one by default)
   const [expandedBLs, setExpandedBLs] = useState<Record<number, boolean>>(() => {
@@ -125,17 +130,36 @@ export function BLAllocationView({
           onClick={onBack}
           className="px-4 py-2.5 bg-slate-800/50 text-slate-300 font-medium rounded-xl border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-all duration-300"
         >
-          ← {t('blAllocation.backToProducts', 'Back to Products')}
+          {'\u2190'} {t('blAllocation.backToProducts', 'Back to Products')}
+        </button>
+
+        <button
+          onClick={async () => {
+            setSaving(true);
+            try { await onSaveDraft(); } finally { setSaving(false); }
+          }}
+          disabled={saving || draftSaved}
+          className={`px-4 py-2.5 font-medium rounded-xl border transition-all duration-300 ${
+            draftSaved
+              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+              : 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/30 hover:text-indigo-200'
+          } disabled:cursor-not-allowed`}
+        >
+          {saving
+            ? t('blAllocation.savingDraft', 'Guardando...')
+            : draftSaved
+              ? t('blAllocation.draftSaved', '\u2713 Borrador guardado')
+              : t('blAllocation.saveDraft', 'Guardar borrador')}
         </button>
 
         <button
           onClick={onExport}
           disabled={isExporting}
-          className="px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+          className="px-4 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
         >
           {isExporting
-            ? t('blAllocation.exporting', 'Exporting...')
-            : t('blAllocation.exportBLs', 'Export BLs')}
+            ? t('blAllocation.exporting', 'Exportando...')
+            : t('blAllocation.exportBLs', 'Exportar BLs')}
         </button>
       </div>
 
