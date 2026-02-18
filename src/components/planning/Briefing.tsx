@@ -2,10 +2,9 @@ import type { PlanningHorizonResponse } from '../../requests/planning';
 
 interface BriefingProps {
   horizons: Map<string, PlanningHorizonResponse>;
-  factoryCount: number;
 }
 
-export function Briefing({ horizons, factoryCount }: BriefingProps) {
+export function Briefing({ horizons }: BriefingProps) {
   if (horizons.size === 0) return null;
 
   let totalBoats = 0;
@@ -13,7 +12,6 @@ export function Briefing({ horizons, factoryCount }: BriefingProps) {
   let thisWeekBoats = 0;
   let totalCritical = 0;
   let completedBoats = 0;
-  let nextDeadlineDate: string | null = null;
   let nextDeadlineDays = Infinity;
 
   for (const horizon of horizons.values()) {
@@ -30,7 +28,6 @@ export function Briefing({ horizons, factoryCount }: BriefingProps) {
         else if (p.days_until_order_deadline <= 7) thisWeekBoats++;
         if (p.days_until_order_deadline < nextDeadlineDays) {
           nextDeadlineDays = p.days_until_order_deadline;
-          nextDeadlineDate = p.order_by_date;
         }
       }
     }

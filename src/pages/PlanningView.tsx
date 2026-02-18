@@ -86,10 +86,8 @@ export function PlanningView() {
     setSelectedFactoryId((prev) => (prev === factoryId ? null : factoryId));
   };
 
-  const handleBoatClick = (factoryId: string, boatId: string) => {
-    // Select the factory and scroll to detail
+  const handleBoatClick = (factoryId: string, _boatId: string) => {
     setSelectedFactoryId(factoryId);
-    // Could also navigate to OB, but keeping on planning page for now
   };
 
   const handleDrillIn = (boatId: string) => {
@@ -207,7 +205,7 @@ export function PlanningView() {
             {t('planning.title', 'Tus Pedidos Preparados')}
           </h1>
           <div className="flex items-center justify-between">
-            <Briefing horizons={horizons} factoryCount={factories.filter((f) => f.active).length} />
+            <Briefing horizons={horizons} />
             <span className="text-xs text-slate-600">
               {t('planning.horizon', 'proximos 3 meses')}
             </span>
