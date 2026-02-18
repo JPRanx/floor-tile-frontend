@@ -1,7 +1,23 @@
-import type { PlanningHorizonResponse } from '../../requests/planning';
+import type { BoatProjection, PlanningHorizonResponse } from '../../requests/planning';
 
 interface BriefingProps {
   horizons: Map<string, PlanningHorizonResponse>;
+}
+
+function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDate().toString().padStart(2, '0');
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  return `${day} ${months[d.getMonth()]}`;
+}
+
+interface FactoryOrderLine {
+  boatName: string;
+  departureDate: string;
+  orderByDate: string;
+  daysLeft: number;
+  productCount: number;
+  isEstimated: boolean;
 }
 
 export function Briefing({ horizons }: BriefingProps) {
@@ -12,7 +28,9 @@ export function Briefing({ horizons }: BriefingProps) {
   let thisWeekBoats = 0;
   let totalCritical = 0;
   let completedBoats = 0;
-  let nextDeadlineDays = Infinity;
+
+  // Collect boats that need factory orders (non-completed, with products needing action)
+  const factoryOrderLines: FactoryOrderLine[] = [];
 
   for (const horizon of horizons.values()) {
     for (const p of horizon.projections) {
@@ -26,12 +44,26 @@ export function Briefing({ horizons }: BriefingProps) {
       if (p.days_until_order_deadline != null) {
         if (p.days_until_order_deadline < 0) overdueBoats++;
         else if (p.days_until_order_deadline <= 7) thisWeekBoats++;
-        if (p.days_until_order_deadline < nextDeadlineDays) {
-          nextDeadlineDays = p.days_until_order_deadline;
-        }
+      }
+
+      // Count products that need ordering (critical + urgent)
+      const needsOrderCount = countProductsNeedingOrder(p);
+      if (needsOrderCount > 0 && p.order_by_date && p.days_until_order_deadline != null) {
+        factoryOrderLines.push({
+          boatName: p.boat_name,
+          departureDate: p.departure_date,
+          orderByDate: p.order_by_date,
+          daysLeft: p.days_until_order_deadline,
+          productCount: needsOrderCount,
+          isEstimated: p.is_estimated,
+        });
       }
     }
   }
+
+  // Sort by deadline (most urgent first), show top 4
+  factoryOrderLines.sort((a, b) => a.daysLeft - b.daysLeft);
+  const visibleLines = factoryOrderLines.slice(0, 4);
 
   const actionBoats = totalBoats - completedBoats;
 
@@ -68,8 +100,53 @@ export function Briefing({ horizons }: BriefingProps) {
   };
 
   return (
-    <p className={`text-sm font-medium ${toneStyles[tone]}`}>
-      {sentence}
-    </p>
+    <div className="space-y-2">
+      <p className={`text-sm font-medium ${toneStyles[tone]}`}>
+        {sentence}
+      </p>
+
+      {/* Factory order summary */}
+      {visibleLines.length > 0 && (
+        <div className="space-y-1">
+          <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">
+            Pedidos a fabrica
+          </span>
+          <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+            {visibleLines.map((line) => (
+              <span key={line.departureDate} className="text-xs text-slate-400">
+                <span className={line.daysLeft < 0 ? 'text-red-400 font-medium' : line.daysLeft <= 7 ? 'text-orange-400 font-medium' : ''}>
+                  {line.productCount} prod.
+                </span>
+                {' para '}
+                <span className="text-slate-300">{line.boatName}</span>
+                {' '}
+                <span className="text-slate-500">
+                  ({formatDateShort(line.departureDate)})
+                </span>
+                {' — '}
+                <span className={line.daysLeft < 0 ? 'text-red-400' : line.daysLeft <= 3 ? 'text-red-300' : line.daysLeft <= 7 ? 'text-orange-300' : 'text-slate-500'}>
+                  {line.daysLeft < 0
+                    ? `vencido ${Math.abs(line.daysLeft)}d`
+                    : line.daysLeft <= 3
+                      ? 'pedir ahora'
+                      : `en ${line.daysLeft}d`}
+                </span>
+              </span>
+            ))}
+            {factoryOrderLines.length > visibleLines.length && (
+              <span className="text-xs text-slate-600">
+                +{factoryOrderLines.length - visibleLines.length} mas
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
+}
+
+function countProductsNeedingOrder(projection: BoatProjection): number {
+  return projection.product_details.filter(
+    (p) => p.urgency === 'critical' || p.urgency === 'urgent'
+  ).length;
 }
