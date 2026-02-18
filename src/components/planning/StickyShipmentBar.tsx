@@ -12,6 +12,7 @@ interface StickyShipmentBarProps {
   onExport: () => void;
   isExporting: boolean;
   isBLLoading: boolean;
+  hasBLAllocation: boolean;
 }
 
 function getContainerColorClass(percent: number): string {
@@ -32,6 +33,7 @@ export function StickyShipmentBar({
   onExport,
   isExporting,
   isBLLoading,
+  hasBLAllocation,
 }: StickyShipmentBarProps) {
   const { t } = useTranslation();
 
@@ -134,27 +136,29 @@ export function StickyShipmentBar({
               )}
             </button>
 
-            {/* Export - emerald gradient */}
-            <button
-              onClick={onExport}
-              disabled={exportDisabled}
-              className="
-                px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300
-                bg-gradient-to-r from-emerald-600 to-emerald-500 text-white
-                hover:from-emerald-500 hover:to-emerald-400
-                shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
-              "
-            >
-              {isExporting ? (
-                <span className="flex items-center gap-2">
-                  <span className="animate-spin">{'\u{23F3}'}</span>
-                  {t('planning.shipmentBar.exporting', 'Exportando...')}
-                </span>
-              ) : (
-                t('planning.shipmentBar.export', 'Exportar')
-              )}
-            </button>
+            {/* Export - only after BL allocation */}
+            {hasBLAllocation && (
+              <button
+                onClick={onExport}
+                disabled={exportDisabled}
+                className="
+                  px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-300
+                  bg-gradient-to-r from-emerald-600 to-emerald-500 text-white
+                  hover:from-emerald-500 hover:to-emerald-400
+                  shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40
+                  disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none
+                "
+              >
+                {isExporting ? (
+                  <span className="flex items-center gap-2">
+                    <span className="animate-spin">{'\u{23F3}'}</span>
+                    {t('planning.shipmentBar.exporting', 'Exportando...')}
+                  </span>
+                ) : (
+                  t('planning.shipmentBar.export', 'Exportar')
+                )}
+              </button>
+            )}
           </div>
         </div>
       </div>

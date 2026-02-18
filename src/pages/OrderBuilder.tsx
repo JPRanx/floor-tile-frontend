@@ -500,6 +500,22 @@ export function OrderBuilder() {
 
       setBLAllocationReport(response.allocation);
       setShowBLView(true);
+
+      // Save draft with BL assignments so planning view can show them
+      if (selectedFactoryId && selectedBoatId) {
+        const blItems = response.allocation.allocations.flatMap((bl) =>
+          bl.products.map((p) => ({
+            product_id: p.product_id,
+            selected_pallets: p.pallets,
+            bl_number: bl.bl_number,
+          }))
+        );
+        draftsApi.save({
+          boat_id: selectedBoatId,
+          factory_id: selectedFactoryId,
+          items: blItems,
+        }).catch((err) => console.error('Draft save with BLs failed:', err));
+      }
     } catch (err) {
       console.error('BL allocation failed:', err);
       alert(t('blAllocation.allocationError', 'Failed to generate BL allocation'));
@@ -1135,14 +1151,16 @@ export function OrderBuilder() {
                   : t('blAllocation.allocateToBLs', 'Allocate to BLs')}
               </button>
 
-              {/* Quick Export (single BL) */}
-              <button
-                onClick={handleExport}
-                disabled={exporting}
-                className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
-              </button>
+              {/* Export - only after BL allocation */}
+              {blAllocationReport && (
+                <button
+                  onClick={handleExport}
+                  disabled={exporting}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
+                </button>
+              )}
               <button
                 onClick={handleReset}
                 className="w-full px-4 py-2.5 bg-slate-800/50 text-slate-300 font-medium rounded-xl border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-all duration-300"
@@ -1187,6 +1205,7 @@ export function OrderBuilder() {
         onExport={handleExport}
         isExporting={exporting}
         isBLLoading={blLoading}
+        hasBLAllocation={blAllocationReport !== null}
       />
     </div>
   );

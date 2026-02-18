@@ -7,6 +7,7 @@ export interface DraftItem {
   draft_id: string;
   product_id: string;
   selected_pallets: number;
+  bl_number: number | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -28,6 +29,7 @@ export interface Draft {
 export interface DraftItemCreate {
   product_id: string;
   selected_pallets: number;
+  bl_number?: number | null;
   notes?: string | null;
 }
 

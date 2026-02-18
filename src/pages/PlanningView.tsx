@@ -96,6 +96,13 @@ export function PlanningView() {
     }
   };
 
+  const handleExportFromCard = (boatId: string) => {
+    // Navigate to OB with export flag — OB will auto-allocate BLs and trigger export
+    if (selectedFactoryId) {
+      navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}&action=export`);
+    }
+  };
+
   const handlePreview = (boatId: string) => {
     const horizon = selectedFactoryId ? horizons.get(selectedFactoryId) : null;
     const projection = horizon?.projections.find((p) => p.boat_id === boatId);
@@ -283,6 +290,7 @@ export function PlanningView() {
                       onDrillIn={handleDrillIn}
                       onPreview={handlePreview}
                       onQuickAccept={handleQuickAccept}
+                      onExport={handleExportFromCard}
                       isAccepting={acceptingBoatId === projection.boat_id}
                     />
                   ))}
@@ -302,6 +310,7 @@ export function PlanningView() {
                       key={projection.boat_id}
                       projection={projection}
                       onDrillIn={handleDrillIn}
+                      onExport={handleExportFromCard}
                       compact
                     />
                   ))}

@@ -22,6 +22,13 @@ export interface ProductProjection {
   suggested_pallets: number;
 }
 
+export interface DraftBLItem {
+  product_id: string;
+  sku: string;
+  selected_pallets: number;
+  bl_number: number;
+}
+
 export interface BoatProjection {
   boat_id: string;
   boat_name: string;
@@ -39,6 +46,8 @@ export interface BoatProjection {
   order_by_date: string | null;
   days_until_order_deadline: number | null;
   product_details: ProductProjection[];
+  draft_bl_items: DraftBLItem[];
+  has_bl_allocation: boolean;
 }
 
 export interface PlanningHorizonResponse {

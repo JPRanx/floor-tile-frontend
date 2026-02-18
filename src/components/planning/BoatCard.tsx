@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoatProjection, DraftStatus, ProductProjection } from '../../requests/planning';
+import type { BoatProjection, DraftBLItem, DraftStatus, ProductProjection } from '../../requests/planning';
 import { ConfidenceDots } from './ConfidenceDots';
 
 interface BoatCardProps {
@@ -8,6 +8,7 @@ interface BoatCardProps {
   onDrillIn: (boatId: string) => void;
   onPreview?: (boatId: string) => void;
   onQuickAccept?: (projection: BoatProjection) => void;
+  onExport?: (boatId: string) => void;
   isAccepting?: boolean;
   /** Render in compact mode for completed/ordered boats */
   compact?: boolean;
@@ -117,6 +118,38 @@ function ProductRow({ product }: { product: ProductProjection }) {
   );
 }
 
+function BLGroupedList({ items }: { items: DraftBLItem[] }) {
+  // Group by bl_number
+  const groups = new Map<number, DraftBLItem[]>();
+  for (const item of items) {
+    const list = groups.get(item.bl_number) || [];
+    list.push(item);
+    groups.set(item.bl_number, list);
+  }
+
+  return (
+    <div className="space-y-2">
+      {Array.from(groups.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([blNum, products]) => (
+          <div key={blNum}>
+            <div className="text-[11px] text-indigo-400/80 font-semibold uppercase tracking-wider mb-0.5">
+              BL {blNum}
+            </div>
+            <div className="space-y-0.5 pl-2 border-l border-indigo-500/20">
+              {products.map((p) => (
+                <div key={p.product_id} className="flex items-center justify-between gap-2 py-0.5">
+                  <span className="text-xs text-slate-400 truncate">{p.sku}</span>
+                  <span className="text-[11px] text-slate-500 flex-shrink-0">{p.selected_pallets}p</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+    </div>
+  );
+}
+
 const URGENCY_DOT: Record<string, string> = {
   critical: 'bg-red-400',
   urgent: 'bg-orange-400',
@@ -164,7 +197,7 @@ function getDeadlineBanner(daysLeft: number | null, orderByDate: string | null, 
   };
 }
 
-export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, isAccepting, compact }: BoatCardProps) {
+export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, compact }: BoatCardProps) {
   const { t } = useTranslation();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
@@ -204,6 +237,14 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, isAc
             >
               {t(DRAFT_BADGE_CONFIG[projection.draft_status].label)}
             </span>
+          )}
+          {onExport && projection.has_bl_allocation && (
+            <button
+              onClick={() => onExport(projection.boat_id)}
+              className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
+            >
+              {t('planning.export', 'Exportar')}
+            </button>
           )}
           <button
             onClick={() => onDrillIn(projection.boat_id)}
@@ -266,14 +307,16 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, isAc
           {!isActive && <ConfidenceDots level={projection.confidence} />}
         </div>
 
-        {/* Product list */}
-        {projection.product_details.length > 0 && (
+        {/* Product list: BL-grouped if allocated, flat otherwise */}
+        {projection.has_bl_allocation && projection.draft_bl_items.length > 0 ? (
+          <BLGroupedList items={projection.draft_bl_items} />
+        ) : projection.product_details.length > 0 ? (
           <ProductList
             products={projection.product_details}
             showAll={showAllProducts}
             onToggle={() => setShowAllProducts(!showAllProducts)}
           />
-        )}
+        ) : null}
       </div>
 
       {/* Footer: draft status + actions */}
@@ -309,6 +352,18 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, isAc
               {isAccepting
                 ? t('planning.accepting', 'Guardando...')
                 : t('planning.quickAccept', 'Aceptar sugerido')}
+            </button>
+          )}
+          {onExport && projection.has_bl_allocation && (
+            <button
+              onClick={() => onExport(projection.boat_id)}
+              className="
+                px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
+                bg-emerald-600/20 text-emerald-300 border border-emerald-500/30
+                hover:bg-emerald-600/30 hover:text-emerald-200 hover:border-emerald-500/50
+              "
+            >
+              {t('planning.export', 'Exportar')}
             </button>
           )}
           <button
