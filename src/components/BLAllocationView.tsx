@@ -10,7 +10,6 @@ interface BLAllocationViewProps {
   onExport: () => void;
   onSaveDraft: () => Promise<void>;
   isExporting?: boolean;
-  draftSaved?: boolean;
 }
 
 /**
@@ -23,7 +22,6 @@ export function BLAllocationView({
   onExport,
   onSaveDraft,
   isExporting = false,
-  draftSaved = false,
 }: BLAllocationViewProps) {
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
@@ -138,18 +136,12 @@ export function BLAllocationView({
             setSaving(true);
             try { await onSaveDraft(); } finally { setSaving(false); }
           }}
-          disabled={saving || draftSaved}
-          className={`px-4 py-2.5 font-medium rounded-xl border transition-all duration-300 ${
-            draftSaved
-              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-              : 'bg-indigo-600/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/30 hover:text-indigo-200'
-          } disabled:cursor-not-allowed`}
+          disabled={saving}
+          className="px-4 py-2.5 font-medium rounded-xl border transition-all duration-300 bg-indigo-600/20 text-indigo-300 border-indigo-500/30 hover:bg-indigo-600/30 hover:text-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving
             ? t('blAllocation.savingDraft', 'Guardando...')
-            : draftSaved
-              ? t('blAllocation.draftSaved', '\u2713 Borrador guardado')
-              : t('blAllocation.saveDraft', 'Guardar borrador')}
+            : t('blAllocation.saveDraft', 'Guardar borrador')}
         </button>
 
         <button

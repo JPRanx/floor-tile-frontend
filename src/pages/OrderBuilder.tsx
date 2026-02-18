@@ -86,7 +86,6 @@ export function OrderBuilder() {
   const [showBLView, setShowBLView] = useState(false);
   const [blLoading, setBLLoading] = useState(false);
   const [blExporting, setBLExporting] = useState(false);
-  const [blDraftSaved, setBLDraftSaved] = useState(false);
 
 
   // Removed products tracking (for recalculate feature)
@@ -489,7 +488,6 @@ export function OrderBuilder() {
     }
 
     setBLLoading(true);
-    setBLDraftSaved(false);
     try {
       const response = await orderBuilderApi.generateBLAllocation({
         num_bls: numBLs,
@@ -525,7 +523,7 @@ export function OrderBuilder() {
       factory_id: selectedFactoryId,
       items: blItems,
     });
-    setBLDraftSaved(true);
+    navigate('/order-builder');
   };
 
   const handleExportBLs = async () => {
@@ -562,7 +560,6 @@ export function OrderBuilder() {
 
   const handleBackToProducts = () => {
     setShowBLView(false);
-    setBLDraftSaved(false);
   };
 
   const [exporting, setExporting] = useState(false);
@@ -951,7 +948,6 @@ export function OrderBuilder() {
             onExport={handleExportBLs}
             onSaveDraft={handleSaveBLDraft}
             isExporting={blExporting}
-            draftSaved={blDraftSaved}
           />
         )}
 
@@ -1199,8 +1195,8 @@ export function OrderBuilder() {
         />
       )}
 
-      {/* Sticky Shipment Summary Bar */}
-      <StickyShipmentBar
+      {/* Sticky Shipment Summary Bar — hidden during BL allocation view */}
+      {!showBLView && <StickyShipmentBar
         totalPallets={summary.total_pallets}
         totalM2={summary.total_m2}
         totalContainers={summary.total_containers}
@@ -1213,7 +1209,7 @@ export function OrderBuilder() {
         isExporting={exporting}
         isBLLoading={blLoading}
         hasBLAllocation={blAllocationReport !== null}
-      />
+      />}
     </div>
   );
 }
