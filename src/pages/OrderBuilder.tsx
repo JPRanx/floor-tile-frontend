@@ -528,7 +528,7 @@ export function OrderBuilder() {
         factory_id: selectedFactoryId,
         items: blItems,
       });
-      navigate('/order-builder');
+      navigate('/planning');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: { error?: { message?: string } } } };
       if (axiosErr.response?.status === 409) {
@@ -913,7 +913,7 @@ export function OrderBuilder() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* V2: Back to Planning */}
         <button
-          onClick={() => navigate('/order-builder')}
+          onClick={() => navigate('/planning')}
           className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4"
         >
           <span>&larr;</span>

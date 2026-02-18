@@ -152,6 +152,23 @@ export interface InTransitUploadDetail {
   in_transit_m2: number;
 }
 
+export interface ReconciliationItem {
+  sku: string;
+  dispatch_m2: number;
+  draft_m2: number;
+  diff_m2: number;
+  status: 'match' | 'mismatch' | 'dispatch_only' | 'draft_only';
+  boat_name?: string;
+}
+
+export interface ReconciliationSummary {
+  matched: number;
+  mismatched: number;
+  dispatch_only: number;
+  draft_only: number;
+  items: ReconciliationItem[];
+}
+
 export interface InTransitUploadResponse {
   success: boolean;
   snapshot_date: string;
@@ -161,6 +178,7 @@ export interface InTransitUploadResponse {
   excluded_orders: string[];
   unmatched_skus: string[];
   details: InTransitUploadDetail[];
+  reconciliation?: ReconciliationSummary;
 }
 
 export interface SIESAPreviewLot {
@@ -196,6 +214,18 @@ export interface SIESAPreview {
   warnings: string[];
   sample_lots: SIESAPreviewLot[];
   expires_in_minutes: number;
+}
+
+export interface UploadHistoryItem {
+  upload_type: string;
+  label: string;
+  filename: string;
+  row_count: number;
+  uploaded_at: string;
+}
+
+export interface UploadHistoryResponse {
+  items: UploadHistoryItem[];
 }
 
 export const dataHubApi = {
@@ -274,21 +304,19 @@ export const dataHubApi = {
 
   uploadInTransit: async (
     file: File,
-    snapshotDate: string,
-    receivedOrders?: string,
   ): Promise<InTransitUploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    const params = new URLSearchParams();
-    params.append('snapshot_date', snapshotDate);
-    if (receivedOrders && receivedOrders.trim()) {
-      params.append('received_orders', receivedOrders.trim());
-    }
     const response = await api.post(
-      `/inventory/in-transit/upload?${params.toString()}`,
+      '/inventory/in-transit/upload',
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
+    return response.data;
+  },
+
+  getUploadHistory: async (limit = 20): Promise<UploadHistoryResponse> => {
+    const response = await api.get('/data-freshness/upload-history', { params: { limit } });
     return response.data;
   },
 };

@@ -10,14 +10,6 @@ interface InTransitUploadCardProps {
   onUploadSuccess?: () => void;
 }
 
-function getTodayString(): string {
-  const now = new Date();
-  const yyyy = now.getFullYear();
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const dd = String(now.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProps) {
   const { t } = useTranslation();
   const [dragOver, setDragOver] = useState(false);
@@ -26,6 +18,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUnmatched, setShowUnmatched] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showReconciliation, setShowReconciliation] = useState(false);
 
   const isValidFile = (f: File): boolean => {
     return (
@@ -52,9 +45,10 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     setResult(null);
     setShowUnmatched(false);
     setShowDetails(false);
+    setShowReconciliation(false);
 
     try {
-      const data = await dataHubApi.uploadInTransit(file, getTodayString());
+      const data = await dataHubApi.uploadInTransit(file);
       setResult(data);
       setUploadState('success');
       onUploadSuccess?.();
@@ -108,6 +102,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     setErrorMessage(null);
     setShowUnmatched(false);
     setShowDetails(false);
+    setShowReconciliation(false);
   };
 
   return (
@@ -273,6 +268,86 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                     </tbody>
                   </table>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Reconciliation: dispatch vs drafts */}
+          {result.reconciliation && (
+            <div className={`rounded-lg p-3 border ${
+              result.reconciliation.mismatched > 0 || result.reconciliation.dispatch_only > 0 || result.reconciliation.draft_only > 0
+                ? 'bg-orange-50 border-orange-200'
+                : 'bg-green-50 border-green-200'
+            }`}>
+              <button
+                onClick={() => setShowReconciliation(!showReconciliation)}
+                className={`text-sm font-medium ${
+                  result.reconciliation.mismatched > 0
+                    ? 'text-orange-700 hover:text-orange-900'
+                    : 'text-green-700 hover:text-green-900'
+                }`}
+              >
+                {showReconciliation ? '\u25BC' : '\u25B6'}{' '}
+                {t('dataHub.inTransit.reconciliation', 'Conciliacion vs Borradores')}
+              </button>
+              <div className="mt-2 flex gap-3 text-xs">
+                <span className="px-2 py-1 bg-green-100 text-green-800 rounded">
+                  {result.reconciliation.matched} {t('dataHub.inTransit.matched', 'coinciden')}
+                </span>
+                {result.reconciliation.mismatched > 0 && (
+                  <span className="px-2 py-1 bg-red-100 text-red-800 rounded">
+                    {result.reconciliation.mismatched} {t('dataHub.inTransit.mismatched', 'difieren')}
+                  </span>
+                )}
+                {result.reconciliation.dispatch_only > 0 && (
+                  <span className="px-2 py-1 bg-amber-100 text-amber-800 rounded">
+                    {result.reconciliation.dispatch_only} {t('dataHub.inTransit.dispatchOnly', 'solo en despacho')}
+                  </span>
+                )}
+                {result.reconciliation.draft_only > 0 && (
+                  <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded">
+                    {result.reconciliation.draft_only} {t('dataHub.inTransit.draftOnly', 'solo en borrador')}
+                  </span>
+                )}
+              </div>
+              {showReconciliation && result.reconciliation.items.length > 0 && (
+                <div className="mt-3 overflow-auto max-h-48">
+                  <table className="w-full text-sm">
+                    <thead className="bg-white/60">
+                      <tr>
+                        <th className="px-2 py-1 text-left">SKU</th>
+                        <th className="px-2 py-1 text-right">{t('dataHub.inTransit.dispatchM2', 'Despacho m\u00B2')}</th>
+                        <th className="px-2 py-1 text-right">{t('dataHub.inTransit.draftM2', 'Borrador m\u00B2')}</th>
+                        <th className="px-2 py-1 text-right">{t('dataHub.inTransit.diffM2', 'Dif m\u00B2')}</th>
+                        <th className="px-2 py-1 text-left">{t('dataHub.inTransit.boat', 'Barco')}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {result.reconciliation.items.map((item, i) => (
+                        <tr key={i} className={
+                          item.status === 'mismatch' ? 'bg-red-50' :
+                          item.status === 'dispatch_only' ? 'bg-amber-50' :
+                          'bg-purple-50'
+                        }>
+                          <td className="px-2 py-1 font-medium">{item.sku}</td>
+                          <td className="px-2 py-1 text-right">{item.dispatch_m2.toLocaleString()}</td>
+                          <td className="px-2 py-1 text-right">{item.draft_m2.toLocaleString()}</td>
+                          <td className={`px-2 py-1 text-right font-medium ${
+                            item.diff_m2 > 0 ? 'text-red-600' : item.diff_m2 < 0 ? 'text-blue-600' : ''
+                          }`}>
+                            {item.diff_m2 > 0 ? '+' : ''}{item.diff_m2.toLocaleString()}
+                          </td>
+                          <td className="px-2 py-1 text-gray-600">{item.boat_name || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              {showReconciliation && result.reconciliation.items.length === 0 && (
+                <p className="mt-2 text-sm text-green-700">
+                  {t('dataHub.inTransit.allMatch', 'Todos los productos coinciden con los borradores.')}
+                </p>
               )}
             </div>
           )}

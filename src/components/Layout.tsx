@@ -10,7 +10,7 @@ interface LayoutProps {
 const navItems = [
   { path: '/', labelKey: 'nav.dashboard' },
   { path: '/data-hub', labelKey: 'nav.dataHub' },
-  { path: '/order-builder', labelKey: 'nav.orderBuilder' },
+  { path: '/planning', labelKey: 'nav.orderBuilder' },
   { path: '/boats', labelKey: 'nav.boats' },
   { path: '/intelligence', labelKey: 'nav.intelligence' },
   { path: '/products', labelKey: 'nav.products' },
@@ -23,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/intelligence', '/order-builder', '/products', '/config'].includes(location.pathname);
+  const isDarkPage = ['/', '/intelligence', '/planning', '/order-builder', '/products', '/config'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
@@ -61,7 +61,8 @@ export function Layout({ children }: LayoutProps) {
             {/* Desktop Navigation */}
             <nav className="hidden md:flex space-x-4">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname === item.path
+                  || (item.path === '/planning' && location.pathname === '/order-builder');
                 return (
                   <Link
                     key={item.path}
@@ -111,7 +112,8 @@ export function Layout({ children }: LayoutProps) {
           <div className={`md:hidden border-t ${isDarkPage ? 'border-slate-700' : 'border-gray-200'}`}>
             <nav className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.path;
+                const isActive = location.pathname === item.path
+                  || (item.path === '/planning' && location.pathname === '/order-builder');
                 return (
                   <Link
                     key={item.path}

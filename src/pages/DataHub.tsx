@@ -8,6 +8,7 @@ import { InTransitUploadCard } from '../components/InTransitUploadCard';
 import { BoatUploadCard } from '../components/BoatUploadModal';
 import { ProductionUploadCard } from '../components/ProductionUploadCard';
 import { ShipmentUploadCard } from '../components/ShipmentUploadModal';
+import { UploadHistory } from '../components/UploadHistory';
 import { dataHubApi } from '../requests/dataHub';
 import type { DataFreshnessResponse } from '../requests/dataHub';
 
@@ -94,6 +95,9 @@ export function DataHub() {
           />
         </div>
       </div>
+
+      {/* Upload History */}
+      <UploadHistory refreshKey={refreshKey} />
 
       {/* Help Section */}
       <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">

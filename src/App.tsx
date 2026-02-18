@@ -5,6 +5,7 @@ import { Dashboard } from './pages/Dashboard';
 import { DataHub } from './pages/DataHub';
 import { Boats } from './pages/Boats';
 import { OrderBuilder } from './pages/OrderBuilder';
+import { PlanningView } from './pages/PlanningView';
 import { Intelligence } from './pages/Intelligence';
 import { ProductManagement } from './pages/ProductManagement';
 import { ConfigPage } from './pages/ConfigPage';
@@ -17,6 +18,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/data-hub" element={<DataHub />} />
           <Route path="/boats" element={<Boats />} />
+          <Route path="/planning" element={<PlanningView />} />
           <Route path="/order-builder" element={<OrderBuilder />} />
           <Route path="/intelligence" element={<Intelligence />} />
           <Route path="/products" element={<ProductManagement />} />
