@@ -22,8 +22,6 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
   const { t } = useTranslation();
   const [dragOver, setDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
-  const [snapshotDate, setSnapshotDate] = useState(getTodayString);
-  const [receivedOrders, setReceivedOrders] = useState('');
   const [result, setResult] = useState<InTransitUploadResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUnmatched, setShowUnmatched] = useState(false);
@@ -56,11 +54,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     setShowDetails(false);
 
     try {
-      const data = await dataHubApi.uploadInTransit(
-        file,
-        snapshotDate,
-        receivedOrders || undefined,
-      );
+      const data = await dataHubApi.uploadInTransit(file, getTodayString());
       setResult(data);
       setUploadState('success');
       onUploadSuccess?.();
@@ -90,7 +84,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [snapshotDate, receivedOrders, t],
+    [t],
   );
 
   const handleFileSelect = useCallback(
@@ -105,7 +99,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [snapshotDate, receivedOrders, t],
+    [t],
   );
 
   const handleReset = () => {
@@ -125,40 +119,9 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
         {t('dataHub.inTransit.subtitle', 'Excel de despacho en transito (.xlsx, .xls)')}
       </p>
 
-      {/* Idle / Input State */}
+      {/* Idle State — just drag-drop */}
       {uploadState === 'idle' && (
         <>
-          {/* Date Picker */}
-          <div className="mb-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('dataHub.inTransit.snapshotDate', 'Fecha de corte')}
-            </label>
-            <input
-              type="date"
-              value={snapshotDate}
-              onChange={(e) => setSnapshotDate(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            />
-          </div>
-
-          {/* Received Orders Input */}
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {t('dataHub.inTransit.receivedOrders', 'Pedidos recibidos a excluir')}
-              <span className="text-gray-400 font-normal ml-1">
-                ({t('common.optional', 'opcional')})
-              </span>
-            </label>
-            <input
-              type="text"
-              value={receivedOrders}
-              onChange={(e) => setReceivedOrders(e.target.value)}
-              placeholder="OC002,OC003"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
-            />
-          </div>
-
-          {/* Drag-drop zone */}
           <div
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -239,7 +202,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                   {t('dataHub.inTransit.totalInTransitM2', 'Total en transito m\u00B2')}
                 </div>
                 <div className="text-lg font-bold text-gray-900">
-                  {result.total_in_transit_m2.toLocaleString()} m\u00B2
+                  {result.total_in_transit_m2.toLocaleString()} m²
                 </div>
               </div>
             </div>
