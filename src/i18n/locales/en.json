@@ -1011,6 +1011,7 @@
       "allClear": "All clear. {{count}} shipment(s) ready for the next 3 months.",
       "factoryOrders": "Factory orders",
       "prodFor": "prod. for",
+      "monthSummary": "{{products}} prod. across {{boats}} boats",
       "overdueShort": "overdue {{days}}d",
       "orderNow": "order now",
       "inDays": "in {{days}}d",
@@ -1046,6 +1047,7 @@
     "lowFill": "Significant waste",
     "containerPartial": "Container {{num}} is {{pct}}% full",
     "addToOptimize": "Add {{m2}} m² to fill → reduces overhead to ${{savings}}/m²",
-    "save": "save"
+    "save": "save",
+    "selectProducts": "Select products to see cost estimate"
   }
 }

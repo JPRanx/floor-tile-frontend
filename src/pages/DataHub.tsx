@@ -5,6 +5,7 @@ import { SalesUploadCard } from '../components/SalesUploadCard';
 import { SACUploadCard } from '../components/SACUploadCard';
 import { InventoryUploadCard } from '../components/InventoryUploadModal';
 import { SIESAUploadCard } from '../components/SIESAUploadCard';
+import { InTransitUploadCard } from '../components/InTransitUploadCard';
 import { BoatUploadCard } from '../components/BoatUploadModal';
 import { ProductionUploadCard } from '../components/ProductionUploadCard';
 import { ShipmentUploadCard } from '../components/ShipmentUploadModal';
@@ -64,7 +65,7 @@ export function DataHub() {
       {/* Inventory Section */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{t('dataHub.sections.inventory')}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <InventoryUploadCard
             lastUpdated={freshness?.inventory.last_updated}
             recordCount={freshness?.inventory.record_count}
@@ -73,6 +74,9 @@ export function DataHub() {
           <SIESAUploadCard
             lastUpdated={freshness?.inventory.last_updated}
             recordCount={freshness?.inventory.record_count}
+            onUploadSuccess={handleUploadSuccess}
+          />
+          <InTransitUploadCard
             onUploadSuccess={handleUploadSuccess}
           />
         </div>

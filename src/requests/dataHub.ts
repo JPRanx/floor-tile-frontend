@@ -147,6 +147,22 @@ export interface OwnerSalesUploadResponse {
   warnings: string[];
 }
 
+export interface InTransitUploadDetail {
+  sku: string;
+  in_transit_m2: number;
+}
+
+export interface InTransitUploadResponse {
+  success: boolean;
+  snapshot_date: string;
+  products_updated: number;
+  products_reset: number;
+  total_in_transit_m2: number;
+  excluded_orders: string[];
+  unmatched_skus: string[];
+  details: InTransitUploadDetail[];
+}
+
 export interface SIESAPreviewLot {
   sku: string;
   warehouse_name: string | null;
@@ -253,6 +269,26 @@ export const dataHubApi = {
   ): Promise<SIESAUploadResponse> => {
     const body = manualMappings?.length ? { manual_mappings: manualMappings } : undefined;
     const response = await api.post(`/inventory/siesa/upload/confirm/${previewId}`, body);
+    return response.data;
+  },
+
+  uploadInTransit: async (
+    file: File,
+    snapshotDate: string,
+    receivedOrders?: string,
+  ): Promise<InTransitUploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const params = new URLSearchParams();
+    params.append('snapshot_date', snapshotDate);
+    if (receivedOrders && receivedOrders.trim()) {
+      params.append('received_orders', receivedOrders.trim());
+    }
+    const response = await api.post(
+      `/inventory/in-transit/upload?${params.toString()}`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
     return response.data;
   },
 };

@@ -10,7 +10,19 @@ interface ShippingEstimateProps {
 export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstimateProps) {
   const { t } = useTranslation();
 
-  if (totalM2 <= 0) return null;
+  if (totalM2 <= 0) {
+    return (
+      <div className="bg-slate-800/30 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-5 shadow-xl">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+            {'\u{1F4B0}'}
+          </span>
+          {t('shippingEstimate.title', 'Shipping Estimate')}
+        </h3>
+        <p className="text-slate-500 text-sm">{t('shippingEstimate.selectProducts', 'Selecciona productos para ver el estimado de costos')}</p>
+      </div>
+    );
+  }
 
   const m2PerContainer = costConfig.m2_per_container;
   const containersNeeded = Math.ceil(totalM2 / m2PerContainer);

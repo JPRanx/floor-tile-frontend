@@ -1011,6 +1011,7 @@
       "allClear": "Todo bajo control. {{count}} envío(s) preparado(s) para los próximos 3 meses.",
       "factoryOrders": "Pedidos a fábrica",
       "prodFor": "prod. para",
+      "monthSummary": "{{products}} prod. en {{boats}} barcos",
       "overdueShort": "vencido {{days}}d",
       "orderNow": "pedir ahora",
       "inDays": "en {{days}}d",
@@ -1046,6 +1047,7 @@
     "lowFill": "Desperdicio significativo",
     "containerPartial": "Contenedor {{num}} está al {{pct}}%",
     "addToOptimize": "Agrega {{m2}} m² para llenar → reduce sobrecosto a ${{savings}}/m²",
-    "save": "ahorro"
+    "save": "ahorro",
+    "selectProducts": "Selecciona productos para ver el estimado de costos"
   }
 }

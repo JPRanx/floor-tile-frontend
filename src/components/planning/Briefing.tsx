@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import type { BoatProjection, PlanningHorizonResponse } from '../../requests/planning';
-import { formatDateShort } from '../../utils/dateUtils';
 
 interface BriefingProps {
   horizons: Map<string, PlanningHorizonResponse>;
@@ -13,6 +12,14 @@ interface FactoryOrderLine {
   daysLeft: number;
   productCount: number;
   isEstimated: boolean;
+}
+
+interface MonthGroup {
+  monthKey: string; // "2026-03"
+  boatCount: number;
+  totalProducts: number;
+  mostUrgentDays: number;
+  boatNames: string[];
 }
 
 export function Briefing({ horizons }: BriefingProps) {
@@ -59,7 +66,23 @@ export function Briefing({ horizons }: BriefingProps) {
 
   // Sort by boat departure (next boat first)
   factoryOrderLines.sort((a, b) => a.departureDate.localeCompare(b.departureDate));
-  const visibleLines = factoryOrderLines.slice(0, 4);
+
+  // Group by departure month (factory orders are monthly)
+  const monthGroups: MonthGroup[] = [];
+  const monthMap = new Map<string, MonthGroup>();
+  for (const line of factoryOrderLines) {
+    const monthKey = line.departureDate.slice(0, 7); // "2026-03"
+    let group = monthMap.get(monthKey);
+    if (!group) {
+      group = { monthKey, boatCount: 0, totalProducts: 0, mostUrgentDays: Infinity, boatNames: [] };
+      monthMap.set(monthKey, group);
+      monthGroups.push(group);
+    }
+    group.boatCount++;
+    group.totalProducts += line.productCount;
+    group.mostUrgentDays = Math.min(group.mostUrgentDays, line.daysLeft);
+    group.boatNames.push(line.boatName);
+  }
 
   const actionBoats = totalBoats - completedBoats;
 
@@ -101,39 +124,39 @@ export function Briefing({ horizons }: BriefingProps) {
         {sentence}
       </p>
 
-      {/* Factory order summary */}
-      {visibleLines.length > 0 && (
+      {/* Factory order summary — grouped by month */}
+      {monthGroups.length > 0 && (
         <div className="space-y-1">
           <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">
             {t('planning.briefing.factoryOrders')}
           </span>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-            {visibleLines.map((line) => (
-              <span key={line.departureDate} className="text-xs text-slate-400">
-                <span className={line.daysLeft < 0 ? 'text-red-400 font-medium' : line.daysLeft <= 7 ? 'text-orange-400 font-medium' : ''}>
-                  {line.productCount} {t('planning.briefing.prodFor')}
+            {monthGroups.map((group) => {
+              const monthDate = new Date(group.monthKey + '-01T00:00:00');
+              const monthLabel = new Intl.DateTimeFormat(i18n.language, { month: 'long' }).format(monthDate);
+              const days = group.mostUrgentDays;
+              return (
+                <span key={group.monthKey} className="text-xs text-slate-400">
+                  <span className="text-slate-300 font-medium capitalize">{monthLabel}:</span>
+                  {' '}
+                  <span className={days < 0 ? 'text-red-400 font-medium' : days <= 7 ? 'text-orange-400 font-medium' : ''}>
+                    {t('planning.briefing.monthSummary', {
+                      products: group.totalProducts,
+                      boats: group.boatCount,
+                      defaultValue: '{{products}} prod. across {{boats}} boats',
+                    })}
+                  </span>
+                  {' — '}
+                  <span className={days < 0 ? 'text-red-400' : days <= 3 ? 'text-red-300' : days <= 7 ? 'text-orange-300' : 'text-slate-500'}>
+                    {days < 0
+                      ? t('planning.briefing.overdueShort', { days: Math.abs(days) })
+                      : days <= 3
+                        ? t('planning.briefing.orderNow')
+                        : t('planning.briefing.inDays', { days })}
+                  </span>
                 </span>
-                {' '}
-                <span className="text-slate-300">{line.boatName}</span>
-                {' '}
-                <span className="text-slate-500">
-                  ({formatDateShort(line.departureDate, i18n.language)})
-                </span>
-                {' — '}
-                <span className={line.daysLeft < 0 ? 'text-red-400' : line.daysLeft <= 3 ? 'text-red-300' : line.daysLeft <= 7 ? 'text-orange-300' : 'text-slate-500'}>
-                  {line.daysLeft < 0
-                    ? t('planning.briefing.overdueShort', { days: Math.abs(line.daysLeft) })
-                    : line.daysLeft <= 3
-                      ? t('planning.briefing.orderNow')
-                      : t('planning.briefing.inDays', { days: line.daysLeft })}
-                </span>
-              </span>
-            ))}
-            {factoryOrderLines.length > visibleLines.length && (
-              <span className="text-xs text-slate-600">
-                {t('planning.briefing.more', { count: factoryOrderLines.length - visibleLines.length })}
-              </span>
-            )}
+              );
+            })}
           </div>
         </div>
       )}
