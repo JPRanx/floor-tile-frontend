@@ -77,8 +77,8 @@ export function FactoryRequestSection({
   const selectedTotalM2 = selectedTotalPallets * 134.4;
 
   // Calculate progress toward limit
-  const totalRequestM2 = summary.total_request_m2 + Number(selectedTotalM2);
-  const limitM2 = summary.limit_m2;
+  const totalRequestM2 = Number(summary.total_request_m2) + Number(selectedTotalM2);
+  const limitM2 = Number(summary.limit_m2);
   const utilizationPct = Math.min(100, (totalRequestM2 / limitM2) * 100);
   const isNearLimit = utilizationPct > 80;
   const isOverLimit = totalRequestM2 > limitM2;

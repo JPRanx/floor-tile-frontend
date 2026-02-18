@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import type { BoatProjection } from '../../requests/planning';
 import { ConfidenceDots } from './ConfidenceDots';
+import { formatDateShort } from '../../utils/dateUtils';
 
 interface ProjectedBoatPreviewProps {
   isOpen: boolean;
@@ -9,20 +10,13 @@ interface ProjectedBoatPreviewProps {
   boatProjection: BoatProjection;
 }
 
-function formatDateShort(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  const day = date.getDate().toString().padStart(2, '0');
-  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  return `${day} ${months[date.getMonth()]}`;
-}
-
 export function ProjectedBoatPreview({
   isOpen,
   onClose,
   onDrillIn,
   boatProjection,
 }: ProjectedBoatPreviewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   if (!isOpen) return null;
 
@@ -56,10 +50,10 @@ export function ProjectedBoatPreview({
             </div>
             <div className="text-right text-sm flex-shrink-0 ml-3 opacity-80">
               <div className="text-slate-400">
-                {t('planning.departs', 'Zarpa')}: <span className="text-slate-300">{formatDateShort(boatProjection.departure_date)}</span>
+                {t('planning.departs', 'Zarpa')}: <span className="text-slate-300">{formatDateShort(boatProjection.departure_date, i18n.language)}</span>
               </div>
               <div className="text-slate-500">
-                {t('planning.arrives', 'Llega')}: <span className="text-slate-400">{formatDateShort(boatProjection.arrival_date)}</span>
+                {t('planning.arrives', 'Llega')}: <span className="text-slate-400">{formatDateShort(boatProjection.arrival_date, i18n.language)}</span>
               </div>
             </div>
           </div>

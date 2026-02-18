@@ -1,14 +1,9 @@
+import { useTranslation } from 'react-i18next';
 import type { BoatProjection, PlanningHorizonResponse } from '../../requests/planning';
+import { formatDateShort } from '../../utils/dateUtils';
 
 interface BriefingProps {
   horizons: Map<string, PlanningHorizonResponse>;
-}
-
-function formatDateShort(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  const day = d.getDate().toString().padStart(2, '0');
-  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  return `${day} ${months[d.getMonth()]}`;
 }
 
 interface FactoryOrderLine {
@@ -21,6 +16,7 @@ interface FactoryOrderLine {
 }
 
 export function Briefing({ horizons }: BriefingProps) {
+  const { t, i18n } = useTranslation();
   if (horizons.size === 0) return null;
 
   let totalBoats = 0;
@@ -72,24 +68,24 @@ export function Briefing({ horizons }: BriefingProps) {
   let tone: 'calm' | 'warning' | 'urgent';
 
   if (totalBoats === 0) {
-    sentence = 'Sin barcos programados en el horizonte.';
+    sentence = t('planning.briefing.noBoats');
     tone = 'calm';
   } else if (actionBoats === 0) {
-    sentence = `Todos los pedidos colocados. ${totalBoats} envio${totalBoats > 1 ? 's' : ''} en camino.`;
+    sentence = t('planning.briefing.allDone', { count: totalBoats });
     tone = 'calm';
   } else if (overdueBoats > 0) {
-    const criticalNote = totalCritical > 0 ? ` ${totalCritical} producto${totalCritical > 1 ? 's' : ''} critico${totalCritical > 1 ? 's' : ''}.` : '';
-    sentence = `${overdueBoats} pedido${overdueBoats > 1 ? 's' : ''} vencido${overdueBoats > 1 ? 's' : ''}.${criticalNote}`;
+    const criticalNote = totalCritical > 0 ? ` ${t('planning.briefing.criticalProducts', { count: totalCritical })}` : '';
+    sentence = `${t('planning.briefing.overdue', { count: overdueBoats })}${criticalNote}`;
     tone = 'urgent';
   } else if (thisWeekBoats > 0) {
-    const criticalNote = totalCritical > 0 ? ` ${totalCritical} producto${totalCritical > 1 ? 's' : ''} critico${totalCritical > 1 ? 's' : ''}.` : '';
-    sentence = `${thisWeekBoats} barco${thisWeekBoats > 1 ? 's' : ''} necesita${thisWeekBoats > 1 ? 'n' : ''} pedido esta semana.${criticalNote}`;
+    const criticalNote = totalCritical > 0 ? ` ${t('planning.briefing.criticalProducts', { count: totalCritical })}` : '';
+    sentence = `${t('planning.briefing.thisWeek', { count: thisWeekBoats })}${criticalNote}`;
     tone = 'warning';
   } else if (totalCritical > 0) {
-    sentence = `${actionBoats} barco${actionBoats > 1 ? 's' : ''} por revisar. ${totalCritical} producto${totalCritical > 1 ? 's' : ''} critico${totalCritical > 1 ? 's' : ''}.`;
+    sentence = `${t('planning.briefing.toReview', { count: actionBoats })} ${t('planning.briefing.criticalProducts', { count: totalCritical })}`;
     tone = 'warning';
   } else {
-    sentence = `Todo bajo control. ${actionBoats} envio${actionBoats > 1 ? 's' : ''} preparado${actionBoats > 1 ? 's' : ''} para los proximos 3 meses.`;
+    sentence = t('planning.briefing.allClear', { count: actionBoats });
     tone = 'calm';
   }
 
@@ -109,33 +105,33 @@ export function Briefing({ horizons }: BriefingProps) {
       {visibleLines.length > 0 && (
         <div className="space-y-1">
           <span className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">
-            Pedidos a fabrica
+            {t('planning.briefing.factoryOrders')}
           </span>
           <div className="flex flex-wrap gap-x-4 gap-y-0.5">
             {visibleLines.map((line) => (
               <span key={line.departureDate} className="text-xs text-slate-400">
                 <span className={line.daysLeft < 0 ? 'text-red-400 font-medium' : line.daysLeft <= 7 ? 'text-orange-400 font-medium' : ''}>
-                  {line.productCount} prod.
+                  {line.productCount} {t('planning.briefing.prodFor')}
                 </span>
-                {' para '}
+                {' '}
                 <span className="text-slate-300">{line.boatName}</span>
                 {' '}
                 <span className="text-slate-500">
-                  ({formatDateShort(line.departureDate)})
+                  ({formatDateShort(line.departureDate, i18n.language)})
                 </span>
                 {' — '}
                 <span className={line.daysLeft < 0 ? 'text-red-400' : line.daysLeft <= 3 ? 'text-red-300' : line.daysLeft <= 7 ? 'text-orange-300' : 'text-slate-500'}>
                   {line.daysLeft < 0
-                    ? `vencido ${Math.abs(line.daysLeft)}d`
+                    ? t('planning.briefing.overdueShort', { days: Math.abs(line.daysLeft) })
                     : line.daysLeft <= 3
-                      ? 'pedir ahora'
-                      : `en ${line.daysLeft}d`}
+                      ? t('planning.briefing.orderNow')
+                      : t('planning.briefing.inDays', { days: line.daysLeft })}
                 </span>
               </span>
             ))}
             {factoryOrderLines.length > visibleLines.length && (
               <span className="text-xs text-slate-600">
-                +{factoryOrderLines.length - visibleLines.length} mas
+                {t('planning.briefing.more', { count: factoryOrderLines.length - visibleLines.length })}
               </span>
             )}
           </div>

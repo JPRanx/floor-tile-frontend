@@ -879,7 +879,7 @@ export function OrderBuilder() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -887,7 +887,7 @@ export function OrderBuilder() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-950 p-8 -mx-4 sm:-mx-6 lg:-mx-8 -my-6">
+      <div className="min-h-screen bg-slate-950 p-8">
         <div className="max-w-md mx-auto bg-rose-500/10 border border-rose-500/30 rounded-xl p-6 backdrop-blur-xl">
           <div className="flex items-center gap-3 mb-4">
             <span className="text-2xl">⚠️</span>
@@ -909,7 +909,7 @@ export function OrderBuilder() {
 
 
   return (
-    <div className="min-h-screen bg-slate-950 -mx-4 sm:-mx-6 lg:-mx-8 -my-6 px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-slate-950 px-4 sm:px-6 lg:px-8 py-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* V2: Back to Planning */}
         <button

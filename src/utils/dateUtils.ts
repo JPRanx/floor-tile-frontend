@@ -95,6 +95,27 @@ export function isDatePast(dateString: string): boolean {
 }
 
 /**
+ * Format a date string as "18 Feb" / "Feb 18" depending on locale.
+ * Uses Intl.DateTimeFormat for locale-aware month abbreviations.
+ *
+ * @param dateString - ISO date string (e.g., "2026-02-19")
+ * @param lang - Language code (e.g., "es", "en")
+ * @returns Formatted short date string
+ */
+export function formatDateShort(dateString: string, lang: string = 'es'): string {
+  if (!dateString) return '—';
+  try {
+    const date = new Date(dateString + 'T00:00:00');
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = new Intl.DateTimeFormat(lang, { month: 'short' }).format(date);
+    const cleanMonth = month.charAt(0).toUpperCase() + month.slice(1).replace('.', '');
+    return `${day} ${cleanMonth}`;
+  } catch {
+    return dateString;
+  }
+}
+
+/**
  * Check if a date string represents today.
  *
  * @param dateString - ISO date string

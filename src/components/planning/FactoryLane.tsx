@@ -75,20 +75,20 @@ export function FactoryLane({
           <span className="text-lg">{'\u{1F3ED}'}</span>
           <span className="text-white font-semibold">{factory.name}</span>
           {loading && (
-            <span className="text-slate-500 text-xs animate-pulse">cargando...</span>
+            <span className="text-slate-500 text-xs animate-pulse">{t('planning.loading')}</span>
           )}
           {!loading && (
             <span className="text-slate-500 text-xs">
-              {boatCount} {boatCount === 1 ? 'barco' : 'barcos'}
+              {boatCount === 1 ? t('planning.boatCountOne') : t('planning.boatCount', { count: boatCount })}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3">
           {totalCritical > 0 && (
-            <span className="text-red-400 text-xs font-medium">{totalCritical} crit</span>
+            <span className="text-red-400 text-xs font-medium">{totalCritical} {t('planning.critShort')}</span>
           )}
           {totalUrgent > 0 && (
-            <span className="text-orange-400 text-xs font-medium">{totalUrgent} urg</span>
+            <span className="text-orange-400 text-xs font-medium">{totalUrgent} {t('planning.urgShort')}</span>
           )}
           <span className={`text-xs transition-transform duration-200 text-slate-500 ${isSelected ? 'rotate-180' : ''}`}>
             {'\u25BC'}
@@ -121,7 +121,7 @@ export function FactoryLane({
                   onClick={() => setShowAllEstimated(true)}
                   className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
                 >
-                  +{hiddenCount} estimados
+                  {t('planning.estimatedMore', { count: hiddenCount })}
                 </button>
               )}
               {showAllEstimated && estimated.length > 3 && (
@@ -129,7 +129,7 @@ export function FactoryLane({
                   onClick={() => setShowAllEstimated(false)}
                   className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
                 >
-                  ver menos
+                  {t('planning.showLess')}
                 </button>
               )}
             </div>

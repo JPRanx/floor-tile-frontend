@@ -130,8 +130,8 @@ export function PlanningView() {
         items,
       });
 
-      // Refresh horizon for this factory
-      await fetchHorizon(selectedFactoryId);
+      // Navigate to Order Builder detail for BL allocation
+      navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${projection.boat_id}`);
     } catch (err) {
       console.error('Quick accept failed:', err);
     } finally {
@@ -273,7 +273,7 @@ export function PlanningView() {
                         {healthStats.totalOk}
                       </span>
                     )}
-                    <span className="text-slate-600">{healthStats.totalProducts} prod</span>
+                    <span className="text-slate-600">{healthStats.totalProducts} {t('planning.prod')}</span>
                   </div>
                 )}
               </div>
@@ -312,7 +312,7 @@ export function PlanningView() {
                       onClick={() => setShowAllEstimated(true)}
                       className="w-full py-2.5 text-sm text-slate-500 hover:text-slate-300 border border-dashed border-slate-700/50 hover:border-slate-600/50 rounded-xl transition-colors"
                     >
-                      +{hiddenEstimatedCount} barcos estimados
+                      {t('planning.estimatedBoatsMore', { count: hiddenEstimatedCount })}
                     </button>
                   )}
                   {showAllEstimated && estimatedAction.length > 3 && (
@@ -320,7 +320,7 @@ export function PlanningView() {
                       onClick={() => setShowAllEstimated(false)}
                       className="w-full py-2 text-xs text-slate-600 hover:text-slate-400 transition-colors"
                     >
-                      ver menos
+                      {t('planning.showLess')}
                     </button>
                   )}
                 </div>

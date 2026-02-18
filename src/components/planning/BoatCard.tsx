@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BoatProjection, DraftBLItem, DraftStatus, ProductProjection } from '../../requests/planning';
 import { ConfidenceDots } from './ConfidenceDots';
+import { formatDateShort } from '../../utils/dateUtils';
 
 interface BoatCardProps {
   projection: BoatProjection;
@@ -12,13 +13,6 @@ interface BoatCardProps {
   isAccepting?: boolean;
   /** Render in compact mode for completed/ordered boats */
   compact?: boolean;
-}
-
-function formatDateShort(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  const day = date.getDate().toString().padStart(2, '0');
-  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  return `${day} ${months[date.getMonth()]}`;
 }
 
 const DRAFT_BADGE_CONFIG: Record<DraftStatus, { label: string; classes: string }> = {
@@ -51,6 +45,7 @@ function ProductList({
   showAll: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation();
   const priorityProducts = products.filter(
     (p) => p.urgency === 'critical' || p.urgency === 'urgent'
   );
@@ -64,7 +59,7 @@ function ProductList({
   return (
     <div className="space-y-1">
       <div className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">
-        Productos
+        {t('planning.products')}
       </div>
       <div className="space-y-0.5">
         {priorityProducts.map((p) => (
@@ -82,7 +77,7 @@ function ProductList({
           }}
           className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
         >
-          + {hiddenCount} mas...
+          {t('planning.showMore', { count: hiddenCount })}
         </button>
       )}
       {showAll && otherProducts.length > MAX_VISIBLE_PRODUCTS - priorityProducts.length && (
@@ -93,7 +88,7 @@ function ProductList({
           }}
           className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
         >
-          Ver menos
+          {t('planning.showLess')}
         </button>
       )}
     </div>
@@ -172,15 +167,15 @@ function getUrgencyStyle(daysLeft: number): { classes: string; level: 'overdue' 
   return { classes: 'bg-slate-500/10 border-slate-500/20 text-slate-400', level: 'onTrack' };
 }
 
-function formatDeadlineText(daysLeft: number, dateStr: string, label: string, t: (k: string, d: string, o?: Record<string, unknown>) => string): string {
-  const date = formatDateShort(dateStr);
+function formatDeadlineText(daysLeft: number, dateStr: string, label: string, t: (k: string, d: string, o?: Record<string, unknown>) => string, lang: string): string {
+  const date = formatDateShort(dateStr, lang);
   if (daysLeft < 0) return `${label}: ${t('planning.deadline.overdue', 'Vencido hace {{days}}d', { days: Math.abs(daysLeft) })}`;
   if (daysLeft <= 3) return `${label}: ${t('planning.deadline.now', 'Ahora — {{date}}', { date })}`;
   return `${label}: ${date} (${daysLeft}d)`;
 }
 
 export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, compact }: BoatCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
   const isEstimated = projection.is_estimated;
@@ -214,7 +209,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         <div className="flex items-center gap-3 min-w-0">
           <span className="text-sm">{'\u{2705}'}</span>
           <span className="text-white font-medium truncate">{projection.boat_name}</span>
-          <span className="text-slate-500 text-sm">{formatDateShort(projection.departure_date)}</span>
+          <span className="text-slate-500 text-sm">{formatDateShort(projection.departure_date, i18n.language)}</span>
         </div>
         <div className="flex items-center gap-3">
           {projection.draft_status && (
@@ -257,9 +252,9 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
       {/* Deadline banners */}
       {urgencyStyle && !isCompleted && factoryDays != null && projection.order_by_date && (
         <div className={`mx-5 mt-4 px-3 py-1.5 rounded-lg border text-xs font-medium space-y-0.5 ${urgencyStyle.classes}`}>
-          <div>{formatDeadlineText(factoryDays, projection.order_by_date, t('planning.factoryOrder', 'Pedir a fabrica'), t)}</div>
+          <div>{formatDeadlineText(factoryDays, projection.order_by_date, t('planning.factoryOrder', 'Pedir a fabrica'), t, i18n.language)}</div>
           {shippingDays != null && projection.shipping_book_by_date && (
-            <div className="opacity-70">{formatDeadlineText(shippingDays, projection.shipping_book_by_date, t('planning.siesaShipment', 'Enviar de SIESA'), t)}</div>
+            <div className="opacity-70">{formatDeadlineText(shippingDays, projection.shipping_book_by_date, t('planning.siesaShipment', 'Enviar de SIESA'), t, i18n.language)}</div>
           )}
         </div>
       )}
@@ -281,10 +276,10 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         </div>
         <div className="text-right text-sm flex-shrink-0 ml-3">
           <div className="text-slate-400">
-            {t('planning.departs', 'Sale')}: <span className="text-slate-300">{formatDateShort(projection.departure_date)}</span>
+            {t('planning.departs', 'Sale')}: <span className="text-slate-300">{formatDateShort(projection.departure_date, i18n.language)}</span>
           </div>
           <div className="text-slate-500">
-            {t('planning.arrives', 'Llega')}: <span className="text-slate-400">{formatDateShort(projection.arrival_date)}</span>
+            {t('planning.arrives', 'Llega')}: <span className="text-slate-400">{formatDateShort(projection.arrival_date, i18n.language)}</span>
           </div>
         </div>
       </div>

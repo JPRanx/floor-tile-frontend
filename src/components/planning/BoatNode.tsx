@@ -1,20 +1,15 @@
+import { useTranslation } from 'react-i18next';
 import type { BoatProjection } from '../../requests/planning';
+import { formatDateShort } from '../../utils/dateUtils';
 
 interface BoatNodeProps {
   projection: BoatProjection;
   onClick: () => void;
 }
 
-function formatDateShort(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00');
-  const day = date.getDate().toString().padStart(2, '0');
-  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  return `${day} ${months[date.getMonth()]}`;
-}
-
 function getDeadlineStyle(daysLeft: number | null): { badge: string; classes: string } {
   if (daysLeft == null) return { badge: '', classes: '' };
-  if (daysLeft < 0) return { badge: 'VENCIDO', classes: 'text-red-400 bg-red-500/15 border-red-500/30' };
+  if (daysLeft < 0) return { badge: '_OVERDUE_', classes: 'text-red-400 bg-red-500/15 border-red-500/30' };
   if (daysLeft <= 3) return { badge: `${daysLeft}d`, classes: 'text-red-400 bg-red-500/15 border-red-500/30' };
   if (daysLeft <= 7) return { badge: `${daysLeft}d`, classes: 'text-orange-400 bg-orange-500/15 border-orange-500/30' };
   if (daysLeft <= 14) return { badge: `${daysLeft}d`, classes: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
@@ -29,6 +24,7 @@ const STATUS_ICON: Record<string, string> = {
 };
 
 export function BoatNode({ projection, onClick }: BoatNodeProps) {
+  const { t, i18n } = useTranslation();
   const deadline = getDeadlineStyle(projection.days_until_order_deadline);
   const hasDraft = projection.is_active;
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
@@ -51,7 +47,7 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
     >
       {/* Boat name + date */}
       <div className="text-white text-sm font-medium truncate">{projection.boat_name}</div>
-      <div className="text-slate-500 text-xs mt-0.5">{formatDateShort(projection.departure_date)}</div>
+      <div className="text-slate-500 text-xs mt-0.5">{formatDateShort(projection.departure_date, i18n.language)}</div>
 
       {/* Pallets + confidence */}
       <div className="flex items-center justify-between mt-2">
@@ -77,14 +73,14 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
       <div className="flex items-center justify-between mt-2 gap-1">
         {projection.draft_status ? (
           <span className="text-[10px] text-slate-400">
-            {STATUS_ICON[projection.draft_status] || ''} {projection.draft_status === 'drafting' ? 'Borrador' : projection.draft_status === 'ordered' ? 'Enviado' : projection.draft_status === 'confirmed' ? 'Confirmado' : 'Accion'}
+            {STATUS_ICON[projection.draft_status] || ''} {projection.draft_status === 'drafting' ? t('planning.draftStatus.drafting') : projection.draft_status === 'ordered' ? t('planning.draftStatus.ordered') : projection.draft_status === 'confirmed' ? t('planning.draftStatus.confirmed') : t('planning.draftStatus.action_needed')}
           </span>
         ) : (
-          <span className="text-[10px] text-slate-600">Sin revisar</span>
+          <span className="text-[10px] text-slate-600">{t('planning.noReview')}</span>
         )}
         {deadline.badge && !isCompleted && (
           <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${deadline.classes}`}>
-            {deadline.badge}
+            {deadline.badge === '_OVERDUE_' ? t('planning.deadlineOverdue') : deadline.badge}
           </span>
         )}
       </div>
