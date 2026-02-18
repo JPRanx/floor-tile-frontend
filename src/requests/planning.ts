@@ -48,6 +48,8 @@ export interface BoatProjection {
   product_details: ProductProjection[];
   draft_bl_items: DraftBLItem[];
   has_bl_allocation: boolean;
+  is_estimated: boolean;
+  carrier: string | null;
 }
 
 export interface PlanningHorizonResponse {

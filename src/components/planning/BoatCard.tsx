@@ -201,11 +201,14 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
   const { t } = useTranslation();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
+  const isEstimated = projection.is_estimated;
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
 
   const borderStyle = isActive
     ? 'border-slate-700/50'
-    : 'border-dashed border-slate-700/40';
+    : isEstimated
+      ? 'border-dashed border-slate-600/30'
+      : 'border-dashed border-slate-700/40';
 
   const palletsText = isActive
     ? `${projection.projected_pallets_min}`
@@ -276,11 +279,16 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
       <div className={`px-5 ${deadline && !isCompleted ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg flex-shrink-0">
-            {isActive ? '\u{1F6A2}' : '\u{1F310}'}
+            {isActive ? '\u{1F6A2}' : isEstimated ? '\u{1F4C5}' : '\u{1F310}'}
           </span>
           <h3 className="text-white font-semibold truncate">
             {projection.boat_name}
           </h3>
+          {projection.carrier && (
+            <span className="text-[10px] text-slate-500 bg-slate-700/40 px-1.5 py-0.5 rounded font-medium flex-shrink-0">
+              {projection.carrier}
+            </span>
+          )}
         </div>
         <div className="text-right text-sm flex-shrink-0 ml-3">
           <div className="text-slate-400">
