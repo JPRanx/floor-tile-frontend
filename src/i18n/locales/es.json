@@ -967,6 +967,10 @@
       "export": "Exportar",
       "exporting": "Exportando..."
     },
+    "supplyFactory": "SIESA {{m2}} m²",
+    "supplyProduction": "Producción {{m2}} m²",
+    "needsReview": "Revisar",
+    "draftLocked": "Bloqueado por {{boat}}",
     "draftChanges": {
       "title": "{{count}} cambios desde tu ultima visita",
       "quantities": "cantidades",

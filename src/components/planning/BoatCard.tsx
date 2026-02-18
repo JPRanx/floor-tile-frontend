@@ -304,6 +304,39 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
           {!isActive && <ConfidenceDots level={projection.confidence} />}
         </div>
 
+        {/* Supply source badges */}
+        {!isCompleted && (projection.has_factory_siesa_supply || projection.has_production_supply) && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {projection.has_factory_siesa_supply && (
+              <span className="text-[10px] bg-blue-500/15 text-blue-300 px-1.5 py-0.5 rounded font-medium">
+                {t('planning.supplyFactory', 'SIESA {{m2}} m²', { m2: Math.round(projection.factory_siesa_total_m2).toLocaleString() })}
+              </span>
+            )}
+            {projection.has_production_supply && (
+              <span className="text-[10px] bg-purple-500/15 text-purple-300 px-1.5 py-0.5 rounded font-medium">
+                {t('planning.supplyProduction', 'Producción {{m2}} m²', { m2: Math.round(projection.production_total_m2).toLocaleString() })}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Review warning */}
+        {projection.needs_review && (
+          <div className="mt-3 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-300">
+            <span className="font-medium">{t('planning.needsReview', 'Revisar')}</span>
+            {projection.review_reason && (
+              <span className="text-amber-300/70"> — {projection.review_reason}</span>
+            )}
+          </div>
+        )}
+
+        {/* Earlier draft dependency context */}
+        {!isCompleted && projection.has_earlier_drafts && projection.earlier_draft_context && !projection.needs_review && (
+          <div className="mt-2 text-[10px] text-slate-500 italic">
+            {projection.earlier_draft_context}
+          </div>
+        )}
+
         {/* Product list: BL-grouped if allocated, flat otherwise */}
         {projection.has_bl_allocation && projection.draft_bl_items.length > 0 ? (
           <BLGroupedList items={projection.draft_bl_items} />
@@ -336,20 +369,26 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         </div>
         <div className="flex items-center gap-2">
           {canQuickAccept && (
-            <button
-              onClick={() => onQuickAccept(projection)}
-              disabled={isAccepting}
-              className="
-                px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
-                bg-emerald-600/20 text-emerald-300 border border-emerald-500/30
-                hover:bg-emerald-600/30 hover:text-emerald-200 hover:border-emerald-500/50
-                disabled:opacity-50 disabled:cursor-not-allowed
-              "
-            >
-              {isAccepting
-                ? t('planning.accepting', 'Guardando...')
-                : t('planning.quickAccept', 'Aceptar sugerido')}
-            </button>
+            projection.is_draft_locked ? (
+              <span className="text-xs text-amber-400/70 flex items-center gap-1">
+                {t('planning.draftLocked', 'Bloqueado por {{boat}}', { boat: projection.blocking_boat_name })}
+              </span>
+            ) : (
+              <button
+                onClick={() => onQuickAccept(projection)}
+                disabled={isAccepting}
+                className="
+                  px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200
+                  bg-emerald-600/20 text-emerald-300 border border-emerald-500/30
+                  hover:bg-emerald-600/30 hover:text-emerald-200 hover:border-emerald-500/50
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                "
+              >
+                {isAccepting
+                  ? t('planning.accepting', 'Guardando...')
+                  : t('planning.quickAccept', 'Aceptar sugerido')}
+              </button>
+            )
           )}
           {onExport && projection.has_bl_allocation && (
             <button

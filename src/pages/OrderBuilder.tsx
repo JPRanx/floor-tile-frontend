@@ -394,7 +394,11 @@ export function OrderBuilder() {
         });
         setDraftSaveStatus('saved');
         setTimeout(() => setDraftSaveStatus('idle'), 2000);
-      } catch {
+      } catch (err: unknown) {
+        const axiosErr = err as { response?: { status?: number; data?: { error?: { message?: string } } } };
+        if (axiosErr.response?.status === 409) {
+          alert(axiosErr.response.data?.error?.message || 'Este borrador esta bloqueado');
+        }
         setDraftSaveStatus('error');
         setTimeout(() => setDraftSaveStatus('idle'), 3000);
       }
@@ -518,12 +522,21 @@ export function OrderBuilder() {
         bl_number: bl.bl_number,
       }))
     );
-    await draftsApi.save({
-      boat_id: selectedBoatId,
-      factory_id: selectedFactoryId,
-      items: blItems,
-    });
-    navigate('/order-builder');
+    try {
+      await draftsApi.save({
+        boat_id: selectedBoatId,
+        factory_id: selectedFactoryId,
+        items: blItems,
+      });
+      navigate('/order-builder');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { status?: number; data?: { error?: { message?: string } } } };
+      if (axiosErr.response?.status === 409) {
+        alert(axiosErr.response.data?.error?.message || 'Este borrador esta bloqueado');
+      } else {
+        console.error('Save failed:', err);
+      }
+    }
   };
 
   const handleExportBLs = async () => {

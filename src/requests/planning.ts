@@ -10,6 +10,13 @@ export interface UrgencyBreakdown {
   ok: number;
 }
 
+export interface SupplySource {
+  warehouse_m2: number;
+  factory_siesa_m2: number;
+  production_pipeline_m2: number;
+  in_transit_m2: number;
+}
+
 export interface ProductProjection {
   product_id: string;
   sku: string;
@@ -20,6 +27,8 @@ export interface ProductProjection {
   urgency: 'critical' | 'urgent' | 'soon' | 'ok';
   coverage_gap_m2: number;
   suggested_pallets: number;
+  supply_breakdown: SupplySource | null;
+  is_draft_committed: boolean;
 }
 
 export interface DraftBLItem {
@@ -52,6 +61,16 @@ export interface BoatProjection {
   has_bl_allocation: boolean;
   is_estimated: boolean;
   carrier: string | null;
+  is_draft_locked: boolean;
+  blocking_boat_name: string | null;
+  has_earlier_drafts: boolean;
+  needs_review: boolean;
+  review_reason: string | null;
+  earlier_draft_context: string | null;
+  has_factory_siesa_supply: boolean;
+  has_production_supply: boolean;
+  factory_siesa_total_m2: number;
+  production_total_m2: number;
 }
 
 export interface PlanningHorizonResponse {
