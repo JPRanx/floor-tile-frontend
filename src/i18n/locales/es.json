@@ -30,7 +30,7 @@
     "recommendations": "Recomendaciones",
     "boats": "Barcos",
     "shipments": "Embarques",
-    "pipeline": "Pipeline",
+    "pipeline": "Seguimiento",
     "analytics": "Financiero",
     "intelligence": "Inteligencia",
     "products": "Productos",
@@ -77,7 +77,7 @@
     "widgets": {
       "loadError": "Error al cargar datos",
       "topMovers": {
-        "title": "Top Movers",
+        "title": "Productos Destacados",
         "rising": "Subiendo",
         "falling": "Bajando",
         "viewMore": "Ver más",
@@ -650,7 +650,7 @@
     "topProducts": "Top Productos"
   },
   "pipeline": {
-    "title": "Pipeline de Órdenes",
+    "title": "Seguimiento de Órdenes",
     "ordered": "Ordenado",
     "shipped": "Enviado",
     "inTransit": "En Tránsito",
@@ -854,7 +854,7 @@
     "warehouse": "bodega",
     "total": "total",
     "transit": "Tránsito llega",
-    "gap": "Gap",
+    "gap": "Brecha",
     "daysWithoutProduct": "días sin producto",
     "noSales": "Sin ventas",
     "now": "AHORA",
@@ -951,7 +951,7 @@
     "draftError": "Error al guardar borrador",
     "timeline": {
       "factoryRequestCutoff": "Solicitud Fábrica",
-      "piggybackCutoff": "Cierre Piggyback",
+      "piggybackCutoff": "Cierre Agregar a Producción",
       "orderDeadline": "Límite de Pedido",
       "departure": "Zarpe",
       "arrival": "Llegada",
@@ -995,12 +995,12 @@
     "containerCosts": "Costos por contenedor",
     "blCosts": "Costos por BL",
     "totalCost": "Costo total estimado",
-    "overheadPerM2": "Overhead por m²",
+    "overheadPerM2": "Sobrecosto por m²",
     "wellUtilized": "Contenedores bien aprovechados",
     "partialFill": "Parcialmente lleno",
     "lowFill": "Desperdicio significativo",
     "containerPartial": "Contenedor {{num}} está al {{pct}}%",
-    "addToOptimize": "Agrega {{m2}} m² para llenar → reduce overhead a ${{savings}}/m²",
+    "addToOptimize": "Agrega {{m2}} m² para llenar → reduce sobrecosto a ${{savings}}/m²",
     "save": "ahorro"
   }
 }
