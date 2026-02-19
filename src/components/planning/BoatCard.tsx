@@ -197,11 +197,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
   // Fall back to legacy fields if new ones not present
   const primaryDays = siesaDays ?? projection.days_until_order_deadline;
   const secondaryDays = productionDays ?? null;
-  // Card urgency color based on most urgent deadline
-  const mostUrgentDays = secondaryDays != null && primaryDays != null
-    ? Math.min(primaryDays, secondaryDays)
-    : primaryDays;
-  const urgencyStyle = mostUrgentDays != null ? getUrgencyStyle(mostUrgentDays) : null;
+
 
   const canQuickAccept = onQuickAccept
     && !isCompleted
