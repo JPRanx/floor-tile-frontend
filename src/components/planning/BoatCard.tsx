@@ -34,7 +34,8 @@ const DRAFT_BADGE_CONFIG: Record<DraftStatus, { label: string; classes: string }
   },
 };
 
-function translateReviewReason(reason: string, t: (key: string, fallback?: string) => string): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function translateReviewReason(reason: string, t: any): string {
   const knownKeys: Record<string, string> = {
     'draft_needs_review': 'planning.reviewReason.needsReview',
     'earlier_draft_modified': 'planning.reviewReason.earlierModified',
@@ -44,7 +45,8 @@ function translateReviewReason(reason: string, t: (key: string, fallback?: strin
   return key ? t(key) : reason;
 }
 
-function translateDraftContext(ctx: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function translateDraftContext(ctx: string, t: any): string {
   if (ctx.startsWith('based_on_single:')) {
     const parts = ctx.split(':');
     return t('planning.draftContext.basedOnSingle', { boat: parts[1], pallets: parts[2] });
