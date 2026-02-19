@@ -25,7 +25,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
   const [modalOpen, setModalOpen] = useState(false);
 
   const isValidFile = (f: File): boolean => {
-    return f.name.endsWith('.csv') || f.type === 'text/csv';
+    return f.name.endsWith('.csv') || f.name.endsWith('.xls') || f.name.endsWith('.xlsx') || f.type === 'text/csv';
   };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -48,7 +48,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
       setErrorMessage(null);
       handleUpload(droppedFile);
     } else {
-      setErrorMessage(t('dataHub.sales.pleaseUploadCSV'));
+      setErrorMessage(t('dataHub.sales.pleaseUploadFile'));
     }
   }, [t]);
 
@@ -59,7 +59,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
       setErrorMessage(null);
       handleUpload(selectedFile);
     } else if (selectedFile) {
-      setErrorMessage(t('dataHub.sales.pleaseUploadCSV'));
+      setErrorMessage(t('dataHub.sales.pleaseUploadFile'));
     }
   }, [t]);
 
@@ -141,7 +141,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
           {t('dataHub.sales.title')}
         </h3>
         <p className="text-sm text-gray-500 mb-4">
-          Ventas SAC formato CSV (.csv)
+          Ventas SAC (.csv, .xls, .xlsx)
         </p>
 
         {/* Drag-drop zone */}
@@ -172,11 +172,11 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
             <p className="mt-2 text-sm text-gray-600">
               {t('dataHub.sales.dropzone')}
             </p>
-            <p className="mt-1 text-xs text-gray-500">CSV</p>
+            <p className="mt-1 text-xs text-gray-500">CSV, XLS, XLSX</p>
             <input
               type="file"
               className="hidden"
-              accept=".csv"
+              accept=".csv,.xls,.xlsx"
               onChange={handleFileSelect}
             />
           </label>
