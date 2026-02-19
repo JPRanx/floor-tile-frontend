@@ -99,6 +99,7 @@ export interface SIESAUploadResponse {
 }
 
 export interface SalesPreviewRow {
+  row_index: number;
   sku: string;
   week_start: string;
   quantity_m2: number;
@@ -113,8 +114,21 @@ export interface SalesPreview {
   date_range_start: string;
   date_range_end: string;
   warnings: string[];
+  rows: SalesPreviewRow[];
   sample_rows: SalesPreviewRow[];
   expires_in_minutes: number;
+}
+
+export interface SalesModification {
+  row_index: number;
+  quantity_m2?: number;
+  customer?: string;
+}
+
+export interface SalesConfirmPayload {
+  preview_id: string;
+  modifications: SalesModification[];
+  deletions: number[];
 }
 
 export interface VerificationCheck {
@@ -189,6 +203,19 @@ export interface SIESAPreviewLot {
   weight_kg: number | null;
 }
 
+export interface SIESAPreviewRow {
+  sku: string;
+  lot_code: string;
+  warehouse_name: string | null;
+  factory_available_m2: number;
+  weight_kg: number | null;
+}
+
+export interface SIESAModification {
+  lot_code: string;
+  factory_available_m2?: number;
+}
+
 export interface SIESAPreview {
   preview_id: string;
   snapshot_date: string;
@@ -213,6 +240,7 @@ export interface SIESAPreview {
   }>;
   warnings: string[];
   sample_lots: SIESAPreviewLot[];
+  rows: SIESAPreviewRow[];
   expires_in_minutes: number;
 }
 
@@ -266,8 +294,14 @@ export const dataHubApi = {
     return response.data;
   },
 
-  confirmSalesUpload: async (previewId: string): Promise<OwnerSalesUploadResponse> => {
-    const response = await api.post(`/sales/upload/confirm/${previewId}`);
+  confirmSalesUpload: async (
+    previewId: string,
+    payload?: { modifications: SalesModification[]; deletions: number[] }
+  ): Promise<OwnerSalesUploadResponse> => {
+    const body = payload
+      ? { preview_id: previewId, modifications: payload.modifications, deletions: payload.deletions }
+      : undefined;
+    const response = await api.post(`/sales/upload/confirm/${previewId}`, body);
     return response.data;
   },
 
@@ -296,8 +330,17 @@ export const dataHubApi = {
   confirmSIESA: async (
     previewId: string,
     manualMappings?: Array<{ original_key: string; mapped_product_id: string }>,
+    modifications?: SIESAModification[],
+    deletions?: string[],
   ): Promise<SIESAUploadResponse> => {
-    const body = manualMappings?.length ? { manual_mappings: manualMappings } : undefined;
+    const hasData = (manualMappings && manualMappings.length > 0) ||
+      (modifications && modifications.length > 0) ||
+      (deletions && deletions.length > 0);
+    const body = hasData ? {
+      manual_mappings: manualMappings || [],
+      modifications: modifications || [],
+      deletions: deletions || [],
+    } : undefined;
     const response = await api.post(`/inventory/siesa/upload/confirm/${previewId}`, body);
     return response.data;
   },

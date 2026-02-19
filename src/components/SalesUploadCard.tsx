@@ -4,6 +4,8 @@ import { dataHubApi } from '../requests/dataHub';
 import type { SalesPreview, OwnerSalesUploadResponse } from '../requests/dataHub';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
+import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -22,6 +24,8 @@ export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
   const [result, setResult] = useState<OwnerSalesUploadResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (f: File): boolean => {
     return f.name.endsWith('.xlsx') || f.name.endsWith('.xls');
@@ -73,8 +77,9 @@ export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
       const previewData = await dataHubApi.previewSalesUpload(fileToUpload);
       setPreview(previewData);
       setUploadState('preview');
-    } catch (err: any) {
-      setErrorMessage(err.response?.data?.error?.message || err.response?.data?.detail || 'Parse failed');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string }; detail?: string } }; message?: string };
+      setErrorMessage(axiosErr.response?.data?.error?.message || axiosErr.response?.data?.detail || 'Parse failed');
       setUploadState('error');
     }
   };
@@ -83,12 +88,24 @@ export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     if (!preview) return;
     setUploadState('confirming');
     try {
-      const res = await dataHubApi.confirmSalesUpload(preview.preview_id);
+      const modsArray = Array.from(modifications.entries()).map(([rowKey, changes]) => ({
+        row_index: parseInt(rowKey, 10),
+        ...(changes.quantity_m2 !== undefined ? { quantity_m2: changes.quantity_m2 as number } : {}),
+        ...(changes.customer !== undefined ? { customer: changes.customer as string } : {}),
+      }));
+      const deletionsArray = Array.from(deletions).map((k) => parseInt(k, 10));
+
+      const payload = modsArray.length > 0 || deletionsArray.length > 0
+        ? { modifications: modsArray, deletions: deletionsArray }
+        : undefined;
+
+      const res = await dataHubApi.confirmSalesUpload(preview.preview_id, payload);
       setResult(res);
       setUploadState('success');
       onUploadSuccess?.();
-    } catch (err: any) {
-      setErrorMessage(err.response?.data?.error?.message || err.response?.data?.detail || 'Save failed');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string }; detail?: string } }; message?: string };
+      setErrorMessage(axiosErr.response?.data?.error?.message || axiosErr.response?.data?.detail || 'Save failed');
       setUploadState('error');
     }
   };
@@ -106,12 +123,46 @@ export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
+    setModifications(new Map());
+    setDeletions(new Set());
     setModalOpen(false);
   };
 
   const handleModalClose = () => {
     handleReset();
   };
+
+  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
+    setModifications((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(rowKey) ?? {};
+      next.set(rowKey, { ...existing, [field]: value });
+      return next;
+    });
+  }, []);
+
+  const handleDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.add(rowKey);
+      return next;
+    });
+  }, []);
+
+  const handleUndoDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.delete(rowKey);
+      return next;
+    });
+  }, []);
+
+  const salesColumns: EditableColumn[] = [
+    { key: 'week_start', label: 'Semana', editable: false, type: 'text', width: 'w-28' },
+    { key: 'sku', label: 'SKU', editable: false, type: 'text', width: 'w-48' },
+    { key: 'quantity_m2', label: 'm\u00B2', editable: true, type: 'number', width: 'w-28' },
+    { key: 'customer', label: 'Cliente', editable: true, type: 'text', width: 'w-48' },
+  ];
 
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return t('dataHub.never');
@@ -244,29 +295,17 @@ export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
               </div>
             )}
 
-            {/* Sample Rows Table — no inline max-h, modal handles scrolling */}
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-2 py-1 text-left">SKU</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.ownerSales.date', 'Date')}</th>
-                    <th className="px-2 py-1 text-right">m²</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.ownerSales.customer', 'Customer')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {preview.sample_rows.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-2 py-1">{row.sku}</td>
-                      <td className="px-2 py-1">{row.week_start}</td>
-                      <td className="px-2 py-1 text-right">{row.quantity_m2}</td>
-                      <td className="px-2 py-1 text-gray-500">{row.customer || '\u2014'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* Editable Preview Table */}
+            <EditablePreviewTable
+              rows={(preview.rows ?? preview.sample_rows) as unknown as Record<string, unknown>[]}
+              columns={salesColumns}
+              rowKeyField="row_index"
+              onModify={handleModify}
+              onDelete={handleDelete}
+              onUndoDelete={handleUndoDelete}
+              modifications={modifications}
+              deletions={deletions}
+            />
 
             {/* Confirm / Cancel Buttons */}
             <div className="flex gap-3">

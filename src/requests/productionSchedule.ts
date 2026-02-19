@@ -10,6 +10,12 @@ export interface ProductionPreviewRow {
   estimated_delivery_date: string | null;
 }
 
+export interface ProductionModification {
+  row_index: number;
+  requested_m2?: number;
+  status?: string;
+}
+
 export interface ProductionPreview {
   preview_id: string;
   filename: string;
@@ -25,6 +31,7 @@ export interface ProductionPreview {
   existing_records_to_delete: number;
   warnings: string[];
   sample_rows: ProductionPreviewRow[];
+  rows: ProductionPreviewRow[];
   expires_in_minutes: number;
 }
 
@@ -59,8 +66,17 @@ export const productionScheduleApi = {
   confirmUpload: async (
     previewId: string,
     manualMappings?: Array<{ original_key: string; mapped_product_id: string }>,
+    modifications?: ProductionModification[],
+    deletions?: number[],
   ): Promise<ProductionImportResult> => {
-    const body = manualMappings?.length ? { manual_mappings: manualMappings } : undefined;
+    const hasData = (manualMappings && manualMappings.length > 0) ||
+      (modifications && modifications.length > 0) ||
+      (deletions && deletions.length > 0);
+    const body = hasData ? {
+      manual_mappings: manualMappings || [],
+      modifications: modifications || [],
+      deletions: deletions || [],
+    } : undefined;
     const response = await api.post(`/production-schedule/upload-replace/confirm/${previewId}`, body);
     return response.data;
   },

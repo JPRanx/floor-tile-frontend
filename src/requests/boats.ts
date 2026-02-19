@@ -35,12 +35,14 @@ export interface BoatUploadResult {
 }
 
 export interface BoatPreviewRow {
+  row_index: number;
   vessel_name: string | null;
   departure_date: string;
   arrival_date: string;
   transit_days: number;
   origin_port: string;
   destination_port: string;
+  carrier: string | null;
   action: string;
 }
 
@@ -54,8 +56,23 @@ export interface BoatPreview {
   latest_departure: string | null;
   skipped_rows: Array<{ row: number; reason: string }>;
   warnings: string[];
+  rows: BoatPreviewRow[];
   sample_rows: BoatPreviewRow[];
   expires_in_minutes: number;
+}
+
+export interface BoatModification {
+  row_index: number;
+  departure_date?: string;
+  arrival_date?: string;
+  vessel_name?: string;
+  carrier?: string;
+}
+
+export interface BoatConfirmPayload {
+  preview_id: string;
+  modifications: BoatModification[];
+  deletions: number[];
 }
 
 export interface BoatListResponse {
@@ -150,10 +167,16 @@ export const boatsApi = {
   },
 
   /**
-   * Confirm previewed boat upload
+   * Confirm previewed boat upload with optional modifications/deletions
    */
-  confirmUpload: async (previewId: string): Promise<BoatUploadResult> => {
-    const response = await api.post(`/boats/upload/confirm/${previewId}`);
+  confirmUpload: async (
+    previewId: string,
+    payload?: { modifications: BoatModification[]; deletions: number[] }
+  ): Promise<BoatUploadResult> => {
+    const body = payload
+      ? { preview_id: previewId, modifications: payload.modifications, deletions: payload.deletions }
+      : undefined;
+    const response = await api.post(`/boats/upload/confirm/${previewId}`, body);
     return response.data;
   },
 

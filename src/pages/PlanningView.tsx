@@ -10,6 +10,8 @@ import { boatsApi } from '../requests/boats';
 import { FactoryLane } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
+import { FactoryCardGrid } from '../components/planning/FactoryCardGrid';
+import { PipelineStrip } from '../components/planning/PipelineStrip';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
@@ -258,18 +260,30 @@ export function PlanningView() {
   return (
     <div className="min-h-screen bg-slate-950">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Page header + briefing */}
-        <div>
-          <h1 className="text-2xl font-bold text-white mb-1">
+        {/* Page header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-white">
             {t('planning.title', 'Tus Pedidos Preparados')}
           </h1>
-          <div className="flex items-center justify-between">
-            <Briefing horizons={horizons} />
-            <span className="text-xs text-slate-600">
-              {t('planning.horizon', 'proximos 3 meses')}
-            </span>
-          </div>
+          <span className="text-xs text-slate-600">
+            {t('planning.horizon', 'proximos 3 meses')}
+          </span>
         </div>
+
+        {/* Factory card grid */}
+        <FactoryCardGrid
+          factories={factories}
+          horizons={horizons}
+          horizonLoading={horizonLoading}
+          selectedFactoryId={selectedFactoryId}
+          onSelectFactory={handleFactorySelect}
+        />
+
+        {/* Briefing for selected factory */}
+        <Briefing
+          horizon={selectedHorizon ?? null}
+          loading={selectedFactoryId != null && horizonLoading.has(selectedFactoryId)}
+        />
 
         {/* Factory swimlanes */}
         <div className="space-y-3">
@@ -408,6 +422,9 @@ export function PlanningView() {
           </>
         )}
       </div>
+
+      {/* Pipeline strip at bottom */}
+      <PipelineStrip horizon={selectedHorizon ?? null} />
 
       {/* Preview modal */}
       {previewBoat && (

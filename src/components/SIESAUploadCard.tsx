@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dataHubApi } from '../requests/dataHub';
-import type { SIESAPreview, SIESAUploadResponse } from '../requests/dataHub';
+import type { SIESAPreview, SIESAUploadResponse, SIESAModification } from '../requests/dataHub';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ProductSearchDropdown } from './ProductSearchDropdown';
 import { UploadPreviewModal } from './UploadPreviewModal';
+import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -25,6 +27,8 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showUnmatchedList, setShowUnmatchedList] = useState(false);
   const [manualMappings, setManualMappings] = useState<Record<string, { productId: string; sku: string }>>({});
+  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -97,13 +101,27 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
       const mappings = Object.entries(manualMappings)
         .filter(([, v]) => v.productId)
         .map(([key, v]) => ({ original_key: key, mapped_product_id: v.productId }));
-      const uploadResult = await dataHubApi.confirmSIESA(preview.preview_id, mappings.length > 0 ? mappings : undefined);
+
+      // Build modifications array from Map
+      const modsArray: SIESAModification[] = Array.from(modifications.entries()).map(([lotCode, changes]) => ({
+        lot_code: lotCode,
+        ...(changes.factory_available_m2 !== undefined ? { factory_available_m2: changes.factory_available_m2 as number } : {}),
+      }));
+      const deletionsArray = Array.from(deletions);
+
+      const uploadResult = await dataHubApi.confirmSIESA(
+        preview.preview_id,
+        mappings.length > 0 ? mappings : undefined,
+        modsArray.length > 0 ? modsArray : undefined,
+        deletionsArray.length > 0 ? deletionsArray : undefined,
+      );
       setResult(uploadResult);
       setUploadState('success');
       onUploadSuccess?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
       setErrorMessage(
-        err.response?.data?.error?.message || t('dataHub.uploadFailed')
+        axiosErr.response?.data?.error?.message || t('dataHub.uploadFailed')
       );
       setUploadState('error');
     }
@@ -123,12 +141,45 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setResult(null);
     setErrorMessage(null);
     setShowUnmatchedList(false);
+    setModifications(new Map());
+    setDeletions(new Set());
     setModalOpen(false);
   };
 
   const handleModalClose = () => {
     handleReset();
   };
+
+  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
+    setModifications((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(rowKey) ?? {};
+      next.set(rowKey, { ...existing, [field]: value });
+      return next;
+    });
+  }, []);
+
+  const handleDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.add(rowKey);
+      return next;
+    });
+  }, []);
+
+  const handleUndoDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.delete(rowKey);
+      return next;
+    });
+  }, []);
+
+  const siesaColumns: EditableColumn[] = [
+    { key: 'sku', label: 'SKU', editable: false, type: 'text', width: 'w-48' },
+    { key: 'lot_code', label: 'Lote', editable: false, type: 'text', width: 'w-32' },
+    { key: 'factory_available_m2', label: 'Disponible (m\u00B2)', editable: true, type: 'number', width: 'w-32' },
+  ];
 
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return t('dataHub.never');
@@ -339,34 +390,17 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
               </div>
             )}
 
-            {/* Sample Lots Table */}
-            <div className="overflow-auto">
-              <div className="text-sm font-medium text-gray-700 mb-2">
-                {t('dataHub.inventory.sampleLots', 'Sample Lots')}
-              </div>
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-2 py-1 text-left">SKU</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.inventory.warehouse', 'Warehouse')}</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.inventory.lot', 'Lot')}</th>
-                    <th className="px-2 py-1 text-right">m²</th>
-                    <th className="px-2 py-1 text-right">kg</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {preview.sample_lots.map((lot, i) => (
-                    <tr key={i}>
-                      <td className="px-2 py-1">{lot.sku}</td>
-                      <td className="px-2 py-1 text-gray-500">{lot.warehouse_name || '—'}</td>
-                      <td className="px-2 py-1">{lot.lot_number}</td>
-                      <td className="px-2 py-1 text-right">{lot.quantity_m2}</td>
-                      <td className="px-2 py-1 text-right">{lot.weight_kg || '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* Editable Lots Table */}
+            <EditablePreviewTable
+              rows={preview.rows as unknown as Record<string, unknown>[]}
+              columns={siesaColumns}
+              rowKeyField="lot_code"
+              onModify={handleModify}
+              onDelete={handleDelete}
+              onUndoDelete={handleUndoDelete}
+              modifications={modifications}
+              deletions={deletions}
+            />
 
             {/* Confirm / Cancel Buttons */}
             <div className="flex gap-3">

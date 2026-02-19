@@ -4,6 +4,8 @@ import { boatsApi } from '../requests/boats';
 import type { BoatUploadResult, BoatPreview } from '../requests/boats';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
+import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 interface BoatUploadCardProps {
   lastUpdated?: string | null;
@@ -22,6 +24,8 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
   const [result, setResult] = useState<BoatUploadResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -78,10 +82,11 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
       const previewData = await boatsApi.preview(selectedFile);
       setPreview(previewData);
       setUploadState('preview');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setUploadState('error');
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
       setErrorMessage(
-        err.response?.data?.error?.message || t('boatUpload.uploadFailed', 'Upload failed')
+        axiosErr.response?.data?.error?.message || t('boatUpload.uploadFailed', 'Upload failed')
       );
     }
   }, [t]);
@@ -110,14 +115,28 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
     setErrorMessage(null);
 
     try {
-      const uploadResult = await boatsApi.confirmUpload(preview.preview_id);
+      const modsArray = Array.from(modifications.entries()).map(([rowKey, changes]) => ({
+        row_index: parseInt(rowKey, 10),
+        ...(changes.departure_date !== undefined ? { departure_date: changes.departure_date as string } : {}),
+        ...(changes.arrival_date !== undefined ? { arrival_date: changes.arrival_date as string } : {}),
+        ...(changes.vessel_name !== undefined ? { vessel_name: changes.vessel_name as string } : {}),
+        ...(changes.carrier !== undefined ? { carrier: changes.carrier as string } : {}),
+      }));
+      const deletionsArray = Array.from(deletions).map((k) => parseInt(k, 10));
+
+      const payload = modsArray.length > 0 || deletionsArray.length > 0
+        ? { modifications: modsArray, deletions: deletionsArray }
+        : undefined;
+
+      const uploadResult = await boatsApi.confirmUpload(preview.preview_id, payload);
       setResult(uploadResult);
       setUploadState('success');
       onUploadSuccess?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setUploadState('error');
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
       setErrorMessage(
-        err.response?.data?.error?.message || t('boatUpload.confirmFailed', 'Save failed')
+        axiosErr.response?.data?.error?.message || t('boatUpload.confirmFailed', 'Save failed')
       );
     }
   };
@@ -127,6 +146,8 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
     setFile(null);
     setUploadState('idle');
     setModalOpen(false);
+    setModifications(new Map());
+    setDeletions(new Set());
   };
 
   const handleModalClose = () => {
@@ -136,7 +157,43 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
+    setModifications(new Map());
+    setDeletions(new Set());
   };
+
+  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
+    setModifications((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(rowKey) ?? {};
+      next.set(rowKey, { ...existing, [field]: value });
+      return next;
+    });
+  }, []);
+
+  const handleDeleteRow = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.add(rowKey);
+      return next;
+    });
+  }, []);
+
+  const handleUndoDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.delete(rowKey);
+      return next;
+    });
+  }, []);
+
+  const boatColumns: EditableColumn[] = [
+    { key: 'vessel_name', label: 'Buque', editable: true, type: 'text', width: 'w-36' },
+    { key: 'departure_date', label: 'Salida', editable: true, type: 'text', width: 'w-28' },
+    { key: 'arrival_date', label: 'Llegada', editable: true, type: 'text', width: 'w-28' },
+    { key: 'carrier', label: 'Carrier', editable: true, type: 'text', width: 'w-28' },
+    { key: 'origin_port', label: 'Origen', editable: false, type: 'text', width: 'w-28' },
+    { key: 'action', label: 'Acci\u00F3n', editable: false, type: 'text', width: 'w-20' },
+  ];
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -252,49 +309,17 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
               </div>
             )}
 
-            {/* Sample Rows Table */}
-            {preview.sample_rows.length > 0 && (
-              <div className="overflow-y-auto border border-gray-200 rounded-lg">
-                <table className="min-w-full divide-y divide-gray-200 text-xs">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr>
-                      <th className="px-2 py-2 text-left font-medium text-gray-700">{t('boatUpload.vessel', 'Vessel')}</th>
-                      <th className="px-2 py-2 text-left font-medium text-gray-700">{t('boatUpload.departure', 'Departure')}</th>
-                      <th className="px-2 py-2 text-left font-medium text-gray-700">{t('boatUpload.arrival', 'Arrival')}</th>
-                      <th className="px-2 py-2 text-center font-medium text-gray-700">{t('boatUpload.transit', 'Transit')}</th>
-                      <th className="px-2 py-2 text-center font-medium text-gray-700">{t('boatUpload.action', 'Action')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {preview.sample_rows.map((row, i) => (
-                      <tr key={i}>
-                        <td className="px-2 py-2 text-gray-900">{row.vessel_name || '-'}</td>
-                        <td className="px-2 py-2 text-gray-600">{new Date(row.departure_date).toLocaleDateString()}</td>
-                        <td className="px-2 py-2 text-gray-600">{new Date(row.arrival_date).toLocaleDateString()}</td>
-                        <td className="px-2 py-2 text-center text-gray-600">{row.transit_days}d</td>
-                        <td className="px-2 py-2 text-center">
-                          {row.action === 'new' && (
-                            <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-700 rounded">
-                              {t('boatUpload.actionNew', 'NEW')}
-                            </span>
-                          )}
-                          {row.action === 'update' && (
-                            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded">
-                              {t('boatUpload.actionUpdate', 'UPDATE')}
-                            </span>
-                          )}
-                          {row.action === 'skip' && (
-                            <span className="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded">
-                              {t('boatUpload.actionSkip', 'SKIP')}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {/* Editable Preview Table */}
+            <EditablePreviewTable
+              rows={(preview.rows ?? preview.sample_rows) as unknown as Record<string, unknown>[]}
+              columns={boatColumns}
+              rowKeyField="row_index"
+              onModify={handleModify}
+              onDelete={handleDeleteRow}
+              onUndoDelete={handleUndoDelete}
+              modifications={modifications}
+              deletions={deletions}
+            />
 
             {/* Skipped Rows */}
             {preview.skipped_rows.length > 0 && (
@@ -436,6 +461,8 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
                 setPreview(null);
                 setResult(null);
                 setErrorMessage(null);
+                setModifications(new Map());
+                setDeletions(new Set());
                 setModalOpen(false);
               }}
               className="mt-4 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700"

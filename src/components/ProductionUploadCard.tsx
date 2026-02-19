@@ -1,10 +1,12 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { productionScheduleApi } from '../requests/productionSchedule';
-import type { ProductionPreview, ProductionImportResult } from '../requests/productionSchedule';
+import type { ProductionPreview, ProductionImportResult, ProductionModification } from '../requests/productionSchedule';
 import { LoadingSpinner } from './LoadingSpinner';
 import { ProductSearchDropdown } from './ProductSearchDropdown';
 import { UploadPreviewModal } from './UploadPreviewModal';
+import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -25,6 +27,8 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
   const [showUnmatched, setShowUnmatched] = useState(false);
   const [manualMappings, setManualMappings] = useState<Record<string, { productId: string; sku: string }>>({});
   const [modalOpen, setModalOpen] = useState(false);
+  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (f: File): boolean => {
     return f.name.endsWith('.xlsx') || f.name.endsWith('.xls') ||
@@ -91,12 +95,27 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
       const mappings = Object.entries(manualMappings)
         .filter(([, v]) => v.productId)
         .map(([key, v]) => ({ original_key: key, mapped_product_id: v.productId }));
-      const res = await productionScheduleApi.confirmUpload(preview.preview_id, mappings.length > 0 ? mappings : undefined);
+
+      // Build modifications array from Map (key is row_index as string)
+      const modsArray: ProductionModification[] = Array.from(modifications.entries()).map(([rowIdx, changes]) => ({
+        row_index: parseInt(rowIdx, 10),
+        ...(changes.requested_m2 !== undefined ? { requested_m2: changes.requested_m2 as number } : {}),
+        ...(changes.status !== undefined ? { status: changes.status as string } : {}),
+      }));
+      const deletionsArray = Array.from(deletions).map((idx) => parseInt(idx, 10));
+
+      const res = await productionScheduleApi.confirmUpload(
+        preview.preview_id,
+        mappings.length > 0 ? mappings : undefined,
+        modsArray.length > 0 ? modsArray : undefined,
+        deletionsArray.length > 0 ? deletionsArray : undefined,
+      );
       setResult(res);
       setUploadState('success');
       onUploadSuccess?.();
-    } catch (err: any) {
-      setErrorMessage(err.response?.data?.error?.message || err.response?.data?.detail || 'Save failed');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { error?: { message?: string }; detail?: string } } };
+      setErrorMessage(axiosErr.response?.data?.error?.message || axiosErr.response?.data?.detail || 'Save failed');
       setUploadState('error');
     }
   };
@@ -114,6 +133,8 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
+    setModifications(new Map());
+    setDeletions(new Set());
     setModalOpen(false);
   };
 
@@ -124,7 +145,47 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
+    setModifications(new Map());
+    setDeletions(new Set());
   };
+
+  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
+    setModifications((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(rowKey) ?? {};
+      next.set(rowKey, { ...existing, [field]: value });
+      return next;
+    });
+  }, []);
+
+  const handleDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.add(rowKey);
+      return next;
+    });
+  }, []);
+
+  const handleUndoDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.delete(rowKey);
+      return next;
+    });
+  }, []);
+
+  const productionColumns: EditableColumn[] = [
+    { key: 'sku', label: 'SKU', editable: false, type: 'text', width: 'w-40' },
+    { key: 'requested_m2', label: 'Solicitado (m\u00B2)', editable: true, type: 'number', width: 'w-32' },
+    { key: 'status', label: 'Estado', editable: true, type: 'text', width: 'w-28' },
+    { key: 'estimated_delivery_date', label: 'Entrega est.', editable: false, type: 'text', width: 'w-28' },
+  ];
+
+  // Add row_index to each row for use as unique key
+  const productionRowsWithIndex = (preview?.rows || []).map((row, idx) => ({
+    ...row,
+    _row_index: String(idx),
+  }));
 
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return t('dataHub.never', 'Never');
@@ -321,39 +382,17 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
               </div>
             )}
 
-            {/* Sample Rows Table */}
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-2 py-1 text-left">{t('dataHub.production.referencia', 'Referencia')}</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.production.sku', 'SKU')}</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.production.plant', 'Plant')}</th>
-                    <th className="px-2 py-1 text-right">{t('dataHub.production.requestedM2', 'Requested m²')}</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.production.status', 'Status')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {preview.sample_rows.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-2 py-1">{row.referencia}</td>
-                      <td className="px-2 py-1">{row.sku || '—'}</td>
-                      <td className="px-2 py-1">{row.plant}</td>
-                      <td className="px-2 py-1 text-right">{row.requested_m2.toLocaleString()}</td>
-                      <td className="px-2 py-1">
-                        <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                          row.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          row.status === 'in_progress' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {row.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* Editable Rows Table */}
+            <EditablePreviewTable
+              rows={productionRowsWithIndex as unknown as Record<string, unknown>[]}
+              columns={productionColumns}
+              rowKeyField="_row_index"
+              onModify={handleModify}
+              onDelete={handleDelete}
+              onUndoDelete={handleUndoDelete}
+              modifications={modifications}
+              deletions={deletions}
+            />
 
             {/* Confirm / Cancel Buttons */}
             <div className="flex gap-3">
