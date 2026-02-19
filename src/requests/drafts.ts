@@ -9,6 +9,7 @@ export interface DraftItem {
   selected_pallets: number;
   bl_number: number | null;
   notes: string | null;
+  snapshot_data: Record<string, unknown> | null;
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +32,7 @@ export interface DraftItemCreate {
   selected_pallets: number;
   bl_number?: number | null;
   notes?: string | null;
+  snapshot_data?: Record<string, unknown> | null;
 }
 
 export interface DraftSaveRequest {

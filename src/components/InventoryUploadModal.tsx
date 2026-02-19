@@ -4,6 +4,8 @@ import { uploadApi } from '../requests/upload';
 import type { InventoryPreview, InventoryUploadResponse } from '../requests/upload';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
+import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 interface InventoryUploadCardProps {
   lastUpdated?: string | null;
@@ -35,6 +37,8 @@ export function InventoryUploadCard({
   const [errorDetails, setErrorDetails] = useState<UploadError[]>([]);
   const [showAutoCreatedList, setShowAutoCreatedList] = useState(false);
   const [showZeroFilledList, setShowZeroFilledList] = useState(false);
+  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
+  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -56,15 +60,16 @@ export function InventoryUploadCard({
       const previewData = await uploadApi.previewInventory(file);
       setPreview(previewData);
       setUploadState('preview');
-    } catch (err: any) {
+    } catch (err: unknown) {
       setUploadState('error');
 
       // Extract error details if available
-      if (err.response?.data?.error?.details) {
-        const details = err.response.data.error.details;
+      const axiosErr = err as { response?: { data?: { error?: { message?: string; details?: Array<{ sheet?: string; row?: number; field?: string; error?: string }> } } }; message?: string };
+      if (axiosErr.response?.data?.error?.details) {
+        const details = axiosErr.response.data.error.details;
         if (Array.isArray(details)) {
           setErrorDetails(
-            details.map((d: any) => ({
+            details.map((d) => ({
               sheet: d.sheet || 'INVENTARIO',
               row: d.row || 0,
               field: d.field,
@@ -75,8 +80,8 @@ export function InventoryUploadCard({
       }
 
       setErrorMessage(
-        err.response?.data?.error?.message ||
-          err.message ||
+        axiosErr.response?.data?.error?.message ||
+          axiosErr.message ||
           t('inventory.uploadError')
       );
     }
@@ -87,15 +92,27 @@ export function InventoryUploadCard({
     setUploadState('confirming');
 
     try {
-      const uploadResult = await uploadApi.confirmInventory(preview.preview_id);
+      const modsArray = Array.from(modifications.entries()).map(([productId, changes]) => ({
+        product_id: productId,
+        ...(changes.warehouse_qty !== undefined ? { warehouse_qty: changes.warehouse_qty as number } : {}),
+        ...(changes.in_transit_qty !== undefined ? { in_transit_qty: changes.in_transit_qty as number } : {}),
+      }));
+      const deletionsArray = Array.from(deletions);
+
+      const payload = modsArray.length > 0 || deletionsArray.length > 0
+        ? { modifications: modsArray, deletions: deletionsArray }
+        : undefined;
+
+      const uploadResult = await uploadApi.confirmInventory(preview.preview_id, payload);
       setResult(uploadResult);
       setUploadState('success');
       onUploadSuccess?.();
-    } catch (err: any) {
+    } catch (err: unknown) {
       setUploadState('error');
+      const axiosErr = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
       setErrorMessage(
-        err.response?.data?.error?.message ||
-          err.message ||
+        axiosErr.response?.data?.error?.message ||
+          axiosErr.message ||
           t('inventory.uploadError')
       );
     }
@@ -154,12 +171,45 @@ export function InventoryUploadCard({
     setResult(null);
     setShowAutoCreatedList(false);
     setShowZeroFilledList(false);
+    setModifications(new Map());
+    setDeletions(new Set());
     setModalOpen(false);
   };
 
   const handleModalClose = () => {
     handleReset();
   };
+
+  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
+    setModifications((prev) => {
+      const next = new Map(prev);
+      const existing = next.get(rowKey) ?? {};
+      next.set(rowKey, { ...existing, [field]: value });
+      return next;
+    });
+  }, []);
+
+  const handleDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.add(rowKey);
+      return next;
+    });
+  }, []);
+
+  const handleUndoDelete = useCallback((rowKey: string) => {
+    setDeletions((prev) => {
+      const next = new Set(prev);
+      next.delete(rowKey);
+      return next;
+    });
+  }, []);
+
+  const inventoryColumns: EditableColumn[] = [
+    { key: 'sku', label: 'SKU', editable: false, type: 'text', width: 'w-48' },
+    { key: 'warehouse_qty', label: t('inventory.warehouseQty', 'Bodega (m\u00B2)'), editable: true, type: 'number', width: 'w-32' },
+    { key: 'in_transit_qty', label: t('inventory.inTransitQty', 'En tr\u00E1nsito (m\u00B2)'), editable: true, type: 'number', width: 'w-32' },
+  ];
 
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return t('dataHub.never');
@@ -320,29 +370,17 @@ export function InventoryUploadCard({
               </div>
             )}
 
-            {/* Sample Rows Table */}
-            <div className="overflow-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-2 py-1 text-left">SKU</th>
-                    <th className="px-2 py-1 text-right">{t('inventory.warehouseQty', 'Warehouse m²')}</th>
-                    <th className="px-2 py-1 text-right">{t('inventory.inTransitQty', 'In Transit m²')}</th>
-                    <th className="px-2 py-1 text-left">{t('inventory.date', 'Date')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {preview.sample_rows.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-2 py-1">{row.sku}</td>
-                      <td className="px-2 py-1 text-right">{row.warehouse_qty}</td>
-                      <td className="px-2 py-1 text-right">{row.in_transit_qty}</td>
-                      <td className="px-2 py-1">{row.snapshot_date}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            {/* Editable Preview Table */}
+            <EditablePreviewTable
+              rows={preview.rows as unknown as Record<string, unknown>[]}
+              columns={inventoryColumns}
+              rowKeyField="product_id"
+              onModify={handleModify}
+              onDelete={handleDelete}
+              onUndoDelete={handleUndoDelete}
+              modifications={modifications}
+              deletions={deletions}
+            />
 
             {/* Confirm / Cancel Buttons */}
             <div className="flex gap-3 pt-2">

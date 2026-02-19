@@ -386,6 +386,13 @@ export function OrderBuilder() {
           .map(p => ({
             product_id: p.product_id,
             selected_pallets: p.selected_pallets,
+            snapshot_data: {
+              urgency: p.urgency,
+              days_of_stock: p.days_of_stock,
+              daily_velocity_m2: p.daily_velocity_m2,
+              current_stock_m2: p.current_stock_m2,
+              suggested_pallets: p.suggested_pallets,
+            },
           }));
         await draftsApi.save({
           boat_id: selectedBoatId,
@@ -432,14 +439,22 @@ export function OrderBuilder() {
               return p;
             });
 
-            // Compute draft changes (diff between draft selections and current OB recommendations)
-            const recommendations = prev.map(p => ({
+            // Compute draft changes using snapshot_data from saved items vs current OB state
+            const savedItems = draft.items.map(d => ({
+              product_id: d.product_id,
+              selected_pallets: d.selected_pallets,
+              snapshot_data: d.snapshot_data,
+            }));
+            const currentProducts = prev.map(p => ({
               product_id: p.product_id,
               sku: p.sku,
-              suggested_pallets: p.coverage_gap_pallets || 0,
               urgency: p.urgency,
+              days_of_stock: p.days_of_stock ?? 0,
+              daily_velocity_m2: p.daily_velocity_m2,
+              current_stock_m2: p.current_stock_m2,
+              suggested_pallets: p.suggested_pallets,
             }));
-            const changes = computeDraftDiff(draft.items, recommendations);
+            const changes = computeDraftDiff(savedItems, currentProducts);
             if (changes.length > 0) {
               setDraftChanges(changes);
               setDraftChangesDismissed(false);
@@ -516,11 +531,21 @@ export function OrderBuilder() {
     if (!blAllocationReport || !selectedFactoryId || !selectedBoatId) return;
 
     const blItems = blAllocationReport.allocations.flatMap((bl) =>
-      bl.products.map((p) => ({
-        product_id: p.product_id,
-        selected_pallets: p.pallets,
-        bl_number: bl.bl_number,
-      }))
+      bl.products.map((p) => {
+        const obProduct = products.find(op => op.product_id === p.product_id);
+        return {
+          product_id: p.product_id,
+          selected_pallets: p.pallets,
+          bl_number: bl.bl_number,
+          snapshot_data: obProduct ? {
+            urgency: obProduct.urgency,
+            days_of_stock: obProduct.days_of_stock,
+            daily_velocity_m2: obProduct.daily_velocity_m2,
+            current_stock_m2: obProduct.current_stock_m2,
+            suggested_pallets: obProduct.suggested_pallets,
+          } : undefined,
+        };
+      })
     );
     try {
       await draftsApi.save({

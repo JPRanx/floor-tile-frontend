@@ -1,130 +1,159 @@
-import type { DraftItem } from '../requests/drafts';
+export type DraftChangeType =
+  | 'quantity_changed'
+  | 'new_product'
+  | 'removed_product'
+  | 'urgency_increased'
+  | 'urgency_decreased'
+  | 'velocity_changed'
+  | 'stock_changed'
+  | 'suggestion_changed';
 
 export interface DraftChange {
-  type: 'quantity_changed' | 'new_product' | 'removed_product' | 'urgency_changed';
-  productId: string;
-  sku: string;
-  draftValue?: number;
-  currentValue?: number;
-  oldUrgency?: string;
-  newUrgency?: string;
-}
-
-export interface ProductRecommendation {
   product_id: string;
   sku: string;
-  suggested_pallets: number;
+  change_type: DraftChangeType;
+  severity: 'high' | 'medium' | 'low';
+  old_value?: string | number;
+  new_value?: string | number;
+  description: string;
+}
+
+const URGENCY_ORDER = ['ok', 'soon', 'urgent', 'critical'];
+
+interface SavedItem {
+  product_id: string;
+  selected_pallets: number;
+  snapshot_data?: Record<string, unknown> | null;
+}
+
+interface CurrentProduct {
+  product_id: string;
+  sku: string;
   urgency: string;
+  days_of_stock: number;
+  daily_velocity_m2: number;
+  current_stock_m2: number;
+  suggested_pallets: number;
 }
 
 /**
- * Computes the diff between a user's saved draft selections and
- * the system's current product recommendations.
- *
- * Returns an array of DraftChange objects describing what changed.
+ * Computes the diff between saved draft items (with snapshot_data)
+ * and the current OB state. Uses snapshot_data to detect urgency,
+ * velocity, stock, and suggestion changes since last visit.
  */
 export function computeDraftDiff(
-  draftItems: DraftItem[],
-  currentProducts: ProductRecommendation[]
+  savedItems: SavedItem[],
+  currentProducts: CurrentProduct[],
 ): DraftChange[] {
   const changes: DraftChange[] = [];
+  const savedMap = new Map(savedItems.map(item => [item.product_id, item]));
+  const currentMap = new Map(currentProducts.map(p => [p.product_id, p]));
 
-  // Index current products by product_id for O(1) lookups
-  const currentByProductId = new Map<string, ProductRecommendation>();
-  for (const product of currentProducts) {
-    currentByProductId.set(product.product_id, product);
-  }
-
-  // Index draft items by product_id for reverse lookup
-  const draftByProductId = new Set<string>();
-  for (const item of draftItems) {
-    draftByProductId.add(item.product_id);
-  }
-
-  // Check each draft item against current recommendations
-  for (const item of draftItems) {
-    const current = currentByProductId.get(item.product_id);
-
+  // Check each saved item against current data
+  for (const [pid, saved] of savedMap) {
+    const current = currentMap.get(pid);
     if (!current) {
-      // Product was in draft but is no longer recommended
       changes.push({
-        type: 'removed_product',
-        productId: item.product_id,
-        sku: item.product_id, // fallback; caller may enrich with real SKU
-        draftValue: item.selected_pallets,
+        product_id: pid,
+        sku: '',
+        change_type: 'removed_product',
+        severity: 'medium',
+        description: 'Producto ya no aparece en OB',
       });
       continue;
     }
 
-    // Quantity changed by more than 1 pallet
-    const palletDiff = Math.abs(item.selected_pallets - current.suggested_pallets);
-    if (palletDiff > 1) {
+    const snapshot = saved.snapshot_data;
+    if (!snapshot) continue; // No snapshot = can't compare
+
+    // Suggestion changed
+    const oldSuggested = Number(snapshot.suggested_pallets) || 0;
+    if (oldSuggested !== current.suggested_pallets) {
       changes.push({
-        type: 'quantity_changed',
-        productId: item.product_id,
+        product_id: pid,
         sku: current.sku,
-        draftValue: item.selected_pallets,
-        currentValue: current.suggested_pallets,
+        change_type: 'suggestion_changed',
+        severity: 'medium',
+        old_value: oldSuggested,
+        new_value: current.suggested_pallets,
+        description: `Sugerencia: ${oldSuggested} \u2192 ${current.suggested_pallets} paletas`,
       });
     }
 
-    // Note: urgency changes are detected separately below since
-    // we need the previous urgency stored in draft metadata.
-    // For now, we cannot detect urgency changes from DraftItem alone
-    // because DraftItem does not store urgency. The caller should
-    // provide old urgency via a separate mechanism if needed.
-  }
+    // Urgency changes
+    const oldUrgency = (snapshot.urgency as string) || 'ok';
+    const newUrgency = current.urgency;
+    const oldIdx = URGENCY_ORDER.indexOf(oldUrgency);
+    const newIdx = URGENCY_ORDER.indexOf(newUrgency);
+    if (newIdx > oldIdx && oldIdx >= 0) {
+      changes.push({
+        product_id: pid,
+        sku: current.sku,
+        change_type: 'urgency_increased',
+        severity: 'high',
+        old_value: oldUrgency,
+        new_value: newUrgency,
+        description: `Urgencia: ${oldUrgency} \u2192 ${newUrgency}`,
+      });
+    } else if (newIdx < oldIdx && oldIdx >= 0) {
+      changes.push({
+        product_id: pid,
+        sku: current.sku,
+        change_type: 'urgency_decreased',
+        severity: 'low',
+        old_value: oldUrgency,
+        new_value: newUrgency,
+        description: `Urgencia mejor\u00f3: ${oldUrgency} \u2192 ${newUrgency}`,
+      });
+    }
 
-  // Products in current recommendations but not in draft -> new_product
-  // Only flag HIGH_PRIORITY products (urgency-based filter)
-  for (const product of currentProducts) {
-    if (!draftByProductId.has(product.product_id)) {
-      if (product.urgency === 'HIGH_PRIORITY') {
+    // Velocity changed >10%
+    const oldVelocity = Number(snapshot.daily_velocity_m2) || 0;
+    if (oldVelocity > 0) {
+      const velocityChange = Math.abs(current.daily_velocity_m2 - oldVelocity) / oldVelocity;
+      if (velocityChange > 0.1) {
         changes.push({
-          type: 'new_product',
-          productId: product.product_id,
-          sku: product.sku,
-          currentValue: product.suggested_pallets,
+          product_id: pid,
+          sku: current.sku,
+          change_type: 'velocity_changed',
+          severity: 'medium',
+          old_value: oldVelocity,
+          new_value: current.daily_velocity_m2,
+          description: `Velocidad: ${oldVelocity.toFixed(1)} \u2192 ${current.daily_velocity_m2.toFixed(1)} m\u00b2/d\u00eda`,
+        });
+      }
+    }
+
+    // Stock changed >20%
+    const oldStock = Number(snapshot.current_stock_m2) || 0;
+    if (oldStock > 0) {
+      const stockChange = Math.abs(current.current_stock_m2 - oldStock) / oldStock;
+      if (stockChange > 0.2) {
+        changes.push({
+          product_id: pid,
+          sku: current.sku,
+          change_type: 'stock_changed',
+          severity: current.current_stock_m2 < oldStock ? 'high' : 'low',
+          old_value: oldStock,
+          new_value: current.current_stock_m2,
+          description: `Stock: ${oldStock.toFixed(0)} \u2192 ${current.current_stock_m2.toFixed(0)} m\u00b2`,
         });
       }
     }
   }
 
-  return changes;
-}
-
-/**
- * Overload that also detects urgency changes when old urgency data is available.
- * Pass a map of product_id -> old urgency string from the draft's metadata.
- */
-export function computeDraftDiffWithUrgency(
-  draftItems: DraftItem[],
-  currentProducts: ProductRecommendation[],
-  oldUrgencyMap: Map<string, string>
-): DraftChange[] {
-  const baseChanges = computeDraftDiff(draftItems, currentProducts);
-
-  // Index current products for urgency comparison
-  const currentByProductId = new Map<string, ProductRecommendation>();
-  for (const product of currentProducts) {
-    currentByProductId.set(product.product_id, product);
-  }
-
-  // Check urgency changes for items that are in both draft and current
-  for (const item of draftItems) {
-    const current = currentByProductId.get(item.product_id);
-    const oldUrgency = oldUrgencyMap.get(item.product_id);
-
-    if (current && oldUrgency && oldUrgency !== current.urgency) {
-      baseChanges.push({
-        type: 'urgency_changed',
-        productId: item.product_id,
+  // New products (in current OB but not in saved draft)
+  for (const [pid, current] of currentMap) {
+    if (!savedMap.has(pid) && (current.urgency === 'critical' || current.urgency === 'urgent')) {
+      changes.push({
+        product_id: pid,
         sku: current.sku,
-        oldUrgency,
-        newUrgency: current.urgency,
+        change_type: 'new_product',
+        severity: 'high',
+        description: `Nuevo producto urgente: ${current.sku}`,
       });
     }
   }
 
-  return baseChanges;
+  return changes;
 }
