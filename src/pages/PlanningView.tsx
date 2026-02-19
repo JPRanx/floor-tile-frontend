@@ -349,7 +349,7 @@ export function PlanningView() {
               const visibleEstimated = showAllEstimated ? estimatedAction : estimatedAction.slice(0, 3);
               const hiddenEstimatedCount = estimatedAction.length - visibleEstimated.length;
               const visibleAction = [...realAction, ...visibleEstimated].sort(
-                (a, b) => (a.days_until_order_deadline ?? 999) - (b.days_until_order_deadline ?? 999)
+                (a, b) => (a.days_until_siesa_deadline ?? a.days_until_order_deadline ?? 999) - (b.days_until_siesa_deadline ?? b.days_until_order_deadline ?? 999)
               );
 
               return (

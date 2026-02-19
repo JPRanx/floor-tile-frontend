@@ -253,11 +253,11 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
       {!isCompleted && (siesaDays != null || secondaryDays != null) && (
         <div className="mx-5 mt-4 space-y-1.5">
           {/* Production request deadline (longer lead time — show first if overdue) */}
-          {secondaryDays != null && (projection.production_request_date || projection.order_by_date) && (
+          {secondaryDays != null && projection.production_request_date && (
             <div className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${getUrgencyStyle(secondaryDays).classes}`}>
               {formatDeadlineText(
                 secondaryDays,
-                projection.production_request_date || projection.order_by_date!,
+                projection.production_request_date,
                 t('planning.productionRequest', 'Solicitar producción'),
                 t, i18n.language
               )}

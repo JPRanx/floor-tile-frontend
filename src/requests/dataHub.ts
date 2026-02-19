@@ -244,6 +244,35 @@ export interface SIESAPreview {
   expires_in_minutes: number;
 }
 
+export interface UnfulfilledDemandPreviewRow {
+  sku: string;
+  product_id: string | null;
+  quantity_m2: number;
+  snapshot_date: string;
+  matched: boolean;
+}
+
+export interface UnfulfilledDemandPreview {
+  preview_id: string;
+  row_count: number;
+  snapshot_date: string;
+  warnings: string[];
+  rows: UnfulfilledDemandPreviewRow[];
+  expires_in_minutes: number;
+}
+
+export interface UnfulfilledDemandModification {
+  sku: string;
+  quantity_m2?: number;
+}
+
+export interface UnfulfilledDemandResponse {
+  success: boolean;
+  records_upserted: number;
+  snapshot_date: string;
+  message: string;
+}
+
 export interface UploadHistoryItem {
   upload_type: string;
   label: string;
@@ -355,6 +384,27 @@ export const dataHubApi = {
       formData,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     );
+    return response.data;
+  },
+
+  previewUnfulfilledDemand: async (file: File): Promise<UnfulfilledDemandPreview> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/inventory/unfulfilled-demand/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  confirmUnfulfilledDemand: async (
+    previewId: string,
+    modifications?: UnfulfilledDemandModification[],
+    deletions?: string[]
+  ): Promise<UnfulfilledDemandResponse> => {
+    const payload: Record<string, unknown> = { preview_id: previewId };
+    if (modifications?.length) payload.modifications = modifications;
+    if (deletions?.length) payload.deletions = deletions;
+    const response = await api.post(`/inventory/unfulfilled-demand/confirm/${previewId}`, payload);
     return response.data;
   },
 

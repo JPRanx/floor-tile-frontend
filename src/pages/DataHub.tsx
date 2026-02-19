@@ -5,6 +5,7 @@ import { SACUploadCard } from '../components/SACUploadCard';
 import { InventoryUploadCard } from '../components/InventoryUploadModal';
 import { SIESAUploadCard } from '../components/SIESAUploadCard';
 import { InTransitUploadCard } from '../components/InTransitUploadCard';
+import { UnfulfilledDemandCard } from '../components/UnfulfilledDemandCard';
 import { BoatUploadCard } from '../components/BoatUploadModal';
 import { ProductionUploadCard } from '../components/ProductionUploadCard';
 import { ShipmentUploadCard } from '../components/ShipmentUploadModal';
@@ -72,6 +73,9 @@ export function DataHub() {
             onUploadSuccess={handleUploadSuccess}
           />
           <InTransitUploadCard
+            onUploadSuccess={handleUploadSuccess}
+          />
+          <UnfulfilledDemandCard
             onUploadSuccess={handleUploadSuccess}
           />
         </div>

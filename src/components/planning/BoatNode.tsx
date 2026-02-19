@@ -25,7 +25,7 @@ const STATUS_ICON: Record<string, string> = {
 
 export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const { t, i18n } = useTranslation();
-  const deadline = getDeadlineStyle(projection.days_until_order_deadline);
+  const deadline = getDeadlineStyle(projection.days_until_siesa_deadline ?? projection.days_until_order_deadline);
   const hasDraft = projection.is_active;
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
 

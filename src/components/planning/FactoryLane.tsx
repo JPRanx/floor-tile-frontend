@@ -48,9 +48,10 @@ export function FactoryLane({
   const mostUrgentDeadline = horizon?.projections
     .filter((p) => p.draft_status !== 'ordered' && p.draft_status !== 'confirmed')
     .reduce((min, p) => {
-      if (p.days_until_order_deadline == null) return min;
-      if (min == null) return p.days_until_order_deadline;
-      return p.days_until_order_deadline < min ? p.days_until_order_deadline : min;
+      const days = p.days_until_siesa_deadline ?? p.days_until_order_deadline;
+      if (days == null) return min;
+      if (min == null) return days;
+      return days < min ? days : min;
     }, null as number | null);
 
   const urgencyIndicator = mostUrgentDeadline != null && mostUrgentDeadline <= 3
