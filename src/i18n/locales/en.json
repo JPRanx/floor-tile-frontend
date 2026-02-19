@@ -969,6 +969,8 @@
     },
     "factoryOrder": "Factory order",
     "siesaShipment": "SIESA shipment",
+    "siesaOrder": "SIESA order",
+    "productionRequest": "Request production",
     "deadline": {
       "overdue": "Overdue {{days}}d",
       "now": "Now — {{date}}"

@@ -217,7 +217,7 @@ export function PlanningView() {
       totalProducts += p.product_details.length;
     }
 
-    action.sort((a, b) => (a.days_until_order_deadline ?? 999) - (b.days_until_order_deadline ?? 999));
+    action.sort((a, b) => (a.days_until_siesa_deadline ?? a.days_until_order_deadline ?? 999) - (b.days_until_siesa_deadline ?? b.days_until_order_deadline ?? 999));
 
     return {
       actionBoats: action,

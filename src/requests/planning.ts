@@ -56,6 +56,11 @@ export interface BoatProjection {
   days_until_order_deadline: number | null;
   shipping_book_by_date: string | null;
   days_until_shipping_deadline: number | null;
+  // Dual deadline system
+  siesa_order_date: string | null;
+  days_until_siesa_deadline: number | null;
+  production_request_date: string | null;
+  days_until_production_deadline: number | null;
   product_details: ProductProjection[];
   draft_bl_items: DraftBLItem[];
   has_bl_allocation: boolean;

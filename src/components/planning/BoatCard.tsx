@@ -191,10 +191,16 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
     ? `${projection.projected_pallets_min}`
     : `~${projection.projected_pallets_min}-${projection.projected_pallets_max}`;
 
-  // Pick most urgent deadline for card border/banner styling
-  const factoryDays = projection.days_until_order_deadline;
-  const shippingDays = projection.days_until_shipping_deadline;
-  const mostUrgentDays = factoryDays != null ? factoryDays : shippingDays;
+  // Dual deadline system: SIESA order (20d) and Production request (45d)
+  const siesaDays = projection.days_until_siesa_deadline;
+  const productionDays = projection.days_until_production_deadline;
+  // Fall back to legacy fields if new ones not present
+  const primaryDays = siesaDays ?? projection.days_until_order_deadline;
+  const secondaryDays = productionDays ?? null;
+  // Card urgency color based on most urgent deadline
+  const mostUrgentDays = secondaryDays != null && primaryDays != null
+    ? Math.min(primaryDays, secondaryDays)
+    : primaryDays;
   const urgencyStyle = mostUrgentDays != null ? getUrgencyStyle(mostUrgentDays) : null;
 
   const canQuickAccept = onQuickAccept
@@ -249,18 +255,36 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         flex flex-col
       `}
     >
-      {/* Deadline banners */}
-      {urgencyStyle && !isCompleted && factoryDays != null && projection.order_by_date && (
-        <div className={`mx-5 mt-4 px-3 py-1.5 rounded-lg border text-xs font-medium space-y-0.5 ${urgencyStyle.classes}`}>
-          <div>{formatDeadlineText(factoryDays, projection.order_by_date, t('planning.factoryOrder', 'Pedir a fabrica'), t, i18n.language)}</div>
-          {shippingDays != null && projection.shipping_book_by_date && (
-            <div className="opacity-70">{formatDeadlineText(shippingDays, projection.shipping_book_by_date, t('planning.siesaShipment', 'Enviar de SIESA'), t, i18n.language)}</div>
+      {/* Dual deadline banners: SIESA order + Production request */}
+      {!isCompleted && (siesaDays != null || secondaryDays != null) && (
+        <div className="mx-5 mt-4 space-y-1.5">
+          {/* Production request deadline (longer lead time — show first if overdue) */}
+          {secondaryDays != null && (projection.production_request_date || projection.order_by_date) && (
+            <div className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${getUrgencyStyle(secondaryDays).classes}`}>
+              {formatDeadlineText(
+                secondaryDays,
+                projection.production_request_date || projection.order_by_date!,
+                t('planning.productionRequest', 'Solicitar producción'),
+                t, i18n.language
+              )}
+            </div>
+          )}
+          {/* SIESA order deadline (shorter lead time — Ashley's primary action deadline) */}
+          {siesaDays != null && projection.siesa_order_date && (
+            <div className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${getUrgencyStyle(siesaDays).classes}`}>
+              {formatDeadlineText(
+                siesaDays,
+                projection.siesa_order_date,
+                t('planning.siesaOrder', 'Pedido SIESA'),
+                t, i18n.language
+              )}
+            </div>
           )}
         </div>
       )}
 
       {/* Header: vessel name + dates */}
-      <div className={`px-5 ${urgencyStyle && !isCompleted && factoryDays != null ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
+      <div className={`px-5 ${!isCompleted && (siesaDays != null || secondaryDays != null) ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg flex-shrink-0">
             {isActive ? '\u{1F6A2}' : isEstimated ? '\u{1F4C5}' : '\u{1F310}'}

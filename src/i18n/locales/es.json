@@ -969,6 +969,8 @@
     },
     "factoryOrder": "Pedir a fábrica",
     "siesaShipment": "Enviar de SIESA",
+    "siesaOrder": "Pedido SIESA",
+    "productionRequest": "Solicitar producción",
     "deadline": {
       "overdue": "Vencido hace {{days}}d",
       "now": "Ahora — {{date}}"
