@@ -273,6 +273,38 @@ export interface UnfulfilledDemandResponse {
   message: string;
 }
 
+export interface CommittedOrderPreviewRow {
+  sku: string;
+  product_id: string | null;
+  quantity_committed: number;
+  current_stock: number | null;
+  available_qty: number | null;
+  warehouse_code: string | null;
+  order_reference: string | null;
+  matched: boolean;
+}
+
+export interface CommittedOrderPreview {
+  preview_id: string;
+  row_count: number;
+  snapshot_date: string;
+  warnings: string[];
+  rows: CommittedOrderPreviewRow[];
+  expires_in_minutes: number;
+}
+
+export interface CommittedOrderModification {
+  sku: string;
+  quantity_committed?: number;
+}
+
+export interface CommittedOrderResponse {
+  success: boolean;
+  records_upserted: number;
+  snapshot_date: string;
+  message: string;
+}
+
 export interface UploadHistoryItem {
   upload_type: string;
   label: string;
@@ -405,6 +437,27 @@ export const dataHubApi = {
     if (modifications?.length) payload.modifications = modifications;
     if (deletions?.length) payload.deletions = deletions;
     const response = await api.post(`/inventory/unfulfilled-demand/confirm/${previewId}`, payload);
+    return response.data;
+  },
+
+  previewCommittedOrders: async (file: File): Promise<CommittedOrderPreview> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/committed-orders/preview', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  confirmCommittedOrders: async (
+    previewId: string,
+    modifications?: CommittedOrderModification[],
+    deletions?: string[]
+  ): Promise<CommittedOrderResponse> => {
+    const response = await api.post(`/committed-orders/confirm/${previewId}`, {
+      modifications: modifications || [],
+      deletions: deletions || [],
+    });
     return response.data;
   },
 
