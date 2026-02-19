@@ -19,7 +19,12 @@
     "pallets": "paletas",
     "days": "días",
     "selected": "seleccionados",
-    "noProductsCategory": "No hay productos en esta categoría"
+    "noProductsCategory": "No hay productos en esta categoría",
+    "months": {
+      "jan": "Ene", "feb": "Feb", "mar": "Mar", "apr": "Abr",
+      "may": "May", "jun": "Jun", "jul": "Jul", "aug": "Ago",
+      "sep": "Sep", "oct": "Oct", "nov": "Nov", "dec": "Dic"
+    }
   },
   "nav": {
     "appName": "CM Tarragona S.A.",
@@ -1004,10 +1009,19 @@
     "needsReview": "Revisar",
     "draftLocked": "Bloqueado por {{boat}}",
     "briefing": {
+      "loading": "Cargando datos...",
+      "noFactory": "Sin datos de fábrica",
       "noBoats": "Sin barcos programados en el horizonte.",
       "allDone": "Todos los pedidos colocados. {{count}} envío(s) en camino.",
       "overdue": "{{count}} pedido(s) vencido(s).",
-      "criticalProducts": "{{count}} producto(s) crítico(s).",
+      "criticalProducts": "{{count}} producto(s) llegarán a cero antes del próximo envío.",
+      "criticalCount": "{{count}} producto(s) crítico(s).",
+      "actionThisWeek": "{{count}} barco(s) necesita(n) pedido esta semana.",
+      "allConfirmed": "Todos los pedidos confirmados.",
+      "mixed": "{{completed}} completado(s), {{pending}} pendiente(s).",
+      "nextDeadline": "Próximo deadline: {{date}}.",
+      "allGood": "Todo bajo control. Cobertura ~{{days}} días al ritmo actual.",
+      "pendingReview": "{{count}} barco(s) pendiente(s) de revisión.",
       "thisWeek": "{{count}} barco(s) necesita(n) pedido esta semana.",
       "toReview": "{{count}} barco(s) por revisar.",
       "allClear": "Todo bajo control. {{count}} envío(s) preparado(s) para los próximos 3 meses.",
@@ -1018,6 +1032,26 @@
       "orderNow": "pedir ahora",
       "inDays": "en {{days}}d",
       "more": "+{{count}} más"
+    },
+    "factory": {
+      "comingSoon": "Próximamente",
+      "boatCount": "{{count}} barcos",
+      "overdueShort": "{{days}}d vencido"
+    },
+    "pipeline": {
+      "noDraft": "Sin borrador",
+      "drafts": "Borradores",
+      "ordered": "En pedido",
+      "confirmed": "Confirmados"
+    },
+    "reviewReason": {
+      "needsReview": "Borrador necesita revisión",
+      "earlierModified": "Borrador anterior modificado",
+      "earlierDeleted": "Borrador anterior eliminado"
+    },
+    "draftContext": {
+      "basedOnSingle": "Basado en borrador de {{boat}} ({{pallets}} paletas)",
+      "basedOnMultiple": "Basado en {{count}} borradores anteriores ({{pallets}} paletas)"
     },
     "factorySignal": {
       "title": "Próximo pedido fábrica",

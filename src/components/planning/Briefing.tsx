@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { PlanningHorizonResponse } from '../../requests/planning';
 
 interface BriefingProps {
@@ -6,11 +7,13 @@ interface BriefingProps {
 }
 
 export function Briefing({ horizon, loading }: BriefingProps) {
+  const { t } = useTranslation();
+
   if (loading) {
     return (
       <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
         <InfoIcon />
-        <span className="text-sm text-slate-400">Cargando datos...</span>
+        <span className="text-sm text-slate-400">{t('planning.briefing.loading')}</span>
       </div>
     );
   }
@@ -19,7 +22,7 @@ export function Briefing({ horizon, loading }: BriefingProps) {
     return (
       <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
         <InfoIcon />
-        <span className="text-sm text-slate-400">Sin datos de f{'\u00E1'}brica</span>
+        <span className="text-sm text-slate-400">{t('planning.briefing.noFactory')}</span>
       </div>
     );
   }
@@ -30,7 +33,7 @@ export function Briefing({ horizon, loading }: BriefingProps) {
     return (
       <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
         <InfoIcon />
-        <span className="text-sm text-slate-400">Sin barcos en el horizonte.</span>
+        <span className="text-sm text-slate-400">{t('planning.briefing.noBoats')}</span>
       </div>
     );
   }
@@ -82,34 +85,29 @@ export function Briefing({ horizon, loading }: BriefingProps) {
   let tone: 'urgent' | 'warning' | 'calm';
 
   if (overdueCount > 0) {
-    // Overdue state
     const critPart = totalCritical > 0
-      ? ` ${totalCritical} producto${totalCritical !== 1 ? 's' : ''} llegar${totalCritical !== 1 ? '\u00E1n' : '\u00E1'} a cero antes del pr\u00F3ximo env\u00EDo.`
+      ? ' ' + t('planning.briefing.criticalProducts', { count: totalCritical })
       : '';
-    sentence = `${overdueCount} pedido${overdueCount !== 1 ? 's' : ''} vencido${overdueCount !== 1 ? 's' : ''}.${critPart}`;
+    sentence = t('planning.briefing.overdue', { count: overdueCount }) + critPart;
     tone = 'urgent';
   } else if (actionThisWeekCount > 0) {
-    // Action needed this week
-    const critPart = totalCritical > 0 ? ` ${totalCritical} producto${totalCritical !== 1 ? 's' : ''} cr\u00EDtico${totalCritical !== 1 ? 's' : ''}.` : '';
-    sentence = `${actionThisWeekCount} barco${actionThisWeekCount !== 1 ? 's' : ''} necesita${actionThisWeekCount !== 1 ? 'n' : ''} pedido esta semana.${critPart}`;
+    const critPart = totalCritical > 0 ? ' ' + t('planning.briefing.criticalCount', { count: totalCritical }) : '';
+    sentence = t('planning.briefing.actionThisWeek', { count: actionThisWeekCount }) + critPart;
     tone = 'warning';
   } else if (pendingCount === 0 && completedCount > 0) {
-    // All completed
-    sentence = 'Todos los pedidos confirmados. \u2615';
+    sentence = t('planning.briefing.allConfirmed');
     tone = 'calm';
   } else if (pendingCount > 0 && completedCount > 0) {
-    // Mixed state
     const deadlinePart = nearestDeadlineDate
-      ? ` Pr\u00F3ximo deadline: ${formatShortDate(nearestDeadlineDate)}.`
+      ? ' ' + t('planning.briefing.nextDeadline', { date: formatShortDate(nearestDeadlineDate, t) })
       : '';
-    sentence = `${completedCount} completado${completedCount !== 1 ? 's' : ''}, ${pendingCount} pendiente${pendingCount !== 1 ? 's' : ''}.${deadlinePart}`;
+    sentence = t('planning.briefing.mixed', { completed: completedCount, pending: pendingCount }) + deadlinePart;
     tone = 'calm';
   } else if (avgCoverage > 0) {
-    // All good with coverage info
-    sentence = `Todo bajo control. Cobertura ~${avgCoverage} d\u00EDas al ritmo actual.`;
+    sentence = t('planning.briefing.allGood', { days: avgCoverage });
     tone = 'calm';
   } else {
-    sentence = `${pendingCount} barco${pendingCount !== 1 ? 's' : ''} pendiente${pendingCount !== 1 ? 's' : ''} de revisi\u00F3n.`;
+    sentence = t('planning.briefing.pendingReview', { count: pendingCount });
     tone = 'calm';
   }
 
@@ -135,11 +133,12 @@ export function Briefing({ horizon, loading }: BriefingProps) {
   );
 }
 
-function formatShortDate(dateStr: string): string {
+function formatShortDate(dateStr: string, t: (key: string) => string): string {
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDate();
-  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  return `${day} ${months[d.getMonth()]}`;
+  const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  const month = t(`common.months.${monthKeys[d.getMonth()]}`);
+  return `${day} ${month}`;
 }
 
 function InfoIcon() {

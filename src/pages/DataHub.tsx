@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DataFreshnessBar } from '../components/DataFreshnessBar';
-import { SACUploadCard } from '../components/SACUploadCard';
+import { SalesUploadCard } from '../components/SalesUploadCard';
 import { InventoryUploadCard } from '../components/InventoryUploadModal';
 import { SIESAUploadCard } from '../components/SIESAUploadCard';
 import { InTransitUploadCard } from '../components/InTransitUploadCard';
@@ -51,7 +51,7 @@ export function DataHub() {
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-3">{t('dataHub.sections.sales')}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SACUploadCard
+          <SalesUploadCard
             lastUpdated={freshness?.sales.last_updated}
             recordCount={freshness?.sales.record_count}
             onUploadSuccess={handleUploadSuccess}

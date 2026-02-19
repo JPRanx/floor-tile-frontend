@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { PlanningHorizonResponse } from '../../requests/planning';
 
 interface PipelineStripProps {
@@ -11,6 +12,8 @@ interface StageCount {
 }
 
 export function PipelineStrip({ horizon }: PipelineStripProps) {
+  const { t } = useTranslation();
+
   if (!horizon || horizon.projections.length === 0) return null;
 
   let drafting = 0;
@@ -31,10 +34,10 @@ export function PipelineStrip({ horizon }: PipelineStripProps) {
   }
 
   const stages: StageCount[] = [
-    { label: 'Sin borrador', count: noDraft, color: 'text-slate-400' },
-    { label: 'Borradores', count: drafting, color: 'text-slate-300' },
-    { label: 'En pedido', count: ordered, color: 'text-blue-400' },
-    { label: 'Confirmados', count: confirmed, color: 'text-emerald-400' },
+    { label: t('planning.pipeline.noDraft'), count: noDraft, color: 'text-slate-400' },
+    { label: t('planning.pipeline.drafts'), count: drafting, color: 'text-slate-300' },
+    { label: t('planning.pipeline.ordered'), count: ordered, color: 'text-blue-400' },
+    { label: t('planning.pipeline.confirmed'), count: confirmed, color: 'text-emerald-400' },
   ];
 
   return (
@@ -42,7 +45,7 @@ export function PipelineStrip({ horizon }: PipelineStripProps) {
       <div className="max-w-7xl mx-auto flex items-center gap-1 text-xs">
         <span className="text-slate-500 font-semibold uppercase tracking-wider mr-2">Pipeline</span>
         {stages.map((stage, i) => (
-          <span key={stage.label} className="flex items-center gap-1">
+          <span key={i} className="flex items-center gap-1">
             {i > 0 && (
               <svg className="w-3 h-3 text-slate-600 mx-1 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path d="M9 5l7 7-7 7" />

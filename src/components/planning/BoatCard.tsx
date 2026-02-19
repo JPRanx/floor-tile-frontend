@@ -34,6 +34,28 @@ const DRAFT_BADGE_CONFIG: Record<DraftStatus, { label: string; classes: string }
   },
 };
 
+function translateReviewReason(reason: string, t: (key: string, fallback?: string) => string): string {
+  const knownKeys: Record<string, string> = {
+    'draft_needs_review': 'planning.reviewReason.needsReview',
+    'earlier_draft_modified': 'planning.reviewReason.earlierModified',
+    'earlier_draft_deleted': 'planning.reviewReason.earlierDeleted',
+  };
+  const key = knownKeys[reason];
+  return key ? t(key) : reason;
+}
+
+function translateDraftContext(ctx: string, t: (key: string, opts?: Record<string, unknown>) => string): string {
+  if (ctx.startsWith('based_on_single:')) {
+    const parts = ctx.split(':');
+    return t('planning.draftContext.basedOnSingle', { boat: parts[1], pallets: parts[2] });
+  }
+  if (ctx.startsWith('based_on_multiple:')) {
+    const parts = ctx.split(':');
+    return t('planning.draftContext.basedOnMultiple', { count: parts[1], pallets: parts[2] });
+  }
+  return ctx;
+}
+
 const MAX_VISIBLE_PRODUCTS = 4;
 
 function ProductList({
@@ -325,7 +347,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
           <div className="mt-3 px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-xs text-amber-300">
             <span className="font-medium">{t('planning.needsReview', 'Revisar')}</span>
             {projection.review_reason && (
-              <span className="text-amber-300/70"> — {projection.review_reason}</span>
+              <span className="text-amber-300/70"> — {translateReviewReason(projection.review_reason, t)}</span>
             )}
           </div>
         )}
@@ -333,7 +355,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         {/* Earlier draft dependency context */}
         {!isCompleted && projection.has_earlier_drafts && projection.earlier_draft_context && !projection.needs_review && (
           <div className="mt-2 text-[10px] text-slate-500 italic">
-            {projection.earlier_draft_context}
+            {translateDraftContext(projection.earlier_draft_context, t)}
           </div>
         )}
 

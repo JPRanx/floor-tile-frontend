@@ -19,7 +19,12 @@
     "pallets": "pallets",
     "days": "days",
     "selected": "selected",
-    "noProductsCategory": "No products in this category"
+    "noProductsCategory": "No products in this category",
+    "months": {
+      "jan": "Jan", "feb": "Feb", "mar": "Mar", "apr": "Apr",
+      "may": "May", "jun": "Jun", "jul": "Jul", "aug": "Aug",
+      "sep": "Sep", "oct": "Oct", "nov": "Nov", "dec": "Dec"
+    }
   },
   "nav": {
     "appName": "CM Tarragona S.A.",
@@ -1004,10 +1009,19 @@
     "needsReview": "Review",
     "draftLocked": "Locked by {{boat}}",
     "briefing": {
+      "loading": "Loading data...",
+      "noFactory": "No factory data",
       "noBoats": "No boats scheduled in horizon.",
       "allDone": "All orders placed. {{count}} shipment(s) on the way.",
       "overdue": "{{count}} order(s) overdue.",
-      "criticalProducts": "{{count}} critical product(s).",
+      "criticalProducts": "{{count}} product(s) will reach zero before next shipment.",
+      "criticalCount": "{{count}} critical product(s).",
+      "actionThisWeek": "{{count}} boat(s) need ordering this week.",
+      "allConfirmed": "All orders confirmed.",
+      "mixed": "{{completed}} completed, {{pending}} pending.",
+      "nextDeadline": "Next deadline: {{date}}.",
+      "allGood": "All under control. Coverage ~{{days}} days at current rate.",
+      "pendingReview": "{{count}} boat(s) pending review.",
       "thisWeek": "{{count}} boat(s) need ordering this week.",
       "toReview": "{{count}} boat(s) to review.",
       "allClear": "All clear. {{count}} shipment(s) ready for the next 3 months.",
@@ -1018,6 +1032,26 @@
       "orderNow": "order now",
       "inDays": "in {{days}}d",
       "more": "+{{count}} more"
+    },
+    "factory": {
+      "comingSoon": "Coming soon",
+      "boatCount": "{{count}} boats",
+      "overdueShort": "{{days}}d overdue"
+    },
+    "pipeline": {
+      "noDraft": "No draft",
+      "drafts": "Drafts",
+      "ordered": "Ordered",
+      "confirmed": "Confirmed"
+    },
+    "reviewReason": {
+      "needsReview": "Draft needs review",
+      "earlierModified": "Earlier draft modified",
+      "earlierDeleted": "Earlier draft deleted"
+    },
+    "draftContext": {
+      "basedOnSingle": "Based on draft from {{boat}} ({{pallets}} pallets)",
+      "basedOnMultiple": "Based on {{count}} earlier drafts ({{pallets}} pallets)"
     },
     "factorySignal": {
       "title": "Next factory order",

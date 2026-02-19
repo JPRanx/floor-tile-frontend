@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Factory } from '../../requests/factories';
 import type { PlanningHorizonResponse } from '../../requests/planning';
 
@@ -30,6 +31,8 @@ function getUrgencyDot(days: number): string {
 }
 
 function FactoryCard({ factory, horizon, isSelected, isLoading, onClick }: FactoryCardProps) {
+  const { t } = useTranslation();
+
   if (!factory.active) {
     return (
       <div className="bg-slate-800/20 rounded-xl border border-slate-700/20 px-4 py-3 opacity-50 cursor-not-allowed">
@@ -37,7 +40,7 @@ function FactoryCard({ factory, horizon, isSelected, isLoading, onClick }: Facto
           <span className="text-sm">{'\u{1F512}'}</span>
           <span className="text-slate-400 font-semibold text-sm">{factory.name}</span>
         </div>
-        <span className="text-slate-600 text-xs">pr{'\u00F3'}ximamente</span>
+        <span className="text-slate-600 text-xs">{t('planning.factory.comingSoon')}</span>
       </div>
     );
   }
@@ -76,17 +79,17 @@ function FactoryCard({ factory, horizon, isSelected, isLoading, onClick }: Facto
       </div>
 
       {isLoading ? (
-        <span className="text-slate-500 text-xs animate-pulse">Cargando...</span>
+        <span className="text-slate-500 text-xs animate-pulse">{t('common.loading')}</span>
       ) : (
         <div className="space-y-0.5">
           <div className="text-slate-400 text-xs">
-            {boatCount} {boatCount === 1 ? 'barco' : 'barcos'}
+            {t('planning.factory.boatCount', { count: boatCount })}
           </div>
           {mostUrgentName != null && mostUrgentDays != null && (
             <div className="flex items-center gap-1.5">
               <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${getUrgencyDot(mostUrgentDays)}`} />
               <span className={`text-xs truncate ${getUrgencyColor(mostUrgentDays)}`}>
-                {mostUrgentName} {mostUrgentDays < 0 ? `${Math.abs(mostUrgentDays)}d vencido` : `${mostUrgentDays}d`}
+                {mostUrgentName} {mostUrgentDays < 0 ? t('planning.factory.overdueShort', { days: Math.abs(mostUrgentDays) }) : `${mostUrgentDays}d`}
               </span>
             </div>
           )}
