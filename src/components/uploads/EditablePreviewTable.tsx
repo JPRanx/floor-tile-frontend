@@ -1,5 +1,14 @@
 import { useState, useMemo, useCallback } from 'react';
 
+/** Detect ISO date strings (YYYY-MM-DD) and reformat as DD/MM/YYYY for Latin American display */
+export function formatDateForDisplay(value: string): string {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) {
+    return `${match[3]}/${match[2]}/${match[1]}`;
+  }
+  return value;
+}
+
 export interface EditableColumn {
   key: string;
   label: string;
@@ -266,7 +275,7 @@ export function EditablePreviewTable({
                                   maximumFractionDigits: 2,
                                 })
                               : cellVal != null
-                                ? String(cellVal)
+                                ? formatDateForDisplay(String(cellVal))
                                 : ''}
                           </span>
                         )}

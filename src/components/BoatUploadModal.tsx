@@ -4,7 +4,7 @@ import { boatsApi } from '../requests/boats';
 import type { BoatUploadResult, BoatPreview } from '../requests/boats';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
-import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
 import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 interface BoatUploadCardProps {
@@ -293,7 +293,7 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
             {preview.earliest_departure && preview.latest_departure && (
               <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
                 <span className="font-medium">{t('boatUpload.dateRange', 'Date range:')}</span>{' '}
-                {new Date(preview.earliest_departure).toLocaleDateString()} – {new Date(preview.latest_departure).toLocaleDateString()}
+                {formatDateForDisplay(preview.earliest_departure)} – {formatDateForDisplay(preview.latest_departure)}
               </div>
             )}
 

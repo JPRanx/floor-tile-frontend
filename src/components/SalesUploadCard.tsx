@@ -4,7 +4,7 @@ import { dataHubApi } from '../requests/dataHub';
 import type { SalesPreview, OwnerSalesUploadResponse } from '../requests/dataHub';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
-import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
 import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
@@ -280,7 +280,7 @@ export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="text-sm text-gray-500">{t('dataHub.ownerSales.dateRange', 'Date Range')}</div>
                 <div className="text-sm font-bold text-gray-900">
-                  {preview.date_range_start} – {preview.date_range_end}
+                  {formatDateForDisplay(preview.date_range_start)} – {formatDateForDisplay(preview.date_range_end)}
                 </div>
               </div>
             </div>
@@ -346,7 +346,7 @@ export function SalesUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                       <p>{result.deleted} {t('dataHub.ownerSales.recordsReplaced', 'previous records replaced')}</p>
                     )}
                     {result.date_range && (
-                      <p>{result.date_range.start} – {result.date_range.end}</p>
+                      <p>{formatDateForDisplay(result.date_range.start)} – {formatDateForDisplay(result.date_range.end)}</p>
                     )}
                     {result.verification && (
                       <p className={result.verification.status === 'VERIFIED' ? 'text-green-800 font-medium' : 'text-amber-700 font-medium'}>

@@ -4,7 +4,7 @@ import { uploadApi } from '../requests/upload';
 import type { InventoryPreview, InventoryUploadResponse } from '../requests/upload';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
-import { EditablePreviewTable } from './uploads/EditablePreviewTable';
+import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
 import type { EditableColumn } from './uploads/EditablePreviewTable';
 
 interface InventoryUploadCardProps {
@@ -314,7 +314,7 @@ export function InventoryUploadCard({
               </div>
               <div className="bg-gray-50 rounded-lg p-3 col-span-2">
                 <div className="text-sm text-gray-500">{t('inventory.snapshotDate', 'Snapshot Date')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.snapshot_date}</div>
+                <div className="text-lg font-bold text-gray-900">{formatDateForDisplay(preview.snapshot_date)}</div>
               </div>
             </div>
 
