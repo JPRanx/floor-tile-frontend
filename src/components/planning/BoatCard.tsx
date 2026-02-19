@@ -194,8 +194,6 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
   // Dual deadline system: SIESA order (20d) and Production request (45d)
   const siesaDays = projection.days_until_siesa_deadline;
   const productionDays = projection.days_until_production_deadline;
-  // Fall back to legacy fields if new ones not present
-  const primaryDays = siesaDays ?? projection.days_until_order_deadline;
   const secondaryDays = productionDays ?? null;
 
 
