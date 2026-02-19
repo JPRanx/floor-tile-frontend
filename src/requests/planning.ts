@@ -78,12 +78,21 @@ export interface BoatProjection {
   production_total_m2: number;
 }
 
+export interface FactoryOrderSignal {
+  next_order_date: string | null;
+  days_until_order: number | null;
+  is_overdue: boolean;
+  limiting_product_sku: string | null;
+  effective_coverage_days: number | null;
+}
+
 export interface PlanningHorizonResponse {
   factory_id: string;
   factory_name: string;
   horizon_months: number;
   generated_at: string;
   projections: BoatProjection[];
+  factory_order_signal: FactoryOrderSignal | null;
 }
 
 export const planningApi = {

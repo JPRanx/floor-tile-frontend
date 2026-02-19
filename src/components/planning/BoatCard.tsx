@@ -191,10 +191,8 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
     ? `${projection.projected_pallets_min}`
     : `~${projection.projected_pallets_min}-${projection.projected_pallets_max}`;
 
-  // Dual deadline system: SIESA order (20d) and Production request (45d)
+  // SIESA order deadline
   const siesaDays = projection.days_until_siesa_deadline;
-  const productionDays = projection.days_until_production_deadline;
-  const secondaryDays = productionDays ?? null;
 
 
   const canQuickAccept = onQuickAccept
@@ -249,21 +247,10 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         flex flex-col
       `}
     >
-      {/* Dual deadline banners: SIESA order + Production request */}
-      {!isCompleted && (siesaDays != null || secondaryDays != null) && (
+      {/* SIESA order deadline banner */}
+      {!isCompleted && siesaDays != null && (
         <div className="mx-5 mt-4 space-y-1.5">
-          {/* Production request deadline (longer lead time — show first if overdue) */}
-          {secondaryDays != null && projection.production_request_date && (
-            <div className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${getUrgencyStyle(secondaryDays).classes}`}>
-              {formatDeadlineText(
-                secondaryDays,
-                projection.production_request_date,
-                t('planning.productionRequest', 'Solicitar producción'),
-                t, i18n.language
-              )}
-            </div>
-          )}
-          {/* SIESA order deadline (shorter lead time — Ashley's primary action deadline) */}
+          {/* SIESA order deadline — Ashley's primary action deadline */}
           {siesaDays != null && projection.siesa_order_date && (
             <div className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${getUrgencyStyle(siesaDays).classes}`}>
               {formatDeadlineText(
@@ -278,7 +265,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
       )}
 
       {/* Header: vessel name + dates */}
-      <div className={`px-5 ${!isCompleted && (siesaDays != null || secondaryDays != null) ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
+      <div className={`px-5 ${!isCompleted && siesaDays != null ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg flex-shrink-0">
             {isActive ? '\u{1F6A2}' : isEstimated ? '\u{1F4C5}' : '\u{1F310}'}

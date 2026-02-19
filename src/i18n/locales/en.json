@@ -1019,6 +1019,12 @@
       "inDays": "in {{days}}d",
       "more": "+{{count}} more"
     },
+    "factorySignal": {
+      "title": "Next factory order",
+      "overdue": "Factory order overdue",
+      "limitedBy": "Limited by",
+      "coverage": "coverage"
+    },
     "draftChanges": {
       "title": "{{count}} changes since your last visit",
       "quantities": "quantities",

@@ -15,8 +15,16 @@ import { PipelineStrip } from '../components/planning/PipelineStrip';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
+function formatFactorySignalDate(dateStr: string, lang: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString(lang === 'es' ? 'es-CO' : 'en-US', {
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
 export function PlanningView() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
 
   const [factories, setFactories] = useState<Factory[]>([]);
@@ -284,6 +292,55 @@ export function PlanningView() {
           horizon={selectedHorizon ?? null}
           loading={selectedFactoryId != null && horizonLoading.has(selectedFactoryId)}
         />
+
+        {/* Factory Order Signal */}
+        {selectedHorizon?.factory_order_signal && (
+          <div className={`rounded-xl border px-5 py-3 flex items-center justify-between ${
+            selectedHorizon.factory_order_signal.is_overdue
+              ? 'bg-red-500/10 border-red-500/30'
+              : (selectedHorizon.factory_order_signal.days_until_order != null && selectedHorizon.factory_order_signal.days_until_order <= 14)
+                ? 'bg-amber-500/10 border-amber-500/30'
+                : 'bg-slate-800/30 border-slate-700/50'
+          }`}>
+            <div className="flex items-center gap-3">
+              <span className="text-lg">{selectedHorizon.factory_order_signal.is_overdue ? '\u26A0\uFE0F' : '\u{1F3ED}'}</span>
+              <div>
+                <div className={`text-sm font-medium ${
+                  selectedHorizon.factory_order_signal.is_overdue
+                    ? 'text-red-300'
+                    : (selectedHorizon.factory_order_signal.days_until_order != null && selectedHorizon.factory_order_signal.days_until_order <= 14)
+                      ? 'text-amber-300'
+                      : 'text-slate-300'
+                }`}>
+                  {selectedHorizon.factory_order_signal.is_overdue
+                    ? t('planning.factorySignal.overdue', 'Pedido fábrica vencido')
+                    : t('planning.factorySignal.title', 'Próximo pedido fábrica')}
+                  {selectedHorizon.factory_order_signal.next_order_date && (
+                    <>
+                      {': '}
+                      {formatFactorySignalDate(selectedHorizon.factory_order_signal.next_order_date, i18n.language)}
+                      {selectedHorizon.factory_order_signal.days_until_order != null && (
+                        <span className="ml-1 opacity-70">
+                          ({selectedHorizon.factory_order_signal.days_until_order}d)
+                        </span>
+                      )}
+                    </>
+                  )}
+                </div>
+                {selectedHorizon.factory_order_signal.limiting_product_sku && (
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    {t('planning.factorySignal.limitedBy', 'Limitado por')}: {selectedHorizon.factory_order_signal.limiting_product_sku}
+                    {selectedHorizon.factory_order_signal.effective_coverage_days != null && (
+                      <span className="ml-2">
+                        ({selectedHorizon.factory_order_signal.effective_coverage_days}d {t('planning.factorySignal.coverage', 'cobertura')})
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Factory swimlanes */}
         <div className="space-y-3">
