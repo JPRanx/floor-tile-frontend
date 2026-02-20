@@ -117,7 +117,6 @@ export function OrderBuilder() {
   // V2: Draft auto-save state
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [savePersistentError, setSavePersistentError] = useState(false);
   const MAX_SAVE_RETRIES = 3;
 
   // V2: Draft change detection
@@ -128,12 +127,6 @@ export function OrderBuilder() {
   // 5c: Staleness banner state
   const [freshness, setFreshness] = useState<Record<string, { last_updated: string | null; status: string }> | null>(null);
   const [staleDismissed, setStaleDismissed] = useState(false);
-
-  // 5m: Conflict modal state
-  const [conflictInfo, setConflictInfo] = useState<{ message: string } | null>(null);
-
-  // 5n: Dirty ref for navigation flush
-  const isDirtyRef = useRef(false);
 
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
@@ -438,7 +431,6 @@ export function OrderBuilder() {
         items,
       });
       setDraftSaveStatus('saved');
-      setSavePersistentError(false);
       setTimeout(() => setDraftSaveStatus('idle'), 2000);
     } catch (err: unknown) {
       const axiosErr = err as { response?: { status?: number; data?: { error?: { message?: string } } } };
@@ -454,7 +446,6 @@ export function OrderBuilder() {
         setTimeout(() => performSave(retryAttempt + 1), delay);
       } else {
         setDraftSaveStatus('error');
-        setSavePersistentError(true);
       }
     }
   }, [isDetailView, selectedFactoryId, selectedBoatId, products, MAX_SAVE_RETRIES]);
