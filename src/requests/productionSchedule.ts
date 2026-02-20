@@ -80,4 +80,24 @@ export const productionScheduleApi = {
     const response = await api.post(`/production-schedule/upload-replace/confirm/${previewId}`, body);
     return response.data;
   },
+
+  /** Create production_schedule rows from OB factory request export (Section 3). */
+  createFromOrderBuilder: async (
+    items: Array<{ product_id: string; sku?: string; referencia?: string; requested_m2: number }>,
+    boatDeparture?: string,
+  ): Promise<{ created: number }> => {
+    const response = await api.post('/production-schedule/from-order-builder', {
+      items,
+      boat_departure: boatDeparture,
+    });
+    return response.data;
+  },
+
+  /** Update production_schedule.requested_m2 for piggyback exports (Section 2). */
+  updatePiggyback: async (
+    items: Array<{ product_id: string; additional_m2: number }>,
+  ): Promise<{ updated: number }> => {
+    const response = await api.post('/production-schedule/piggyback-update', { items });
+    return response.data;
+  },
 };

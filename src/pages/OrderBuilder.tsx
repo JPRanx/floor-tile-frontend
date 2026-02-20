@@ -13,6 +13,7 @@ import type {
 import { boatsApi } from '../requests/boats';
 import { factoryOrdersApi } from '../requests/factoryOrders';
 import { warehouseOrdersApi } from '../requests/warehouseOrders';
+import { productionScheduleApi } from '../requests/productionSchedule';
 import type { WarehouseOrderItemCreate, WarehouseOrder } from '../requests/warehouseOrders';
 import type { BoatSchedule } from '../requests/boats';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -422,14 +423,14 @@ export function OrderBuilder() {
       try {
         const draft = await draftsApi.getDraft(selectedBoatId, selectedFactoryId);
         if (draft && draft.items.length > 0) {
-          // Restore selections from draft
+          // Restore selections from draft (respect current SIESA stock)
           setProducts(prev => {
             const updated = prev.map(p => {
               const draftItem = draft.items.find(d => d.product_id === p.product_id);
               if (draftItem) {
                 return {
                   ...p,
-                  is_selected: true,
+                  is_selected: (p.factory_available_m2 ?? 0) > 0,
                   selected_pallets: draftItem.selected_pallets,
                   selected_m2: draftItem.selected_pallets * M2_PER_PALLET,
                 };
@@ -670,7 +671,35 @@ export function OrderBuilder() {
         });
       }
 
-      // 3. Export Excel (existing functionality)
+      // 3. Close feedback loops — write to production_schedule so OB reads it back
+      // Section 3: Factory request items → INSERT production_schedule rows
+      const factoryRequestItems = data?.factory_request_summary?.items
+        ?.filter((item) => item.is_selected && item.request_m2 > 0) || [];
+      if (factoryRequestItems.length > 0) {
+        await productionScheduleApi.createFromOrderBuilder(
+          factoryRequestItems.map((item) => ({
+            product_id: item.product_id,
+            sku: item.sku,
+            referencia: item.description || item.sku,
+            requested_m2: Number(item.request_m2),
+          })),
+          departureDateStr,
+        );
+      }
+
+      // Section 2: Piggyback items → UPDATE production_schedule.requested_m2
+      const piggybackItems = data?.add_to_production_summary?.items
+        ?.filter((item) => item.is_selected && item.suggested_additional_m2 > 0) || [];
+      if (piggybackItems.length > 0) {
+        await productionScheduleApi.updatePiggyback(
+          piggybackItems.map((item) => ({
+            product_id: item.product_id,
+            additional_m2: Number(item.suggested_additional_m2),
+          })),
+        );
+      }
+
+      // 4. Export Excel (existing functionality)
       const blob = await orderBuilderApi.exportOrder({
         products: selected.map((p) => ({
           sku: p.sku,
@@ -679,7 +708,7 @@ export function OrderBuilder() {
         boat_departure: departureDateStr,
       });
 
-      // 4. Create download link with PV number in filename
+      // 5. Create download link with PV number in filename
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -687,10 +716,10 @@ export function OrderBuilder() {
       a.click();
       URL.revokeObjectURL(url);
 
-      // 5. Show success message
+      // 6. Show success message
       setExportSuccess(t('orderBuilder.exportSuccess', { pvNumber }));
 
-      // 6. Refresh pending orders list
+      // 7. Refresh pending orders list
       fetchPendingOrders();
 
       // Clear success message after 5 seconds
