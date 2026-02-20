@@ -1048,14 +1048,37 @@ export function OrderBuilder() {
                 changes={draftChanges}
                 onAcceptAll={() => {
                   // Accept all: reset selections to current OB recommendations
-                  setProducts(prev => prev.map(p => ({
+                  const updated = products.map(p => ({
                     ...p,
                     selected_pallets: p.coverage_gap_pallets || 0,
                     selected_m2: (p.coverage_gap_pallets || 0) * M2_PER_PALLET,
                     is_selected: (p.coverage_gap_pallets || 0) > 0,
-                  })));
+                  }));
+                  setProducts(updated);
                   setDraftChanges([]);
                   setDraftChangesDismissed(true);
+
+                  // Immediate save with fresh snapshot to prevent stale diff on next load
+                  if (selectedBoatId && selectedFactoryId) {
+                    const items = updated
+                      .filter(p => p.is_selected && p.selected_pallets > 0)
+                      .map(p => ({
+                        product_id: p.product_id,
+                        selected_pallets: p.selected_pallets,
+                        snapshot_data: {
+                          urgency: p.urgency,
+                          days_of_stock: p.days_of_stock,
+                          daily_velocity_m2: p.daily_velocity_m2,
+                          current_stock_m2: p.current_stock_m2,
+                          suggested_pallets: p.suggested_pallets,
+                        },
+                      }));
+                    draftsApi.save({
+                      boat_id: selectedBoatId,
+                      factory_id: selectedFactoryId,
+                      items,
+                    }).catch(console.error);
+                  }
                 }}
                 onDismiss={() => {
                   setDraftChangesDismissed(true);
