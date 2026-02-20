@@ -84,6 +84,10 @@ export interface FactoryOrderSignal {
   is_overdue: boolean;
   limiting_product_sku: string | null;
   effective_coverage_days: number | null;
+  target_boat_name: string | null;
+  target_boat_departure: string | null;
+  estimated_pallets: number | null;
+  product_count: number | null;
 }
 
 export interface PlanningHorizonResponse {

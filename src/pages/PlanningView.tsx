@@ -324,6 +324,16 @@ export function PlanningView() {
                           ({selectedHorizon.factory_order_signal.days_until_order}d)
                         </span>
                       )}
+                      {selectedHorizon.factory_order_signal.target_boat_name && (
+                        <span className="ml-2">
+                          — para {selectedHorizon.factory_order_signal.target_boat_name}
+                          {selectedHorizon.factory_order_signal.target_boat_departure && (
+                            <span className="opacity-70 ml-1">
+                              ({formatFactorySignalDate(selectedHorizon.factory_order_signal.target_boat_departure, i18n.language)})
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </>
                   )}
                 </div>
@@ -335,6 +345,11 @@ export function PlanningView() {
                         ({selectedHorizon.factory_order_signal.effective_coverage_days}d {t('planning.factorySignal.coverage', 'cobertura')})
                       </span>
                     )}
+                  </div>
+                )}
+                {(selectedHorizon.factory_order_signal.product_count != null && selectedHorizon.factory_order_signal.product_count > 0) && (
+                  <div className="text-xs text-slate-500 mt-0.5">
+                    ~{selectedHorizon.factory_order_signal.estimated_pallets} paletas, {selectedHorizon.factory_order_signal.product_count} productos
                   </div>
                 )}
               </div>
