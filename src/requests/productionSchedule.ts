@@ -100,4 +100,18 @@ export const productionScheduleApi = {
     const response = await api.post('/production-schedule/piggyback-update', { items });
     return response.data;
   },
+
+  /** Confirm piggyback for a single product: update requested_m2 and record in history. */
+  confirmPiggyback: async (
+    productId: string,
+    additionalM2: number,
+    notes?: string,
+  ): Promise<{ success: boolean; new_requested_m2: number; history_id: string; message: string }> => {
+    const response = await api.post('/production-schedule/piggyback-confirm', {
+      product_id: productId,
+      additional_m2: additionalM2,
+      notes,
+    });
+    return response.data;
+  },
 };

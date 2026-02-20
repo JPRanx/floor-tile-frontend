@@ -451,6 +451,11 @@ export interface AddToProductionItem {
 
   // Selection (pre-selected by default)
   is_selected: boolean;
+
+  // Piggyback history
+  piggyback_history: Array<{ product_id: string; additional_m2: number; created_at: string }>;
+  total_piggybacked_m2: number;
+  remaining_headroom_m2: number;
 }
 
 export interface FactoryRequestItem {

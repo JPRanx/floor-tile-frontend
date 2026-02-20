@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AddToProductionSummary, AddToProductionItem } from '../requests/orderBuilder';
+import { productionScheduleApi } from '../requests/productionSchedule';
 import { formatM2 } from '../utils/formatters';
 
 interface AddToProductionSectionProps {
@@ -39,6 +40,11 @@ export function AddToProductionSection({
     return quantities;
   });
 
+  // Piggyback confirmation state
+  const [piggybackAmounts, setPiggybackAmounts] = useState<Record<string, string>>({});
+  const [confirmedPiggybacks, setConfirmedPiggybacks] = useState<Record<string, { m2: number; date: string }>>({});
+  const [piggybackLoading, setPiggybackLoading] = useState<Record<string, boolean>>({});
+
   if (!summary || summary.items.length === 0) {
     return null;
   }
@@ -70,6 +76,25 @@ export function AddToProductionSection({
     onItemQuantityChange?.(item, validPallets);
   };
 
+  const handleConfirmPiggyback = async (productId: string) => {
+    const amount = parseFloat(piggybackAmounts[productId] || '0');
+    if (amount <= 0) return;
+
+    setPiggybackLoading(prev => ({ ...prev, [productId]: true }));
+    try {
+      await productionScheduleApi.confirmPiggyback(productId, amount);
+      setConfirmedPiggybacks(prev => ({
+        ...prev,
+        [productId]: { m2: amount, date: new Date().toISOString().split('T')[0] },
+      }));
+      setPiggybackAmounts(prev => ({ ...prev, [productId]: '' }));
+    } catch (err) {
+      console.error('Piggyback confirmation failed:', err);
+    } finally {
+      setPiggybackLoading(prev => ({ ...prev, [productId]: false }));
+    }
+  };
+
   // Calculate totals for selected items
   const selectedTotalPallets = summary.items
     .filter((item) => selectedItems.has(item.product_id))
@@ -87,7 +112,7 @@ export function AddToProductionSection({
           <div className="w-2 h-10 rounded-full bg-amber-500" />
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <span className="text-amber-400">⚠️</span>
+              <span className="text-amber-400">{'\u26A0\uFE0F'}</span>
               {t('orderBuilder.actionRequired', 'ACTION REQUIRED')}
               <span className="text-slate-500 font-normal">({summary.items.length})</span>
               {summary.has_critical_items && (
@@ -99,13 +124,13 @@ export function AddToProductionSection({
             <p className="text-sm text-amber-400/80 mt-0.5">
               {t('orderBuilder.addToProductionDesc2', 'Piggyback on scheduled items')}
               <span className="ml-1 text-emerald-400">
-                · {t('orderBuilder.canAddBeforeProduction', 'Can add before production starts')}
+                {'\u00B7'} {t('orderBuilder.canAddBeforeProduction', 'Can add before production starts')}
               </span>
             </p>
           </div>
         </div>
         <span className={`text-slate-400 text-sm transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}>
-          ▼
+          {'\u25BC'}
         </span>
       </button>
 
@@ -121,6 +146,11 @@ export function AddToProductionSection({
                 quantity={itemQuantities[item.product_id] || item.suggested_additional_pallets}
                 onToggle={() => handleToggleItem(item)}
                 onQuantityChange={(pallets) => handleQuantityChange(item, pallets)}
+                piggybackAmount={piggybackAmounts[item.product_id] || ''}
+                onPiggybackAmountChange={(val) => setPiggybackAmounts(prev => ({ ...prev, [item.product_id]: val }))}
+                onConfirmPiggyback={() => handleConfirmPiggyback(item.product_id)}
+                piggybackLoading={piggybackLoading[item.product_id] || false}
+                confirmedPiggyback={confirmedPiggybacks[item.product_id]}
               />
             ))}
           </div>
@@ -133,7 +163,7 @@ export function AddToProductionSection({
                   {t('orderBuilder.totalToAdd', 'Total to add')}:
                 </span>
                 <span className="ml-2">
-                  {formatM2(selectedTotalM2)} m² ({selectedTotalPallets} {t('common.pallets', 'pallets')})
+                  {formatM2(selectedTotalM2)} m{'\u00B2'} ({selectedTotalPallets} {t('common.pallets', 'pallets')})
                 </span>
               </div>
               {selectedItems.size > 0 && (
@@ -156,6 +186,11 @@ interface AddToProductionCardProps {
   quantity: number;
   onToggle: () => void;
   onQuantityChange: (pallets: number) => void;
+  piggybackAmount: string;
+  onPiggybackAmountChange: (value: string) => void;
+  onConfirmPiggyback: () => void;
+  piggybackLoading: boolean;
+  confirmedPiggyback?: { m2: number; date: string };
 }
 
 function AddToProductionCard({
@@ -164,6 +199,11 @@ function AddToProductionCard({
   quantity,
   onToggle,
   onQuantityChange,
+  piggybackAmount,
+  onPiggybackAmountChange,
+  onConfirmPiggyback,
+  piggybackLoading,
+  confirmedPiggyback,
 }: AddToProductionCardProps) {
   const { t } = useTranslation();
   const m2 = quantity * 134.4;
@@ -217,7 +257,7 @@ function AddToProductionCard({
               </div>
               <p className="text-sm text-slate-400 mt-0.5">
                 {t('orderBuilder.currentlyScheduled', 'Currently scheduled')}:{' '}
-                <span className="text-slate-300">{formatM2(item.current_requested_m2)} m²</span>
+                <span className="text-slate-300">{formatM2(item.current_requested_m2)} m{'\u00B2'}</span>
               </p>
             </div>
           </div>
@@ -237,6 +277,50 @@ function AddToProductionCard({
             </div>
           </div>
         </div>
+
+        {/* Piggyback history */}
+        {item.piggyback_history && item.piggyback_history.length > 0 && (
+          <div className="text-xs text-slate-400 mt-3 space-y-0.5">
+            <div className="text-slate-300 font-medium">
+              Piggybacked: {formatM2(item.total_piggybacked_m2)} m{'\u00B2'}
+            </div>
+            {item.piggyback_history.map((h, i) => (
+              <div key={i} className="pl-2 text-slate-500">
+                +{formatM2(h.additional_m2)} m{'\u00B2'} {'\u2014'} {new Date(h.created_at).toLocaleDateString()}
+              </div>
+            ))}
+            {item.remaining_headroom_m2 > 0 && (
+              <div className="text-slate-400">
+                Disponible: {formatM2(item.remaining_headroom_m2)} m{'\u00B2'}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Piggyback confirmation */}
+        <div className="flex items-center gap-2 mt-3">
+          <input
+            type="number"
+            placeholder={t('orderBuilder.piggybackPlaceholder', 'm\u00B2 a agregar')}
+            value={piggybackAmount}
+            onChange={(e) => onPiggybackAmountChange(e.target.value)}
+            className="w-32 px-2 py-1 text-sm bg-slate-800 border border-slate-600 rounded text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            min="0"
+            step="0.01"
+          />
+          <button
+            onClick={onConfirmPiggyback}
+            disabled={piggybackLoading || !piggybackAmount || parseFloat(piggybackAmount) <= 0}
+            className="px-3 py-1 text-xs font-medium rounded bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {piggybackLoading ? '...' : t('orderBuilder.confirmPiggyback', 'Confirmar Piggyback')}
+          </button>
+        </div>
+        {confirmedPiggyback && (
+          <div className="text-xs text-green-400 mt-1">
+            {'\u2713'} Piggybacked: {formatM2(confirmedPiggyback.m2)} m{'\u00B2'} ({confirmedPiggyback.date})
+          </div>
+        )}
 
         {/* Quantity Controls - Only show when selected */}
         {isSelected && (
@@ -265,7 +349,7 @@ function AddToProductionCard({
                   </button>
                 </div>
                 <span className="text-sm text-slate-400">
-                  {t('common.pallets', 'pallets')} = {formatM2(m2)} m²
+                  {t('common.pallets', 'pallets')} = {formatM2(m2)} m{'\u00B2'}
                 </span>
               </div>
 
@@ -275,13 +359,13 @@ function AddToProductionCard({
                   {item.estimated_ready_date && (
                     <>
                       <span className="text-emerald-400">{t('orderBuilder.ready', 'Ready')}: ~{item.estimated_ready_date}</span>
-                      <span className="mx-1">→</span>
+                      <span className="mx-1">{'\u2192'}</span>
                     </>
                   )}
                   <span className="text-blue-400">
                     {t('orderBuilder.ships', 'Ships')}:{' '}
                     {item.target_boat_departure
-                      ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` — ${item.target_boat}` : ''}`
+                      ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` \u2014 ${item.target_boat}` : ''}`
                       : item.target_boat || 'TBD'}
                   </span>
                 </div>
@@ -294,16 +378,16 @@ function AddToProductionCard({
         {!isSelected && (
           <div className="mt-2 flex items-center gap-4 text-sm text-slate-400">
             <span>
-              {t('orderBuilder.systemSuggests', 'System suggests')}: {formatM2(item.suggested_total_m2)} m²
+              {t('orderBuilder.systemSuggests', 'System suggests')}: {formatM2(item.suggested_total_m2)} m{'\u00B2'}
             </span>
             <span className="text-amber-400">
-              +{formatM2(item.suggested_additional_m2)} m² ({item.suggested_additional_pallets}p)
+              +{formatM2(item.suggested_additional_m2)} m{'\u00B2'} ({item.suggested_additional_pallets}p)
             </span>
             {(item.target_boat || item.target_boat_departure) && (
               <span className="text-emerald-400">
-                →{' '}
+                {'\u2192'}{' '}
                 {item.target_boat_departure
-                  ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` — ${item.target_boat}` : ''}`
+                  ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` \u2014 ${item.target_boat}` : ''}`
                   : item.target_boat || 'TBD'}
               </span>
             )}
