@@ -229,7 +229,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="text-sm text-gray-500">{t('dataHub.sales.totalM2', 'Total m\u00B2')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.total_m2.toLocaleString()}</div>
+                <div className="text-lg font-bold text-gray-900">{(preview.total_m2 ?? 0).toLocaleString()}</div>
               </div>
               <div className="bg-gray-50 rounded-lg p-3">
                 <div className="text-sm text-gray-500">{t('dataHub.sales.customers', 'Customers')}</div>
@@ -374,15 +374,15 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
                 <div className="flex-1">
                   <h4 className="font-medium text-green-800">{t('dataHub.sales.successTitle', 'Upload Successful')}</h4>
                   <div className="mt-2 space-y-1 text-sm text-green-700">
-                    <p>{result.sales_created} {t('dataHub.sales.recordsCreated', 'records created')}</p>
-                    {result.sales_updated > 0 && (
-                      <p>{result.sales_updated} {t('dataHub.sales.recordsUpdated', 'records updated')}</p>
+                    <p>{result.created} {t('dataHub.sales.recordsCreated', 'records created')}</p>
+                    {result.deleted > 0 && (
+                      <p>{result.deleted} {t('dataHub.sales.recordsDeleted', 'records replaced')}</p>
                     )}
                     {result.date_range_start && result.date_range_end && (
                       <p>{result.date_range_start} – {result.date_range_end}</p>
                     )}
                     <p className="font-medium text-green-800">
-                      {result.unique_customers} {t('dataHub.sales.uniqueCustomers', 'unique customers')} · {result.total_m2.toLocaleString()} m²
+                      {result.unique_customers} {t('dataHub.sales.uniqueCustomers', 'unique customers')} · {(result.total_m2_sold ?? 0).toLocaleString()} m²
                     </p>
                   </div>
                 </div>

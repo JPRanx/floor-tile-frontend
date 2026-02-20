@@ -60,11 +60,11 @@ export function UploadResultPanel(props: UploadResultPanelProps) {
             <h4 className="font-medium text-green-800">{t('dataHub.sales.successTitle')}</h4>
             <div className="mt-2 space-y-1 text-sm text-green-700">
               <p>📅 {t('dataHub.sales.dateRange')}: {startDate} - {endDate}</p>
-              <p>📊 {result.sales_created} {t('dataHub.sales.salesCount')}</p>
-              <p>📦 {result.total_m2.toLocaleString()} {t('dataHub.sales.totalM2')}</p>
+              <p>📊 {result.created} {t('dataHub.sales.salesCount')}</p>
+              <p>📦 {(result.total_m2_sold ?? 0).toLocaleString()} {t('dataHub.sales.totalM2')}</p>
               <p>👥 {result.unique_customers} {t('dataHub.sales.customers')}</p>
-              {result.top_product_sku && (
-                <p>🏆 {t('dataHub.sales.topProduct')}: {result.top_product_sku} — {result.top_product_m2?.toLocaleString()} m²</p>
+              {result.top_product && (
+                <p>🏆 {t('dataHub.sales.topProduct')}: {result.top_product}</p>
               )}
             </div>
             {result.skipped_non_tile > 0 && (

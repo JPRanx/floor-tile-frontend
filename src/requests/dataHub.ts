@@ -13,27 +13,28 @@ export interface DataFreshnessResponse {
 }
 
 export interface SACUploadResponse {
-  success: boolean;
+  created: number;
+  deleted: number;
   total_rows: number;
-  processed_rows: number;
+  matched_by_sac_sku: number;
+  matched_by_name: number;
+  unmatched_count: number;
+  match_rate_pct: number;
+  date_range_start: string | null;
+  date_range_end: string | null;
+  total_m2_sold: number;
+  unique_customers: number;
+  unique_products: number;
+  top_product: string | null;
   skipped_non_tile: number;
-  skipped_errors: number;
+  skipped_products: string[];
+  unmatched_products: string[];
   errors: Array<{
     row: number;
     field: string;
     error: string;
     value?: string;
   }>;
-  sales_created: number;
-  sales_updated: number;
-  unique_customers: number;
-  total_m2: number;
-  total_revenue_usd: number;
-  date_range_start: string;
-  date_range_end: string;
-  top_product_sku: string | null;
-  top_product_m2: number | null;
-  non_tile_products: string[];
 }
 
 export interface SACPreviewRow {
