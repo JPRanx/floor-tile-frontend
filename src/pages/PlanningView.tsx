@@ -7,6 +7,7 @@ import { planningApi } from '../requests/planning';
 import type { PlanningHorizonResponse, BoatProjection } from '../requests/planning';
 import { draftsApi } from '../requests/drafts';
 import { boatsApi } from '../requests/boats';
+import { dataHubApi } from '../requests/dataHub';
 import { FactoryLane } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
@@ -57,6 +58,42 @@ export function PlanningView() {
 
   // Horizon fetch error tracking (4d)
   const [horizonErrors, setHorizonErrors] = useState<Set<string>>(new Set());
+
+  // 5c: Staleness banner state
+  const [freshness, setFreshness] = useState<Record<string, { last_updated: string | null; status: string }> | null>(null);
+  const [staleDismissed, setStaleDismissed] = useState(false);
+
+  // 5c: Fetch data freshness on mount
+  useEffect(() => {
+    dataHubApi.getFreshness()
+      .then(data => setFreshness(data as unknown as Record<string, { last_updated: string | null; status: string }>))
+      .catch(() => {});
+  }, []);
+
+  // 5c: Compute stale items
+  const staleItems = useMemo(() => {
+    if (!freshness) return [];
+    const items: { type: string; label: string; daysAgo: number; critical: boolean }[] = [];
+    const thresholds: Record<string, { label: string; warn: number; critical: number }> = {
+      sales: { label: 'Ventas', warn: 7, critical: 14 },
+      inventory: { label: 'Inventario', warn: 3, critical: 7 },
+      siesa: { label: 'SIESA', warn: 3, critical: 7 },
+    };
+    const now = Date.now();
+    for (const [key, config] of Object.entries(thresholds)) {
+      const d = freshness[key];
+      if (!d?.last_updated) {
+        items.push({ type: key, label: config.label, daysAgo: 999, critical: true });
+        continue;
+      }
+      const daysAgo = Math.floor((now - new Date(d.last_updated).getTime()) / 86400000);
+      if (daysAgo >= config.warn) {
+        items.push({ type: key, label: config.label, daysAgo, critical: daysAgo >= config.critical });
+      }
+    }
+    return items;
+  }, [freshness]);
+  const hasCritical = staleItems.some(i => i.critical);
 
   // Fetch factories on mount
   useEffect(() => {
@@ -307,6 +344,22 @@ export function PlanningView() {
             {t('planning.horizon', 'proximos 3 meses')}
           </span>
         </div>
+
+        {/* 5c: Staleness warning banner */}
+        {staleItems.length > 0 && !staleDismissed && (
+          <div className={`px-4 py-2 rounded-lg border text-sm flex items-center justify-between ${
+            hasCritical ? 'bg-red-500/10 border-red-500/30 text-red-300' : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+          }`}>
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              {staleItems.map(item => (
+                <span key={item.type}>
+                  {item.label}: hace {item.daysAgo > 900 ? '?' : item.daysAgo} d{'\u00ed'}as
+                </span>
+              ))}
+            </div>
+            <button onClick={() => setStaleDismissed(true)} className="ml-3 text-slate-500 hover:text-slate-300 flex-shrink-0">{'\u2715'}</button>
+          </div>
+        )}
 
         {/* Factory card grid */}
         <FactoryCardGrid

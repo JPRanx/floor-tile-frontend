@@ -329,7 +329,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         </div>
 
         {/* Supply source badges */}
-        {!isCompleted && (projection.has_factory_siesa_supply || projection.has_production_supply) && (
+        {!isCompleted && (projection.has_factory_siesa_supply || projection.has_production_supply || projection.has_in_transit_supply) && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {projection.has_factory_siesa_supply && (
               <span className="text-[10px] bg-blue-500/15 text-blue-300 px-1.5 py-0.5 rounded font-medium">
@@ -339,6 +339,11 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
             {projection.has_production_supply && (
               <span className="text-[10px] bg-purple-500/15 text-purple-300 px-1.5 py-0.5 rounded font-medium">
                 {t('planning.supplyProduction', 'Producción {{m2}} m²', { m2: Math.round(projection.production_total_m2).toLocaleString() })}
+              </span>
+            )}
+            {projection.has_in_transit_supply && (
+              <span className="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded font-medium">
+                {t('planning.supplyInTransit', 'En tránsito {{m2}} m²', { m2: Math.round(projection.in_transit_total_m2).toLocaleString() })}
               </span>
             )}
           </div>

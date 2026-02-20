@@ -726,6 +726,37 @@ export function OrderBuilderProductCard({
               </div>
             )}
 
+            {/* Committed Orders (5e) */}
+            {product.committed_orders_m2 > 0 && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-blue-400">Comprometido:</span>
+                  <span className="text-blue-300 font-medium">
+                    {formatM2(product.committed_orders_m2)} m²
+                  </span>
+                  {product.committed_orders_customer && (
+                    <span className="text-slate-500">({product.committed_orders_customer})</span>
+                  )}
+                  {product.committed_orders_count > 1 && (
+                    <span className="text-slate-500">· {product.committed_orders_count} orders</span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Unfulfilled Demand (5f) */}
+            {product.has_unfulfilled_demand && (
+              <div className="p-3 border-b border-slate-700/50">
+                <div className="flex items-center gap-1.5 text-xs">
+                  <span className="text-amber-400">Demanda insatisfecha:</span>
+                  <span className="text-amber-300 font-medium">
+                    {formatM2(product.unfulfilled_demand_m2)} m²
+                  </span>
+                  <span className="text-slate-500">(ultimos 90 dias)</span>
+                </div>
+              </div>
+            )}
+
             {/* Weight + Confidence */}
             <div className="p-3 flex flex-wrap gap-4 text-xs text-slate-400">
               {/* Weight */}

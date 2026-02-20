@@ -310,6 +310,15 @@ export interface OrderBuilderProduct {
 
   // Full calculation breakdown (transparency layer)
   full_calculation_breakdown: FullCalculationBreakdown | null;
+
+  // Committed orders visibility (5e)
+  committed_orders_m2: number;
+  committed_orders_customer?: string;
+  committed_orders_count: number;
+
+  // Unfulfilled demand visibility (5f)
+  unfulfilled_demand_m2: number;
+  has_unfulfilled_demand: boolean;
 }
 
 export interface OrderBuilderBoat {

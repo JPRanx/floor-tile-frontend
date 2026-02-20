@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { orderBuilderApi } from '../requests/orderBuilder';
+import { dataHubApi } from '../requests/dataHub';
 import type {
   OrderBuilderResponse,
   OrderBuilderProduct,
@@ -124,6 +125,16 @@ export function OrderBuilder() {
   const [draftChangesDismissed, setDraftChangesDismissed] = useState(false);
   const draftLoadedRef = useRef(false);
 
+  // 5c: Staleness banner state
+  const [freshness, setFreshness] = useState<Record<string, { last_updated: string | null; status: string }> | null>(null);
+  const [staleDismissed, setStaleDismissed] = useState(false);
+
+  // 5m: Conflict modal state
+  const [conflictInfo, setConflictInfo] = useState<{ message: string } | null>(null);
+
+  // 5n: Dirty ref for navigation flush
+  const isDirtyRef = useRef(false);
+
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
     try {
@@ -138,6 +149,38 @@ export function OrderBuilder() {
   useEffect(() => {
     fetchPendingOrders();
   }, [fetchPendingOrders]);
+
+  // 5c: Fetch data freshness on mount
+  useEffect(() => {
+    dataHubApi.getFreshness()
+      .then(data => setFreshness(data as unknown as Record<string, { last_updated: string | null; status: string }>))
+      .catch(() => {}); // silent fail — nice-to-have banner
+  }, []);
+
+  // 5c: Compute stale items from freshness data
+  const staleItems = useMemo(() => {
+    if (!freshness) return [];
+    const items: { type: string; label: string; daysAgo: number; critical: boolean }[] = [];
+    const thresholds: Record<string, { label: string; warn: number; critical: number }> = {
+      sales: { label: 'Ventas', warn: 7, critical: 14 },
+      inventory: { label: 'Inventario', warn: 3, critical: 7 },
+      siesa: { label: 'SIESA', warn: 3, critical: 7 },
+    };
+    const now = Date.now();
+    for (const [key, config] of Object.entries(thresholds)) {
+      const d = freshness[key];
+      if (!d?.last_updated) {
+        items.push({ type: key, label: config.label, daysAgo: 999, critical: true });
+        continue;
+      }
+      const daysAgo = Math.floor((now - new Date(d.last_updated).getTime()) / 86400000);
+      if (daysAgo >= config.warn) {
+        items.push({ type: key, label: config.label, daysAgo, critical: daysAgo >= config.critical });
+      }
+    }
+    return items;
+  }, [freshness]);
+  const hasCritical = staleItems.some(i => i.critical);
 
   // V2: Fetch factories on mount
   useEffect(() => {
@@ -1000,6 +1043,22 @@ export function OrderBuilder() {
           <span>&larr;</span>
           <span className="text-sm">{t('planning.backToPlanning', 'Volver a Planificaci\u00f3n')}</span>
         </button>
+
+        {/* 5c: Staleness warning banner */}
+        {staleItems.length > 0 && !staleDismissed && (
+          <div className={`px-4 py-2 rounded-lg border text-sm flex items-center justify-between ${
+            hasCritical ? 'bg-red-500/10 border-red-500/30 text-red-300' : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+          }`}>
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              {staleItems.map(item => (
+                <span key={item.type}>
+                  {item.label}: hace {item.daysAgo > 900 ? '?' : item.daysAgo} d\u00edas
+                </span>
+              ))}
+            </div>
+            <button onClick={() => setStaleDismissed(true)} className="ml-3 text-slate-500 hover:text-slate-300 flex-shrink-0">{'\u2715'}</button>
+          </div>
+        )}
 
         {/* V2: Factory Pills */}
         {factories.length > 0 && (

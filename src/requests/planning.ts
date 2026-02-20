@@ -76,6 +76,8 @@ export interface BoatProjection {
   has_production_supply: boolean;
   factory_siesa_total_m2: number;
   production_total_m2: number;
+  has_in_transit_supply: boolean;
+  in_transit_total_m2: number;
 }
 
 export interface FactoryOrderSignal {
