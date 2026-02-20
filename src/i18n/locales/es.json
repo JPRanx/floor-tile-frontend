@@ -309,7 +309,12 @@
     "inventarioSheet": "Hoja INVENTARIO: Fecha Conteo, SKU, Bodega (m²), En Tránsito (m²)",
     "ventasSheet": "Hoja VENTAS: Fecha, SKU, Cantidad (m²)",
     "pleaseUploadExcel": "Por favor sube un archivo Excel (.xlsx)",
-    "noRecordsCreated": "No se crearon registros. Verifica el formato de tu archivo Excel."
+    "noRecordsCreated": "No se crearon registros. Verifica el formato de tu archivo Excel.",
+    "formatError": "Error de Formato",
+    "columnDiagnostic": "Diagnóstico de columnas",
+    "missingColumns": "Columnas faltantes",
+    "foundColumns": "Columnas encontradas en el archivo",
+    "noColumnsFound": "No se detectaron columnas en el archivo"
   },
   "shipments": {
     "title": "Embarques",

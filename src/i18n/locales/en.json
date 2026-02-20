@@ -309,7 +309,12 @@
     "inventarioSheet": "INVENTARIO sheet: Fecha Conteo, SKU, Bodega (m²), En Tránsito (m²)",
     "ventasSheet": "VENTAS sheet: Fecha, SKU, Cantidad (m²)",
     "pleaseUploadExcel": "Please upload an Excel file (.xlsx)",
-    "noRecordsCreated": "No records were created. Check your Excel file format."
+    "noRecordsCreated": "No records were created. Check your Excel file format.",
+    "formatError": "Format Error",
+    "columnDiagnostic": "Column Diagnostic",
+    "missingColumns": "Missing Columns",
+    "foundColumns": "Columns found in the file",
+    "noColumnsFound": "No columns detected in the file"
   },
   "shipments": {
     "title": "Shipments",

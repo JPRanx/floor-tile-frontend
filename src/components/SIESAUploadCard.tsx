@@ -7,6 +7,7 @@ import { ProductSearchDropdown } from './ProductSearchDropdown';
 import { UploadPreviewModal } from './UploadPreviewModal';
 import { EditablePreviewTable } from './uploads/EditablePreviewTable';
 import type { EditableColumn } from './uploads/EditablePreviewTable';
+import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -25,6 +26,8 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
   const [preview, setPreview] = useState<SIESAPreview | null>(null);
   const [result, setResult] = useState<SIESAUploadResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [missingColumns, setMissingColumns] = useState<string[]>([]);
+  const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [showUnmatchedList, setShowUnmatchedList] = useState(false);
   const [manualMappings, setManualMappings] = useState<Record<string, { productId: string; sku: string }>>({});
   const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
@@ -86,6 +89,9 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
       setPreview(previewData);
       setUploadState('preview');
     } catch (err: any) {
+      const details = err.response?.data?.error?.details;
+      if (details?.missing_columns) setMissingColumns(details.missing_columns);
+      if (details?.found_columns) setFoundColumns(details.found_columns);
       setErrorMessage(
         err.response?.data?.error?.message || t('dataHub.uploadFailed')
       );
@@ -140,6 +146,8 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
+    setMissingColumns([]);
+    setFoundColumns([]);
     setShowUnmatchedList(false);
     setModifications(new Map());
     setDeletions(new Set());
@@ -459,18 +467,12 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
 
         {/* Error State */}
         {uploadState === 'error' && (
-          <>
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h4 className="font-medium text-red-800">{t('dataHub.uploadFailed', 'Upload Failed')}</h4>
-              <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
-            </div>
-            <button
-              onClick={handleReset}
-              className="mt-4 w-full px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-            >
-              {t('common.tryAgain', 'Try Again')}
-            </button>
-          </>
+          <ParseDiagnosticPanel
+            errorMessage={errorMessage || t('dataHub.uploadFailed', 'Upload Failed')}
+            missingColumns={missingColumns}
+            foundColumns={foundColumns}
+            onRetry={handleReset}
+          />
         )}
       </UploadPreviewModal>
     </div>

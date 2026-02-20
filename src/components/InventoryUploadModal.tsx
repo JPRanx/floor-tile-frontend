@@ -6,6 +6,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
 import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
 import type { EditableColumn } from './uploads/EditablePreviewTable';
+import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 interface InventoryUploadCardProps {
   lastUpdated?: string | null;
@@ -35,6 +36,8 @@ export function InventoryUploadCard({
   const [result, setResult] = useState<InventoryUploadResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<UploadError[]>([]);
+  const [missingColumns, setMissingColumns] = useState<string[]>([]);
+  const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [showAutoCreatedList, setShowAutoCreatedList] = useState(false);
   const [showZeroFilledList, setShowZeroFilledList] = useState(false);
   const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
@@ -64,12 +67,14 @@ export function InventoryUploadCard({
       setUploadState('error');
 
       // Extract error details if available
-      const axiosErr = err as { response?: { data?: { error?: { message?: string; details?: Array<{ sheet?: string; row?: number; field?: string; error?: string }> } } }; message?: string };
+      const axiosErr = err as { response?: { data?: { error?: { message?: string; details?: Record<string, unknown> & { missing_columns?: string[]; found_columns?: string[] } } } }; message?: string };
       if (axiosErr.response?.data?.error?.details) {
         const details = axiosErr.response.data.error.details;
+        if (details.missing_columns) setMissingColumns(details.missing_columns);
+        if (details.found_columns) setFoundColumns(details.found_columns);
         if (Array.isArray(details)) {
           setErrorDetails(
-            details.map((d) => ({
+            (details as Array<{ sheet?: string; row?: number; field?: string; error?: string }>).map((d) => ({
               sheet: d.sheet || 'INVENTARIO',
               row: d.row || 0,
               field: d.field,
@@ -167,6 +172,8 @@ export function InventoryUploadCard({
     setUploadState('idle');
     setErrorMessage(null);
     setErrorDetails([]);
+    setMissingColumns([]);
+    setFoundColumns([]);
     setPreview(null);
     setResult(null);
     setShowAutoCreatedList(false);
@@ -426,14 +433,13 @@ export function InventoryUploadCard({
 
         {/* Error State */}
         {uploadState === 'error' && (
-          <div className="text-center py-8">
-            <div className="text-5xl mb-4">❌</div>
-            <p className="text-red-600 font-medium mb-2">
-              {t('inventory.uploadError')}
-            </p>
-            {errorMessage && (
-              <p className="text-gray-600 text-sm mb-4">{errorMessage}</p>
-            )}
+          <div className="py-4">
+            <ParseDiagnosticPanel
+              errorMessage={errorMessage || t('inventory.uploadError')}
+              missingColumns={missingColumns}
+              foundColumns={foundColumns}
+              onRetry={handleReset}
+            />
             {errorDetails.length > 0 && (
               <div className="mt-4 text-left bg-red-50 rounded-lg p-4 max-h-40 overflow-auto">
                 <p className="text-sm font-medium text-red-800 mb-2">
@@ -456,12 +462,6 @@ export function InventoryUploadCard({
                 </ul>
               </div>
             )}
-            <button
-              onClick={handleReset}
-              className="mt-6 px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {t('inventory.tryAgain')}
-            </button>
           </div>
         )}
       </UploadPreviewModal>

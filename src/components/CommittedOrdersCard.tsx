@@ -5,6 +5,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
 import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
 import type { EditableColumn } from './uploads/EditablePreviewTable';
+import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
 
@@ -27,6 +28,8 @@ export function CommittedOrdersCard({ onUploadSuccess }: Props) {
   const [preview, setPreview] = useState<CommittedOrderPreview | null>(null);
   const [result, setResult] = useState<CommittedOrderResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [missingColumns, setMissingColumns] = useState<string[]>([]);
+  const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
   const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
@@ -63,7 +66,10 @@ export function CommittedOrdersCard({ onUploadSuccess }: Props) {
       setPreview(previewData);
       setUploadState('preview');
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: { message?: string }; detail?: string } } };
+      const axiosErr = err as { response?: { data?: { error?: { message?: string; details?: { missing_columns?: string[]; found_columns?: string[] } }; detail?: string } } };
+      const details = axiosErr.response?.data?.error?.details;
+      if (details?.missing_columns) setMissingColumns(details.missing_columns);
+      if (details?.found_columns) setFoundColumns(details.found_columns);
       setErrorMessage(
         axiosErr.response?.data?.error?.message ||
         axiosErr.response?.data?.detail ||
@@ -140,6 +146,8 @@ export function CommittedOrdersCard({ onUploadSuccess }: Props) {
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
+    setMissingColumns([]);
+    setFoundColumns([]);
     setModifications(new Map());
     setDeletions(new Set());
     setModalOpen(false);
@@ -342,18 +350,12 @@ export function CommittedOrdersCard({ onUploadSuccess }: Props) {
 
         {/* Error State */}
         {uploadState === 'error' && (
-          <>
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <h4 className="font-medium text-red-800">Error en la carga</h4>
-              <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
-            </div>
-            <button
-              onClick={handleReset}
-              className="mt-4 w-full px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-            >
-              Intentar de nuevo
-            </button>
-          </>
+          <ParseDiagnosticPanel
+            errorMessage={errorMessage || 'Error en la carga'}
+            missingColumns={missingColumns}
+            foundColumns={foundColumns}
+            onRetry={handleReset}
+          />
         )}
       </UploadPreviewModal>
     </div>

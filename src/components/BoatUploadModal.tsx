@@ -6,6 +6,7 @@ import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
 import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
 import type { EditableColumn } from './uploads/EditablePreviewTable';
+import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 interface BoatUploadCardProps {
   lastUpdated?: string | null;
@@ -23,6 +24,8 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
   const [preview, setPreview] = useState<BoatPreview | null>(null);
   const [result, setResult] = useState<BoatUploadResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [missingColumns, setMissingColumns] = useState<string[]>([]);
+  const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
   const [deletions, setDeletions] = useState<Set<string>>(new Set());
@@ -84,7 +87,10 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
       setUploadState('preview');
     } catch (err: unknown) {
       setUploadState('error');
-      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
+      const axiosErr = err as { response?: { data?: { error?: { message?: string; details?: { missing_columns?: string[]; found_columns?: string[] } } } } };
+      const details = axiosErr.response?.data?.error?.details;
+      if (details?.missing_columns) setMissingColumns(details.missing_columns);
+      if (details?.found_columns) setFoundColumns(details.found_columns);
       setErrorMessage(
         axiosErr.response?.data?.error?.message || t('boatUpload.uploadFailed', 'Upload failed')
       );
@@ -157,6 +163,8 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
+    setMissingColumns([]);
+    setFoundColumns([]);
     setModifications(new Map());
     setDeletions(new Set());
   };
@@ -428,23 +436,13 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
 
         {/* Error State */}
         {uploadState === 'error' && (
-          <div className="py-4 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-red-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h3 className="mt-3 text-lg font-medium text-gray-900">{t('boatUpload.uploadFailed')}</h3>
-            <p className="mt-2 text-sm text-gray-600">{errorMessage}</p>
-
+          <div className="py-4">
+            <ParseDiagnosticPanel
+              errorMessage={errorMessage || t('boatUpload.uploadFailed')}
+              missingColumns={missingColumns}
+              foundColumns={foundColumns}
+              onRetry={handleModalClose}
+            />
             {result && result.errors && result.errors.length > 0 && (
               <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-left text-sm max-h-32 overflow-y-auto">
                 <ul className="text-red-700 text-xs">
@@ -454,21 +452,6 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
                 </ul>
               </div>
             )}
-
-            <button
-              onClick={() => {
-                setUploadState('idle');
-                setPreview(null);
-                setResult(null);
-                setErrorMessage(null);
-                setModifications(new Map());
-                setDeletions(new Set());
-                setModalOpen(false);
-              }}
-              className="mt-4 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700"
-            >
-              {t('common.tryAgain', 'Try Again')}
-            </button>
           </div>
         )}
       </UploadPreviewModal>

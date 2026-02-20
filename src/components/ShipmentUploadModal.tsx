@@ -5,6 +5,7 @@ import type { IngestResponse, CandidateShipment } from '../requests/shipments';
 import { LoadingSpinner } from './LoadingSpinner';
 import { FactoryOrderSelector } from './FactoryOrderSelector';
 import { UploadPreviewModal } from './UploadPreviewModal';
+import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 interface ShipmentUploadCardProps {
   onSuccess: () => void;
@@ -25,6 +26,8 @@ export function ShipmentUploadCard({
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [parseResult, setParseResult] = useState<IngestResponse | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [missingColumns, setMissingColumns] = useState<string[]>([]);
+  const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -149,6 +152,9 @@ export function ShipmentUploadCard({
       }
     } catch (err: any) {
       setUploadState('error');
+      const details = err.response?.data?.error?.details;
+      if (details?.missing_columns) setMissingColumns(details.missing_columns);
+      if (details?.found_columns) setFoundColumns(details.found_columns);
       if (err.message === 'TIMEOUT') {
         setErrorMessage(t('shipmentUpload.timeout'));
       } else if (err.response?.data?.error?.message) {
@@ -339,6 +345,8 @@ export function ShipmentUploadCard({
     setUploadState('idle');
     setParseResult(null);
     setErrorMessage(null);
+    setMissingColumns([]);
+    setFoundColumns([]);
     setPreviewId(null);
     setCandidateShipments([]);
     setSelectedShipmentId(null);
@@ -846,35 +854,12 @@ export function ShipmentUploadCard({
 
         {/* Error State */}
         {uploadState === 'error' && (
-          <div className="py-4 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-red-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h3 className="mt-3 text-lg font-medium text-gray-900">{t('shipmentUpload.uploadFailed')}</h3>
-            <p className="mt-2 text-sm text-gray-600">{errorMessage}</p>
-
-            <button
-              onClick={() => {
-                setUploadState('idle');
-                setParseResult(null);
-                setErrorMessage(null);
-                setModalOpen(false);
-              }}
-              className="mt-4 px-4 py-2 text-sm font-medium text-white bg-gray-600 rounded-lg hover:bg-gray-700"
-            >
-              {t('common.tryAgain')}
-            </button>
-          </div>
+          <ParseDiagnosticPanel
+            errorMessage={errorMessage || t('shipmentUpload.uploadFailed')}
+            missingColumns={missingColumns}
+            foundColumns={foundColumns}
+            onRetry={handleModalClose}
+          />
         )}
       </UploadPreviewModal>
     </div>
