@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BoatProjection, DraftBLItem, DraftStatus, ProductProjection } from '../../requests/planning';
+import type { BoatProjection, DraftBLItem, DraftStatus, ProductProjection, StabilityImpact } from '../../requests/planning';
 import { ConfidenceDots } from './ConfidenceDots';
 import { formatDateShort } from '../../utils/dateUtils';
 
@@ -198,6 +198,102 @@ function formatDeadlineText(daysLeft: number, dateStr: string, label: string, t:
   return `${label}: ${date} (${daysLeft}d)`;
 }
 
+function StabilitySection({ impact }: { impact: StabilityImpact }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+
+  const hasAny = impact.stabilizes_count > 0 || impact.recovering_count > 0 || impact.blocked_count > 0;
+  if (!hasAny && impact.progress_before_pct === impact.progress_after_pct) return null;
+
+  return (
+    <div className="mt-2">
+      {/* Clickable header with badge counts */}
+      <button
+        onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+        className="w-full flex items-center gap-1.5 text-left"
+      >
+        {impact.stabilizes_count > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-medium">
+            {'\u2713'} {impact.stabilizes_count}
+          </span>
+        )}
+        {impact.recovering_count > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-medium">
+            {'\u21BB'} {impact.recovering_count}
+          </span>
+        )}
+        {impact.blocked_count > 0 && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-300 text-[10px] font-medium">
+            {'\u2717'} {impact.blocked_count}
+          </span>
+        )}
+        <span className="text-[10px] text-slate-600 ml-auto">
+          {expanded ? '\u25B2' : '\u25BC'}
+        </span>
+      </button>
+
+      {/* Progress bar */}
+      <div className="mt-1.5">
+        <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+          <div className="h-full flex">
+            {impact.progress_before_pct > 0 && (
+              <div
+                className="bg-slate-500 h-full"
+                style={{ width: `${impact.progress_before_pct}%` }}
+              />
+            )}
+            {impact.progress_after_pct > impact.progress_before_pct && (
+              <div
+                className="bg-emerald-500 h-full"
+                style={{ width: `${impact.progress_after_pct - impact.progress_before_pct}%` }}
+              />
+            )}
+          </div>
+        </div>
+        <div className="text-[10px] text-slate-500 mt-0.5">
+          {impact.progress_before_pct}% {'\u2192'} {impact.progress_after_pct}%
+        </div>
+      </div>
+
+      {/* Expanded product lists */}
+      {expanded && (
+        <div className="mt-2 space-y-1.5">
+          {impact.stabilizes_count > 0 && (
+            <div>
+              <div className="text-[10px] font-medium text-emerald-400 uppercase tracking-wider">
+                {t('planning.stability.stabilizes', 'Estabiliza')}
+              </div>
+              <div className="text-[11px] text-slate-400 pl-2">
+                {impact.stabilizes_products.join(', ')}
+              </div>
+            </div>
+          )}
+          {impact.recovering_count > 0 && (
+            <div>
+              <div className="text-[10px] font-medium text-amber-400 uppercase tracking-wider">
+                {t('planning.stability.recovering', 'Recuperándose')}
+              </div>
+              <div className="text-[11px] text-slate-400 pl-2">
+                {impact.recovering_products.join(', ')}
+              </div>
+            </div>
+          )}
+          {impact.blocked_count > 0 && (
+            <div>
+              <div className="text-[10px] font-medium text-red-400 uppercase tracking-wider">
+                {t('planning.stability.blocked', 'Bloqueado')}
+              </div>
+              <div className="text-[11px] text-slate-400 pl-2">
+                {impact.blocked_products.join(', ')}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, compact }: BoatCardProps) {
   const { t, i18n } = useTranslation();
   const [showAllProducts, setShowAllProducts] = useState(false);
@@ -347,6 +443,11 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
               </span>
             )}
           </div>
+        )}
+
+        {/* Stability impact */}
+        {!isCompleted && projection.stability_impact && (
+          <StabilitySection impact={projection.stability_impact} />
         )}
 
         {/* Review warning */}

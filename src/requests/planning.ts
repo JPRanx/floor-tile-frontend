@@ -38,6 +38,17 @@ export interface DraftBLItem {
   bl_number: number;
 }
 
+export interface StabilityImpact {
+  stabilizes_count: number;
+  stabilizes_products: string[];
+  recovering_count: number;
+  recovering_products: string[];
+  blocked_count: number;
+  blocked_products: string[];
+  progress_before_pct: number;
+  progress_after_pct: number;
+}
+
 export interface BoatProjection {
   boat_id: string;
   boat_name: string;
@@ -78,6 +89,7 @@ export interface BoatProjection {
   production_total_m2: number;
   has_in_transit_supply: boolean;
   in_transit_total_m2: number;
+  stability_impact: StabilityImpact | null;
 }
 
 export interface FactoryOrderSignal {

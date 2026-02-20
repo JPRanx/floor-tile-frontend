@@ -1012,6 +1012,12 @@
     "urgShort": "urg",
     "supplyFactory": "SIESA {{m2}} m²",
     "supplyProduction": "Producción {{m2}} m²",
+    "supplyInTransit": "En tránsito {{m2}} m²",
+    "stability": {
+      "stabilizes": "Estabiliza",
+      "recovering": "Recuperándose",
+      "blocked": "Bloqueado"
+    },
     "needsReview": "Revisar",
     "draftLocked": "Bloqueado por {{boat}}",
     "briefing": {
