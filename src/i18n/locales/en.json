@@ -774,7 +774,8 @@
     "help": {
       "title": "File help",
       "sacDescription": "Export weekly sales from SAC as CSV. The file should have columns for date, SKU, customer, quantity, and price.",
-      "siesaDescription": "Export inventory from SIESA as XLS. The file should have columns Item, Lote, and Cant. disponible."
+      "siesaDescription": "Export inventory from SIESA as XLS. The file should have columns Item, Lote, and Cant. disponible.",
+      "productionDescription": "Export the monthly production schedule from the factory as XLS. The file should have the sheet with references, scheduled dates, and m² per plant."
     }
   },
   "intelligence": {

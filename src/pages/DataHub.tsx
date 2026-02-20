@@ -117,6 +117,9 @@ export function DataHub() {
           <p>
             <strong>{t('dataHub.inventory.title')}:</strong> {t('dataHub.help.siesaDescription')}
           </p>
+          <p>
+            <strong>{t('dataHub.sections.logistics')}:</strong> {t('dataHub.help.productionDescription')}
+          </p>
         </div>
       </div>
     </div>
