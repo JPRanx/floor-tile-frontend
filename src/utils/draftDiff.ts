@@ -64,7 +64,17 @@ export function computeDraftDiff(
     }
 
     const snapshot = saved.snapshot_data;
-    if (!snapshot) continue; // No snapshot = can't compare
+    if (!snapshot) {
+      // No snapshot = can't compare, treat as potentially changed
+      changes.push({
+        product_id: pid,
+        sku: current.sku,
+        change_type: 'suggestion_changed',
+        severity: 'medium',
+        description: 'Sin datos previos para comparar — revisar',
+      });
+      continue;
+    }
 
     // Suggestion changed
     const oldSuggested = Number(snapshot.suggested_pallets) || 0;

@@ -47,6 +47,17 @@ export function PlanningView() {
   // Estimated boats visibility
   const [showAllEstimated, setShowAllEstimated] = useState(false);
 
+  // Inline notifications (4a)
+  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showNotification = useCallback((type: 'success' | 'error', message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), type === 'error' ? 5000 : 3000);
+  }, []);
+
+  // Horizon fetch error tracking (4d)
+  const [horizonErrors, setHorizonErrors] = useState<Set<string>>(new Set());
+
   // Fetch factories on mount
   useEffect(() => {
     const fetchFactories = async () => {
@@ -74,8 +85,10 @@ export function PlanningView() {
         next.set(factoryId, result);
         return next;
       });
+      setHorizonErrors((prev) => { const next = new Set(prev); next.delete(factoryId); return next; });
     } catch (err) {
       console.error(`Failed to load horizon for factory ${factoryId}:`, err);
+      setHorizonErrors((prev) => new Set(prev).add(factoryId));
     } finally {
       setHorizonLoading((prev) => {
         const next = new Set(prev);
@@ -137,6 +150,7 @@ export function PlanningView() {
         navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${realId}`);
       } catch (err) {
         console.error('Failed to create estimated boat:', err);
+        showNotification('error', 'Error al cargar detalles. Intenta de nuevo.');
       }
     } else {
       navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}`);
@@ -153,6 +167,7 @@ export function PlanningView() {
         navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${realId}&action=export`);
       } catch (err) {
         console.error('Failed to create estimated boat:', err);
+        showNotification('error', 'Error al preparar exportación. Intenta de nuevo.');
       }
     } else {
       navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}&action=export`);
@@ -166,13 +181,22 @@ export function PlanningView() {
   };
 
   const handleQuickAccept = async (projection: BoatProjection) => {
-    if (!selectedFactoryId) return;
+    if (!selectedFactoryId || acceptingBoatId) return;
+
+    // Idempotency: if a draft already exists, just navigate (4h)
+    if (projection.draft_id) {
+      navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${projection.boat_id}`);
+      return;
+    }
+
     setAcceptingBoatId(projection.boat_id);
+    let materialized = false;
     try {
       // Materialize estimated boats before saving draft (FK constraint)
       let boatId = projection.boat_id;
       if (projection.is_estimated) {
         boatId = await materializeEstimatedBoat(projection);
+        materialized = true;
       }
 
       const items = projection.product_details
@@ -189,10 +213,16 @@ export function PlanningView() {
         items,
       });
 
+      showNotification('success', 'Borrador creado exitosamente');
       // Navigate to Order Builder detail for BL allocation
       navigate(`/order-builder?factory_id=${selectedFactoryId}&boat_id=${boatId}`);
     } catch (err) {
       console.error('Quick accept failed:', err);
+      if (materialized) {
+        showNotification('error', 'Barco creado pero error al guardar borrador. Ve a Order Builder para completar.');
+      } else {
+        showNotification('error', 'Error al aceptar sugerido. Intenta de nuevo.');
+      }
     } finally {
       setAcceptingBoatId(null);
     }
@@ -357,6 +387,18 @@ export function PlanningView() {
           </div>
         )}
 
+        {/* Inline notification (4a) */}
+        {notification && (
+          <div className={`mx-4 mt-2 px-4 py-2 rounded-lg text-sm flex items-center justify-between ${
+            notification.type === 'error'
+              ? 'bg-red-500/10 border border-red-500/30 text-red-300'
+              : 'bg-green-500/10 border border-green-500/30 text-green-300'
+          }`}>
+            <span>{notification.message}</span>
+            <button onClick={() => setNotification(null)} className="ml-4 text-xs opacity-70 hover:opacity-100">{'\u2715'}</button>
+          </div>
+        )}
+
         {/* Factory swimlanes */}
         <div className="space-y-3">
           {factories.map((factory) => (
@@ -372,8 +414,23 @@ export function PlanningView() {
           ))}
         </div>
 
+        {/* Horizon fetch error state (4d) */}
+        {selectedFactoryId && horizonErrors.has(selectedFactoryId) && !horizonLoading.has(selectedFactoryId) && (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-400">
+            <span className="text-4xl mb-4">{'\u26A0\uFE0F'}</span>
+            <p className="text-lg font-medium text-slate-300 mb-2">Error al cargar datos</p>
+            <p className="text-sm text-slate-500 mb-4">Verifica tu conexión e intenta de nuevo.</p>
+            <button
+              onClick={() => selectedFactoryId && fetchHorizon(selectedFactoryId)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-medium"
+            >
+              Reintentar
+            </button>
+          </div>
+        )}
+
         {/* Detail view for selected factory */}
-        {selectedFactoryId && selectedHorizon && (
+        {selectedFactoryId && selectedHorizon && !horizonErrors.has(selectedFactoryId) && (
           <>
             {/* Divider */}
             <div className="border-t border-slate-700/50 pt-2">
