@@ -194,6 +194,27 @@ export interface InTransitUploadResponse {
   unmatched_skus: string[];
   details: InTransitUploadDetail[];
   reconciliation?: ReconciliationSummary;
+  promoted_draft_id?: string;
+  promoted_boat_name?: string;
+}
+
+export interface CandidateBoat {
+  boat_id: string;
+  vessel_name: string;
+  departure_date: string;
+  arrival_date: string;
+  carrier: string | null;
+  draft_id: string | null;
+  draft_status: string | null;
+  draft_pallets: number | null;
+  is_suggested: boolean;
+}
+
+export interface InTransitParseResponse {
+  products: InTransitUploadDetail[];
+  total_m2: number;
+  unmatched_skus: string[];
+  candidate_boats: CandidateBoat[];
 }
 
 export interface SIESAPreviewLot {
@@ -407,15 +428,30 @@ export const dataHubApi = {
     return response.data;
   },
 
+  parseInTransit: async (file: File): Promise<InTransitParseResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<InTransitParseResponse>(
+      '/inventory/in-transit/parse',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    );
+    return response.data;
+  },
+
   uploadInTransit: async (
     file: File,
+    boatId?: string,
   ): Promise<InTransitUploadResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await api.post(
+    const response = await api.post<InTransitUploadResponse>(
       '/inventory/in-transit/upload',
       formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } },
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        params: boatId ? { boat_id: boatId } : undefined,
+      },
     );
     return response.data;
   },
