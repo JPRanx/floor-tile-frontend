@@ -121,6 +121,7 @@ export function OrderBuilder() {
   // V2: Draft change detection
   const [draftChanges, setDraftChanges] = useState<DraftChange[]>([]);
   const [draftChangesDismissed, setDraftChangesDismissed] = useState(false);
+  const draftLoadedRef = useRef(false);
 
   // Fetch pending orders
   const fetchPendingOrders = useCallback(async () => {
@@ -416,9 +417,12 @@ export function OrderBuilder() {
     };
   }, [products, isDetailView, selectedFactoryId, selectedBoatId]);
 
-  // V2: Load existing draft on detail view mount
+  // V2: Load existing draft on detail view mount (once per view entry)
   useEffect(() => {
-    if (!isDetailView || !selectedFactoryId || !selectedBoatId) return;
+    if (!isDetailView || !selectedFactoryId || !selectedBoatId || !data) return;
+    // Only load draft once per view entry — skip when data refreshes (e.g. BL change)
+    if (draftLoadedRef.current) return;
+    draftLoadedRef.current = true;
 
     const loadDraft = async () => {
       try {
@@ -470,6 +474,11 @@ export function OrderBuilder() {
     loadDraft();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDetailView, selectedFactoryId, selectedBoatId, data]); // data dependency ensures products are loaded first
+
+  // Reset draft loaded flag when switching boat/factory
+  useEffect(() => {
+    draftLoadedRef.current = false;
+  }, [selectedBoatId, selectedFactoryId]);
 
   // V2: Handle factory change from pills
   const handleFactoryChange = (factoryId: string) => {
