@@ -81,7 +81,7 @@ export function OrderBuilder() {
   const [demandLoading, setDemandLoading] = useState(false);
 
   // BL Allocation state
-  const [numBLs, setNumBLs] = useState(3);
+  const [numBLs, setNumBLs] = useState(0); // 0 = auto (backend resolves to recommended)
   const [blAllocationReport, setBLAllocationReport] = useState<BLAllocationReport | null>(null);
   const [showBLView, setShowBLView] = useState(false);
   const [blLoading, setBLLoading] = useState(false);
@@ -92,8 +92,6 @@ export function OrderBuilder() {
   const [removedSkus, setRemovedSkus] = useState<Set<string>>(new Set());
   const [recalculating, setRecalculating] = useState(false);
 
-  // Track if initial load has happened (for auto-selecting recommended BLs)
-  const [hasInitiallyLoaded, setHasInitiallyLoaded] = useState(false);
 
   // Pending warehouse orders state
   const [pendingOrders, setPendingOrders] = useState<WarehouseOrder[]>([]);
@@ -208,13 +206,10 @@ export function OrderBuilder() {
       }));
       setProducts(allProducts);
 
-      // Auto-select recommended BLs on initial load (no re-fetch needed —
-      // the response already reflects recommended_bls)
+      // Auto-select recommended BLs on initial load — backend already used
+      // recommended_bls for capacity when num_bls=0 (auto), so no re-fetch needed
       if (isInitialLoad) {
-        if (result.recommended_bls && result.recommended_bls !== blCount) {
-          setNumBLs(result.recommended_bls);
-        }
-        setHasInitiallyLoaded(true);
+        setNumBLs(result.recommended_bls || 1);
       }
     } catch (err) {
       setError('Failed to load order builder data');
@@ -238,16 +233,15 @@ export function OrderBuilder() {
     }
   }, []);
 
-  // numBLs intentionally excluded — manual changes go through handleNumBLsChange
+  // Load OB data when boat changes — always use num_bls=0 (auto) so backend
+  // resolves to recommended BLs. Manual BL changes go through handleNumBLsChange.
   useEffect(() => {
-    // Load data even without a boat - backend will use defaults
     if (boatsLoaded) {
-      // Pass isInitialLoad=true only on the first load (before hasInitiallyLoaded is set)
-      loadData(numBLs, selectedBoatId, !hasInitiallyLoaded);
+      loadData(0, selectedBoatId, true);
       loadDemandForecast(selectedBoatId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBoatId, loadData, loadDemandForecast, boatsLoaded, hasInitiallyLoaded]);
+  }, [selectedBoatId, loadData, loadDemandForecast, boatsLoaded]);
 
   const handleBoatChange = (boatId: string) => {
     setSelectedBoatId(boatId);
