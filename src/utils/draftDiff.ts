@@ -129,7 +129,7 @@ export function computeDraftDiff(
           severity: 'medium',
           old_value: oldVelocity,
           new_value: current.daily_velocity_m2,
-          description: `Velocidad: ${oldVelocity.toFixed(1)} \u2192 ${current.daily_velocity_m2.toFixed(1)} m\u00b2/d\u00eda`,
+          description: `Velocidad: ${Number(oldVelocity).toFixed(1)} \u2192 ${Number(current.daily_velocity_m2).toFixed(1)} m\u00b2/d\u00eda`,
         });
       }
     }
@@ -146,7 +146,7 @@ export function computeDraftDiff(
           severity: current.current_stock_m2 < oldStock ? 'high' : 'low',
           old_value: oldStock,
           new_value: current.current_stock_m2,
-          description: `Stock: ${oldStock.toFixed(0)} \u2192 ${current.current_stock_m2.toFixed(0)} m\u00b2`,
+          description: `Stock: ${Number(oldStock).toFixed(0)} \u2192 ${Number(current.current_stock_m2).toFixed(0)} m\u00b2`,
         });
       }
     }

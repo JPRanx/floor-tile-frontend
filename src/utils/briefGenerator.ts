@@ -180,7 +180,7 @@ function getVelocityLine(p: ProductTrend): BriefPart {
     return { text: 'Sin ventas recientes.', type: 'normal' };
   }
   return {
-    text: `Vendes ${p.daily_velocity_m2.toFixed(1)} m²/día.`,
+    text: `Vendes ${Number(p.daily_velocity_m2).toFixed(1)} m²/día.`,
     type: 'normal'
   };
 }
