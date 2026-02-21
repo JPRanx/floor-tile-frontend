@@ -43,8 +43,7 @@ import { StabilityForecastModal } from '../components/StabilityForecastModal';
 import { PendingOrdersCard } from '../components/PendingOrdersCard';
 import { StickyShipmentBar } from '../components/planning/StickyShipmentBar';
 import { DraftChangeBanner } from '../components/planning/DraftChangeBanner';
-import { computeDraftDiff } from '../utils/draftDiff';
-import type { DraftChange } from '../utils/draftDiff';
+import type { DataFreshnessResponse } from '../requests/dataHub';
 import {
   M2_PER_PALLET,
   CONTAINER_MAX_PALLETS,
@@ -119,13 +118,14 @@ export function OrderBuilder() {
   const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const MAX_SAVE_RETRIES = 3;
 
-  // V2: Draft change detection
-  const [draftChanges, setDraftChanges] = useState<DraftChange[]>([]);
+  // V2: Draft change detection (timestamp-based)
+  const [draftChangedSources, setDraftChangedSources] = useState<Array<{ source: string; label: string }>>([]);
+  const [draftAgeDays, setDraftAgeDays] = useState(0);
   const [draftChangesDismissed, setDraftChangesDismissed] = useState(false);
   const draftLoadedRef = useRef(false);
 
   // 5c: Staleness banner state
-  const [freshness, setFreshness] = useState<Record<string, { last_updated: string | null; status: string }> | null>(null);
+  const [freshness, setFreshness] = useState<DataFreshnessResponse | null>(null);
   const [staleDismissed, setStaleDismissed] = useState(false);
 
   // Fetch pending orders
@@ -477,43 +477,50 @@ export function OrderBuilder() {
         const draft = await draftsApi.getDraft(selectedBoatId, selectedFactoryId);
         if (draft && draft.items.length > 0) {
           // Restore selections from draft (respect current SIESA stock)
-          setProducts(prev => {
-            const updated = prev.map(p => {
-              const draftItem = draft.items.find(d => d.product_id === p.product_id);
-              if (draftItem) {
-                return {
-                  ...p,
-                  is_selected: (p.factory_available_m2 ?? 0) > 0,
-                  selected_pallets: draftItem.selected_pallets,
-                  selected_m2: draftItem.selected_pallets * M2_PER_PALLET,
-                };
-              }
-              return p;
-            });
+          setProducts(prev => prev.map(p => {
+            const draftItem = draft.items.find(d => d.product_id === p.product_id);
+            if (draftItem) {
+              return {
+                ...p,
+                is_selected: (p.factory_available_m2 ?? 0) > 0,
+                selected_pallets: draftItem.selected_pallets,
+                selected_m2: draftItem.selected_pallets * M2_PER_PALLET,
+              };
+            }
+            return p;
+          }));
 
-            // Compute draft changes using snapshot_data from saved items vs current OB state
-            const savedItems = draft.items.map(d => ({
-              product_id: d.product_id,
-              selected_pallets: d.selected_pallets,
-              snapshot_data: d.snapshot_data,
-            }));
-            const currentProducts = prev.map(p => ({
-              product_id: p.product_id,
-              sku: p.sku,
-              urgency: p.urgency,
-              days_of_stock: p.days_of_stock ?? 0,
-              daily_velocity_m2: p.daily_velocity_m2,
-              current_stock_m2: p.current_stock_m2,
-              suggested_pallets: p.suggested_pallets,
-            }));
-            const changes = computeDraftDiff(savedItems, currentProducts);
-            if (changes.length > 0) {
-              setDraftChanges(changes);
+          // Timestamp-based change detection: compare data source timestamps vs draft save time
+          const draftSavedAt = new Date(draft.updated_at).getTime();
+          const ageMs = Date.now() - draftSavedAt;
+          setDraftAgeDays(Math.floor(ageMs / (1000 * 60 * 60 * 24)));
+
+          try {
+            const freshnessData = await dataHubApi.getFreshness();
+            const SOURCE_LABELS: Record<string, string> = {
+              sales: 'Ventas',
+              inventory: 'Inventario',
+              siesa: 'SIESA',
+              boats: 'Barcos',
+              production: 'Producción',
+            };
+            const changed: Array<{ source: string; label: string }> = [];
+            for (const [key, label] of Object.entries(SOURCE_LABELS)) {
+              const source = freshnessData[key as keyof typeof freshnessData];
+              if (source?.last_updated) {
+                const sourceUpdated = new Date(source.last_updated).getTime();
+                if (sourceUpdated > draftSavedAt) {
+                  changed.push({ source: key, label });
+                }
+              }
+            }
+            if (changed.length > 0) {
+              setDraftChangedSources(changed);
               setDraftChangesDismissed(false);
             }
-
-            return updated;
-          });
+          } catch {
+            // Freshness check failed — don't show banner
+          }
         }
       } catch (err) {
         console.error('Failed to load draft:', err);
@@ -1148,10 +1155,11 @@ export function OrderBuilder() {
               </div>
             )}
 
-            {/* Draft Change Flags Banner */}
-            {draftChanges.length > 0 && !draftChangesDismissed && (
+            {/* Draft Change Banner — timestamp-based detection */}
+            {!draftChangesDismissed && (
               <DraftChangeBanner
-                changes={draftChanges}
+                changedSources={draftChangedSources}
+                draftAgeDays={draftAgeDays}
                 onAcceptAll={() => {
                   // Accept all: reset selections to current OB recommendations
                   const updated = products.map(p => ({
@@ -1161,10 +1169,10 @@ export function OrderBuilder() {
                     is_selected: (p.coverage_gap_pallets || 0) > 0,
                   }));
                   setProducts(updated);
-                  setDraftChanges([]);
+                  setDraftChangedSources([]);
                   setDraftChangesDismissed(true);
 
-                  // Immediate save with fresh snapshot to prevent stale diff on next load
+                  // Immediate save to update draft timestamp
                   if (selectedBoatId && selectedFactoryId) {
                     const items = updated
                       .filter(p => p.is_selected && p.selected_pallets > 0)

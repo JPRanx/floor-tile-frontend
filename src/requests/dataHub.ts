@@ -2,7 +2,7 @@ import api from './api';
 
 export interface DataSourceFreshness {
   last_updated: string | null;
-  record_count: number;
+  record_count?: number;
   status: 'fresh' | 'stale' | 'very_stale';
 }
 
@@ -10,6 +10,8 @@ export interface DataFreshnessResponse {
   sales: DataSourceFreshness;
   inventory: DataSourceFreshness;
   boats: DataSourceFreshness;
+  siesa?: DataSourceFreshness;
+  production?: DataSourceFreshness;
 }
 
 export interface SACUploadResponse {
