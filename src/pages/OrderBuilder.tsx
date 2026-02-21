@@ -31,10 +31,7 @@ import { AddToProductionSection } from '../components/AddToProductionSection';
 import { FactoryRequestSection } from '../components/FactoryRequestSection';
 import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { factoriesApi } from '../requests/factories';
-import type { Factory } from '../requests/factories';
 import { draftsApi } from '../requests/drafts';
-import { FactoryPills } from '../components/planning/FactoryPills';
 import { FactoryTimeline } from '../components/planning/FactoryTimeline';
 import { PlanningView } from './PlanningView';
 import { RecalculateBar } from '../components/RecalculateBar';
@@ -107,7 +104,6 @@ export function OrderBuilder() {
   const isDetailView = !!urlFactoryId;
 
   // V2: Factory state
-  const [factories, setFactories] = useState<Factory[]>([]);
   const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(urlFactoryId);
 
   // V2: Factory timeline from OB response
@@ -176,18 +172,6 @@ export function OrderBuilder() {
   }, [freshness]);
   const hasCritical = staleItems.some(i => i.critical);
 
-  // V2: Fetch factories on mount
-  useEffect(() => {
-    const fetchFactories = async () => {
-      try {
-        const all = await factoriesApi.getAll();
-        setFactories(all);
-      } catch (err) {
-        console.error('Failed to fetch factories:', err);
-      }
-    };
-    fetchFactories();
-  }, []);
 
   // Handle cancel pending order
   const handleCancelPendingOrder = async (orderId: string) => {
@@ -537,11 +521,6 @@ export function OrderBuilder() {
     draftLoadedRef.current = false;
   }, [selectedBoatId, selectedFactoryId]);
 
-  // V2: Handle factory change from pills
-  const handleFactoryChange = (factoryId: string) => {
-    setSelectedFactoryId(factoryId);
-    navigate(`/order-builder?factory_id=${factoryId}&boat_id=${selectedBoatId || ''}`);
-  };
 
   // Calculate freed capacity from removed products
   const freedCapacity = (() => {
@@ -1060,16 +1039,6 @@ export function OrderBuilder() {
           </div>
         )}
 
-        {/* V2: Factory Pills */}
-        {factories.length > 0 && (
-          <div className="mb-6">
-            <FactoryPills
-              factories={factories}
-              selectedFactoryId={selectedFactoryId}
-              onSelect={handleFactoryChange}
-            />
-          </div>
-        )}
 
         {/* V2: Factory Timeline */}
         {factoryTimeline && (
