@@ -45,21 +45,22 @@ export function OrderBuilderHeader({
   // Use timezone-safe date formatting
   const formatDate = (dateStr: string) => formatDateUTC(dateStr, 'en-US');
 
-  // Calculate "In Warehouse" date from days_until_warehouse
+  // Compute in-warehouse date from arrival_date + WAREHOUSE_BUFFER_DAYS (6)
+  const WAREHOUSE_BUFFER_DAYS = 6;
   const getInWarehouseDate = () => {
-    const today = new Date();
-    today.setDate(today.getDate() + boat.days_until_warehouse);
-    return today.toISOString().split('T')[0];
+    const arrival = new Date(boat.arrival_date + 'T00:00:00Z');
+    arrival.setUTCDate(arrival.getUTCDate() + WAREHOUSE_BUFFER_DAYS);
+    return arrival.toISOString().split('T')[0];
   };
 
   const inWarehouseDate = getInWarehouseDate();
 
   // Timeline milestones
   const milestones = [
-    { label: 'Deadline', date: boat.order_deadline, days: boat.days_until_order_deadline, color: 'rose', isPast: boat.past_order_deadline },
-    { label: 'Departs', date: boat.departure_date, days: boat.days_until_departure, color: 'indigo' },
-    { label: 'Arrives Port', date: boat.arrival_date, days: boat.days_until_arrival, color: 'indigo' },
-    { label: 'In Warehouse', date: inWarehouseDate, days: boat.days_until_warehouse, color: 'emerald' },
+    { label: t('orderBuilder.timeline.deadline', 'Fecha límite'), date: boat.order_deadline, days: boat.days_until_order_deadline, color: 'rose', isPast: boat.past_order_deadline },
+    { label: t('orderBuilder.timeline.departs', 'Zarpa'), date: boat.departure_date, days: boat.days_until_departure, color: 'indigo' },
+    { label: t('orderBuilder.timeline.arrives', 'Llega a puerto'), date: boat.arrival_date, days: boat.days_until_arrival, color: 'indigo' },
+    { label: t('orderBuilder.timeline.warehouse', 'En bodega'), date: inWarehouseDate, days: boat.days_until_warehouse, color: 'emerald' },
   ];
 
   return (
@@ -78,13 +79,13 @@ export function OrderBuilderHeader({
                 <p className="text-slate-400">
                   {boat.carrier && <span className="text-indigo-400 font-medium">{boat.carrier}</span>}
                   {boat.carrier && ' • '}
-                  {formatDate(boat.departure_date)} departure • Arrives {formatDate(boat.arrival_date)}
+                  {t('orderBuilder.timeline.departs', 'Zarpa')} {formatDate(boat.departure_date)} • {t('orderBuilder.timeline.arrives', 'Llega')} {formatDate(boat.arrival_date)}
                 </p>
                 {boat.days_until_order_deadline <= 7 && !boat.past_order_deadline && (
                   <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30">
                     <span className="text-rose-400">⏰</span>
                     <span className="text-rose-300 text-sm font-medium">
-                      Order deadline in {boat.days_until_order_deadline} days
+                      {t('orderBuilder.timeline.deadlineWarning', 'Fecha límite en {{days}} días', { days: boat.days_until_order_deadline })}
                     </span>
                   </div>
                 )}
@@ -105,7 +106,7 @@ export function OrderBuilderHeader({
           {availableBoats.length > 0 && (
             <div className="flex-shrink-0">
               <label htmlFor="boat-selector" className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wide">
-                Select Boat
+                {t('orderBuilder.selectBoat', 'Seleccionar barco')}
               </label>
               <select
                 id="boat-selector"
@@ -131,7 +132,7 @@ export function OrderBuilderHeader({
       {/* Timeline Section */}
       {hasBoat && (
         <div className="px-6 py-4 bg-slate-900/30 border-t border-slate-700/30">
-          <div className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">Order Timeline</div>
+          <div className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">{t('orderBuilder.timeline.title', 'Línea de tiempo')}</div>
 
           {/* Desktop: Horizontal timeline */}
           <div className="hidden sm:block">
@@ -169,7 +170,7 @@ export function OrderBuilderHeader({
                         ? 'bg-rose-500/20 text-rose-300'
                         : 'bg-slate-700/50 text-slate-400'
                     }`}>
-                      {isPast ? 'PAST' : `${m.days}d`}
+                      {isPast ? t('orderBuilder.timeline.past', 'PASADO') : `${m.days}d`}
                     </div>
                   </div>
                 );
@@ -199,7 +200,7 @@ export function OrderBuilderHeader({
                     </div>
                   </div>
                   <span className={`text-xs ${isPast ? 'text-rose-400' : 'text-slate-500'}`}>
-                    {isPast ? 'PAST' : `${m.days}d`}
+                    {isPast ? t('orderBuilder.timeline.past', 'PASADO') : `${m.days}d`}
                   </span>
                 </div>
               );
@@ -208,7 +209,7 @@ export function OrderBuilderHeader({
 
           {nextBoat && (
             <div className="mt-3 pt-3 border-t border-slate-700/30 text-xs text-slate-500">
-              Following boat: <span className="text-slate-400">{formatDate(nextBoat.departure_date)}</span> ({nextBoat.days_until_departure}d)
+              {t('orderBuilder.timeline.nextBoat', 'Siguiente barco')}: <span className="text-slate-400">{formatDate(nextBoat.departure_date)}</span> ({nextBoat.days_until_departure}d)
             </div>
           )}
         </div>
