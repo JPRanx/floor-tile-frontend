@@ -146,7 +146,7 @@ export function OrderBuilder() {
   // 5c: Fetch data freshness on mount
   useEffect(() => {
     dataHubApi.getFreshness()
-      .then(data => setFreshness(data as unknown as Record<string, { last_updated: string | null; status: string }>))
+      .then(data => setFreshness(data))
       .catch(() => {}); // silent fail — nice-to-have banner
   }, []);
 
@@ -161,7 +161,7 @@ export function OrderBuilder() {
     };
     const now = Date.now();
     for (const [key, config] of Object.entries(thresholds)) {
-      const d = freshness[key];
+      const d = freshness[key as keyof typeof freshness];
       if (!d?.last_updated) {
         items.push({ type: key, label: config.label, daysAgo: 999, critical: true });
         continue;
