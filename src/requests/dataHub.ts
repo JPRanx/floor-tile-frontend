@@ -9,9 +9,10 @@ export interface DataSourceFreshness {
 export interface DataFreshnessResponse {
   sales: DataSourceFreshness;
   inventory: DataSourceFreshness;
+  siesa: DataSourceFreshness;
+  in_transit: DataSourceFreshness;
   boats: DataSourceFreshness;
-  siesa?: DataSourceFreshness;
-  production?: DataSourceFreshness;
+  production: DataSourceFreshness;
 }
 
 export interface SACUploadResponse {

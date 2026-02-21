@@ -8,6 +8,7 @@ import type { PlanningHorizonResponse, BoatProjection } from '../requests/planni
 import { draftsApi } from '../requests/drafts';
 import { boatsApi } from '../requests/boats';
 import { dataHubApi } from '../requests/dataHub';
+import type { DataFreshnessResponse } from '../requests/dataHub';
 import { FactoryLane } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
@@ -60,30 +61,31 @@ export function PlanningView() {
   const [horizonErrors, setHorizonErrors] = useState<Set<string>>(new Set());
 
   // 5c: Staleness banner state
-  const [freshness, setFreshness] = useState<Record<string, { last_updated: string | null; status: string }> | null>(null);
+  const [freshness, setFreshness] = useState<DataFreshnessResponse | null>(null);
   const [staleDismissed, setStaleDismissed] = useState(false);
 
   // 5c: Fetch data freshness on mount
   useEffect(() => {
     dataHubApi.getFreshness()
-      .then(data => setFreshness(data as unknown as Record<string, { last_updated: string | null; status: string }>))
+      .then(data => setFreshness(data))
       .catch(() => {});
   }, []);
 
   // 5c: Compute stale items
   const staleItems = useMemo(() => {
     if (!freshness) return [];
-    const items: { type: string; label: string; daysAgo: number; critical: boolean }[] = [];
+    const items: { type: string; label: string; daysAgo: number | null; critical: boolean }[] = [];
     const thresholds: Record<string, { label: string; warn: number; critical: number }> = {
       sales: { label: 'Ventas', warn: 7, critical: 14 },
       inventory: { label: 'Inventario', warn: 3, critical: 7 },
       siesa: { label: 'SIESA', warn: 3, critical: 7 },
+      in_transit: { label: 'En tránsito', warn: 7, critical: 14 },
     };
     const now = Date.now();
     for (const [key, config] of Object.entries(thresholds)) {
-      const d = freshness[key];
+      const d = freshness[key as keyof typeof freshness];
       if (!d?.last_updated) {
-        items.push({ type: key, label: config.label, daysAgo: 999, critical: true });
+        items.push({ type: key, label: config.label, daysAgo: null, critical: true });
         continue;
       }
       const daysAgo = Math.floor((now - new Date(d.last_updated).getTime()) / 86400000);
@@ -353,7 +355,7 @@ export function PlanningView() {
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               {staleItems.map(item => (
                 <span key={item.type}>
-                  {item.label}: hace {item.daysAgo > 900 ? '?' : item.daysAgo} d{'\u00ed'}as
+                  {item.label}: {item.daysAgo === null ? 'Sin datos' : `hace ${item.daysAgo} días`}
                 </span>
               ))}
             </div>

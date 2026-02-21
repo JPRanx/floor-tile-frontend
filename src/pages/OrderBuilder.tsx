@@ -153,17 +153,18 @@ export function OrderBuilder() {
   // 5c: Compute stale items from freshness data
   const staleItems = useMemo(() => {
     if (!freshness) return [];
-    const items: { type: string; label: string; daysAgo: number; critical: boolean }[] = [];
+    const items: { type: string; label: string; daysAgo: number | null; critical: boolean }[] = [];
     const thresholds: Record<string, { label: string; warn: number; critical: number }> = {
       sales: { label: 'Ventas', warn: 7, critical: 14 },
       inventory: { label: 'Inventario', warn: 3, critical: 7 },
       siesa: { label: 'SIESA', warn: 3, critical: 7 },
+      in_transit: { label: 'En tránsito', warn: 7, critical: 14 },
     };
     const now = Date.now();
     for (const [key, config] of Object.entries(thresholds)) {
       const d = freshness[key as keyof typeof freshness];
       if (!d?.last_updated) {
-        items.push({ type: key, label: config.label, daysAgo: 999, critical: true });
+        items.push({ type: key, label: config.label, daysAgo: null, critical: true });
         continue;
       }
       const daysAgo = Math.floor((now - new Date(d.last_updated).getTime()) / 86400000);
@@ -501,6 +502,7 @@ export function OrderBuilder() {
               sales: 'Ventas',
               inventory: 'Inventario',
               siesa: 'SIESA',
+              in_transit: 'En tránsito',
               boats: 'Barcos',
               production: 'Producción',
             };
@@ -1050,7 +1052,7 @@ export function OrderBuilder() {
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               {staleItems.map(item => (
                 <span key={item.type}>
-                  {item.label}: hace {item.daysAgo > 900 ? '?' : item.daysAgo} d\u00edas
+                  {item.label}: {item.daysAgo === null ? 'Sin datos' : `hace ${item.daysAgo} días`}
                 </span>
               ))}
             </div>
