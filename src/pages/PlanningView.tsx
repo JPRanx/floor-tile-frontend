@@ -12,7 +12,6 @@ import type { DataFreshnessResponse } from '../requests/dataHub';
 import { FactoryLane } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
-import { FactoryCardGrid } from '../components/planning/FactoryCardGrid';
 import { PipelineStrip } from '../components/planning/PipelineStrip';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -362,15 +361,6 @@ export function PlanningView() {
             <button onClick={() => setStaleDismissed(true)} className="ml-3 text-slate-500 hover:text-slate-300 flex-shrink-0">{'\u2715'}</button>
           </div>
         )}
-
-        {/* Factory card grid */}
-        <FactoryCardGrid
-          factories={factories}
-          horizons={horizons}
-          horizonLoading={horizonLoading}
-          selectedFactoryId={selectedFactoryId}
-          onSelectFactory={handleFactorySelect}
-        />
 
         {/* Briefing for selected factory */}
         <Briefing
