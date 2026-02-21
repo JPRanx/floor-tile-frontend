@@ -104,7 +104,7 @@ export function OrderBuilder() {
   const isDetailView = !!urlFactoryId;
 
   // V2: Factory state
-  const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(urlFactoryId);
+  const [selectedFactoryId] = useState<string | null>(urlFactoryId);
 
   // V2: Factory timeline from OB response
   const [factoryTimeline, setFactoryTimeline] = useState<{ milestones: Array<{ key: string; label: string; date: string; passed: boolean; is_current: boolean }>; current_milestone: string } | null>(null);
