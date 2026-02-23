@@ -901,14 +901,14 @@ export function OrderBuilder() {
         type: 'blocked',
         icon: '🚫',
         product_sku: null,
-        message: `Exceeds warehouse by ${over} pallets. Remove some items.`,
+        message: t('orderBuilder.alerts.warehouseExceeded', 'Excede bodega en {{over}} paletas. Elimina algunos artículos.', { over }),
       });
     } else if (summary.warehouse_utilization_after > 95) {
       alertList.push({
         type: 'warning',
         icon: '⚠️',
         product_sku: null,
-        message: `Warehouse will be at ${Math.round(summary.warehouse_utilization_after)}% after delivery`,
+        message: t('orderBuilder.alerts.warehouseHigh', 'Bodega estará al {{pct}}% después de entrega', { pct: Math.round(summary.warehouse_utilization_after) }),
       });
     }
 
@@ -918,7 +918,7 @@ export function OrderBuilder() {
         type: 'blocked',
         icon: '🚫',
         product_sku: null,
-        message: `Exceeds boat capacity (${summary.total_containers}/${summary.boat_max_containers} containers)`,
+        message: t('orderBuilder.alerts.boatExceeded', 'Excede capacidad del barco ({{used}}/{{max}} contenedores)', { used: summary.total_containers, max: summary.boat_max_containers }),
       });
     }
 
@@ -931,7 +931,7 @@ export function OrderBuilder() {
         type: 'suggestion',
         icon: '💡',
         product_sku: null,
-        message: `Room for ${summary.boat_remaining_containers} more container(s)`,
+        message: t('orderBuilder.alerts.roomForMore', 'Espacio para {{count}} contenedor(es) más', { count: summary.boat_remaining_containers }),
       });
     }
 
@@ -943,7 +943,7 @@ export function OrderBuilder() {
           type: 'warning',
           icon: '⚠️',
           product_sku: p.sku,
-          message: `HIGH_PRIORITY but not selected — stockout risk`,
+          message: t('orderBuilder.alerts.highPriorityUnselected', 'ALTA PRIORIDAD pero no seleccionado — riesgo de desabasto'),
         });
       }
     }
@@ -967,7 +967,7 @@ export function OrderBuilder() {
         type: 'warning',
         icon: '⏰',
         product_sku: null,
-        message: `Booking deadline in ${data.boat.days_until_deadline} days!`,
+        message: t('orderBuilder.alerts.bookingDeadline', '¡Fecha límite de reserva en {{days}} días!', { days: data.boat.days_until_deadline }),
       });
     }
 
@@ -1078,17 +1078,17 @@ export function OrderBuilder() {
           <div className="flex items-center gap-3">
             {data.warehouse_order_summary && data.warehouse_order_summary.product_count > 0 && (
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                {t('orderBuilder.warehouseOrder', 'Warehouse')}: {data.warehouse_order_summary.product_count}
+                {t('orderBuilder.warehouseOrder', 'Bodega')}: {data.warehouse_order_summary.product_count}
               </span>
             )}
             {data.add_to_production_summary && data.add_to_production_summary.product_count > 0 && (
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                {t('orderBuilder.addToProduction', 'Add to Production')}: {data.add_to_production_summary.product_count}
+                {t('orderBuilder.addToProduction', 'Agregar a Producción')}: {data.add_to_production_summary.product_count}
               </span>
             )}
             {data.factory_request_summary && data.factory_request_summary.product_count > 0 && (
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
-                {t('orderBuilder.factoryRequest', 'Factory Request')}: {data.factory_request_summary.product_count}
+                {t('orderBuilder.factoryRequest', 'Solicitud de Fábrica')}: {data.factory_request_summary.product_count}
               </span>
             )}
           </div>

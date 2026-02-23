@@ -94,13 +94,13 @@ export function FactoryRequestSection({
           <div className="w-2 h-10 rounded-full bg-slate-500" />
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              {t('orderBuilder.newFactoryRequest', 'New Factory Request')}
+              {t('orderBuilder.newFactoryRequest', 'Nueva Solicitud de Fábrica')}
               <span className="text-slate-500 font-normal">({summary.items.length})</span>
             </h2>
             <p className="text-sm text-slate-400 mt-0.5">
-              {t('orderBuilder.factoryRequestDesc2', 'For products not currently in production')}
+              {t('orderBuilder.factoryRequestDesc2', 'Para productos sin producción activa')}
               <span className="ml-1 text-blue-400">
-                · {t('orderBuilder.minPerProduct', 'Min: 1 container per product')}
+                · {t('orderBuilder.minPerProduct', 'Mín: 1 contenedor por producto')}
               </span>
               {summary.submit_deadline_display && (
                 <span className="ml-1 font-medium text-slate-300">
@@ -122,7 +122,7 @@ export function FactoryRequestSection({
           <div className="pt-4 pb-4">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-slate-400">
-                {t('orderBuilder.monthlyQuota', 'Monthly Quota')}
+                {t('orderBuilder.monthlyQuota', 'Cuota Mensual')}
               </span>
               <span className={`font-medium ${isOverLimit ? 'text-red-400' : isNearLimit ? 'text-amber-400' : 'text-slate-300'}`}>
                 {formatM2(totalRequestM2)} / {formatM2(limitM2)} m²
@@ -141,9 +141,9 @@ export function FactoryRequestSection({
               />
             </div>
             <div className="flex items-center justify-between text-xs text-slate-500 mt-1">
-              <span>{utilizationPct.toFixed(0)}% {t('orderBuilder.used', 'used')}</span>
+              <span>{utilizationPct.toFixed(0)}% {t('orderBuilder.used', 'utilizado')}</span>
               <span>
-                {t('orderBuilder.remaining', 'Remaining')}: {formatM2(limitM2 - totalRequestM2)} m²
+                {t('orderBuilder.remaining', 'Restante')}: {formatM2(limitM2 - totalRequestM2)} m²
               </span>
             </div>
           </div>
@@ -167,21 +167,21 @@ export function FactoryRequestSection({
             <div className="flex items-center justify-between">
               <div className="text-sm text-slate-300">
                 <span className="font-medium">
-                  {t('orderBuilder.totalRequest', 'Total request')}:
+                  {t('orderBuilder.totalRequest', 'Total solicitud')}:
                 </span>
                 <span className="ml-2">
-                  {formatM2(selectedTotalM2)} m² ({selectedTotalPallets} {t('common.pallets', 'pallets')})
+                  {formatM2(selectedTotalM2)} m² ({selectedTotalPallets} {t('common.pallets', 'paletas')})
                 </span>
               </div>
               {selectedItems.size > 0 && (
                 <button className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white text-sm font-medium rounded-lg transition-colors">
-                  {t('orderBuilder.exportFactoryRequest', 'Export Factory Request')}
+                  {t('orderBuilder.exportFactoryRequest', 'Exportar Solicitud')}
                 </button>
               )}
             </div>
             {selectedItems.size > 0 && (
               <p className="text-xs text-slate-500 mt-2">
-                {t('orderBuilder.estimatedReady', 'Estimated ready')}: {summary.estimated_ready}
+                {t('orderBuilder.estimatedReady', 'Listo estimado')}: {summary.estimated_ready}
               </p>
             )}
           </div>
@@ -211,9 +211,9 @@ function FactoryRequestCard({
   const m2 = quantity * 134.4;
 
   const urgencyStyles: Record<string, { color: string; bg: string; label: string }> = {
-    critical: { color: 'text-red-400', bg: 'bg-red-500/20', label: 'CRITICAL' },
-    urgent: { color: 'text-orange-400', bg: 'bg-orange-500/20', label: 'URGENT' },
-    soon: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: 'SOON' },
+    critical: { color: 'text-red-400', bg: 'bg-red-500/20', label: t('orderBuilder.urgency.critical', 'CRÍTICO') },
+    urgent: { color: 'text-orange-400', bg: 'bg-orange-500/20', label: t('orderBuilder.urgency.urgent', 'URGENTE') },
+    soon: { color: 'text-amber-400', bg: 'bg-amber-500/20', label: t('orderBuilder.urgency.soon', 'PRONTO') },
     ok: { color: 'text-slate-400', bg: 'bg-slate-500/20', label: 'OK' },
   };
   const urgency = urgencyStyles[item.urgency] || urgencyStyles.ok;
@@ -267,7 +267,7 @@ function FactoryRequestCard({
                 <h3 className="text-white font-medium truncate">{item.sku}</h3>
                 {isLowVolume ? (
                   <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                    {t('orderBuilder.lowVolume', 'LOW VOLUME')}
+                    {t('orderBuilder.lowVolume', 'BAJO VOLUMEN')}
                   </span>
                 ) : (
                   <>
@@ -276,7 +276,7 @@ function FactoryRequestCard({
                     </span>
                     {item.minimum_applied && (
                       <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                        {t('orderBuilder.minimumApplied', '1 CTN MIN')}
+                        {t('orderBuilder.minimumApplied', '1 CTN MÍN')}
                       </span>
                     )}
                   </>
@@ -284,11 +284,11 @@ function FactoryRequestCard({
               </div>
               <div className="text-sm text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap">
                 <span>
-                  {t('orderBuilder.need', 'Need')}: {formatM2(Number(item.suggested_m2 || 0))} m²
+                  {t('orderBuilder.need', 'Necesita')}: {formatM2(Number(item.suggested_m2 || 0))} m²
                 </span>
                 <span className="text-slate-600">·</span>
                 <span>
-                  {t('orderBuilder.velocity', 'Velocity')}: {Number(item.velocity_m2_day || 0).toFixed(1)} m²/d
+                  {t('orderBuilder.velocity', 'Velocidad')}: {Number(item.velocity_m2_day || 0).toFixed(1)} m²/d
                 </span>
                 {item.days_to_consume_container && (
                   <>
@@ -307,16 +307,16 @@ function FactoryRequestCard({
             {isLowVolume ? (
               <>
                 <div className="text-sm text-amber-400">
-                  {t('orderBuilder.notRecommended', 'NOT RECOMMENDED')}
+                  {t('orderBuilder.notRecommended', 'NO RECOMENDADO')}
                 </div>
                 <div className="text-xs text-slate-500">
-                  Special order only
+                  {t('orderBuilder.specialOrderOnly', 'Solo pedido especial')}
                 </div>
               </>
             ) : (
               <>
                 <div className="text-sm text-slate-400">
-                  {t('orderBuilder.request', 'Request')}
+                  {t('orderBuilder.request', 'Solicitud')}
                 </div>
                 <div className="text-lg font-bold text-emerald-400">
                   {item.request_pallets} p
@@ -341,17 +341,17 @@ function FactoryRequestCard({
         {/* Target Boat Info - for non-low-volume items */}
         {!isLowVolume && item.target_boat && (
           <div className="mt-2 text-sm text-slate-400 flex items-center gap-2">
-            <span className="text-slate-500">Target:</span>
+            <span className="text-slate-500">{t('orderBuilder.target', 'Destino')}:</span>
             <span className="text-emerald-400">
               {item.target_boat_departure
-                ? new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                ? new Date(item.target_boat_departure).toLocaleDateString('es', { month: 'short', day: 'numeric' })
                 : ''} — {item.target_boat}
             </span>
             {item.arrival_date && (
               <>
                 <span className="text-slate-600">→</span>
                 <span>
-                  Arrives {new Date(item.arrival_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {t('orderBuilder.arrives', 'Llega')} {new Date(item.arrival_date).toLocaleDateString('es', { month: 'short', day: 'numeric' })}
                 </span>
               </>
             )}
@@ -363,7 +363,7 @@ function FactoryRequestCard({
           <div className="mt-4 pt-4 border-t border-slate-700/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">{t('orderBuilder.request', 'REQUEST')}:</span>
+                <span className="text-sm text-slate-400">{t('orderBuilder.request', 'SOLICITUD')}:</span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => onQuantityChange(quantity - 1)}
@@ -385,7 +385,7 @@ function FactoryRequestCard({
                   </button>
                 </div>
                 <span className="text-sm text-slate-400">
-                  {t('common.pallets', 'pallets')} = {formatM2(m2)} m²
+                  {t('common.pallets', 'paletas')} = {formatM2(m2)} m²
                 </span>
               </div>
 
@@ -393,7 +393,7 @@ function FactoryRequestCard({
               {item.days_to_consume_container && (
                 <div className="text-sm text-slate-400">
                   <span className="text-slate-500">
-                    Will consume in ~{item.days_to_consume_container} days
+                    {t('orderBuilder.willConsume', 'Se consume en ~{{days}} días', { days: item.days_to_consume_container })}
                   </span>
                 </div>
               )}
@@ -413,9 +413,9 @@ function FactoryRequestCard({
         {/* Compact Info - Show when not selected and not low-volume */}
         {!isSelected && !isLowVolume && (
           <div className="mt-2 text-sm text-slate-500">
-            {t('orderBuilder.gapPallets', 'Gap')}: {item.gap_pallets} {t('common.pallets', 'pallets')}
+            {t('orderBuilder.gapPallets', 'Brecha')}: {item.gap_pallets} {t('common.pallets', 'paletas')}
             <span className="mx-2">·</span>
-            {t('orderBuilder.ready', 'Ready')}: {item.estimated_ready}
+            {t('orderBuilder.ready', 'Listo')}: {item.estimated_ready}
           </div>
         )}
       </div>

@@ -120,7 +120,7 @@ export function OrderBuilderHeader({
                     {b.vessel_name ? ` — ${b.vessel_name}` : ''}
                     {b.carrier ? ` (${b.carrier})` : ''}
                     {' '}— {b.days_until_departure ?? '?'}d
-                    {idx === 0 ? ' (next)' : ''}
+                    {idx === 0 ? ' (siguiente)' : ''}
                   </option>
                 ))}
               </select>
@@ -221,7 +221,7 @@ export function OrderBuilderHeader({
           {/* BL Count Selector - Always visible */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              {t('blAllocation.numBLs', 'Number of BLs')}
+              {t('blAllocation.numBLs', 'Número de BLs')}
             </span>
             <div className="flex gap-2">
               {blOptions.map((num) => {
@@ -251,9 +251,9 @@ export function OrderBuilderHeader({
               })}
             </div>
             <div className="text-sm text-slate-400">
-              {t('blAllocation.capacity', 'Capacity')}: {numBLs * 5}{' '}
-              {t('blAllocation.containers', 'containers')} ({numBLs * 70}{' '}
-              {t('blAllocation.pallets', 'pallets')})
+              {t('blAllocation.capacity', 'Capacidad')}: {numBLs * 5}{' '}
+              {t('blAllocation.containers', 'contenedores')} ({numBLs * 70}{' '}
+              {t('blAllocation.pallets', 'paletas')})
             </div>
           </div>
 
@@ -262,7 +262,7 @@ export function OrderBuilderHeader({
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
               <span className="text-slate-300 font-medium">
-                {t('blAllocation.canShip', 'Can Ship')}: {shippableBLs} BLs ({shippableM2.toLocaleString()} m²)
+                {t('blAllocation.canShip', 'Puede enviar')}: {shippableBLs} BLs ({shippableM2.toLocaleString()} m²)
               </span>
               {shippableBLs >= numBLs && (
                 <span className="text-emerald-400">✓</span>
