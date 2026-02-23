@@ -45,12 +45,19 @@ export function WarehouseOrderSection({
   const totalPallets = selectedProducts.reduce((sum, p) => sum + p.selected_pallets, 0);
   const totalM2 = totalPallets * 134.4;
 
+  // Sort: selected first, then alphabetically by SKU
+  const sortProducts = (list: OrderBuilderProductWithM2[]) =>
+    [...list].sort((a, b) => {
+      if (a.is_selected !== b.is_selected) return a.is_selected ? -1 : 1;
+      return a.sku.localeCompare(b.sku);
+    });
+
   // Group products WITH SIESA stock by priority for display
   const productsByPriority = {
-    high_priority: withSiesa.filter((p) => p.priority === 'HIGH_PRIORITY'),
-    consider: withSiesa.filter((p) => p.priority === 'CONSIDER'),
-    well_covered: withSiesa.filter((p) => p.priority === 'WELL_COVERED'),
-    your_call: withSiesa.filter((p) => p.priority === 'YOUR_CALL'),
+    high_priority: sortProducts(withSiesa.filter((p) => p.priority === 'HIGH_PRIORITY')),
+    consider: sortProducts(withSiesa.filter((p) => p.priority === 'CONSIDER')),
+    well_covered: sortProducts(withSiesa.filter((p) => p.priority === 'WELL_COVERED')),
+    your_call: sortProducts(withSiesa.filter((p) => p.priority === 'YOUR_CALL')),
   };
 
   const priorityConfig = [
@@ -205,7 +212,7 @@ export function WarehouseOrderSection({
 
               {showNoSiesa && (
                 <div className="mt-3 space-y-2 opacity-70">
-                  {withoutSiesa.map((product) => (
+                  {sortProducts(withoutSiesa).map((product) => (
                     <OrderBuilderProductCard
                       key={product.product_id}
                       product={product}
