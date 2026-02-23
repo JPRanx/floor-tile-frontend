@@ -1012,7 +1012,7 @@ export function OrderBuilder() {
 
 
   return (
-    <div className="min-h-screen bg-slate-950 px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-slate-950 px-4 sm:px-6 lg:px-8 py-8 pb-24">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* V2: Back to Planning */}
         <button
