@@ -76,7 +76,7 @@ export function CallBeforeOrderingAlert({ alerts, loading }: CallBeforeOrderingA
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-slate-400 text-sm">
-                          Avg: {formatCurrency(alert.avg_order_usd)}
+                          {t('callAlert.avg', 'Prom')}: {formatCurrency(alert.avg_order_usd)}
                         </span>
                         <button
                           onClick={(e) => {
@@ -130,7 +130,7 @@ export function CallBeforeOrderingAlert({ alerts, loading }: CallBeforeOrderingA
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-slate-400 text-sm">
-                          Avg: {formatCurrency(alert.avg_order_usd)}
+                          {t('callAlert.avg', 'Prom')}: {formatCurrency(alert.avg_order_usd)}
                         </span>
                         <button
                           onClick={(e) => {

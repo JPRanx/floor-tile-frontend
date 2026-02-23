@@ -236,7 +236,7 @@ export function OrderBuilder() {
         setNumBLs(result.recommended_bls || 1);
       }
     } catch (err) {
-      setError('Failed to load order builder data');
+      setError(t('orderBuilder.loadError', 'Error al cargar datos del Order Builder'));
       console.error(err);
     } finally {
       setLoading(false);
@@ -1285,8 +1285,8 @@ export function OrderBuilder() {
                 className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-xl hover:from-blue-500 hover:to-blue-400 transition-all duration-300 shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {generatingReport
-                  ? t('orderBuilder.generatingReport', 'Generating Report...')
-                  : t('orderBuilder.generateReport', 'Generate Report')}
+                  ? t('orderBuilder.generatingReport', 'Generando Reporte...')
+                  : t('orderBuilder.generateReport', 'Generar Reporte')}
               </button>
 
               {/* Allocate to BLs Button */}
@@ -1296,8 +1296,8 @@ export function OrderBuilder() {
                 className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
               >
                 {blLoading
-                  ? t('blAllocation.allocating', 'Allocating...')
-                  : t('blAllocation.allocateToBLs', 'Allocate to BLs')}
+                  ? t('blAllocation.allocating', 'Asignando...')
+                  : t('blAllocation.allocateToBLs', 'Asignar a BLs')}
               </button>
 
               {/* Export - only after BL allocation */}

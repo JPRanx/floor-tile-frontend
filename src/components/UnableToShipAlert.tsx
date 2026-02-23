@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { UnableToShipSummary } from '../requests/orderBuilder';
 
 interface UnableToShipAlertProps {
@@ -6,6 +7,7 @@ interface UnableToShipAlertProps {
 }
 
 export function UnableToShipAlert({ unableToShip }: UnableToShipAlertProps) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   if (!unableToShip || unableToShip.count === 0) {
@@ -22,10 +24,10 @@ export function UnableToShipAlert({ unableToShip }: UnableToShipAlertProps) {
           <span className="w-8 h-8 rounded-lg bg-slate-600/30 flex items-center justify-center text-lg">⏳</span>
           <div>
             <h3 className="text-sm font-semibold text-slate-300">
-              Awaiting Production ({unableToShip.count})
+              {t('orderBuilder.awaitingProduction', 'Esperando Producción')} ({unableToShip.count})
             </h3>
             <p className="text-xs text-slate-500">
-              {Math.round(unableToShip.total_gap_m2).toLocaleString()} m² pending
+              {Math.round(unableToShip.total_gap_m2).toLocaleString()} m² {t('orderBuilder.pending', 'pendiente')}
             </p>
           </div>
         </div>
@@ -56,7 +58,7 @@ export function UnableToShipAlert({ unableToShip }: UnableToShipAlertProps) {
                 </div>
                 {item.days_of_stock !== null && item.days_of_stock <= 14 && (
                   <div className="text-xs text-amber-400 mt-1">
-                    {item.days_of_stock}d of stock left
+                    {t('orderBuilder.daysOfStockLeft', '{{days}}d de inventario restante', { days: item.days_of_stock })}
                   </div>
                 )}
                 {item.production_status && (

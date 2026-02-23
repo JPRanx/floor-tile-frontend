@@ -113,18 +113,18 @@ export function AddToProductionSection({
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
               <span className="text-amber-400">{'\u26A0\uFE0F'}</span>
-              {t('orderBuilder.actionRequired', 'ACTION REQUIRED')}
+              {t('orderBuilder.actionRequired', 'ACCIÓN REQUERIDA')}
               <span className="text-slate-500 font-normal">({summary.items.length})</span>
               {summary.has_critical_items && (
                 <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
-                  {t('orderBuilder.criticalItems', 'Critical items')}
+                  {t('orderBuilder.criticalItems', 'Artículos críticos')}
                 </span>
               )}
             </h2>
             <p className="text-sm text-amber-400/80 mt-0.5">
-              {t('orderBuilder.addToProductionDesc2', 'Piggyback on scheduled items')}
+              {t('orderBuilder.addToProductionDesc2', 'Agregar a producción programada')}
               <span className="ml-1 text-emerald-400">
-                {'\u00B7'} {t('orderBuilder.canAddBeforeProduction', 'Can add before production starts')}
+                {'\u00B7'} {t('orderBuilder.canAddBeforeProduction', 'Se puede agregar antes de que inicie producción')}
               </span>
             </p>
           </div>
@@ -160,15 +160,15 @@ export function AddToProductionSection({
             <div className="flex items-center justify-between">
               <div className="text-sm text-amber-300">
                 <span className="font-medium">
-                  {t('orderBuilder.totalToAdd', 'Total to add')}:
+                  {t('orderBuilder.totalToAdd', 'Total a agregar')}:
                 </span>
                 <span className="ml-2">
-                  {formatM2(selectedTotalM2)} m{'\u00B2'} ({selectedTotalPallets} {t('common.pallets', 'pallets')})
+                  {formatM2(selectedTotalM2)} m{'\u00B2'} ({selectedTotalPallets} {t('common.pallets', 'paletas')})
                 </span>
               </div>
               {selectedItems.size > 0 && (
                 <button className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white text-sm font-medium rounded-lg transition-colors">
-                  {t('orderBuilder.exportAddRequest', 'Export Add Request')}
+                  {t('orderBuilder.exportAddRequest', 'Exportar Solicitud')}
                 </button>
               )}
             </div>
@@ -246,17 +246,17 @@ function AddToProductionCard({
                 <h3 className="text-white font-medium truncate">{item.sku}</h3>
                 {item.is_critical && (
                   <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 border border-red-500/30">
-                    {t('orderBuilder.critical', 'CRITICAL')} {item.score}
+                    {t('orderBuilder.critical', 'CRÍTICO')} {item.score}
                   </span>
                 )}
                 {!item.is_critical && item.score >= 70 && (
                   <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400">
-                    {t('orderBuilder.high', 'HIGH')} {item.score}
+                    {t('orderBuilder.high', 'ALTO')} {item.score}
                   </span>
                 )}
               </div>
               <p className="text-sm text-slate-400 mt-0.5">
-                {t('orderBuilder.currentlyScheduled', 'Currently scheduled')}:{' '}
+                {t('orderBuilder.currentlyScheduled', 'Actualmente programado')}:{' '}
                 <span className="text-slate-300">{formatM2(item.current_requested_m2)} m{'\u00B2'}</span>
               </p>
             </div>
@@ -282,7 +282,7 @@ function AddToProductionCard({
         {item.piggyback_history && item.piggyback_history.length > 0 && (
           <div className="text-xs text-slate-400 mt-3 space-y-0.5">
             <div className="text-slate-300 font-medium">
-              Piggybacked: {formatM2(item.total_piggybacked_m2)} m{'\u00B2'}
+              {t('orderBuilder.piggybacked', 'Agregado')}: {formatM2(item.total_piggybacked_m2)} m{'\u00B2'}
             </div>
             {item.piggyback_history.map((h, i) => (
               <div key={i} className="pl-2 text-slate-500">
@@ -318,7 +318,7 @@ function AddToProductionCard({
         </div>
         {confirmedPiggyback && (
           <div className="text-xs text-green-400 mt-1">
-            {'\u2713'} Piggybacked: {formatM2(confirmedPiggyback.m2)} m{'\u00B2'} ({confirmedPiggyback.date})
+            {'\u2713'} {t('orderBuilder.piggybacked', 'Agregado')}: {formatM2(confirmedPiggyback.m2)} m{'\u00B2'} ({confirmedPiggyback.date})
           </div>
         )}
 
@@ -327,7 +327,7 @@ function AddToProductionCard({
           <div className="mt-4 pt-4 border-t border-slate-700/50">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">{t('orderBuilder.add', 'ADD')}:</span>
+                <span className="text-sm text-slate-400">{t('orderBuilder.add', 'AGREGAR')}:</span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => onQuantityChange(quantity - 1)}
@@ -349,7 +349,7 @@ function AddToProductionCard({
                   </button>
                 </div>
                 <span className="text-sm text-slate-400">
-                  {t('common.pallets', 'pallets')} = {formatM2(m2)} m{'\u00B2'}
+                  {t('common.pallets', 'paletas')} = {formatM2(m2)} m{'\u00B2'}
                 </span>
               </div>
 
@@ -358,15 +358,15 @@ function AddToProductionCard({
                 <div className="text-sm text-slate-400">
                   {item.estimated_ready_date && (
                     <>
-                      <span className="text-emerald-400">{t('orderBuilder.ready', 'Ready')}: ~{item.estimated_ready_date}</span>
+                      <span className="text-emerald-400">{t('orderBuilder.ready', 'Listo')}: ~{item.estimated_ready_date}</span>
                       <span className="mx-1">{'\u2192'}</span>
                     </>
                   )}
                   <span className="text-blue-400">
-                    {t('orderBuilder.ships', 'Ships')}:{' '}
+                    {t('orderBuilder.ships', 'Zarpa')}:{' '}
                     {item.target_boat_departure
-                      ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` \u2014 ${item.target_boat}` : ''}`
-                      : item.target_boat || 'TBD'}
+                      ? `${new Date(item.target_boat_departure).toLocaleDateString('es', { month: 'short', day: 'numeric' })}${item.target_boat ? ` \u2014 ${item.target_boat}` : ''}`
+                      : item.target_boat || 'Por definir'}
                   </span>
                 </div>
               )}
@@ -378,7 +378,7 @@ function AddToProductionCard({
         {!isSelected && (
           <div className="mt-2 flex items-center gap-4 text-sm text-slate-400">
             <span>
-              {t('orderBuilder.systemSuggests', 'System suggests')}: {formatM2(item.suggested_total_m2)} m{'\u00B2'}
+              {t('orderBuilder.systemSuggests', 'Sistema sugiere')}: {formatM2(item.suggested_total_m2)} m{'\u00B2'}
             </span>
             <span className="text-amber-400">
               +{formatM2(item.suggested_additional_m2)} m{'\u00B2'} ({item.suggested_additional_pallets}p)
@@ -387,8 +387,8 @@ function AddToProductionCard({
               <span className="text-emerald-400">
                 {'\u2192'}{' '}
                 {item.target_boat_departure
-                  ? `${new Date(item.target_boat_departure).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}${item.target_boat ? ` \u2014 ${item.target_boat}` : ''}`
-                  : item.target_boat || 'TBD'}
+                  ? `${new Date(item.target_boat_departure).toLocaleDateString('es', { month: 'short', day: 'numeric' })}${item.target_boat ? ` \u2014 ${item.target_boat}` : ''}`
+                  : item.target_boat || 'Por definir'}
               </span>
             )}
           </div>

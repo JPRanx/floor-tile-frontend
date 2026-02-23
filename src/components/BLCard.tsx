@@ -36,7 +36,7 @@ export function BLCard({
   const customersStr = bl.primary_customers.length > 0
     ? bl.primary_customers.slice(0, 3).join(', ') +
       (bl.primary_customers.length > 3 ? ` +${bl.primary_customers.length - 3}` : '')
-    : t('blAllocation.generalStock', 'General Stock');
+    : t('blAllocation.generalStock', 'Stock General');
 
   // Weight constraint check
   const weightOverLimit = bl.total_weight_kg > CONTAINER_MAX_WEIGHT_KG;
@@ -77,7 +77,7 @@ export function BLCard({
               BL {bl.bl_number} — {customersStr}
             </h3>
             <div className="text-sm text-slate-400 mt-0.5">
-              {bl.products.length} {t('blAllocation.products', 'products')}
+              {bl.products.length} {t('blAllocation.products', 'productos')}
             </div>
           </div>
         </div>
@@ -99,20 +99,20 @@ export function BLCard({
           {/* Containers */}
           <div className="text-center">
             <div className="text-white font-semibold">{bl.total_containers}</div>
-            <div className="text-slate-500 text-xs">{t('blAllocation.containers', 'cont.')}</div>
+            <div className="text-slate-500 text-xs">{t('blAllocation.containers', 'cont')}</div>
           </div>
 
           {/* Pallets */}
           <div className="text-center">
             <div className="text-white font-semibold">{bl.total_pallets}</div>
-            <div className="text-slate-500 text-xs">{t('blAllocation.pallets', 'pallets')}</div>
+            <div className="text-slate-500 text-xs">{t('blAllocation.pallets', 'paletas')}</div>
           </div>
 
           {/* Critical Count */}
           {bl.critical_product_count > 0 && (
             <div className="text-center">
               <div className="text-red-400 font-semibold">{bl.critical_product_count}</div>
-              <div className="text-slate-500 text-xs">{t('blAllocation.critical', 'critical')}</div>
+              <div className="text-slate-500 text-xs">{t('blAllocation.critical', 'críticos')}</div>
             </div>
           )}
         </div>
@@ -122,7 +122,7 @@ export function BLCard({
       {isEditMode && weightOverLimit && (
         <div className="px-5 py-2 bg-red-500/10 border-t border-red-500/30 flex items-center gap-2">
           <span className="text-red-400 text-sm font-semibold">
-            Peso excede {CONTAINER_MAX_WEIGHT_KG.toLocaleString()} kg por{' '}
+            {t('blAllocation.weightExceeds', 'Peso excede')} {CONTAINER_MAX_WEIGHT_KG.toLocaleString()} kg {t('blAllocation.by', 'por')}{' '}
             {Math.round(bl.total_weight_kg - CONTAINER_MAX_WEIGHT_KG).toLocaleString()} kg
           </span>
         </div>
@@ -134,11 +134,11 @@ export function BLCard({
           {/* Column Headers */}
           <div className={`px-5 py-2 bg-slate-900/30 grid gap-2 text-xs font-semibold text-slate-500 uppercase tracking-wide ${isEditMode ? 'grid-cols-13' : 'grid-cols-12'}`}>
             {isEditMode && <div className="col-span-1"></div>}
-            <div className="col-span-5">{t('blAllocation.product', 'Product')}</div>
-            <div className="col-span-2 text-center">{t('blAllocation.pallets', 'Pallets')}</div>
+            <div className="col-span-5">{t('blAllocation.product', 'Producto')}</div>
+            <div className="col-span-2 text-center">{t('blAllocation.pallets', 'Paletas')}</div>
             <div className="col-span-2 text-center">m{'\u00B2'}</div>
-            <div className="col-span-2">{t('blAllocation.customer', 'Customer')}</div>
-            <div className="col-span-1 text-center">{t('blAllocation.score', 'Score')}</div>
+            <div className="col-span-2">{t('blAllocation.customer', 'Cliente')}</div>
+            <div className="col-span-1 text-center">{t('blAllocation.score', 'Puntaje')}</div>
           </div>
 
           {/* Product Rows */}

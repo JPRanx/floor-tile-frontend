@@ -141,11 +141,11 @@ export function OrderBuilderProductCard({
     if (currentDays !== null && currentDays <= 7) {
       if (currentDays === 0 && product.daily_velocity_m2 === 0) {
         // No sales data - don't say "Out of stock" which is misleading
-        parts.push(t('orderBuilderProduct.noSalesHistory', 'No sales history'));
+        parts.push(t('orderBuilderProduct.noSalesHistory', 'Sin historial de ventas'));
       } else if (currentDays === 0) {
-        parts.push(t('orderBuilderProduct.outOfStock', 'Out of stock'));
+        parts.push(t('orderBuilderProduct.outOfStock', 'Agotado'));
       } else {
-        parts.push(t('orderBuilderProduct.daysLeft', '{{days}}d left', { days: currentDays }));
+        parts.push(t('orderBuilderProduct.daysLeft', '{{days}}d restantes', { days: currentDays }));
       }
     }
 
@@ -252,7 +252,7 @@ export function OrderBuilderProductCard({
             <button
               onClick={() => onRemove(product.sku)}
               className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-              title={t('orderBuilder.removeFromOrder', 'Remove from order')}
+              title={t('orderBuilder.removeFromOrder', 'Quitar del pedido')}
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -277,7 +277,7 @@ export function OrderBuilderProductCard({
         {/* INVENTORY Column */}
         <div className="space-y-1.5">
           <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            {t('orderBuilderProduct.inventory', 'Inventory')}
+            {t('orderBuilderProduct.inventory', 'Inventario')}
           </div>
 
           {/* No inventory data warning */}
@@ -288,7 +288,7 @@ export function OrderBuilderProductCard({
             <div className="flex items-center gap-2 text-sm bg-amber-500/10 border border-amber-500/30 rounded-lg px-2 py-1.5 mb-1">
               <span className="text-amber-400">⚠️</span>
               <span className="text-amber-400 text-xs">
-                {t('orderBuilderProduct.noInventoryData', 'No inventory data')}
+                {t('orderBuilderProduct.noInventoryData', 'Sin datos de inventario')}
               </span>
             </div>
           )}
@@ -392,12 +392,12 @@ export function OrderBuilderProductCard({
                 <span className={`text-xs ${velocityTrendStyles[product.velocity_trend_signal].color}`}>
                   {velocityTrendStyles[product.velocity_trend_signal].icon}{' '}
                   {product.velocity_trend_signal === 'growing' && (
-                    <>+{Math.round((product.velocity_trend_ratio - 1) * 100)}% {t('orderBuilderProduct.vs6mo', 'vs 6mo')}</>
+                    <>+{Math.round((product.velocity_trend_ratio - 1) * 100)}% {t('orderBuilderProduct.vs6mo', 'vs 6m')}</>
                   )}
                   {product.velocity_trend_signal === 'declining' && (
-                    <>{Math.round((product.velocity_trend_ratio - 1) * 100)}% {t('orderBuilderProduct.vs6mo', 'vs 6mo')}</>
+                    <>{Math.round((product.velocity_trend_ratio - 1) * 100)}% {t('orderBuilderProduct.vs6mo', 'vs 6m')}</>
                   )}
-                  {product.velocity_trend_signal === 'stable' && t('orderBuilderProduct.stable', 'Stable')}
+                  {product.velocity_trend_signal === 'stable' && t('orderBuilderProduct.stable', 'Estable')}
                 </span>
               )}
             </div>
@@ -405,7 +405,7 @@ export function OrderBuilderProductCard({
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-500">⚡</span>
               <span className="text-slate-500 italic">
-                {t('orderBuilderProduct.noVelocityData', 'No velocity data')}
+                {t('orderBuilderProduct.noVelocityData', 'Sin datos de velocidad')}
               </span>
             </div>
           )}
@@ -414,7 +414,7 @@ export function OrderBuilderProductCard({
         {/* ORDER Column */}
         <div className="space-y-2">
           <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            {t('orderBuilderProduct.order', 'Order')}
+            {t('orderBuilderProduct.order', 'Pedido')}
           </div>
 
           {/* Pallet Selector */}
@@ -498,7 +498,7 @@ export function OrderBuilderProductCard({
           {/* Coverage Change */}
           {product.is_selected && product.selected_m2 > 0 && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">{t('orderBuilderProduct.coverage', 'Coverage')}:</span>
+              <span className="text-slate-500">{t('orderBuilderProduct.coverage', 'Cobertura')}:</span>
               <span className={`font-medium ${currentDays <= 7 ? 'text-red-400' : 'text-slate-400'}`}>
                 {currentDays}d
               </span>
@@ -522,8 +522,8 @@ export function OrderBuilderProductCard({
                 {product.production_add_more_alert}
               </div>
               <div className="text-amber-400/70 text-xs mt-1">
-                {t('orderBuilderProduct.productionScheduledNotStarted', 'Production scheduled but not started yet')} ·{' '}
-                {t('orderBuilderProduct.currentRequest', 'Current request')}: {formatM2(product.production_requested_m2)} m²
+                {t('orderBuilderProduct.productionScheduledNotStarted', 'Producción programada pero no iniciada')} ·{' '}
+                {t('orderBuilderProduct.currentRequest', 'Solicitud actual')}: {formatM2(product.production_requested_m2)} m²
               </div>
             </div>
           </div>
@@ -551,7 +551,7 @@ export function OrderBuilderProductCard({
           <span className={`transform transition-transform duration-200 ${showDetails ? 'rotate-180' : ''}`}>
             ▼
           </span>
-          {t('orderBuilderProduct.details', 'Details')}
+          {t('orderBuilderProduct.details', 'Detalles')}
         </button>
       </div>
 
@@ -564,26 +564,26 @@ export function OrderBuilderProductCard({
             {product.velocity_90d_m2 > 0 && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  {t('orderBuilderProduct.velocityBreakdown', 'Velocity')}
+                  {t('orderBuilderProduct.velocityBreakdown', 'Velocidad')}
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between text-slate-400">
-                    <span>{t('orderBuilderProduct.velocity90d', '90-day')} ({t('orderBuilderProduct.recent', 'recent')})</span>
+                    <span>{t('orderBuilderProduct.velocity90d', '90 días')} ({t('orderBuilderProduct.recent', 'reciente')})</span>
                     <span className="text-slate-300 font-medium">{Number(product.velocity_90d_m2).toFixed(1)} m²/d</span>
                   </div>
                   {product.velocity_180d_m2 > 0 && (
                     <>
                       <div className="flex justify-between text-slate-400">
-                        <span>{t('orderBuilderProduct.velocity180d', '6-month')} ({t('orderBuilderProduct.historical', 'historical')})</span>
+                        <span>{t('orderBuilderProduct.velocity180d', '6 meses')} ({t('orderBuilderProduct.historical', 'histórico')})</span>
                         <span className="text-slate-300">{Number(product.velocity_180d_m2).toFixed(1)} m²/d</span>
                       </div>
                       <div className={`flex justify-between font-medium pt-1 border-t border-slate-700/50 mt-1 ${velocityTrendStyles[product.velocity_trend_signal].color}`}>
-                        <span>{t('orderBuilderProduct.trend', 'Trend')}</span>
+                        <span>{t('orderBuilderProduct.trend', 'Tendencia')}</span>
                         <span>
                           {velocityTrendStyles[product.velocity_trend_signal].icon}{' '}
-                          {product.velocity_trend_signal === 'growing' && `${t('orderBuilderProduct.growing', 'Growing')} +${Math.round((product.velocity_trend_ratio - 1) * 100)}%`}
-                          {product.velocity_trend_signal === 'declining' && `${t('orderBuilderProduct.declining', 'Declining')} ${Math.round((product.velocity_trend_ratio - 1) * 100)}%`}
-                          {product.velocity_trend_signal === 'stable' && t('orderBuilderProduct.stable', 'Stable')}
+                          {product.velocity_trend_signal === 'growing' && `${t('orderBuilderProduct.growing', 'Creciendo')} +${Math.round((product.velocity_trend_ratio - 1) * 100)}%`}
+                          {product.velocity_trend_signal === 'declining' && `${t('orderBuilderProduct.declining', 'Bajando')} ${Math.round((product.velocity_trend_ratio - 1) * 100)}%`}
+                          {product.velocity_trend_signal === 'stable' && t('orderBuilderProduct.stable', 'Estable')}
                         </span>
                       </div>
                     </>
@@ -596,7 +596,7 @@ export function OrderBuilderProductCard({
             {breakdown && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  {t('orderBuilderProduct.calculation', 'Calculation')}
+                  {t('orderBuilderProduct.calculation', 'Cálculo')}
                 </div>
                 <div className="space-y-1 text-xs text-slate-400">
                   <div className="flex justify-between">
@@ -605,22 +605,22 @@ export function OrderBuilderProductCard({
                   </div>
                   {Number(breakdown.trend_adjustment_m2) !== 0 && (
                     <div className="flex justify-between text-emerald-400">
-                      <span>{t('orderBuilderProduct.trendAdjustment', 'Trend')} (+{Number(breakdown.trend_adjustment_pct).toFixed(0)}%)</span>
+                      <span>{t('orderBuilderProduct.trendAdjustment', 'Tendencia')} (+{Number(breakdown.trend_adjustment_pct).toFixed(0)}%)</span>
                       <span>+{formatM2(Number(breakdown.trend_adjustment_m2))} m²</span>
                     </div>
                   )}
                   <div className="flex justify-between text-red-400">
-                    <span>- {t('orderBuilderProduct.warehouse', 'Warehouse')}</span>
+                    <span>- {t('orderBuilderProduct.warehouse', 'Bodega')}</span>
                     <span>-{formatM2(Number(breakdown.minus_current_stock_m2))} m²</span>
                   </div>
                   {Number(breakdown.minus_incoming_m2) > 0 && (
                     <div className="flex justify-between text-amber-400">
-                      <span>- {t('orderBuilderProduct.inTransitLabel', 'In transit')}</span>
+                      <span>- {t('orderBuilderProduct.inTransitLabel', 'En tránsito')}</span>
                       <span>-{formatM2(Number(breakdown.minus_incoming_m2))} m²</span>
                     </div>
                   )}
                   <div className="flex justify-between font-semibold text-white pt-1 border-t border-slate-700/50 mt-1">
-                    <span>= {t('orderBuilderProduct.suggestion', 'Suggestion')}</span>
+                    <span>= {t('orderBuilderProduct.suggestion', 'Sugerencia')}</span>
                     <span>{formatM2(Number(breakdown.final_suggestion_m2))} m²</span>
                   </div>
                 </div>
@@ -631,13 +631,13 @@ export function OrderBuilderProductCard({
             {product.unique_customers > 0 && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  {t('orderBuilderProduct.customers', 'Customers')}
+                  {t('orderBuilderProduct.customers', 'Clientes')}
                 </div>
                 <div className="text-xs text-slate-400">
                   <span className="text-indigo-400 font-medium">{product.unique_customers}</span> {t('orderBuilderProduct.totalCustomers', 'total')}
                   {product.top_customer_name && Number(product.top_customer_share) > 0.2 && (
                     <span className="ml-2">
-                      · {t('orderBuilderProduct.top', 'Top')}: <span className="text-slate-300">{product.top_customer_name}</span>
+                      · {t('orderBuilderProduct.top', 'Principal')}: <span className="text-slate-300">{product.top_customer_name}</span>
                       <span className="text-amber-400 ml-1">({Math.round(Number(product.top_customer_share) * 100)}%)</span>
                     </span>
                   )}
@@ -649,15 +649,15 @@ export function OrderBuilderProductCard({
             {product.factory_status === 'in_production' && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  {t('orderBuilderProduct.factory', 'Factory')}
+                  {t('orderBuilderProduct.factory', 'Fábrica')}
                 </div>
                 <div className={`text-xs flex items-center gap-2 ${product.factory_ready_before_boat ? 'text-emerald-400' : 'text-amber-400'}`}>
                   <span>🏭</span>
                   <span>
                     {product.factory_timing_message || (
                       product.factory_production_date
-                        ? `Ready ${formatDateUTC(product.factory_production_date)}`
-                        : 'In production'
+                        ? `${t('orderBuilderProduct.ready', 'Listo')} ${formatDateUTC(product.factory_production_date)}`
+                        : t('orderBuilderProduct.inProduction', 'En producción')
                     )}
                   </span>
                   {product.factory_production_m2 && (
@@ -672,11 +672,11 @@ export function OrderBuilderProductCard({
             {product.factory_status === 'not_scheduled' && product.is_selected && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  {t('orderBuilderProduct.factory', 'Factory')}
+                  {t('orderBuilderProduct.factory', 'Fábrica')}
                 </div>
                 <div className="text-xs text-slate-400 flex items-center gap-2">
                   <span>📋</span>
-                  <span>{t('orderBuilderProduct.notInSchedule', 'Not in production schedule')}</span>
+                  <span>{t('orderBuilderProduct.notInSchedule', 'No está en programa de producción')}</span>
                 </div>
               </div>
             )}
@@ -685,36 +685,36 @@ export function OrderBuilderProductCard({
             {product.availability_breakdown && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                  {t('orderBuilderProduct.availability', 'Availability for This Boat')}
+                  {t('orderBuilderProduct.availability', 'Disponibilidad para este barco')}
                 </div>
                 <div className="space-y-1 text-xs">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">SIESA (factory stock)</span>
+                    <span className="text-slate-400">{t('orderBuilderProduct.siesaStock', 'SIESA (stock fábrica)')}</span>
                     <span className="text-slate-300">{formatM2(product.availability_breakdown.siesa_now_m2)} m²</span>
                   </div>
                   {product.availability_breakdown.production_completing_m2 > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-slate-400">+ Production completing</span>
+                      <span className="text-slate-400">+ {t('orderBuilderProduct.productionCompleting', 'Producción completando')}</span>
                       <span className="text-emerald-400">+{formatM2(product.availability_breakdown.production_completing_m2)} m²</span>
                     </div>
                   )}
                   <div className="flex justify-between border-t border-slate-700/50 pt-1 mt-1">
-                    <span className="text-slate-300 font-medium">Total available</span>
+                    <span className="text-slate-300 font-medium">{t('orderBuilderProduct.totalAvailable', 'Total disponible')}</span>
                     <span className="text-slate-200 font-medium">{formatM2(product.availability_breakdown.total_available_m2)} m²</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Suggested order</span>
+                    <span className="text-slate-400">{t('orderBuilderProduct.suggestedOrder', 'Pedido sugerido')}</span>
                     <span className="text-slate-300">{formatM2(product.availability_breakdown.suggested_order_m2)} m²</span>
                   </div>
                   {product.availability_breakdown.shortfall_m2 > 0 ? (
                     <div className="flex justify-between text-red-400">
-                      <span>Shortfall</span>
+                      <span>{t('orderBuilderProduct.shortfall', 'Faltante')}</span>
                       <span>-{formatM2(product.availability_breakdown.shortfall_m2)} m²</span>
                     </div>
                   ) : (
                     <div className="flex justify-between text-emerald-400">
-                      <span>Status</span>
-                      <span>✓ Can fulfill</span>
+                      <span>{t('orderBuilderProduct.status', 'Estado')}</span>
+                      <span>✓ {t('orderBuilderProduct.canFulfill', 'Puede cumplir')}</span>
                     </div>
                   )}
                   {product.availability_breakdown.shortfall_note && (
@@ -738,7 +738,7 @@ export function OrderBuilderProductCard({
                     <span className="text-slate-500">({product.committed_orders_customer})</span>
                   )}
                   {product.committed_orders_count > 1 && (
-                    <span className="text-slate-500">· {product.committed_orders_count} orders</span>
+                    <span className="text-slate-500">· {product.committed_orders_count} {t('orderBuilderProduct.orders', 'pedidos')}</span>
                   )}
                 </div>
               </div>
@@ -763,7 +763,7 @@ export function OrderBuilderProductCard({
               {product.selected_m2 > 0 && (
                 <div className="flex items-center gap-1.5">
                   <span>⚖️</span>
-                  <span>{t('orderBuilderProduct.weight', 'Weight')}:</span>
+                  <span>{t('orderBuilderProduct.weight', 'Peso')}:</span>
                   <span className="text-slate-300 font-medium">
                     {Math.round(product.selected_m2 * WEIGHT_PER_M2_KG).toLocaleString()} kg
                   </span>
@@ -773,7 +773,7 @@ export function OrderBuilderProductCard({
               {/* Confidence */}
               <div className="flex items-center gap-1.5">
                 <span className={confidence.color}>{confidence.icon}</span>
-                <span>{t('orderBuilderProduct.confidence', 'Confidence')}:</span>
+                <span>{t('orderBuilderProduct.confidence', 'Confianza')}:</span>
                 <span className={`font-medium ${confidence.color}`}>{product.confidence}</span>
                 {product.confidence === 'LOW' && product.confidence_reason && (
                   <span className="text-slate-500 italic ml-1">({product.confidence_reason})</span>
@@ -782,7 +782,7 @@ export function OrderBuilderProductCard({
 
               {/* Gap info */}
               <div className="flex items-center gap-1.5">
-                <span>{t('orderBuilderProduct.gap', 'Gap')}:</span>
+                <span>{t('orderBuilderProduct.gap', 'Brecha')}:</span>
                 <span className="text-slate-300 font-medium">
                   {formatM2(product.coverage_gap_m2)} m²
                 </span>

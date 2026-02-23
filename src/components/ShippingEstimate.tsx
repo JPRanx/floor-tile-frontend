@@ -17,7 +17,7 @@ export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstima
           <span className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
             {'\u{1F4B0}'}
           </span>
-          {t('shippingEstimate.title', 'Shipping Estimate')}
+          {t('shippingEstimate.title', 'Estimado de Envío')}
         </h3>
         <p className="text-slate-500 text-sm">{t('shippingEstimate.selectProducts', 'Selecciona productos para ver el estimado de costos')}</p>
       </div>
@@ -46,12 +46,12 @@ export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstima
   // Container fill status
   const getContainerStatus = () => {
     if (lastContainerFill >= 0.9 || m2ToFill === 0) {
-      return { color: 'emerald', label: t('shippingEstimate.wellUtilized', 'Containers well utilized'), icon: '✅' };
+      return { color: 'emerald', label: t('shippingEstimate.wellUtilized', 'Contenedores bien utilizados'), icon: '✅' };
     }
     if (lastContainerFill >= 0.7) {
-      return { color: 'amber', label: t('shippingEstimate.partialFill', 'Partially filled'), icon: '⚠️' };
+      return { color: 'amber', label: t('shippingEstimate.partialFill', 'Parcialmente lleno'), icon: '⚠️' };
     }
-    return { color: 'red', label: t('shippingEstimate.lowFill', 'Significant waste'), icon: '🔴' };
+    return { color: 'red', label: t('shippingEstimate.lowFill', 'Desperdicio significativo'), icon: '🔴' };
   };
 
   const status = getContainerStatus();
@@ -64,18 +64,18 @@ export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstima
         <span className="w-8 h-8 rounded-lg bg-emerald-500/20 flex items-center justify-center">
           💰
         </span>
-        {t('shippingEstimate.title', 'Shipping Estimate')}
+        {t('shippingEstimate.title', 'Estimado de Envío')}
       </h3>
 
       <div className="space-y-4">
         {/* Container count + fill */}
         <div className="flex items-center justify-between">
-          <span className="text-slate-400 text-sm">{t('shippingEstimate.containers', 'Containers')}</span>
+          <span className="text-slate-400 text-sm">{t('shippingEstimate.containers', 'Contenedores')}</span>
           <span className="text-white font-semibold">
             {containersNeeded}
             {m2ToFill > 0 && (
               <span className="text-slate-500 text-sm ml-1">
-                ({fullContainers} {t('shippingEstimate.full', 'full')}, 1 {t('shippingEstimate.at', 'at')} {Math.round(lastContainerFill * 100)}%)
+                ({fullContainers} {t('shippingEstimate.full', 'llenos')}, 1 {t('shippingEstimate.at', 'al')} {Math.round(lastContainerFill * 100)}%)
               </span>
             )}
           </span>
@@ -84,22 +84,22 @@ export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstima
         {/* Cost breakdown */}
         <div className="bg-slate-900/50 rounded-xl p-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">{t('shippingEstimate.containerCosts', 'Container costs')} ({containersNeeded} × ${costConfig.per_container_total_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+            <span className="text-slate-500">{t('shippingEstimate.containerCosts', 'Costo contenedores')} ({containersNeeded} × ${costConfig.per_container_total_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
             <span className="text-slate-300">${containerCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-slate-500">{t('shippingEstimate.blCosts', 'BL costs')} ({numBLs} × ${costConfig.bl_fixed_costs_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
+            <span className="text-slate-500">{t('shippingEstimate.blCosts', 'Costo BLs')} ({numBLs} × ${costConfig.bl_fixed_costs_usd.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
             <span className="text-slate-300">${blCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
           <div className="flex justify-between text-sm pt-2 border-t border-slate-700/50">
-            <span className="text-white font-medium">{t('shippingEstimate.totalCost', 'Total estimated cost')}</span>
+            <span className="text-white font-medium">{t('shippingEstimate.totalCost', 'Costo total estimado')}</span>
             <span className="text-white font-bold text-lg">${totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           </div>
         </div>
 
         {/* Overhead per m² — the key metric */}
         <div className="flex items-center justify-between bg-indigo-500/10 rounded-xl px-4 py-3">
-          <span className="text-indigo-300 text-sm font-medium">{t('shippingEstimate.overheadPerM2', 'Overhead per m²')}</span>
+          <span className="text-indigo-300 text-sm font-medium">{t('shippingEstimate.overheadPerM2', 'Sobrecosto por m²')}</span>
           <span className="text-2xl font-bold text-indigo-200">${overheadPerM2.toFixed(2)}/m²</span>
         </div>
 
@@ -114,7 +114,7 @@ export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstima
                 <p className={`text-sm font-medium ${
                   status.color === 'amber' ? 'text-amber-300' : 'text-red-300'
                 }`}>
-                  {t('shippingEstimate.containerPartial', 'Container {{num}} is {{pct}}% full', {
+                  {t('shippingEstimate.containerPartial', 'Contenedor {{num}} está al {{pct}}%', {
                     num: containersNeeded,
                     pct: Math.round(lastContainerFill * 100),
                   })}
@@ -122,13 +122,13 @@ export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstima
                 <p className={`text-xs mt-1 ${
                   status.color === 'amber' ? 'text-amber-400/70' : 'text-red-400/70'
                 }`}>
-                  {t('shippingEstimate.addToOptimize', 'Add {{m2}} m² to fill → reduces overhead to ${{savings}}/m²', {
+                  {t('shippingEstimate.addToOptimize', 'Agrega {{m2}} m² para llenar → reduce sobrecosto a ${{savings}}/m²', {
                     m2: m2ToFill.toLocaleString(),
                     savings: filledOverheadPerM2.toFixed(2),
                   })}
                   {savingsPerM2 > 0.01 && (
                     <span className="text-emerald-400 font-medium ml-1">
-                      ({t('shippingEstimate.save', 'save')} ${savingsPerM2.toFixed(2)}/m²)
+                      ({t('shippingEstimate.save', 'ahorra')} ${savingsPerM2.toFixed(2)}/m²)
                     </span>
                   )}
                 </p>
@@ -141,7 +141,7 @@ export function ShippingEstimate({ totalM2, costConfig, numBLs }: ShippingEstima
         {(lastContainerFill >= 0.9 || m2ToFill === 0) && (
           <div className="rounded-xl px-4 py-3 bg-emerald-500/10 border border-emerald-500/20">
             <p className="text-sm text-emerald-300 flex items-center gap-2">
-              ✅ {t('shippingEstimate.wellUtilized', 'Containers well utilized')}
+              ✅ {t('shippingEstimate.wellUtilized', 'Contenedores bien utilizados')}
             </p>
           </div>
         )}

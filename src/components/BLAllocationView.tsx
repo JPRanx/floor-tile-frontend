@@ -270,12 +270,12 @@ export function BLAllocationView({
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white">
-            {t('blAllocation.title', 'BL Allocation')}
+            {t('blAllocation.title', 'Asignación de BLs')}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
             {report.num_bls} BLs | {report.total_containers}{' '}
-            {t('blAllocation.containers', 'containers')} | {report.total_pallets}{' '}
-            {t('blAllocation.pallets', 'pallets')}
+            {t('blAllocation.containers', 'contenedores')} | {report.total_pallets}{' '}
+            {t('blAllocation.pallets', 'paletas')}
           </p>
         </div>
 
@@ -290,7 +290,7 @@ export function BLAllocationView({
                   : 'text-slate-400 border-slate-700/50 hover:text-white hover:border-slate-600'
               }`}
             >
-              {isEditMode ? 'Ver BLs' : 'Editar BLs'}
+              {isEditMode ? t('blAllocation.viewBLs', 'Ver BLs') : t('blAllocation.editBLs', 'Editar BLs')}
             </button>
           )}
 
@@ -299,13 +299,13 @@ export function BLAllocationView({
             onClick={expandAll}
             className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
           >
-            {t('blAllocation.expandAll', 'Expand All')}
+            {t('blAllocation.expandAll', 'Expandir Todo')}
           </button>
           <button
             onClick={collapseAll}
             className="px-3 py-1.5 text-sm text-slate-400 hover:text-white transition-colors"
           >
-            {t('blAllocation.collapseAll', 'Collapse All')}
+            {t('blAllocation.collapseAll', 'Contraer Todo')}
           </button>
         </div>
       </div>
@@ -345,7 +345,7 @@ export function BLAllocationView({
       {report.warnings.length > 0 && (
         <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 space-y-2">
           <h3 className="font-semibold text-amber-300">
-            {t('blAllocation.warnings', 'Warnings')}
+            {t('blAllocation.warnings', 'Advertencias')}
           </h3>
           <ul className="text-sm text-amber-200/80 space-y-1">
             {report.warnings.map((warning, index) => (
@@ -405,7 +405,7 @@ export function BLAllocationView({
           onClick={onBack}
           className="px-4 py-2.5 bg-slate-800/50 text-slate-300 font-medium rounded-xl border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-all duration-300"
         >
-          {'\u2190'} {t('blAllocation.backToProducts', 'Back to Products')}
+          {'\u2190'} {t('blAllocation.backToProducts', 'Volver a Productos')}
         </button>
 
         <button
@@ -434,9 +434,9 @@ export function BLAllocationView({
 
       {/* Generation Info */}
       <div className="text-xs text-slate-500 text-center pt-2">
-        {t('blAllocation.generatedAt', 'Generated')}: {new Date(report.generated_at).toLocaleString()}
+        {t('blAllocation.generatedAt', 'Generado')}: {new Date(report.generated_at).toLocaleString()}
         {' | '}
-        {t('blAllocation.boat', 'Boat')}: {report.boat_name} ({report.boat_departure})
+        {t('blAllocation.boat', 'Barco')}: {report.boat_name} ({report.boat_departure})
       </div>
     </div>
   );

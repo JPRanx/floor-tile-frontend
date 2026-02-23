@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { OrderBuilderAlert, OrderBuilderAlertType } from '../requests/orderBuilder';
 
 interface OrderBuilderAlertsProps {
@@ -5,6 +6,7 @@ interface OrderBuilderAlertsProps {
 }
 
 export function OrderBuilderAlerts({ alerts }: OrderBuilderAlertsProps) {
+  const { t } = useTranslation();
   if (alerts.length === 0) {
     return null;
   }
@@ -28,7 +30,7 @@ export function OrderBuilderAlerts({ alerts }: OrderBuilderAlertsProps) {
   return (
     <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-700/50 p-4">
       <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-        <span>⚠️</span> ALERTS
+        <span>⚠️</span> {t('orderBuilder.alerts.title', 'ALERTAS')}
       </h3>
 
       <div className="space-y-2">
