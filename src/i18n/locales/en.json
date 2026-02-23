@@ -252,7 +252,7 @@
     "factoryRequestDesc2": "For products not currently in production",
     "noFactoryRequestItems": "All products have active production or sufficient stock",
     "noAddToProductionItems": "No products need to be added to scheduled production",
-    "simulatedTo": "Projection for {{date}} departure — accounts for stock committed to earlier boats",
+    "simulatedTo": "Simulated to {{date}} — projected stock accounts for earlier boats",
     "minimumApplied": "1 CTN MIN",
     "lowVolume": "LOW VOLUME",
     "notRecommended": "NOT RECOMMENDED",

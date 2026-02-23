@@ -252,7 +252,7 @@
     "factoryRequestDesc2": "Para productos no en producción actualmente",
     "noFactoryRequestItems": "Todos los productos tienen producción activa o stock suficiente",
     "noAddToProductionItems": "No hay productos que requieran agregar a producción programada",
-    "simulatedTo": "Proyección para zarpe del {{date}} — considera stock comprometido en barcos anteriores",
+    "simulatedTo": "Simulado al {{date}} — stock proyectado considera barcos anteriores",
     "minimumApplied": "1 CTN MÍN",
     "lowVolume": "BAJO VOLUMEN",
     "notRecommended": "NO RECOMENDADO",
