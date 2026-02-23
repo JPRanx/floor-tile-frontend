@@ -172,7 +172,11 @@ export function StabilityForecastModal({ forecast, isOpen, onClose }: StabilityF
                 <span className="text-sm font-normal text-slate-400">({forecast.recovering_products.length})</span>
               </h3>
               <div className="space-y-3">
-                {forecast.recovering_products.map((product: ProductRecovery, index: number) => (
+                {[...forecast.recovering_products].sort((a, b) => {
+                  const aDate = a.arrival_date ? new Date(a.arrival_date).getTime() : Infinity;
+                  const bDate = b.arrival_date ? new Date(b.arrival_date).getTime() : Infinity;
+                  return aDate - bDate;
+                }).map((product: ProductRecovery, index: number) => (
                   <div
                     key={index}
                     className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50"
@@ -222,7 +226,21 @@ export function StabilityForecastModal({ forecast, isOpen, onClose }: StabilityF
           )}
 
           {/* Blockers Section */}
-          {forecast.blockers.length > 0 && (
+          {forecast.blockers.length > 0 && (() => {
+            // Sort: production-scheduled first (closer to recovery), then truly blocked
+            // Within each group, sort by stockout_date ascending (most urgent first)
+            const hasProduction = (b: StabilityBlocker) => b.reason.toLowerCase().includes('production');
+            const sortedBlockers = [...forecast.blockers].sort((a, b) => {
+              const aHasProd = hasProduction(a) ? 0 : 1;
+              const bHasProd = hasProduction(b) ? 0 : 1;
+              if (aHasProd !== bHasProd) return aHasProd - bHasProd;
+              // Within same group, most urgent (earliest stockout) first
+              const aDate = a.stockout_date ? new Date(a.stockout_date).getTime() : Infinity;
+              const bDate = b.stockout_date ? new Date(b.stockout_date).getTime() : Infinity;
+              return aDate - bDate;
+            });
+
+            return (
             <div>
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <span className="w-6 h-6 rounded bg-red-500/20 flex items-center justify-center text-red-400 text-sm">!</span>
@@ -230,10 +248,15 @@ export function StabilityForecastModal({ forecast, isOpen, onClose }: StabilityF
                 <span className="text-sm font-normal text-slate-400">({forecast.blockers.length})</span>
               </h3>
               <div className="space-y-3">
-                {forecast.blockers.map((blocker: StabilityBlocker, index: number) => (
+                {sortedBlockers.map((blocker: StabilityBlocker, index: number) => {
+                  const hasProd = hasProduction(blocker);
+                  return (
                   <div
                     key={index}
-                    className="bg-red-500/5 border border-red-500/20 rounded-xl p-4"
+                    className={`rounded-xl p-4 border ${hasProd
+                      ? 'bg-amber-500/5 border-amber-500/20'
+                      : 'bg-red-500/5 border-red-500/20'
+                    }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div>
@@ -242,8 +265,14 @@ export function StabilityForecastModal({ forecast, isOpen, onClose }: StabilityF
                           <span className="text-slate-400 text-sm ml-2">{blocker.product_name}</span>
                         )}
                       </div>
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-400">
-                        {t('stabilityForecast.blocked', 'BLOCKED')}
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${hasProd
+                        ? 'bg-amber-500/20 text-amber-400'
+                        : 'bg-red-500/20 text-red-400'
+                      }`}>
+                        {hasProd
+                          ? t('stabilityForecast.needsBoat', 'NEEDS BOAT')
+                          : t('stabilityForecast.blocked', 'BLOCKED')
+                        }
                       </span>
                     </div>
                     <div className="grid grid-cols-3 gap-4 text-sm mb-3">
@@ -266,17 +295,19 @@ export function StabilityForecastModal({ forecast, isOpen, onClose }: StabilityF
                         </div>
                       </div>
                     </div>
-                    <div className="bg-red-500/10 rounded-lg p-3">
-                      <p className="text-sm text-red-300 mb-1">{blocker.reason}</p>
+                    <div className={`rounded-lg p-3 ${hasProd ? 'bg-amber-500/10' : 'bg-red-500/10'}`}>
+                      <p className={`text-sm mb-1 ${hasProd ? 'text-amber-300' : 'text-red-300'}`}>{blocker.reason}</p>
                       <p className="text-sm font-medium text-white">
                         {t('stabilityForecast.action', 'Action')}: {blocker.suggested_action}
                       </p>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
-          )}
+            );
+          })()}
 
           {/* All Stable Message */}
           {forecast.status === 'stable' && (
