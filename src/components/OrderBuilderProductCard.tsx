@@ -361,10 +361,20 @@ export function OrderBuilderProductCard({
           {/* Production Schedule Status (from Programa de Produccion) */}
           {product.production_status && product.production_status !== 'not_scheduled' && (
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">{productionStatusStyles[product.production_status].icon}</span>
-              <span className={`font-medium ${productionStatusStyles[product.production_status].color}`}>
+              <span className="text-slate-500">
+                {product.production_status === 'completed' && !product.factory_available_m2
+                  ? '⏳'
+                  : productionStatusStyles[product.production_status].icon}
+              </span>
+              <span className={`font-medium ${
+                product.production_status === 'completed' && !product.factory_available_m2
+                  ? 'text-amber-400'
+                  : productionStatusStyles[product.production_status].color
+              }`}>
                 {product.production_status === 'completed' && (
-                  <>{formatM2(product.production_completed_m2)} m² {t('orderBuilderProduct.readyToShip', 'ready to ship')}</>
+                  product.factory_available_m2 > 0
+                    ? <>{formatM2(product.production_completed_m2)} m² {t('orderBuilderProduct.readyToShip', 'ready to ship')}</>
+                    : <>{formatM2(product.production_completed_m2)} m² {t('orderBuilderProduct.producedPendingSiesa', 'produced — pending SIESA entry')}</>
                 )}
                 {product.production_status === 'in_progress' && (
                   <>{formatM2(product.production_requested_m2)} m² {t('orderBuilderProduct.inProduction', 'in production')}</>

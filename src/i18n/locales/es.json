@@ -233,6 +233,7 @@
     "exportFactoryRequest": "Exportar Solicitud de Fábrica",
     "estimatedReady": "Listo estimado",
     "readyToShip": "Listo para enviar",
+    "producedPendingSiesa": "producido — pendiente ingreso SIESA",
     "removed": "QUITADO",
     "removeFromOrder": "Quitar del pedido",
     "restore": "Restaurar",
