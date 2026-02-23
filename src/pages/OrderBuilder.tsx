@@ -1112,16 +1112,27 @@ export function OrderBuilder() {
               </div>
             )}
 
-            {/* Forward Simulation Indicator */}
+            {/* Forward Simulation Indicator / Deadline Warning */}
             {products.some(p => p.uses_forward_simulation) && data?.boat.arrival_date && (
-              <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-400">
-                <span className="text-blue-400">&#x1F4CA;</span>
-                <span>
-                  {t('orderBuilder.simulatedTo', 'Simulado al {{date}} — stock proyectado considera barcos anteriores', {
-                    date: new Date(data.boat.arrival_date).toLocaleDateString('es', { month: 'short', day: 'numeric' })
-                  })}
-                </span>
-              </div>
+              new Date(data.boat.arrival_date) > new Date() ? (
+                <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-400">
+                  <span className="text-blue-400">&#x1F4CA;</span>
+                  <span>
+                    {t('orderBuilder.simulatedTo', 'Simulado al {{date}} — stock proyectado considera barcos anteriores', {
+                      date: new Date(data.boat.arrival_date).toLocaleDateString('es', { month: 'short', day: 'numeric' })
+                    })}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-4 py-2 text-xs text-amber-400">
+                  <span>&#x26A0;&#xFE0F;</span>
+                  <span>
+                    {t('orderBuilder.deadlinePassed', 'Fecha límite de pedido pasó hace {{days}} días — actúa pronto', {
+                      days: Math.abs(data.boat.days_until_order_deadline)
+                    })}
+                  </span>
+                </div>
+              )
             )}
 
             {/* Draft Change Banner — timestamp-based detection */}

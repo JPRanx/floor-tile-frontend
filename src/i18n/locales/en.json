@@ -253,6 +253,7 @@
     "noFactoryRequestItems": "All products have active production or sufficient stock",
     "noAddToProductionItems": "No products need to be added to scheduled production",
     "simulatedTo": "Simulated to {{date}} — projected stock accounts for earlier boats",
+    "deadlinePassed": "Order deadline passed {{days}} days ago — act soon",
     "minimumApplied": "1 CTN MIN",
     "lowVolume": "LOW VOLUME",
     "notRecommended": "NOT RECOMMENDED",
