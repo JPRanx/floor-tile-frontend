@@ -1207,7 +1207,16 @@
       "title": "Próximo pedido fábrica",
       "overdue": "Pedido fábrica vencido",
       "limitedBy": "Limitado por",
-      "coverage": "cobertura"
+      "coverage": "cobertura",
+      "inProduction": "En producción",
+      "estDelivery": "entrega est.",
+      "productionDelayed": "Producción retrasada",
+      "wontMake": "no alcanza",
+      "orderToday": "Ordena hoy",
+      "canMake": "alcanza",
+      "noProduction": "No alcanza producción",
+      "nextBoat": "próximo barco",
+      "for": "para"
     },
     "draftChanges": {
       "title": "{{count}} cambios desde tu ultima visita",

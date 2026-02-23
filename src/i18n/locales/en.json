@@ -1207,7 +1207,16 @@
       "title": "Next factory order",
       "overdue": "Factory order overdue",
       "limitedBy": "Limited by",
-      "coverage": "coverage"
+      "coverage": "coverage",
+      "inProduction": "In production",
+      "estDelivery": "est. delivery",
+      "productionDelayed": "Production delayed",
+      "wontMake": "won't make",
+      "orderToday": "Order today",
+      "canMake": "catches",
+      "noProduction": "Production won't make it",
+      "nextBoat": "next boat",
+      "for": "for"
     },
     "draftChanges": {
       "title": "{{count}} changes since your last visit",

@@ -102,6 +102,10 @@ export interface FactoryOrderSignal {
   target_boat_departure: string | null;
   estimated_pallets: number | null;
   product_count: number | null;
+  // Production-aware fields
+  signal_type: 'on_track' | 'in_production' | 'production_delayed' | 'order_today' | 'no_production';
+  limiting_production_delivery: string | null;
+  can_make_target_boat: boolean;
 }
 
 export interface PlanningHorizonResponse {
