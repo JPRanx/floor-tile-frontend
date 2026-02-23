@@ -1060,7 +1060,6 @@ export function OrderBuilder() {
           availableBLs={data.available_bls}
           recommendedBLsReason={data.recommended_bls_reason}
           shippableBLs={data.shippable_bls}
-          shippableM2={data.shippable_m2}
         />
 
         {/* BL Allocation View - shown when allocation is generated */}
