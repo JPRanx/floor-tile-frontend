@@ -280,7 +280,7 @@ export function OrderBuilderHeader({
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-amber-400 rounded-full" />
               <span className="text-slate-300">
-                {t('blAllocation.recommendedLabel', 'Recomendado')}: <span className="font-medium text-amber-400">{recommendedBLs} BLs</span>
+                {t('blAllocation.recommendedLabel', 'Recomendado')}: <span className="font-medium text-amber-400">{recommendedBLs} {recommendedBLs === 1 ? 'BL' : 'BLs'}</span>
               </span>
               {numBLs === recommendedBLs && (
                 <span className="text-emerald-400">✓</span>
@@ -290,7 +290,7 @@ export function OrderBuilderHeader({
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 bg-cyan-400 rounded-full" />
               <span className="text-slate-300">
-                {t('blAllocation.availableLabel', 'Disponible en fábrica')}: <span className="font-medium text-cyan-400">{availableBLs} BLs</span>
+                {t('blAllocation.availableLabel', 'Disponible en fábrica')}: <span className="font-medium text-cyan-400">{availableBLs} {availableBLs === 1 ? 'BL' : 'BLs'}</span>
               </span>
               {availableBLs >= recommendedBLs && (
                 <span className="text-emerald-400">✓</span>
