@@ -211,20 +211,21 @@ function StabilitySection({ impact }: { impact: StabilityImpact }) {
       <button
         onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
         className="w-full flex items-center gap-1.5 text-left"
+        title={t('planning.stability.tooltip', 'Productos con 30+ días de cobertura')}
       >
         {impact.stabilizes_count > 0 && (
           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 text-[10px] font-medium">
-            {'\u2713'} {impact.stabilizes_count}
+            {'\u2713'} {t('planning.stability.stabilizesN', 'Estabiliza {{count}}', { count: impact.stabilizes_count })}
           </span>
         )}
         {impact.recovering_count > 0 && (
           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-medium">
-            {'\u21BB'} {impact.recovering_count}
+            {'\u21BB'} {t('planning.stability.recoveringN', 'Recupera {{count}}', { count: impact.recovering_count })}
           </span>
         )}
         {impact.blocked_count > 0 && (
           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-red-500/15 text-red-300 text-[10px] font-medium">
-            {'\u2717'} {impact.blocked_count}
+            {'\u2717'} {t('planning.stability.blockedN', 'Bloqueado {{count}}', { count: impact.blocked_count })}
           </span>
         )}
         <span className="text-[10px] text-slate-600 ml-auto">
@@ -232,8 +233,8 @@ function StabilitySection({ impact }: { impact: StabilityImpact }) {
         </span>
       </button>
 
-      {/* Progress bar */}
-      <div className="mt-1.5">
+      {/* Progress bar — stability percentage */}
+      <div className="mt-1.5" title={t('planning.stability.tooltip', 'Productos con 30+ días de cobertura')}>
         <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
           <div className="h-full flex">
             {impact.progress_before_pct > 0 && (
@@ -251,7 +252,7 @@ function StabilitySection({ impact }: { impact: StabilityImpact }) {
           </div>
         </div>
         <div className="text-[10px] text-slate-500 mt-0.5">
-          {impact.progress_before_pct}% {'\u2192'} {impact.progress_after_pct}%
+          {t('planning.stability.label', 'Estabilidad')}: {impact.progress_before_pct}% {'\u2192'} {impact.progress_after_pct}%
         </div>
       </div>
 
@@ -428,18 +429,21 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         {!isCompleted && (projection.has_factory_siesa_supply || projection.has_production_supply || projection.has_in_transit_supply) && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {projection.has_factory_siesa_supply && (
-              <span className="text-[10px] bg-blue-500/15 text-blue-300 px-1.5 py-0.5 rounded font-medium">
-                {t('planning.supplyFactory', 'SIESA {{m2}} m²', { m2: Math.round(projection.factory_siesa_total_m2).toLocaleString() })}
+              <span className="text-[10px] bg-blue-500/15 text-blue-300 px-1.5 py-0.5 rounded font-medium"
+                title={t('planning.supplyFactoryTooltip', 'Stock disponible en fábrica SIESA para este barco')}>
+                {t('planning.supplyFactory', 'SIESA: {{m2}} m²', { m2: Math.round(projection.factory_siesa_total_m2).toLocaleString() })}
               </span>
             )}
             {projection.has_production_supply && (
-              <span className="text-[10px] bg-purple-500/15 text-purple-300 px-1.5 py-0.5 rounded font-medium">
-                {t('planning.supplyProduction', 'Producción {{m2}} m²', { m2: Math.round(projection.production_total_m2).toLocaleString() })}
+              <span className="text-[10px] bg-purple-500/15 text-purple-300 px-1.5 py-0.5 rounded font-medium"
+                title={t('planning.supplyProductionTooltip', 'Producción de fábrica asignada a este barco')}>
+                {t('planning.supplyProduction', 'Producción: {{m2}} m²', { m2: Math.round(projection.production_total_m2).toLocaleString() })}
               </span>
             )}
             {projection.has_in_transit_supply && (
-              <span className="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded font-medium">
-                {t('planning.supplyInTransit', 'En tránsito {{m2}} m²', { m2: Math.round(projection.in_transit_total_m2).toLocaleString() })}
+              <span className="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded font-medium"
+                title={t('planning.supplyInTransitTooltip', 'Producto en tránsito que llega antes de este barco')}>
+                {t('planning.supplyInTransit', 'En tránsito: {{m2}} m²', { m2: Math.round(projection.in_transit_total_m2).toLocaleString() })}
               </span>
             )}
           </div>
