@@ -1227,7 +1227,8 @@ export function OrderBuilder() {
             {data.stability_forecast && (
               <StabilityForecastCard
                 forecast={data.stability_forecast}
-                simulationHorizonDate={data.simulation_horizon_date}
+                boatName={data.boat.name}
+                orderDeadline={data.boat.order_deadline}
                 onViewDetails={() => setShowStabilityModal(true)}
               />
             )}

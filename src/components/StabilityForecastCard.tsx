@@ -3,14 +3,15 @@ import type { StabilityForecast } from '../requests/orderBuilder';
 
 interface StabilityForecastCardProps {
   forecast: StabilityForecast;
-  simulationHorizonDate?: string;
+  boatName?: string;
+  orderDeadline?: string;
   onViewDetails: () => void;
 }
 
-export function StabilityForecastCard({ forecast, simulationHorizonDate, onViewDetails }: StabilityForecastCardProps) {
+export function StabilityForecastCard({ forecast, boatName, orderDeadline, onViewDetails }: StabilityForecastCardProps) {
   const { t } = useTranslation();
 
-  const formatHorizonDate = (dateStr: string) => {
+  const formatDeadline = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
   };
@@ -93,15 +94,15 @@ export function StabilityForecastCard({ forecast, simulationHorizonDate, onViewD
         {forecast.status_message}
       </p>
 
-      {/* Simulation Horizon — explains what the date means */}
-      {simulationHorizonDate && (
-        <div className="text-xs text-slate-500 mb-4 flex items-center gap-1.5">
-          <span className="text-slate-600">|</span>
-          <span>
-            {t('stabilityForecast.horizonLabel', 'Si ordenas hoy a fábrica, llega')}{' '}
-            <span className="text-slate-400 font-medium">~{formatHorizonDate(simulationHorizonDate)}</span>
-          </span>
-        </div>
+      {/* Simulation context: what boat and deadline these recommendations are for */}
+      {orderDeadline && (
+        <p className="text-xs text-slate-500 mb-4">
+          {t('stabilityForecast.simulatedFor', 'Simulado para')}{' '}
+          <span className="text-slate-400 font-medium">{boatName}</span>
+          {' · '}
+          {t('stabilityForecast.deadline', 'Fecha límite')}{' '}
+          <span className="text-slate-400 font-medium">{formatDeadline(orderDeadline)}</span>
+        </p>
       )}
 
       {/* Progress Bar */}
