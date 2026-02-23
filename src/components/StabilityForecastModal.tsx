@@ -42,10 +42,26 @@ export function StabilityForecastModal({ forecast, isOpen, onClose }: StabilityF
         return 'bg-indigo-500/20 text-indigo-400';
       case 'in_production':
         return 'bg-amber-500/20 text-amber-400';
+      case 'in_transit':
+        return 'bg-sky-500/20 text-sky-400';
       case 'blocked':
         return 'bg-red-500/20 text-red-400';
       default:
         return 'bg-slate-500/20 text-slate-400';
+    }
+  };
+
+  // Get recovery status label
+  const getRecoveryStatusLabel = (status: string) => {
+    switch (status) {
+      case 'shipping':
+        return t('stabilityForecast.statusShipping', 'SHIPPING');
+      case 'in_production':
+        return t('stabilityForecast.statusInProduction', 'IN PRODUCTION');
+      case 'in_transit':
+        return t('stabilityForecast.statusInTransit', 'IN TRANSIT');
+      default:
+        return status.toUpperCase();
     }
   };
 
@@ -169,7 +185,7 @@ export function StabilityForecastModal({ forecast, isOpen, onClose }: StabilityF
                         )}
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${getRecoveryStatusBadge(product.status)}`}>
-                        {product.status === 'shipping' ? 'SHIPPING' : 'IN PRODUCTION'}
+                        {getRecoveryStatusLabel(product.status)}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
