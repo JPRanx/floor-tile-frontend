@@ -93,12 +93,15 @@ export function StabilityForecastCard({ forecast, simulationHorizonDate, onViewD
         {forecast.status_message}
       </p>
 
-      {/* Simulation Horizon */}
+      {/* Simulation Horizon — explains what the date means */}
       {simulationHorizonDate && (
-        <p className="text-xs text-slate-500 mb-4">
-          {t('stabilityForecast.horizon', 'Proyectando inventario hasta')}{' '}
-          <span className="text-slate-400 font-medium">{formatHorizonDate(simulationHorizonDate)}</span>
-        </p>
+        <div className="text-xs text-slate-500 mb-4 flex items-center gap-1.5">
+          <span className="text-slate-600">|</span>
+          <span>
+            {t('stabilityForecast.horizonLabel', 'Si ordenas hoy a fábrica, llega')}{' '}
+            <span className="text-slate-400 font-medium">~{formatHorizonDate(simulationHorizonDate)}</span>
+          </span>
+        </div>
       )}
 
       {/* Progress Bar */}
