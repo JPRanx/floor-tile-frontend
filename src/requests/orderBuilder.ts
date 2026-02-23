@@ -319,6 +319,11 @@ export interface OrderBuilderProduct {
   // Unfulfilled demand visibility (5f)
   unfulfilled_demand_m2: number;
   has_unfulfilled_demand: boolean;
+
+  // Forward simulation (multi-boat awareness)
+  projected_stock_m2: number | null;
+  earlier_drafts_consumed_m2: number | null;
+  uses_forward_simulation: boolean;
 }
 
 export interface OrderBuilderBoat {
