@@ -16,6 +16,8 @@ interface OrderBuilderHeaderProps {
   recommendedBLs: number;
   // Available BL count (what can ship now based on factory stock)
   availableBLs: number;
+  // Backend explanation: "Need: X BLs (m²) • Available: Y BLs (m²)"
+  recommendedBLsReason: string;
   // Shippable BLs (what can actually fill gaps)
   shippableBLs: number;
   shippableM2: number;
@@ -29,8 +31,9 @@ export function OrderBuilderHeader({
   onBoatChange,
   numBLs,
   onNumBLsChange,
-  recommendedBLs: _recommendedBLs,
-  availableBLs: _availableBLs,
+  recommendedBLs,
+  availableBLs,
+  recommendedBLsReason,
   shippableBLs,
   shippableM2,
 }: OrderBuilderHeaderProps) {
@@ -226,24 +229,40 @@ export function OrderBuilderHeader({
             <div className="flex gap-2">
               {blOptions.map((num) => {
                 const isSelected = numBLs === num;
-                const isShippable = shippableBLs === num;  // Highlight what can actually ship
+                const isRecommended = recommendedBLs === num;
+                const isShippable = shippableBLs === num;
                 return (
                   <button
                     key={num}
                     onClick={() => onNumBLsChange(num)}
+                    title={
+                      isRecommended && isShippable
+                        ? t('blAllocation.recommendedAndShippable', 'Recomendado y disponible')
+                        : isRecommended
+                          ? t('blAllocation.recommended', 'Recomendado según necesidad')
+                          : isShippable
+                            ? t('blAllocation.shippableTooltip', 'Disponible para enviar')
+                            : undefined
+                    }
                     className={`
                       relative w-12 h-12 rounded-xl text-sm font-bold transition-all duration-300
                       ${isSelected
                         ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/25 border border-indigo-500'
-                        : isShippable
-                          ? 'bg-cyan-500/10 text-cyan-400 border-2 border-cyan-500/50 hover:bg-cyan-500/20'
-                          : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
+                        : isRecommended
+                          ? 'bg-amber-500/10 text-amber-400 border-2 border-amber-500/50 hover:bg-amber-500/20'
+                          : isShippable
+                            ? 'bg-cyan-500/10 text-cyan-400 border-2 border-cyan-500/50 hover:bg-cyan-500/20'
+                            : 'bg-slate-800/50 text-slate-400 hover:bg-slate-700/50 hover:text-white border border-slate-700/50'
                       }
                     `}
                   >
                     {num}
-                    {/* Shippable indicator (what you can actually ship) */}
-                    {isShippable && !isSelected && (
+                    {/* Recommended indicator (what you need) */}
+                    {isRecommended && !isSelected && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full animate-pulse" />
+                    )}
+                    {/* Shippable indicator (what you can actually ship) — only if different from recommended */}
+                    {isShippable && !isRecommended && !isSelected && (
                       <span className="absolute -top-1 -right-1 w-3 h-3 bg-cyan-400 rounded-full animate-pulse" />
                     )}
                   </button>
@@ -257,17 +276,34 @@ export function OrderBuilderHeader({
             </div>
           </div>
 
-          {/* BL Shippable indicator */}
-          <div className="flex items-center gap-2 text-sm">
+          {/* BL Recommendation + Shippable indicators */}
+          <div className="flex flex-col gap-1.5 text-sm">
+            {/* Recommended */}
             <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse" />
-              <span className="text-slate-300 font-medium">
-                {t('blAllocation.canShip', 'Puede enviar')}: {shippableBLs} BLs ({shippableM2.toLocaleString()} m²)
+              <span className="w-2 h-2 bg-amber-400 rounded-full" />
+              <span className="text-slate-300">
+                {t('blAllocation.recommendedLabel', 'Recomendado')}: <span className="font-medium text-amber-400">{recommendedBLs} BLs</span>
               </span>
-              {shippableBLs >= numBLs && (
+              {numBLs === recommendedBLs && (
                 <span className="text-emerald-400">✓</span>
               )}
             </span>
+            {/* Available from factory */}
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-cyan-400 rounded-full" />
+              <span className="text-slate-300">
+                {t('blAllocation.canShip', 'Puede enviar')}: <span className="font-medium text-cyan-400">{availableBLs} BLs</span> ({shippableM2.toLocaleString()} m²)
+              </span>
+              {availableBLs >= recommendedBLs && (
+                <span className="text-emerald-400">✓</span>
+              )}
+            </span>
+            {/* Reason from backend */}
+            {recommendedBLsReason && (
+              <span className="text-xs text-slate-500 mt-0.5">
+                {recommendedBLsReason}
+              </span>
+            )}
           </div>
         </div>
       </div>
