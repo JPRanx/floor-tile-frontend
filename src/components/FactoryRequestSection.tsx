@@ -40,7 +40,22 @@ export function FactoryRequestSection({
   });
 
   if (!summary || summary.items.length === 0) {
-    return null;
+    return (
+      <div className="rounded-xl border border-slate-600/50 bg-slate-800/30 backdrop-blur-xl overflow-hidden">
+        <div className="px-5 py-4 flex items-center gap-3">
+          <div className="w-2 h-10 rounded-full bg-slate-500" />
+          <div>
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              {t('orderBuilder.newFactoryRequest', 'Nueva Solicitud de Fábrica')}
+              <span className="text-slate-500 font-normal">(0)</span>
+            </h2>
+            <p className="text-sm text-slate-400 mt-0.5">
+              {t('orderBuilder.noFactoryRequestItems', 'Todos los productos tienen producción activa o stock suficiente')}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleToggleItem = (item: FactoryRequestItem) => {

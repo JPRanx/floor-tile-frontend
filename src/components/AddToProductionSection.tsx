@@ -46,7 +46,22 @@ export function AddToProductionSection({
   const [piggybackLoading, setPiggybackLoading] = useState<Record<string, boolean>>({});
 
   if (!summary || summary.items.length === 0) {
-    return null;
+    return (
+      <div className="rounded-xl border border-amber-500/30 bg-amber-900/10 backdrop-blur-xl overflow-hidden">
+        <div className="px-5 py-4 flex items-center gap-3">
+          <div className="w-2 h-10 rounded-full bg-amber-500/50" />
+          <div>
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              {t('orderBuilder.actionRequired', 'ACCIÓN REQUERIDA')}
+              <span className="text-slate-500 font-normal">(0)</span>
+            </h2>
+            <p className="text-sm text-slate-400 mt-0.5">
+              {t('orderBuilder.noAddToProductionItems', 'No hay productos que requieran agregar a producción programada')}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const handleToggleItem = (item: AddToProductionItem) => {

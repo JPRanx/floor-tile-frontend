@@ -250,6 +250,8 @@
     "actBy": "Actuar antes de",
     "canAddBeforeProduction": "Puede añadir antes de iniciar producción",
     "factoryRequestDesc2": "Para productos no en producción actualmente",
+    "noFactoryRequestItems": "Todos los productos tienen producción activa o stock suficiente",
+    "noAddToProductionItems": "No hay productos que requieran agregar a producción programada",
     "minimumApplied": "1 CTN MÍN",
     "lowVolume": "BAJO VOLUMEN",
     "notRecommended": "NO RECOMENDADO",
