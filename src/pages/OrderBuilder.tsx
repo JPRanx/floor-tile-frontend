@@ -32,7 +32,6 @@ import { FactoryRequestSection } from '../components/FactoryRequestSection';
 import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { draftsApi } from '../requests/drafts';
-import { FactoryTimeline } from '../components/planning/FactoryTimeline';
 import { PlanningView } from './PlanningView';
 import { RecalculateBar } from '../components/RecalculateBar';
 import { StabilityForecastCard } from '../components/StabilityForecastCard';
@@ -105,9 +104,6 @@ export function OrderBuilder() {
 
   // V2: Factory state
   const [selectedFactoryId] = useState<string | null>(urlFactoryId);
-
-  // V2: Factory timeline from OB response
-  const [factoryTimeline, setFactoryTimeline] = useState<{ milestones: Array<{ key: string; label: string; date: string; passed: boolean; is_current: boolean }>; current_milestone: string } | null>(null);
 
   // V2: Draft auto-save state
   const [draftSaveStatus, setDraftSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -214,9 +210,6 @@ export function OrderBuilder() {
       const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId, factory_id: selectedFactoryId || undefined });
       setData(result);
       // V2: Extract factory timeline if present
-      if (result.factory_timeline) {
-        setFactoryTimeline(result.factory_timeline);
-      }
       // Flatten all products into a single array for local state
       // Initialize selected_m2 from backend Decimal value (avoids JS float drift)
       const allProducts: OrderBuilderProductWithM2[] = [
@@ -1039,13 +1032,6 @@ export function OrderBuilder() {
           </div>
         )}
 
-
-        {/* V2: Factory Timeline */}
-        {factoryTimeline && (
-          <div className="mb-6">
-            <FactoryTimeline timeline={factoryTimeline} />
-          </div>
-        )}
 
         {/* Header with boat info and BL selector */}
         <OrderBuilderHeader
