@@ -220,7 +220,7 @@ function StabilitySection({ impact }: { impact: StabilityImpact }) {
         )}
         {impact.recovering_count > 0 && (
           <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 text-[10px] font-medium">
-            {'\u21BB'} {t('planning.stability.recoveringN', 'Recupera {{count}}', { count: impact.recovering_count })}
+            {'\u21BB'} {t('planning.stability.recoveringN', 'Recuperando {{count}}', { count: impact.recovering_count })}
           </span>
         )}
         {impact.blocked_count > 0 && (
@@ -442,7 +442,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
             )}
             {projection.has_in_transit_supply && (
               <span className="text-[10px] bg-cyan-500/15 text-cyan-300 px-1.5 py-0.5 rounded font-medium"
-                title={t('planning.supplyInTransitTooltip', 'Producto en tránsito que llega antes de este barco')}>
+                title={t('planning.supplyInTransitTooltip', 'Productos en tránsito que llegan antes de este barco')}>
                 {t('planning.supplyInTransit', 'En tránsito: {{m2}} m²', { m2: Math.round(projection.in_transit_total_m2).toLocaleString() })}
               </span>
             )}
