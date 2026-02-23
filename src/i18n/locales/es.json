@@ -1175,7 +1175,13 @@
       "overdueShort": "vencido {{days}}d",
       "orderNow": "pedir ahora",
       "inDays": "en {{days}}d",
-      "more": "+{{count}} más"
+      "more": "+{{count}} más",
+      "siesaDeadline": "pedido SIESA",
+      "orderDeadline": "pedido",
+      "deadlineOverdue": "{{type}} vencido hace {{days}}d",
+      "deadlineSoon": "{{type}} esta semana",
+      "atRiskProducts": "En riesgo: {{products}}",
+      "nextFix": "Próximo: {{boat}} ({{date}})"
     },
     "factory": {
       "comingSoon": "Próximamente",

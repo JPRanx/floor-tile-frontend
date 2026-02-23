@@ -1,9 +1,18 @@
 import { useTranslation } from 'react-i18next';
-import type { PlanningHorizonResponse } from '../../requests/planning';
+import type { PlanningHorizonResponse, BoatProjection } from '../../requests/planning';
 
 interface BriefingProps {
   horizon: PlanningHorizonResponse | null;
   loading: boolean;
+}
+
+interface BoatAlert {
+  boatName: string;
+  departureDate: string;
+  deadlineType: 'siesa' | 'order';
+  daysOverdue: number;
+  criticalProducts: string[];
+  urgentProducts: string[];
 }
 
 export function Briefing({ horizon, loading }: BriefingProps) {
@@ -38,11 +47,11 @@ export function Briefing({ horizon, loading }: BriefingProps) {
     );
   }
 
-  let overdueCount = 0;
-  let actionThisWeekCount = 0;
+  // Analyze each boat
+  const overdueBoats: BoatAlert[] = [];
+  const actionBoats: BoatAlert[] = [];
   let completedCount = 0;
   let pendingCount = 0;
-  let totalCritical = 0;
   let nearestDeadlineDate: string | null = null;
   let nearestDeadlineDays: number | null = null;
   let avgCoverageDays = 0;
@@ -56,12 +65,39 @@ export function Briefing({ horizon, loading }: BriefingProps) {
     }
 
     pendingCount++;
-    totalCritical += p.urgency_breakdown.critical;
 
-    const days = p.days_until_siesa_deadline ?? p.days_until_order_deadline;
+    const siesaDays = p.days_until_siesa_deadline;
+    const orderDays = p.days_until_order_deadline;
+    const days = siesaDays ?? orderDays;
+    const deadlineType: 'siesa' | 'order' = siesaDays != null ? 'siesa' : 'order';
+
+    const criticalProducts = p.product_details
+      .filter(prod => prod.urgency === 'critical')
+      .map(prod => prod.sku);
+    const urgentProducts = p.product_details
+      .filter(prod => prod.urgency === 'urgent')
+      .map(prod => prod.sku);
+
     if (days != null) {
-      if (days < 0) overdueCount++;
-      else if (days <= 7) actionThisWeekCount++;
+      if (days < 0) {
+        overdueBoats.push({
+          boatName: p.boat_name,
+          departureDate: p.departure_date,
+          deadlineType,
+          daysOverdue: Math.abs(days),
+          criticalProducts,
+          urgentProducts,
+        });
+      } else if (days <= 7) {
+        actionBoats.push({
+          boatName: p.boat_name,
+          departureDate: p.departure_date,
+          deadlineType,
+          daysOverdue: 0,
+          criticalProducts,
+          urgentProducts,
+        });
+      }
 
       if (nearestDeadlineDays == null || days < nearestDeadlineDays) {
         nearestDeadlineDays = days;
@@ -69,7 +105,6 @@ export function Briefing({ horizon, loading }: BriefingProps) {
       }
     }
 
-    // Estimate average coverage from product details
     for (const prod of p.product_details) {
       if (prod.days_of_stock_at_arrival > 0) {
         avgCoverageDays += prod.days_of_stock_at_arrival;
@@ -80,57 +115,105 @@ export function Briefing({ horizon, loading }: BriefingProps) {
 
   const avgCoverage = coverageCount > 0 ? Math.round(avgCoverageDays / coverageCount) : 0;
 
-  // Determine the briefing sentence and tone
-  let sentence: string;
-  let tone: 'urgent' | 'warning' | 'calm';
+  // Find the next non-overdue boat that will fix things
+  const nextFixBoat = findNextFixBoat(projections);
 
-  if (overdueCount > 0) {
-    const critPart = totalCritical > 0
-      ? ' ' + t('planning.briefing.criticalProducts', { count: totalCritical })
-      : '';
-    sentence = t('planning.briefing.overdue', { count: overdueCount }) + critPart;
-    tone = 'urgent';
-  } else if (actionThisWeekCount > 0) {
-    const critPart = totalCritical > 0 ? ' ' + t('planning.briefing.criticalCount', { count: totalCritical }) : '';
-    sentence = t('planning.briefing.actionThisWeek', { count: actionThisWeekCount }) + critPart;
-    tone = 'warning';
-  } else if (pendingCount === 0 && completedCount > 0) {
+  // Build briefing lines
+  if (overdueBoats.length > 0 || actionBoats.length > 0) {
+    const alerts = [...overdueBoats, ...actionBoats];
+    const isUrgent = overdueBoats.length > 0;
+
+    return (
+      <div className="bg-gray-800/50 rounded-lg px-3 py-2 space-y-1.5">
+        {alerts.map((alert, i) => {
+          const allAtRisk = [...alert.criticalProducts, ...alert.urgentProducts];
+          const displayProducts = allAtRisk.slice(0, 3);
+          const remaining = allAtRisk.length - 3;
+          const deadlineLabel = alert.deadlineType === 'siesa'
+            ? t('planning.briefing.siesaDeadline', 'pedido SIESA')
+            : t('planning.briefing.orderDeadline', 'pedido');
+
+          return (
+            <div key={i} className="flex items-start gap-2">
+              {alert.daysOverdue > 0 ? <WarningIcon /> : <ClockIcon />}
+              <span className={`text-sm font-medium ${alert.daysOverdue > 0 ? 'text-red-300/80' : 'text-amber-300/80'}`}>
+                <span className="text-white">{alert.boatName}</span>
+                {' '}({formatDateShort(alert.departureDate)})
+                {' — '}
+                {alert.daysOverdue > 0
+                  ? t('planning.briefing.deadlineOverdue', '{{type}} vencido hace {{days}}d', { type: deadlineLabel, days: alert.daysOverdue })
+                  : t('planning.briefing.deadlineSoon', '{{type}} esta semana', { type: deadlineLabel })
+                }
+                {allAtRisk.length > 0 && (
+                  <>
+                    {'. '}
+                    {t('planning.briefing.atRiskProducts', 'En riesgo: {{products}}', {
+                      products: displayProducts.join(', ') + (remaining > 0 ? ` +${remaining}` : '')
+                    })}
+                  </>
+                )}
+                {nextFixBoat && i === alerts.length - 1 && (
+                  <>
+                    {'. '}
+                    <span className="text-emerald-400">
+                      {t('planning.briefing.nextFix', 'Próximo: {{boat}} ({{date}})', {
+                        boat: nextFixBoat.boat_name,
+                        date: formatDateShort(nextFixBoat.departure_date)
+                      })}
+                    </span>
+                  </>
+                )}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Calm states
+  let sentence: string;
+  let tone: 'calm' = 'calm';
+
+  if (pendingCount === 0 && completedCount > 0) {
     sentence = t('planning.briefing.allConfirmed');
-    tone = 'calm';
   } else if (pendingCount > 0 && completedCount > 0) {
     const deadlinePart = nearestDeadlineDate
       ? ' ' + t('planning.briefing.nextDeadline', { date: formatShortDate(nearestDeadlineDate, t) })
       : '';
     sentence = t('planning.briefing.mixed', { completed: completedCount, pending: pendingCount }) + deadlinePart;
-    tone = 'calm';
   } else if (avgCoverage > 0) {
     sentence = t('planning.briefing.allGood', { days: avgCoverage });
-    tone = 'calm';
   } else {
     sentence = t('planning.briefing.pendingReview', { count: pendingCount });
-    tone = 'calm';
   }
-
-  const iconByTone = {
-    urgent: <WarningIcon />,
-    warning: <WarningIcon />,
-    calm: completedCount > 0 && pendingCount === 0 ? <CheckIcon /> : <InfoIcon />,
-  };
-
-  const textByTone = {
-    urgent: 'text-red-300/80',
-    warning: 'text-amber-300/80',
-    calm: 'text-emerald-300/80',
-  };
 
   return (
     <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
-      {iconByTone[tone]}
-      <span className={`text-sm font-medium ${textByTone[tone]}`}>
+      {completedCount > 0 && pendingCount === 0 ? <CheckIcon /> : <InfoIcon />}
+      <span className="text-sm font-medium text-emerald-300/80">
         {sentence}
       </span>
     </div>
   );
+}
+
+function findNextFixBoat(projections: BoatProjection[]): BoatProjection | null {
+  // Find the first non-completed boat whose deadline hasn't passed
+  for (const p of projections) {
+    const isCompleted = p.draft_status === 'ordered' || p.draft_status === 'confirmed';
+    if (isCompleted) continue;
+    const days = p.days_until_siesa_deadline ?? p.days_until_order_deadline;
+    if (days != null && days >= 0) return p;
+  }
+  // If all overdue, return the last boat as the next actionable one
+  const pending = projections.filter(p => p.draft_status !== 'ordered' && p.draft_status !== 'confirmed');
+  return pending.length > 0 ? pending[pending.length - 1] : null;
+}
+
+function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('es', { month: 'short', day: 'numeric' });
 }
 
 function formatShortDate(dateStr: string, t: (key: string) => string): string {
@@ -153,10 +236,19 @@ function InfoIcon() {
 
 function WarningIcon() {
   return (
-    <svg className="w-4 h-4 text-amber-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <svg className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
       <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       <line x1="12" y1="9" x2="12" y2="13" />
       <line x1="12" y1="17" x2="12.01" y2="17" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
     </svg>
   );
 }
