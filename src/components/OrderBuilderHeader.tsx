@@ -39,6 +39,8 @@ export function OrderBuilderHeader({
 
   // BL options (1-5 BLs)
   const blOptions = [1, 2, 3, 4, 5];
+  // Effective BL count: when 0 (auto/loading), use recommended as display value
+  const effectiveBLs = numBLs || recommendedBLs || 1;
 
   // Check if we have a real boat or are in no-boat mode
   const hasBoat = availableBoats.length > 0 && boat.departure_date;
@@ -226,7 +228,7 @@ export function OrderBuilderHeader({
             </span>
             <div className="flex gap-2">
               {blOptions.map((num) => {
-                const isSelected = numBLs === num;
+                const isSelected = effectiveBLs === num;
                 const isRecommended = recommendedBLs === num;
                 const isShippable = shippableBLs === num;
                 return (
@@ -268,8 +270,8 @@ export function OrderBuilderHeader({
               })}
             </div>
             <div className="text-sm text-slate-400">
-              {t('blAllocation.capacity', 'Capacidad')}: {numBLs * 5}{' '}
-              {t('blAllocation.containers', 'contenedores')} ({numBLs * 70}{' '}
+              {t('blAllocation.capacity', 'Capacidad')}: {effectiveBLs * 5}{' '}
+              {t('blAllocation.containers', 'contenedores')} ({effectiveBLs * 70}{' '}
               {t('blAllocation.pallets', 'paletas')})
             </div>
           </div>
@@ -282,7 +284,7 @@ export function OrderBuilderHeader({
               <span className="text-slate-300">
                 {t('blAllocation.recommendedLabel', 'Recomendado')}: <span className="font-medium text-amber-400">{recommendedBLs} {recommendedBLs === 1 ? 'BL' : 'BLs'}</span>
               </span>
-              {numBLs === recommendedBLs && (
+              {effectiveBLs === recommendedBLs && (
                 <span className="text-emerald-400">✓</span>
               )}
             </span>
