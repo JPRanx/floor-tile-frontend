@@ -470,13 +470,17 @@ export function OrderBuilder() {
           setProducts(prev => prev.map(p => {
             const draftItem = draft.items.find(d => d.product_id === p.product_id);
             if (draftItem) {
-              const baseM2 = draftItem.selected_pallets * M2_PER_PALLET;
               const availCap = p.availability_breakdown?.total_available_m2;
-              const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
+              const maxAvailM2 = availCap != null ? Number(availCap) : Infinity;
+              // Cap pallets at what's physically available
+              const maxPallets = maxAvailM2 <= 0 ? 0 : maxAvailM2 < Infinity ? Math.max(1, Math.floor(maxAvailM2 / M2_PER_PALLET)) : draftItem.selected_pallets;
+              const cappedPallets = Math.min(draftItem.selected_pallets, maxPallets);
+              const baseM2 = cappedPallets * M2_PER_PALLET;
+              const cappedM2 = Math.min(baseM2, maxAvailM2);
               return {
                 ...p,
                 is_selected: (p.factory_available_m2 ?? 0) > 0,
-                selected_pallets: draftItem.selected_pallets,
+                selected_pallets: cappedPallets,
                 selected_m2: cappedM2,
               };
             }
