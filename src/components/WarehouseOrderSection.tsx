@@ -52,40 +52,7 @@ export function WarehouseOrderSection({
       return a.sku.localeCompare(b.sku);
     });
 
-  // Group products WITH SIESA stock by priority for display
-  const productsByPriority = {
-    high_priority: sortProducts(withSiesa.filter((p) => p.priority === 'HIGH_PRIORITY')),
-    consider: sortProducts(withSiesa.filter((p) => p.priority === 'CONSIDER')),
-    well_covered: sortProducts(withSiesa.filter((p) => p.priority === 'WELL_COVERED')),
-    your_call: sortProducts(withSiesa.filter((p) => p.priority === 'YOUR_CALL')),
-  };
-
-  const priorityConfig = [
-    {
-      key: 'high_priority' as const,
-      label: t('orderBuilder.highPriority', 'Alta Prioridad'),
-      color: 'text-red-400',
-      bgColor: 'bg-red-500/10',
-    },
-    {
-      key: 'consider' as const,
-      label: t('orderBuilder.consider', 'Considerar'),
-      color: 'text-orange-400',
-      bgColor: 'bg-orange-500/10',
-    },
-    {
-      key: 'well_covered' as const,
-      label: t('orderBuilder.wellCovered', 'Bien Cubierto'),
-      color: 'text-emerald-400',
-      bgColor: 'bg-emerald-500/10',
-    },
-    {
-      key: 'your_call' as const,
-      label: t('orderBuilder.yourCall', 'Tu Decisión'),
-      color: 'text-slate-400',
-      bgColor: 'bg-slate-500/10',
-    },
-  ];
+  const sortedWithSiesa = sortProducts(withSiesa);
 
   if (products.length === 0) {
     return null;
@@ -150,44 +117,19 @@ export function WarehouseOrderSection({
             </div>
           )}
 
-          {/* Products WITH SIESA stock — by Priority */}
-          <div className="pt-4 space-y-4">
-            {priorityConfig.map(({ key, label, color, bgColor }) => {
-              const categoryProducts = productsByPriority[key];
-              if (categoryProducts.length === 0) return null;
-
-              const categorySelected = categoryProducts.filter((p) => p.is_selected).length;
-
-              return (
-                <div key={key}>
-                  {/* Priority Header */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className={`text-sm font-medium ${color}`}>{label}</span>
-                    <span className="text-xs text-slate-500">({categoryProducts.length})</span>
-                    {categorySelected > 0 && (
-                      <span className={`px-1.5 py-0.5 rounded text-xs ${bgColor} ${color}`}>
-                        {categorySelected} {t('common.selected', 'seleccionados')}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Product Cards */}
-                  <div className="space-y-2">
-                    {categoryProducts.map((product) => (
-                      <OrderBuilderProductCard
-                        key={product.product_id}
-                        product={product}
-                        onToggleSelect={onToggleSelect}
-                        onQuantityChange={onQuantityChange}
-                        onM2Change={onM2Change}
-                        onRemove={onRemove}
-                        isRemoved={removedSkus.has(product.sku)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+          {/* Products WITH SIESA stock — selected first, then alphabetical */}
+          <div className="pt-4 space-y-2">
+            {sortedWithSiesa.map((product) => (
+              <OrderBuilderProductCard
+                key={product.product_id}
+                product={product}
+                onToggleSelect={onToggleSelect}
+                onQuantityChange={onQuantityChange}
+                onM2Change={onM2Change}
+                onRemove={onRemove}
+                isRemoved={removedSkus.has(product.sku)}
+              />
+            ))}
           </div>
 
           {/* Products WITHOUT SIESA stock — collapsible */}
