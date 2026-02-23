@@ -121,7 +121,6 @@ export function Briefing({ horizon, loading }: BriefingProps) {
   // Build briefing lines
   if (overdueBoats.length > 0 || actionBoats.length > 0) {
     const alerts = [...overdueBoats, ...actionBoats];
-    const isUrgent = overdueBoats.length > 0;
 
     return (
       <div className="bg-gray-800/50 rounded-lg px-3 py-2 space-y-1.5">
@@ -173,7 +172,6 @@ export function Briefing({ horizon, loading }: BriefingProps) {
 
   // Calm states
   let sentence: string;
-  let tone: 'calm' = 'calm';
 
   if (pendingCount === 0 && completedCount > 0) {
     sentence = t('planning.briefing.allConfirmed');
