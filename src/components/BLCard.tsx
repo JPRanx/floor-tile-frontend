@@ -160,7 +160,7 @@ export function BLCard({
           {/* Drop zone hint when empty in edit mode */}
           {isEditMode && bl.products.length === 0 && (
             <div className="px-5 py-8 text-center text-slate-500 text-sm italic border-t border-slate-700/30">
-              Arrastra productos aqu{'\u00ED'}
+              {t('blAllocation.dropHere', 'Arrastra productos aquí')}
             </div>
           )}
 

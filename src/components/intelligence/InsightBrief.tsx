@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { Brief } from '../../utils/briefGenerator';
 
 interface InsightBriefProps {
@@ -37,6 +38,7 @@ function renderWithBold(text: string): React.ReactNode {
 }
 
 export function InsightBrief({ brief }: InsightBriefProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
       {/* Brief text */}
@@ -52,7 +54,7 @@ export function InsightBrief({ brief }: InsightBriefProps) {
       <div
         className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium ${recommendationColors[brief.recommendationType]}`}
       >
-        <span className="font-semibold">Acción:</span>
+        <span className="font-semibold">{t('intelligence.insightBrief.action', 'Acción:')}</span>
         {brief.recommendation}
       </div>
     </div>

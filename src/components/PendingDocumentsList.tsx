@@ -69,10 +69,10 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
 
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${diffDays}d ago`;
+    if (diffMins < 1) return t('pending.timeAgo.justNow', 'justo ahora');
+    if (diffMins < 60) return t('pending.timeAgo.minutesAgo', 'hace {{count}}m', { count: diffMins });
+    if (diffHours < 24) return t('pending.timeAgo.hoursAgo', 'hace {{count}}h', { count: diffHours });
+    return t('pending.timeAgo.daysAgo', 'hace {{count}}d', { count: diffDays });
   };
 
   const getDocumentLabel = (doc: PendingDocument): string => {
@@ -84,7 +84,7 @@ export function PendingDocumentsList({ onSelectDocument, onClose, onResolve }: P
       return `SHP: ${parsed.shp_number.value}`;
     }
     if (parsed.containers?.length > 0) {
-      return `${parsed.containers.length} container(s)`;
+      return t('pending.containerCount', '{{count}} contenedor(es)', { count: parsed.containers.length });
     }
     return doc.document_type.toUpperCase();
   };

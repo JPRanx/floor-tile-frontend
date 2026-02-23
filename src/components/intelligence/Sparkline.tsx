@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { SparklinePoint } from '../../requests/intelligence';
 
 interface SparklineProps {
@@ -16,6 +17,7 @@ const colorMap = {
 };
 
 export function Sparkline({ data, color = 'emerald', height = 40, animated = true }: SparklineProps) {
+  const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
 
@@ -64,7 +66,7 @@ export function Sparkline({ data, color = 'emerald', height = 40, animated = tru
   if (data.length === 0) {
     return (
       <div className="w-full flex items-center justify-center text-slate-600 text-xs" style={{ height }}>
-        No data
+        {t('intelligence.sparkline.noData', 'Sin datos')}
       </div>
     );
   }

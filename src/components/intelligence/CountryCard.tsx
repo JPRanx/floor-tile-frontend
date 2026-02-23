@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { CountryTrend } from '../../requests/intelligence';
 import { Sparkline } from './Sparkline';
 import { ConfidenceBadge } from './ConfidenceBadge';
@@ -56,6 +57,7 @@ const recommendationColors: Record<string, string> = {
 };
 
 export function CountryCard({ country, index, onClick }: CountryCardProps) {
+  const { t } = useTranslation();
   const flag = countryFlags[country.country_code] || countryFlags.OTHER;
   const glowClass = getGlowClass(country.trend_direction);
   const sparklineColor = getSparklineColor(country.trend_direction);
@@ -102,7 +104,7 @@ export function CountryCard({ country, index, onClick }: CountryCardProps) {
           <div>
             <h3 className="text-white font-semibold text-lg">{country.country_name}</h3>
             <p className="text-slate-400 text-sm">
-              {country.customer_count} cliente{country.customer_count !== 1 ? 's' : ''}
+              {country.customer_count} {t('intelligence.countryCard.customers', 'clientes')}
             </p>
           </div>
         </div>
@@ -116,21 +118,21 @@ export function CountryCard({ country, index, onClick }: CountryCardProps) {
       {/* Metrics Row */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Ingresos</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{t('intelligence.countryCard.revenue', 'Ingresos')}</p>
           <p className="text-emerald-400 font-bold text-xl">
             {formatRevenue(country.total_revenue_usd)}
           </p>
           <p className="text-slate-500 text-xs">
-            {country.pct_of_total_revenue.toFixed(1)}% del total
+            {t('intelligence.countryCard.ofTotal', '{{pct}}% del total', { pct: country.pct_of_total_revenue.toFixed(1) })}
           </p>
         </div>
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Volumen</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{t('intelligence.countryCard.volume', 'Volumen')}</p>
           <p className="text-indigo-400 font-bold text-xl">
             {formatM2(country.total_m2)}
           </p>
           <p className="text-slate-500 text-xs">
-            ~{formatM2(country.avg_weekly_m2)}/sem
+            {t('intelligence.countryCard.weeklyVolume', '~{{amount}}/sem', { amount: formatM2(country.avg_weekly_m2) })}
           </p>
         </div>
       </div>
@@ -150,7 +152,7 @@ export function CountryCard({ country, index, onClick }: CountryCardProps) {
         <div className="flex-1 min-w-0">
           {country.top_customers.length > 0 && (
             <p className="text-slate-500 text-xs truncate">
-              Top: {country.top_customers.slice(0, 2).join(', ')}
+              {t('intelligence.countryCard.topPrefix', 'Top:')} {country.top_customers.slice(0, 2).join(', ')}
             </p>
           )}
         </div>

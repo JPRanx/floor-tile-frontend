@@ -17,13 +17,6 @@ const countryNames: Record<string, string> = {
   CO: 'Colombia',
 };
 
-// Status names for display
-const statusNames: Record<string, string> = {
-  active: 'Activos',
-  cooling: 'Enfriándose',
-  dormant: 'Dormidos',
-};
-
 export function Breadcrumb({ currentView, filterLabel, onBack }: BreadcrumbProps) {
   const { t } = useTranslation();
 
@@ -40,14 +33,11 @@ export function Breadcrumb({ currentView, filterLabel, onBack }: BreadcrumbProps
 
   const getCurrentLabel = () => {
     if (filterLabel) {
-      // Check if it's a country code
-      if (countryNames[filterLabel]) {
-        return countryNames[filterLabel];
-      }
-      // Check if it's a status
-      if (statusNames[filterLabel.toLowerCase()]) {
-        return statusNames[filterLabel.toLowerCase()];
-      }
+      if (countryNames[filterLabel]) return countryNames[filterLabel];
+      const statusKey = filterLabel.toLowerCase();
+      if (statusKey === 'active') return t('intelligence.breadcrumb.active', 'Activos');
+      if (statusKey === 'cooling') return t('intelligence.breadcrumb.cooling', 'Enfriándose');
+      if (statusKey === 'dormant') return t('intelligence.breadcrumb.dormant', 'Dormidos');
       return filterLabel;
     }
     return null;

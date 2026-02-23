@@ -39,10 +39,10 @@ export function OrderBuilderProductCard({
 
   // Urgency styles - now combined with score
   const urgencyStyles: Record<string, { bg: string; text: string; border: string; label: string }> = {
-    covered: { bg: 'bg-indigo-500/15', text: 'text-indigo-400', border: 'border-indigo-500/40', label: '🚢 COVERED' },
-    critical: { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/40', label: 'CRITICAL' },
-    urgent: { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/40', label: 'URGENT' },
-    soon: { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/40', label: 'SOON' },
+    covered: { bg: 'bg-indigo-500/15', text: 'text-indigo-400', border: 'border-indigo-500/40', label: t('orderBuilderProduct.covered', '🚢 CUBIERTO') },
+    critical: { bg: 'bg-red-500/15', text: 'text-red-400', border: 'border-red-500/40', label: t('orderBuilderProduct.urgencyCritical', 'CRÍTICO') },
+    urgent: { bg: 'bg-orange-500/15', text: 'text-orange-400', border: 'border-orange-500/40', label: t('orderBuilderProduct.urgencyUrgent', 'URGENTE') },
+    soon: { bg: 'bg-yellow-500/15', text: 'text-yellow-400', border: 'border-yellow-500/40', label: t('orderBuilderProduct.urgencySoon', 'PRONTO') },
     ok: { bg: 'bg-slate-500/15', text: 'text-slate-400', border: 'border-slate-500/40', label: 'OK' },
   };
 
@@ -76,17 +76,17 @@ export function OrderBuilderProductCard({
   };
 
   const velocityTrendStyles: Record<VelocityTrendSignal, { icon: string; color: string; label: string }> = {
-    growing: { icon: '📈', color: 'text-emerald-400', label: 'growing' },
-    stable: { icon: '➡️', color: 'text-slate-400', label: 'stable' },
-    declining: { icon: '📉', color: 'text-amber-400', label: 'declining' },
+    growing: { icon: '📈', color: 'text-emerald-400', label: t('orderBuilderProduct.growing', 'Creciendo') },
+    stable: { icon: '➡️', color: 'text-slate-400', label: t('orderBuilderProduct.stable', 'Estable') },
+    declining: { icon: '📉', color: 'text-amber-400', label: t('orderBuilderProduct.declining', 'Bajando') },
   };
 
   // Production schedule status styles
   const productionStatusStyles: Record<ProductionStatus, { icon: string; color: string; bgColor: string; label: string }> = {
-    scheduled: { icon: '📋', color: 'text-amber-400', bgColor: 'bg-amber-500/20', label: 'Scheduled' },
-    in_progress: { icon: '🔧', color: 'text-blue-400', bgColor: 'bg-blue-500/20', label: 'In Production' },
-    completed: { icon: '✅', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20', label: 'Ready to Ship' },
-    not_scheduled: { icon: '', color: 'text-slate-500', bgColor: '', label: 'Not Scheduled' },
+    scheduled: { icon: '📋', color: 'text-amber-400', bgColor: 'bg-amber-500/20', label: t('orderBuilderProduct.scheduled', 'Programado') },
+    in_progress: { icon: '🔧', color: 'text-blue-400', bgColor: 'bg-blue-500/20', label: t('orderBuilderProduct.inProduction', 'En Producción') },
+    completed: { icon: '✅', color: 'text-emerald-400', bgColor: 'bg-emerald-500/20', label: t('orderBuilderProduct.readyToShip', 'Listo para Enviar') },
+    not_scheduled: { icon: '', color: 'text-slate-500', bgColor: '', label: t('orderBuilderProduct.notScheduled', 'No Programado') },
   };
 
   // Override urgency to COVERED when in-transit covers the need
@@ -730,7 +730,7 @@ export function OrderBuilderProductCard({
             {product.committed_orders_m2 > 0 && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-blue-400">Comprometido:</span>
+                  <span className="text-blue-400">{t('orderBuilderProduct.committed', 'Comprometido:')}</span>
                   <span className="text-blue-300 font-medium">
                     {formatM2(product.committed_orders_m2)} m²
                   </span>
@@ -748,11 +748,11 @@ export function OrderBuilderProductCard({
             {product.has_unfulfilled_demand && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="flex items-center gap-1.5 text-xs">
-                  <span className="text-amber-400">Demanda insatisfecha:</span>
+                  <span className="text-amber-400">{t('orderBuilderProduct.unfulfilledDemand', 'Demanda insatisfecha:')}</span>
                   <span className="text-amber-300 font-medium">
                     {formatM2(product.unfulfilled_demand_m2)} m²
                   </span>
-                  <span className="text-slate-500">(ultimos 90 dias)</span>
+                  <span className="text-slate-500">{t('orderBuilderProduct.last90Days', '(últimos 90 días)')}</span>
                 </div>
               </div>
             )}

@@ -24,7 +24,11 @@
       "jan": "Ene", "feb": "Feb", "mar": "Mar", "apr": "Abr",
       "may": "May", "jun": "Jun", "jul": "Jul", "aug": "Ago",
       "sep": "Sep", "oct": "Oct", "nov": "Nov", "dec": "Dic"
-    }
+    },
+    "noData": "Sin datos",
+    "daysAgoLabel": "hace {{count}} días",
+    "viewDetails": "Ver Detalles",
+    "close": "Cerrar"
   },
   "nav": {
     "appName": "CM Tarragona S.A.",
@@ -249,7 +253,10 @@
     "lowVolume": "BAJO VOLUMEN",
     "notRecommended": "NO RECOMENDADO",
     "velocity": "Velocidad",
-    "minPerProduct": "Mín: 1 contenedor por producto"
+    "minPerProduct": "Mín: 1 contenedor por producto",
+    "exportErrorSave": "Error al guardar pedido. Exportación cancelada.",
+    "exportErrorFactory": "Error al crear orden de fábrica.",
+    "exportErrorGeneric": "Error al exportar. Verifica tu conexión e intenta de nuevo."
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",
@@ -359,7 +366,14 @@
     "clickToAssign": "Haz clic en un documento para asignarlo a un embarque",
     "discard": "Descartar",
     "discardConfirm": "¿Descartar este documento? Esta acción no se puede deshacer.",
-    "from": "De"
+    "from": "De",
+    "timeAgo": {
+      "justNow": "justo ahora",
+      "minutesAgo": "hace {{count}}m",
+      "hoursAgo": "hace {{count}}h",
+      "daysAgo": "hace {{count}}d"
+    },
+    "containerCount": "{{count}} contenedor(es)"
   },
   "shipmentUpload": {
     "title": "Subir Documento de Embarque",
@@ -535,7 +549,15 @@
     "readyToShip": "listo para enviar",
     "canAddMore": "¡puede agregar más!",
     "productionScheduledNotStarted": "Producción programada pero aún no iniciada",
-    "currentRequest": "Solicitud actual"
+    "currentRequest": "Solicitud actual",
+    "covered": "🚢 CUBIERTO",
+    "urgencyCritical": "CRÍTICO",
+    "urgencyUrgent": "URGENTE",
+    "urgencySoon": "PRONTO",
+    "committed": "Comprometido:",
+    "unfulfilledDemand": "Demanda insatisfecha:",
+    "last90Days": "(últimos 90 días)",
+    "notScheduled": "No Programado"
   },
   "blAllocation": {
     "title": "Asignación de BL",
@@ -574,7 +596,12 @@
     "generatedAt": "Generado",
     "boat": "Barco",
     "needIndicator": "Necesidad",
-    "availableIndicator": "Disponible"
+    "availableIndicator": "Disponible",
+    "dropHere": "Arrastra productos aquí",
+    "editModeHint": "Modo edición: Arrastra productos entre BLs para reorganizar",
+    "reset": "Restablecer",
+    "saving": "Guardando...",
+    "saveChanges": "Guardar cambios"
   },
   "demandForecast": {
     "title": "Demanda Esperada",
@@ -836,7 +863,10 @@
     "breadcrumb": {
       "backToRegion": "Volver a Región",
       "backToProducts": "Volver a Productos",
-      "backToCustomers": "Volver a Clientes"
+      "backToCustomers": "Volver a Clientes",
+      "active": "Activos",
+      "cooling": "Enfriándose",
+      "dormant": "Dormidos"
     },
     "productDetail": {
       "title": "Detalle del Producto",
@@ -899,6 +929,63 @@
       "moderate": "Moderado",
       "erratic": "Errático",
       "expected": "esperado"
+    },
+    "categoryCard": {
+      "products": "productos",
+      "warehousePct": "% Bodega",
+      "inWarehouse": "{{m2}} en bodega",
+      "velocity": "Velocidad",
+      "m2DayAvg": "m²/día prom",
+      "coverage": "Cobertura",
+      "daysAvg": "días prom",
+      "noData": "Sin datos",
+      "atRisk": "{{count}} en riesgo",
+      "healthyStock": "Stock saludable",
+      "lowCoverage": "Baja cobertura"
+    },
+    "productCard": {
+      "rotation": "Rot.",
+      "revenue": "Ingresos",
+      "weeklyRevenue": "~{{amount}}/sem",
+      "velocity": "Velocidad",
+      "perDay": "/día",
+      "weeks": "semanas"
+    },
+    "countryCard": {
+      "customers": "clientes",
+      "revenue": "Ingresos",
+      "ofTotal": "{{pct}}% del total",
+      "volume": "Volumen",
+      "weeklyVolume": "~{{amount}}/sem",
+      "topPrefix": "Top:"
+    },
+    "customerCard": {
+      "noOrders": "Sin órdenes",
+      "today": "Hoy",
+      "yesterday": "Ayer",
+      "daysAgo": "Hace {{count}}d",
+      "weeksAgo": "Hace {{count}}sem",
+      "monthsAgo": "Hace {{count}}m",
+      "tierA": "Cliente A",
+      "tierB": "Cliente B",
+      "tierC": "Cliente C",
+      "predictability": {
+        "clockwork": "Muy Regular",
+        "predictable": "Predecible",
+        "moderate": "Moderado",
+        "erratic": "Errático"
+      },
+      "revenue": "Ingresos",
+      "avgPerOrder": "Prom. {{amount}}/orden",
+      "volume": "Volumen",
+      "orders": "órdenes",
+      "topProducts": "Top Productos"
+    },
+    "insightBrief": {
+      "action": "Acción:"
+    },
+    "sparkline": {
+      "noData": "Sin datos"
     }
   },
   "stockCoverage": {
@@ -1143,5 +1230,126 @@
     "addToOptimize": "Agrega {{m2}} m² para llenar → reduce sobrecosto a ${{savings}}/m²",
     "save": "ahorro",
     "selectProducts": "Selecciona productos para ver el estimado de costos"
+  },
+  "unfulfilledDemand": {
+    "title": "Productos Faltantes",
+    "subtitle": "Demanda no satisfecha por agotamiento"
+  },
+  "brief": {
+    "product": {
+      "volumeContext": "({{prev}} → {{curr}} m²/sem)",
+      "openingLowBaseline": "{{name}} muestra +{{change}}% — pero viene de base casi cero{{volumeCtx}}. No es crecimiento real, el producto \"despertó\".",
+      "openingDied": "{{name}} dejó de venderse. ¿Descontinuado o problema de stock?",
+      "openingNew": "{{name}} es nuevo o recién empezó a moverse.",
+      "openingStrongGrowth": "{{name}} está creciendo fuerte (+{{change}}%){{volumeCtx}} con demanda real.",
+      "openingModerateGrowth": "{{name}} está creciendo moderadamente (+{{change}}%).",
+      "openingSevereDecline": "{{name}} cayó fuerte (-{{change}}%){{volumeCtx}}. Revisar qué pasó.",
+      "openingStrongDecline": "{{name}} está bajando significativamente (-{{change}}%){{volumeCtx}}.",
+      "openingModerateDecline": "{{name}} está bajando levemente (-{{change}}%).",
+      "openingStable": "{{name}} se mantiene estable.",
+      "noRecentSales": "Sin ventas recientes.",
+      "velocity": "Vendes {{velocity}} m²/día.",
+      "noInventoryData": "Sin datos de inventario.",
+      "stagnantStock": "Tiene {{stock}} m² en bodega pero sin ventas recientes. Stock estancado.",
+      "noStockSelling": "**Sin stock** y vendiendo {{velocity}} m²/día.",
+      "stockCritical": "**CRÍTICO: Solo {{days}} días de stock.** Pedir urgente.",
+      "stockUrgent": "**Solo {{days}} días de stock.** Incluir en próximo pedido.",
+      "stockLow": "Stock para {{days}} días — monitorear de cerca.",
+      "stockVeryHigh": "Stock muy alto ({{days}} días).",
+      "stockHigh": "Stock alto ({{days}} días). Verificar si es intencional.",
+      "stockGood": "Bien cubierto con {{days}} días de stock.",
+      "confidenceLowExtreme": "El +{{change}}% parece impresionante pero con solo {{weeks}} semanas de datos, es ruido estadístico.",
+      "confidenceLow": "Confianza BAJA (solo {{weeks}} semanas de datos). No actuar basándose únicamente en esta tendencia.",
+      "confidenceMedium": "Confianza MEDIA — el cambio parece grande pero necesita más datos para confirmar.",
+      "erraticSales": "Ventas muy erráticas — difícil predecir. Mantener stock de seguridad extra.",
+      "dangerOversupply": "Stock alto + demanda bajando = riesgo de sobre-inventario.",
+      "dangerStockout": "Stock bajo + demanda subiendo = riesgo de quiebre.",
+      "recCritical": "Pedir URGENTE.",
+      "recUrgent": "Incluir en próximo pedido.",
+      "recLowUp": "Pedir pronto, demanda subiendo.",
+      "recLowDown": "Esperar, demanda bajando.",
+      "recHighDown": "No pedir más. Evaluar reducir precio.",
+      "recHighUp": "Mantener, stock se moverá.",
+      "recGoodUp": "Considerar aumentar próximo pedido.",
+      "recLowConfidence": "Monitorear. Más datos necesarios.",
+      "recNoVelocity": "Evaluar promoción o descontinuar.",
+      "recDefault": "Mantener nivel actual."
+    },
+    "customer": {
+      "revenueContext": "({{prev}} → {{curr}})",
+      "openingTierAActive": "{{name}} — Cliente VIP activo. Top 20% por volumen, comprando regularmente.",
+      "openingTierACooling": "{{name}} — Cliente VIP enfriándose. Hace {{days}} días sin comprar.",
+      "openingTierADormant": "{{name}} — **ALERTA: Cliente VIP dormido.** {{days}} días sin actividad. Contactar urgente.",
+      "openingTierBActive": "{{name}} — Cliente regular activo. Buen volumen, comprando normalmente.",
+      "openingTierBCooling": "{{name}} — Cliente regular enfriándose. Última compra hace {{days}} días.",
+      "openingTierBDormant": "{{name}} — Cliente regular dormido. Sin actividad hace {{days}} días.",
+      "openingTierCGrowing": "{{name}} — Cliente pequeño pero **creciendo** (+{{change}}%){{revenueCtx}}. Potencial de desarrollo.",
+      "openingTierCActive": "{{name}} — Cliente pequeño activo.",
+      "openingTierCDormant": "{{name}} — Cliente pequeño inactivo.",
+      "statusActive": "activo",
+      "statusCooling": "enfriándose",
+      "statusDormant": "dormido",
+      "openingDefault": "{{name}} — Cliente {{tier}}, {{statusLabel}}.",
+      "volumeHigh": "Ha comprado {{volume}} m² en total — cliente de alto volumen.",
+      "volumeMedium": "{{volume}} m² comprados históricamente.",
+      "volumeLow": "Cliente de bajo volumen ({{volume}} m² total).",
+      "tooFewOrders": "Muy pocas compras para detectar patrón.",
+      "orderCount": "{{orders}} pedidos realizados.",
+      "ordersLarge": "Pedidos grandes (promedio {{avg}} m²).",
+      "ordersSmall": "Pedidos pequeños (promedio {{avg}} m²).",
+      "ordersMedium": "Pedidos medianos (promedio {{avg}} m²).",
+      "mixSingle": "Solo compra {{sku}}. Oportunidad de venta cruzada.",
+      "mixConcentrated": "Compra principalmente {{sku}} ({{pct}}% de sus pedidos).",
+      "mixDiversified": "Compra variado: {{products}}.",
+      "recTierADormant": "Contactar URGENTE. Preguntar qué pasó.",
+      "recTierACooling": "Llamar para seguimiento.",
+      "recTierADeclining": "Investigar por qué está comprando menos.",
+      "recTierBCooling": "Enviar recordatorio o promoción.",
+      "recTierBDormant": "Campaña de reactivación.",
+      "recTierCGrowing": "Desarrollar relación, potencial de crecimiento.",
+      "recActiveGrowing": "Mantener excelente servicio.",
+      "recDefault": "Seguimiento normal.",
+      "patternClockworkOverdue": "{{name}} — Cliente muy regular (cada {{gapDays}} días) pero **{{daysOverdue}} días atrasado**. Inusual.",
+      "patternClockwork": "{{name}} — Compra como reloj cada {{gapDays}} días. Cliente predecible y valioso.",
+      "patternPredictableOverdue": "{{name}} — Normalmente compra cada {{gapDays}} días. Ya van {{daysOverdue}} días de atraso.",
+      "patternPredictable": "{{name}} — Cliente predecible, compra aproximadamente cada {{gapDays}} días.",
+      "patternModerateOverdue": "{{name}} — Patrón moderado (cada ~{{gapDays}} días). **{{daysOverdue}} días sin comprar**.",
+      "patternErraticOverdue": "{{name}} — Patrón errático pero {{daysOverdue}} días es mucho tiempo sin comprar.",
+      "patternErratic": "{{name}} — Compras muy irregulares (promedio {{gapDays}} días pero con mucha variación).",
+      "warningCriticalOverdue": "**ALERTA:** Este cliente es muy regular pero lleva {{daysOverdue}} días sin comprar. Posible pérdida.",
+      "warningPossiblyLost": "Sin compras hace {{daysOverdue}} días. Posiblemente perdido.",
+      "warningOverduePattern": "Debería haber comprado hace {{daysOverdue}} días según su patrón.",
+      "warningModerateOverdue": "{{daysOverdue}} días desde última compra, más de lo usual.",
+      "patRecCritical": "Llamar HOY. Cliente valioso con patrón roto.",
+      "patRecClockworkOverdue": "Contactar pronto. Cliente muy regular atrasado.",
+      "patRecTierAOverdue": "Contactar URGENTE. Cliente VIP muy atrasado.",
+      "patRecPredictableOverdue": "Enviar recordatorio, se pasó de su fecha esperada.",
+      "patRecExpectedSoon": "Contactar esta semana, debería comprar pronto.",
+      "patRecTierBOverdue": "Campaña de reactivación.",
+      "patRecLost": "Posiblemente perdido. Último intento de contacto."
+    },
+    "country": {
+      "openingDominantGrowing": "{{name}} es tu mercado principal ({{pct}}%) y sigue creciendo (+{{change}}%).",
+      "openingDominantStable": "{{name}} es tu mercado principal ({{pct}}%), manteniéndose estable.",
+      "openingDominantDeclining": "{{name}} es tu mercado principal ({{pct}}%) pero está bajando (-{{change}}%).",
+      "openingSecondaryGrowing": "{{name}} está creciendo fuerte (+{{change}}%). Mercado en desarrollo.",
+      "openingSecondary": "{{name}} representa {{pct}}% del negocio.",
+      "openingMinorNew": "{{name}} es mercado nuevo, apenas comenzando.",
+      "openingMinor": "{{name}} es un mercado pequeño ({{pct}}%).",
+      "openingDefault": "{{name}} representa {{pct}}% del negocio.",
+      "noCustomers": "Sin clientes registrados.",
+      "oneCustomer": "1 cliente — alto riesgo de concentración.",
+      "fewCustomers": "Solo {{total}} clientes — base pequeña.",
+      "manyCustomers": "{{total}} clientes — base diversificada.",
+      "activeCustomers": "{{total}} clientes activos.",
+      "topCustomers": "Principales: {{names}}.",
+      "recDominantDeclining": "Investigar qué está pasando en {{country}}.",
+      "recSecondaryGrowing": "Invertir en este mercado, está creciendo.",
+      "recSingleCustomer": "Buscar más clientes para diversificar.",
+      "recFewCustomers": "Desarrollar más clientes para reducir riesgo.",
+      "recEmerging": "Mercado emergente, considerar inversión.",
+      "recHealthy": "Mantener estrategia actual.",
+      "recDefault": "Monitorear desempeño."
+    }
   }
 }

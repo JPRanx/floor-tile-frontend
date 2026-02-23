@@ -354,7 +354,7 @@ export function PlanningView() {
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               {staleItems.map(item => (
                 <span key={item.type}>
-                  {item.label}: {item.daysAgo === null ? 'Sin datos' : `hace ${item.daysAgo} días`}
+                  {item.label}: {item.daysAgo === null ? t('common.noData', 'Sin datos') : t('common.daysAgoLabel', 'hace {{count}} días', { count: item.daysAgo })}
                 </span>
               ))}
             </div>

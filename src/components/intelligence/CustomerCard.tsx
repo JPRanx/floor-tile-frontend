@@ -116,12 +116,12 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
 
   // Days since last order label
   const getLastOrderLabel = () => {
-    if (customer.days_since_last_order === null) return 'Sin órdenes';
-    if (customer.days_since_last_order === 0) return 'Hoy';
-    if (customer.days_since_last_order === 1) return 'Ayer';
-    if (customer.days_since_last_order <= 7) return `Hace ${customer.days_since_last_order}d`;
-    if (customer.days_since_last_order <= 30) return `Hace ${Math.floor(customer.days_since_last_order / 7)}sem`;
-    return `Hace ${Math.floor(customer.days_since_last_order / 30)}m`;
+    if (customer.days_since_last_order === null) return t('intelligence.customerCard.noOrders', 'Sin órdenes');
+    if (customer.days_since_last_order === 0) return t('intelligence.customerCard.today', 'Hoy');
+    if (customer.days_since_last_order === 1) return t('intelligence.customerCard.yesterday', 'Ayer');
+    if (customer.days_since_last_order <= 7) return t('intelligence.customerCard.daysAgo', 'Hace {{count}}d', { count: customer.days_since_last_order });
+    if (customer.days_since_last_order <= 30) return t('intelligence.customerCard.weeksAgo', 'Hace {{count}}sem', { count: Math.floor(customer.days_since_last_order / 7) });
+    return t('intelligence.customerCard.monthsAgo', 'Hace {{count}}m', { count: Math.floor(customer.days_since_last_order / 30) });
   };
 
   // Format expected date
@@ -165,28 +165,28 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
 
         {/* Tier badge */}
         <span className={`px-2 py-0.5 rounded text-xs font-medium ${tierStyle.bg} ${tierStyle.text}`}>
-          {tierStyle.label}
+          {t(`intelligence.customerCard.tier${customer.tier}`, tierStyle.label)}
         </span>
       </div>
 
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Ingresos</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{t('intelligence.customerCard.revenue', 'Ingresos')}</p>
           <p className="text-emerald-400 font-bold text-xl">
             {formatRevenue(customer.total_revenue_usd)}
           </p>
           <p className="text-slate-500 text-xs">
-            Prom. {formatRevenue(customer.avg_order_revenue_usd)}/orden
+            {t('intelligence.customerCard.avgPerOrder', 'Prom. {{amount}}/orden', { amount: formatRevenue(customer.avg_order_revenue_usd) })}
           </p>
         </div>
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Volumen</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{t('intelligence.customerCard.volume', 'Volumen')}</p>
           <p className="text-indigo-400 font-bold text-xl">
             {formatM2(customer.total_m2)} m²
           </p>
           <p className="text-slate-500 text-xs">
-            {customer.order_count} orden{customer.order_count !== 1 ? 'es' : ''}
+            {customer.order_count} {t('intelligence.customerCard.orders', 'órdenes')}
           </p>
         </div>
       </div>
@@ -202,7 +202,7 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
               </span>
               {customer.predictability && predictabilityLabels[customer.predictability] && (
                 <span className={`${predictabilityLabels[customer.predictability].color} text-xs`}>
-                  ({predictabilityLabels[customer.predictability].label})
+                  ({t(`intelligence.customerCard.predictability.${customer.predictability.toLowerCase()}`, predictabilityLabels[customer.predictability].label)})
                 </span>
               )}
             </div>
@@ -231,7 +231,7 @@ export function CustomerCard({ customer, index, onClick }: CustomerCardProps) {
       {/* Top Products (if any) */}
       {customer.top_products.length > 0 && (
         <div className="mb-4">
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">Top Productos</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-2">{t('intelligence.customerCard.topProducts', 'Top Productos')}</p>
           <div className="flex flex-wrap gap-1">
             {customer.top_products.slice(0, 3).map((p) => (
               <span

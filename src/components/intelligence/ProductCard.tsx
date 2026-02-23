@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { ProductTrend } from '../../requests/intelligence';
 import { Sparkline } from './Sparkline';
 import { ConfidenceBadge } from './ConfidenceBadge';
@@ -49,6 +50,7 @@ function getSparklineColor(direction: ProductTrend['trend_direction']): 'emerald
 }
 
 export function ProductCard({ product, index, rank, onClick }: ProductCardProps) {
+  const { t } = useTranslation();
   const glowClass = getGlowClass(product.trend_direction);
   const sparklineColor = getSparklineColor(product.trend_direction);
   const rotationStyle = rotationColors[product.rotation || 'C'] || rotationColors.C;
@@ -105,7 +107,7 @@ export function ProductCard({ product, index, rank, onClick }: ProductCardProps)
         {/* Rotation badge */}
         {product.rotation && (
           <span className={`px-2 py-0.5 rounded text-xs font-medium ${rotationStyle.bg} ${rotationStyle.text}`}>
-            Rot. {product.rotation}
+            {t('intelligence.productCard.rotation', 'Rot.')} {product.rotation}
           </span>
         )}
       </div>
@@ -113,21 +115,21 @@ export function ProductCard({ product, index, rank, onClick }: ProductCardProps)
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Ingresos</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{t('intelligence.productCard.revenue', 'Ingresos')}</p>
           <p className="text-emerald-400 font-bold text-lg">
             {formatRevenue(product.total_revenue_usd)}
           </p>
           <p className="text-slate-500 text-xs">
-            ~{formatRevenue(product.avg_weekly_revenue_usd)}/sem
+            {t('intelligence.productCard.weeklyRevenue', '~{{amount}}/sem', { amount: formatRevenue(product.avg_weekly_revenue_usd) })}
           </p>
         </div>
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Velocidad</p>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{t('intelligence.productCard.velocity', 'Velocidad')}</p>
           <p className="text-indigo-400 font-bold text-lg">
             {formatM2(product.daily_velocity_m2)} m²
           </p>
           <p className="text-slate-500 text-xs">
-            /día
+            {t('intelligence.productCard.perDay', '/día')}
           </p>
         </div>
       </div>
@@ -160,7 +162,7 @@ export function ProductCard({ product, index, rank, onClick }: ProductCardProps)
         />
         <div className="flex items-center gap-3">
           <span className="text-slate-500 text-xs">
-            {product.sample_weeks} semanas
+            {product.sample_weeks} {t('intelligence.productCard.weeks', 'semanas')}
           </span>
           <ConfidenceBadge level={product.confidence} showLabel={false} />
         </div>

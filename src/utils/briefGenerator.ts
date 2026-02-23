@@ -5,6 +5,7 @@
  */
 
 import type { ProductTrend, CustomerTrend, CountryTrend } from '../requests/intelligence';
+import i18next from 'i18next';
 
 // ============================================================
 // TYPES
@@ -71,7 +72,7 @@ function formatVolumeContext(currentVelocity: number, changePct: number): string
   const prevWeekly = Math.round(previous * 7);
   const currWeekly = Math.round(currentVelocity * 7);
 
-  return ` (${prevWeekly} → ${currWeekly} m²/sem)`;
+  return ' ' + i18next.t('brief.product.volumeContext', '({{prev}} → {{curr}} m\u00B2/sem)', { prev: prevWeekly, curr: currWeekly });
 }
 
 /**
@@ -86,7 +87,7 @@ function formatRevenueContext(currentRevenue: number, changePct: number): string
 
   const formatK = (v: number) => v >= 1000 ? `$${(v / 1000).toFixed(0)}K` : `$${Math.round(v)}`;
 
-  return ` (${formatK(previous)} → ${formatK(currentRevenue)})`;
+  return ' ' + i18next.t('brief.customer.revenueContext', '({{prev}} → {{curr}})', { prev: formatK(previous), curr: formatK(currentRevenue) });
 }
 
 // ============================================================
@@ -103,7 +104,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Extreme percentage from low baseline
   if (p.velocity_change_pct > 500 && !hasHistory) {
     return {
-      text: `${name} muestra +${change.toFixed(0)}% — pero viene de base casi cero${volumeCtx}. No es crecimiento real, el producto "despertó".`,
+      text: i18next.t('brief.product.openingLowBaseline', '{{name}} muestra +{{change}}% \u2014 pero viene de base casi cero{{volumeCtx}}. No es crecimiento real, el producto "despert\u00F3".', { name, change: change.toFixed(0), volumeCtx }),
       type: 'normal'
     };
   }
@@ -111,7 +112,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Product died (no velocity but had history)
   if (velocity === 0 && hasHistory) {
     return {
-      text: `${name} dejó de venderse. ¿Descontinuado o problema de stock?`,
+      text: i18next.t('brief.product.openingDied', '{{name}} dej\u00F3 de venderse. \u00BFDescontinuado o problema de stock?', { name }),
       type: 'warning'
     };
   }
@@ -119,7 +120,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // New product with low confidence
   if (!hasHistory && velocity > 0 && p.confidence === 'LOW') {
     return {
-      text: `${name} es nuevo o recién empezó a moverse.`,
+      text: i18next.t('brief.product.openingNew', '{{name}} es nuevo o reci\u00E9n empez\u00F3 a moverse.', { name }),
       type: 'normal'
     };
   }
@@ -127,7 +128,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Strong real growth
   if (p.velocity_change_pct > 25 && hasHistory && p.confidence !== 'LOW') {
     return {
-      text: `${name} está creciendo fuerte (+${change.toFixed(0)}%)${volumeCtx} con demanda real.`,
+      text: i18next.t('brief.product.openingStrongGrowth', '{{name}} est\u00E1 creciendo fuerte (+{{change}}%){{volumeCtx}} con demanda real.', { name, change: change.toFixed(0), volumeCtx }),
       type: 'positive'
     };
   }
@@ -135,7 +136,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Moderate growth
   if (p.velocity_change_pct >= 10 && p.velocity_change_pct <= 25) {
     return {
-      text: `${name} está creciendo moderadamente (+${change.toFixed(0)}%).`,
+      text: i18next.t('brief.product.openingModerateGrowth', '{{name}} est\u00E1 creciendo moderadamente (+{{change}}%).', { name, change: change.toFixed(0) }),
       type: 'positive'
     };
   }
@@ -143,7 +144,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Severe decline
   if (p.velocity_change_pct < -50 && hasHistory) {
     return {
-      text: `${name} cayó fuerte (-${change.toFixed(0)}%)${volumeCtx}. Revisar qué pasó.`,
+      text: i18next.t('brief.product.openingSevereDecline', '{{name}} cay\u00F3 fuerte (-{{change}}%){{volumeCtx}}. Revisar qu\u00E9 pas\u00F3.', { name, change: change.toFixed(0), volumeCtx }),
       type: 'warning'
     };
   }
@@ -151,7 +152,7 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Strong decline
   if (p.velocity_change_pct < -25) {
     return {
-      text: `${name} está bajando significativamente (-${change.toFixed(0)}%)${volumeCtx}.`,
+      text: i18next.t('brief.product.openingStrongDecline', '{{name}} est\u00E1 bajando significativamente (-{{change}}%){{volumeCtx}}.', { name, change: change.toFixed(0), volumeCtx }),
       type: 'warning'
     };
   }
@@ -159,14 +160,14 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
   // Moderate decline
   if (p.velocity_change_pct < -10) {
     return {
-      text: `${name} está bajando levemente (-${change.toFixed(0)}%).`,
+      text: i18next.t('brief.product.openingModerateDecline', '{{name}} est\u00E1 bajando levemente (-{{change}}%).', { name, change: change.toFixed(0) }),
       type: 'normal'
     };
   }
 
   // Stable
   return {
-    text: `${name} se mantiene estable.`,
+    text: i18next.t('brief.product.openingStable', '{{name}} se mantiene estable.', { name }),
     type: 'normal'
   };
 }
@@ -177,10 +178,10 @@ function getProductOpeningLine(p: ProductTrend): BriefPart {
 
 function getVelocityLine(p: ProductTrend): BriefPart {
   if (!p.daily_velocity_m2 || p.daily_velocity_m2 === 0) {
-    return { text: 'Sin ventas recientes.', type: 'normal' };
+    return { text: i18next.t('brief.product.noRecentSales', 'Sin ventas recientes.'), type: 'normal' };
   }
   return {
-    text: `Vendes ${Number(p.daily_velocity_m2).toFixed(1)} m²/día.`,
+    text: i18next.t('brief.product.velocity', 'Vendes {{velocity}} m\u00B2/d\u00EDa.', { velocity: Number(p.daily_velocity_m2).toFixed(1) }),
     type: 'normal'
   };
 }
@@ -197,7 +198,7 @@ function getStockLine(p: ProductTrend): BriefPart {
   // No inventory data
   if (stock === null || stock === undefined) {
     return {
-      text: 'Sin datos de inventario.',
+      text: i18next.t('brief.product.noInventoryData', 'Sin datos de inventario.'),
       type: 'warning'
     };
   }
@@ -205,7 +206,7 @@ function getStockLine(p: ProductTrend): BriefPart {
   // Has stock but no velocity (infinite days)
   if (stock > 0 && velocity === 0) {
     return {
-      text: `Tiene ${stock.toFixed(0)} m² en bodega pero sin ventas recientes. Stock estancado.`,
+      text: i18next.t('brief.product.stagnantStock', 'Tiene {{stock}} m\u00B2 en bodega pero sin ventas recientes. Stock estancado.', { stock: stock.toFixed(0) }),
       type: 'warning'
     };
   }
@@ -213,7 +214,7 @@ function getStockLine(p: ProductTrend): BriefPart {
   // No stock but selling
   if (stock === 0 && velocity > 0) {
     return {
-      text: `**Sin stock** y vendiendo ${velocity.toFixed(1)} m²/día.`,
+      text: i18next.t('brief.product.noStockSelling', '**Sin stock** y vendiendo {{velocity}} m\u00B2/d\u00EDa.', { velocity: velocity.toFixed(1) }),
       type: 'critical'
     };
   }
@@ -221,7 +222,7 @@ function getStockLine(p: ProductTrend): BriefPart {
   // Critical
   if (days !== null && days < 7) {
     return {
-      text: `**CRÍTICO: Solo ${Math.round(days)} días de stock.** Pedir urgente.`,
+      text: i18next.t('brief.product.stockCritical', '**CR\u00CDTICO: Solo {{days}} d\u00EDas de stock.** Pedir urgente.', { days: Math.round(days) }),
       type: 'critical'
     };
   }
@@ -229,7 +230,7 @@ function getStockLine(p: ProductTrend): BriefPart {
   // Urgent
   if (days !== null && days < 14) {
     return {
-      text: `**Solo ${Math.round(days)} días de stock.** Incluir en próximo pedido.`,
+      text: i18next.t('brief.product.stockUrgent', '**Solo {{days}} d\u00EDas de stock.** Incluir en pr\u00F3ximo pedido.', { days: Math.round(days) }),
       type: 'warning'
     };
   }
@@ -237,7 +238,7 @@ function getStockLine(p: ProductTrend): BriefPart {
   // Low
   if (days !== null && days < 30) {
     return {
-      text: `Stock para ${Math.round(days)} días — monitorear de cerca.`,
+      text: i18next.t('brief.product.stockLow', 'Stock para {{days}} d\u00EDas \u2014 monitorear de cerca.', { days: Math.round(days) }),
       type: 'normal'
     };
   }
@@ -245,7 +246,7 @@ function getStockLine(p: ProductTrend): BriefPart {
   // Very high
   if (days !== null && days > 90) {
     return {
-      text: `Stock muy alto (${Math.round(days)} días).`,
+      text: i18next.t('brief.product.stockVeryHigh', 'Stock muy alto ({{days}} d\u00EDas).', { days: Math.round(days) }),
       type: 'normal'
     };
   }
@@ -253,14 +254,14 @@ function getStockLine(p: ProductTrend): BriefPart {
   // High
   if (days !== null && days > 60) {
     return {
-      text: `Stock alto (${Math.round(days)} días). Verificar si es intencional.`,
+      text: i18next.t('brief.product.stockHigh', 'Stock alto ({{days}} d\u00EDas). Verificar si es intencional.', { days: Math.round(days) }),
       type: 'normal'
     };
   }
 
   // Good
   return {
-    text: `Bien cubierto con ${Math.round(days!)} días de stock.`,
+    text: i18next.t('brief.product.stockGood', 'Bien cubierto con {{days}} d\u00EDas de stock.', { days: Math.round(days!) }),
     type: 'positive'
   };
 }
@@ -276,7 +277,7 @@ function getConfidenceLine(p: ProductTrend): BriefPart | null {
   // Low confidence with extreme change
   if (p.confidence === 'LOW' && change > 200) {
     return {
-      text: `El +${change.toFixed(0)}% parece impresionante pero con solo ${weeks} semanas de datos, es ruido estadístico.`,
+      text: i18next.t('brief.product.confidenceLowExtreme', 'El +{{change}}% parece impresionante pero con solo {{weeks}} semanas de datos, es ruido estad\u00EDstico.', { change: change.toFixed(0), weeks }),
       type: 'warning'
     };
   }
@@ -284,7 +285,7 @@ function getConfidenceLine(p: ProductTrend): BriefPart | null {
   // Low confidence general
   if (p.confidence === 'LOW') {
     return {
-      text: `Confianza BAJA (solo ${weeks} semanas de datos). No actuar basándose únicamente en esta tendencia.`,
+      text: i18next.t('brief.product.confidenceLow', 'Confianza BAJA (solo {{weeks}} semanas de datos). No actuar bas\u00E1ndose \u00FAnicamente en esta tendencia.', { weeks }),
       type: 'warning'
     };
   }
@@ -292,7 +293,7 @@ function getConfidenceLine(p: ProductTrend): BriefPart | null {
   // Medium confidence with extreme change
   if (p.confidence === 'MEDIUM' && change > 50) {
     return {
-      text: `Confianza MEDIA — el cambio parece grande pero necesita más datos para confirmar.`,
+      text: i18next.t('brief.product.confidenceMedium', 'Confianza MEDIA \u2014 el cambio parece grande pero necesita m\u00E1s datos para confirmar.'),
       type: 'normal'
     };
   }
@@ -300,7 +301,7 @@ function getConfidenceLine(p: ProductTrend): BriefPart | null {
   // High confidence with erratic sales (high CV)
   if (p.cv && p.cv > 1.0) {
     return {
-      text: 'Ventas muy erráticas — difícil predecir. Mantener stock de seguridad extra.',
+      text: i18next.t('brief.product.erraticSales', 'Ventas muy err\u00E1ticas \u2014 dif\u00EDcil predecir. Mantener stock de seguridad extra.'),
       type: 'warning'
     };
   }
@@ -319,7 +320,7 @@ function getProductDangerLine(p: ProductTrend): BriefPart | null {
   // Oversupply risk
   if (days && days > 60 && p.trend_direction === 'DOWN' && p.trend_strength !== 'WEAK') {
     return {
-      text: 'Stock alto + demanda bajando = riesgo de sobre-inventario.',
+      text: i18next.t('brief.product.dangerOversupply', 'Stock alto + demanda bajando = riesgo de sobre-inventario.'),
       type: 'warning'
     };
   }
@@ -327,7 +328,7 @@ function getProductDangerLine(p: ProductTrend): BriefPart | null {
   // Stockout imminent
   if (days && days < 14 && p.trend_direction === 'UP') {
     return {
-      text: 'Stock bajo + demanda subiendo = riesgo de quiebre.',
+      text: i18next.t('brief.product.dangerStockout', 'Stock bajo + demanda subiendo = riesgo de quiebre.'),
       type: 'critical'
     };
   }
@@ -344,51 +345,51 @@ function getProductRecommendation(p: ProductTrend): { recommendation: string; re
 
   // Critical stock
   if (days !== null && days < 7) {
-    return { recommendation: 'Pedir URGENTE.', recommendationType: 'urgent' };
+    return { recommendation: i18next.t('brief.product.recCritical', 'Pedir URGENTE.'), recommendationType: 'urgent' };
   }
 
   // Urgent stock
   if (days !== null && days < 14) {
-    return { recommendation: 'Incluir en próximo pedido.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.product.recUrgent', 'Incluir en pr\u00F3ximo pedido.'), recommendationType: 'action' };
   }
 
   // Low stock + trending up
   if (days !== null && days < 30 && p.trend_direction === 'UP') {
-    return { recommendation: 'Pedir pronto, demanda subiendo.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.product.recLowUp', 'Pedir pronto, demanda subiendo.'), recommendationType: 'action' };
   }
 
   // Low stock + trending down
   if (days !== null && days < 30 && p.trend_direction === 'DOWN') {
-    return { recommendation: 'Esperar, demanda bajando.', recommendationType: 'monitor' };
+    return { recommendation: i18next.t('brief.product.recLowDown', 'Esperar, demanda bajando.'), recommendationType: 'monitor' };
   }
 
   // High stock + declining
   if (days !== null && days > 60 && p.trend_direction === 'DOWN') {
-    return { recommendation: 'No pedir más. Evaluar reducir precio.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.product.recHighDown', 'No pedir m\u00E1s. Evaluar reducir precio.'), recommendationType: 'action' };
   }
 
   // High stock + rising
   if (days !== null && days > 60 && p.trend_direction === 'UP') {
-    return { recommendation: 'Mantener, stock se moverá.', recommendationType: 'maintain' };
+    return { recommendation: i18next.t('brief.product.recHighUp', 'Mantener, stock se mover\u00E1.'), recommendationType: 'maintain' };
   }
 
   // Good stock + rising + high confidence
   if (days !== null && days >= 30 && days <= 60 && p.trend_direction === 'UP' && p.confidence === 'HIGH') {
-    return { recommendation: 'Considerar aumentar próximo pedido.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.product.recGoodUp', 'Considerar aumentar pr\u00F3ximo pedido.'), recommendationType: 'action' };
   }
 
   // Low confidence
   if (p.confidence === 'LOW') {
-    return { recommendation: 'Monitorear. Más datos necesarios.', recommendationType: 'monitor' };
+    return { recommendation: i18next.t('brief.product.recLowConfidence', 'Monitorear. M\u00E1s datos necesarios.'), recommendationType: 'monitor' };
   }
 
   // No velocity but has stock
   if ((!p.daily_velocity_m2 || p.daily_velocity_m2 === 0) && p.current_stock_m2 && p.current_stock_m2 > 0) {
-    return { recommendation: 'Evaluar promoción o descontinuar.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.product.recNoVelocity', 'Evaluar promoci\u00F3n o descontinuar.'), recommendationType: 'action' };
   }
 
   // Default
-  return { recommendation: 'Mantener nivel actual.', recommendationType: 'maintain' };
+  return { recommendation: i18next.t('brief.product.recDefault', 'Mantener nivel actual.'), recommendationType: 'maintain' };
 }
 
 
@@ -436,21 +437,21 @@ function getCustomerOpeningLine(c: CustomerTrend): BriefPart {
   // Tier A combinations
   if (tier === 'A' && status === 'ACTIVE') {
     return {
-      text: `${name} — Cliente VIP activo. Top 20% por volumen, comprando regularmente.`,
+      text: i18next.t('brief.customer.openingTierAActive', '{{name}} \u2014 Cliente VIP activo. Top 20% por volumen, comprando regularmente.', { name }),
       type: 'positive'
     };
   }
 
   if (tier === 'A' && status === 'COOLING') {
     return {
-      text: `${name} — Cliente VIP enfriándose. Hace ${days} días sin comprar.`,
+      text: i18next.t('brief.customer.openingTierACooling', '{{name}} \u2014 Cliente VIP enfri\u00E1ndose. Hace {{days}} d\u00EDas sin comprar.', { name, days }),
       type: 'warning'
     };
   }
 
   if (tier === 'A' && status === 'DORMANT') {
     return {
-      text: `${name} — **ALERTA: Cliente VIP dormido.** ${days} días sin actividad. Contactar urgente.`,
+      text: i18next.t('brief.customer.openingTierADormant', '{{name}} \u2014 **ALERTA: Cliente VIP dormido.** {{days}} d\u00EDas sin actividad. Contactar urgente.', { name, days }),
       type: 'critical'
     };
   }
@@ -458,21 +459,21 @@ function getCustomerOpeningLine(c: CustomerTrend): BriefPart {
   // Tier B combinations
   if (tier === 'B' && status === 'ACTIVE') {
     return {
-      text: `${name} — Cliente regular activo. Buen volumen, comprando normalmente.`,
+      text: i18next.t('brief.customer.openingTierBActive', '{{name}} \u2014 Cliente regular activo. Buen volumen, comprando normalmente.', { name }),
       type: 'positive'
     };
   }
 
   if (tier === 'B' && status === 'COOLING') {
     return {
-      text: `${name} — Cliente regular enfriándose. Última compra hace ${days} días.`,
+      text: i18next.t('brief.customer.openingTierBCooling', '{{name}} \u2014 Cliente regular enfri\u00E1ndose. \u00DAltima compra hace {{days}} d\u00EDas.', { name, days }),
       type: 'warning'
     };
   }
 
   if (tier === 'B' && status === 'DORMANT') {
     return {
-      text: `${name} — Cliente regular dormido. Sin actividad hace ${days} días.`,
+      text: i18next.t('brief.customer.openingTierBDormant', '{{name}} \u2014 Cliente regular dormido. Sin actividad hace {{days}} d\u00EDas.', { name, days }),
       type: 'normal'
     };
   }
@@ -481,28 +482,33 @@ function getCustomerOpeningLine(c: CustomerTrend): BriefPart {
   if (tier === 'C' && status === 'ACTIVE' && change && change > 25) {
     const revenueCtx = formatRevenueContext(c.total_revenue_usd, change);
     return {
-      text: `${name} — Cliente pequeño pero **creciendo** (+${change.toFixed(0)}%)${revenueCtx}. Potencial de desarrollo.`,
+      text: i18next.t('brief.customer.openingTierCGrowing', '{{name}} \u2014 Cliente peque\u00F1o pero **creciendo** (+{{change}}%){{revenueCtx}}. Potencial de desarrollo.', { name, change: change.toFixed(0), revenueCtx }),
       type: 'positive'
     };
   }
 
   if (tier === 'C' && status === 'ACTIVE') {
     return {
-      text: `${name} — Cliente pequeño activo.`,
+      text: i18next.t('brief.customer.openingTierCActive', '{{name}} \u2014 Cliente peque\u00F1o activo.', { name }),
       type: 'normal'
     };
   }
 
   if (tier === 'C' && status === 'DORMANT') {
     return {
-      text: `${name} — Cliente pequeño inactivo.`,
+      text: i18next.t('brief.customer.openingTierCDormant', '{{name}} \u2014 Cliente peque\u00F1o inactivo.', { name }),
       type: 'normal'
     };
   }
 
   // Default
+  const statusLabel = status === 'ACTIVE'
+    ? i18next.t('brief.customer.statusActive', 'activo')
+    : status === 'COOLING'
+      ? i18next.t('brief.customer.statusCooling', 'enfri\u00E1ndose')
+      : i18next.t('brief.customer.statusDormant', 'dormido');
   return {
-    text: `${name} — Cliente ${tier}, ${status === 'ACTIVE' ? 'activo' : status === 'COOLING' ? 'enfriándose' : 'dormido'}.`,
+    text: i18next.t('brief.customer.openingDefault', '{{name}} \u2014 Cliente {{tier}}, {{statusLabel}}.', { name, tier, statusLabel }),
     type: 'normal'
   };
 }
@@ -519,11 +525,11 @@ function getCustomerVolumeLine(c: CustomerTrend): BriefPart {
 
   // Volume classification
   if (volume > 10000) {
-    text = `Ha comprado ${volume.toLocaleString()} m² en total — cliente de alto volumen.`;
+    text = i18next.t('brief.customer.volumeHigh', 'Ha comprado {{volume}} m\u00B2 en total \u2014 cliente de alto volumen.', { volume: volume.toLocaleString() });
   } else if (volume > 1000) {
-    text = `${volume.toLocaleString()} m² comprados históricamente.`;
+    text = i18next.t('brief.customer.volumeMedium', '{{volume}} m\u00B2 comprados hist\u00F3ricamente.', { volume: volume.toLocaleString() });
   } else {
-    text = `Cliente de bajo volumen (${volume.toLocaleString()} m² total).`;
+    text = i18next.t('brief.customer.volumeLow', 'Cliente de bajo volumen ({{volume}} m\u00B2 total).', { volume: volume.toLocaleString() });
   }
 
   // Add revenue if significant
@@ -545,20 +551,20 @@ function getBuyingPatternLine(c: CustomerTrend): BriefPart {
   // Not enough orders for pattern
   if (orders < 3) {
     return {
-      text: 'Muy pocas compras para detectar patrón.',
+      text: i18next.t('brief.customer.tooFewOrders', 'Muy pocas compras para detectar patr\u00F3n.'),
       type: 'normal'
     };
   }
 
-  let text = `${orders} pedidos realizados.`;
+  let text = i18next.t('brief.customer.orderCount', '{{orders}} pedidos realizados.', { orders });
 
   // Order size
   if (avgOrder > 200) {
-    text += ` Pedidos grandes (promedio ${avgOrder.toFixed(0)} m²).`;
+    text += ' ' + i18next.t('brief.customer.ordersLarge', 'Pedidos grandes (promedio {{avg}} m\u00B2).', { avg: avgOrder.toFixed(0) });
   } else if (avgOrder < 50) {
-    text += ` Pedidos pequeños (promedio ${avgOrder.toFixed(0)} m²).`;
+    text += ' ' + i18next.t('brief.customer.ordersSmall', 'Pedidos peque\u00F1os (promedio {{avg}} m\u00B2).', { avg: avgOrder.toFixed(0) });
   } else {
-    text += ` Pedidos medianos (promedio ${avgOrder.toFixed(0)} m²).`;
+    text += ' ' + i18next.t('brief.customer.ordersMedium', 'Pedidos medianos (promedio {{avg}} m\u00B2).', { avg: avgOrder.toFixed(0) });
   }
 
   return { text, type: 'normal' };
@@ -582,7 +588,7 @@ function getProductMixLine(c: CustomerTrend): BriefPart | null {
   // Single product customer
   if (topProducts.length === 1) {
     return {
-      text: `Solo compra ${top.sku}. Oportunidad de venta cruzada.`,
+      text: i18next.t('brief.customer.mixSingle', 'Solo compra {{sku}}. Oportunidad de venta cruzada.', { sku: top.sku }),
       type: 'normal'
     };
   }
@@ -590,7 +596,7 @@ function getProductMixLine(c: CustomerTrend): BriefPart | null {
   // Concentrated
   if (topPct > 50) {
     return {
-      text: `Compra principalmente ${top.sku} (${topPct.toFixed(0)}% de sus pedidos).`,
+      text: i18next.t('brief.customer.mixConcentrated', 'Compra principalmente {{sku}} ({{pct}}% de sus pedidos).', { sku: top.sku, pct: topPct.toFixed(0) }),
       type: 'normal'
     };
   }
@@ -598,7 +604,7 @@ function getProductMixLine(c: CustomerTrend): BriefPart | null {
   // Diversified
   const topNames = topProducts.slice(0, 3).map(p => p.sku).join(', ');
   return {
-    text: `Compra variado: ${topNames}.`,
+    text: i18next.t('brief.customer.mixDiversified', 'Compra variado: {{products}}.', { products: topNames }),
     type: 'normal'
   };
 }
@@ -614,41 +620,41 @@ function getCustomerRecommendation(c: CustomerTrend): { recommendation: string; 
 
   // Tier A + Dormant
   if (tier === 'A' && status === 'DORMANT') {
-    return { recommendation: 'Contactar URGENTE. Preguntar qué pasó.', recommendationType: 'urgent' };
+    return { recommendation: i18next.t('brief.customer.recTierADormant', 'Contactar URGENTE. Preguntar qu\u00E9 pas\u00F3.'), recommendationType: 'urgent' };
   }
 
   // Tier A + Cooling
   if (tier === 'A' && status === 'COOLING') {
-    return { recommendation: 'Llamar para seguimiento.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.recTierACooling', 'Llamar para seguimiento.'), recommendationType: 'action' };
   }
 
   // Tier A + Active + Declining
   if (tier === 'A' && status === 'ACTIVE' && change < -25) {
-    return { recommendation: 'Investigar por qué está comprando menos.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.recTierADeclining', 'Investigar por qu\u00E9 est\u00E1 comprando menos.'), recommendationType: 'action' };
   }
 
   // Tier B + Cooling
   if (tier === 'B' && status === 'COOLING') {
-    return { recommendation: 'Enviar recordatorio o promoción.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.recTierBCooling', 'Enviar recordatorio o promoci\u00F3n.'), recommendationType: 'action' };
   }
 
   // Tier B + Dormant
   if (tier === 'B' && status === 'DORMANT') {
-    return { recommendation: 'Campaña de reactivación.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.recTierBDormant', 'Campa\u00F1a de reactivaci\u00F3n.'), recommendationType: 'action' };
   }
 
   // Tier C + Growing
   if (tier === 'C' && status === 'ACTIVE' && change > 25) {
-    return { recommendation: 'Desarrollar relación, potencial de crecimiento.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.recTierCGrowing', 'Desarrollar relaci\u00F3n, potencial de crecimiento.'), recommendationType: 'action' };
   }
 
   // Active + Growing
   if (status === 'ACTIVE' && change > 10) {
-    return { recommendation: 'Mantener excelente servicio.', recommendationType: 'maintain' };
+    return { recommendation: i18next.t('brief.customer.recActiveGrowing', 'Mantener excelente servicio.'), recommendationType: 'maintain' };
   }
 
   // Default
-  return { recommendation: 'Seguimiento normal.', recommendationType: 'maintain' };
+  return { recommendation: i18next.t('brief.customer.recDefault', 'Seguimiento normal.'), recommendationType: 'maintain' };
 }
 
 // ============================================================
@@ -669,7 +675,7 @@ function getPatternOpeningLine(c: CustomerTrend): BriefPart {
   // CLOCKWORK customer that's overdue
   if (predictability === 'CLOCKWORK' && daysOverdue > 14) {
     return {
-      text: `${name} — Cliente muy regular (cada ${gapDays} días) pero **${daysOverdue} días atrasado**. Inusual.`,
+      text: i18next.t('brief.customer.patternClockworkOverdue', '{{name}} \u2014 Cliente muy regular (cada {{gapDays}} d\u00EDas) pero **{{daysOverdue}} d\u00EDas atrasado**. Inusual.', { name, gapDays, daysOverdue }),
       type: 'critical'
     };
   }
@@ -677,7 +683,7 @@ function getPatternOpeningLine(c: CustomerTrend): BriefPart {
   // CLOCKWORK customer on time
   if (predictability === 'CLOCKWORK') {
     return {
-      text: `${name} — Compra como reloj cada ${gapDays} días. Cliente predecible y valioso.`,
+      text: i18next.t('brief.customer.patternClockwork', '{{name}} \u2014 Compra como reloj cada {{gapDays}} d\u00EDas. Cliente predecible y valioso.', { name, gapDays }),
       type: 'positive'
     };
   }
@@ -685,7 +691,7 @@ function getPatternOpeningLine(c: CustomerTrend): BriefPart {
   // PREDICTABLE customer that's overdue
   if (predictability === 'PREDICTABLE' && daysOverdue > 30) {
     return {
-      text: `${name} — Normalmente compra cada ${gapDays} días. Ya van ${daysOverdue} días de atraso.`,
+      text: i18next.t('brief.customer.patternPredictableOverdue', '{{name}} \u2014 Normalmente compra cada {{gapDays}} d\u00EDas. Ya van {{daysOverdue}} d\u00EDas de atraso.', { name, gapDays, daysOverdue }),
       type: 'warning'
     };
   }
@@ -693,7 +699,7 @@ function getPatternOpeningLine(c: CustomerTrend): BriefPart {
   // PREDICTABLE customer
   if (predictability === 'PREDICTABLE') {
     return {
-      text: `${name} — Cliente predecible, compra aproximadamente cada ${gapDays} días.`,
+      text: i18next.t('brief.customer.patternPredictable', '{{name}} \u2014 Cliente predecible, compra aproximadamente cada {{gapDays}} d\u00EDas.', { name, gapDays }),
       type: 'positive'
     };
   }
@@ -701,7 +707,7 @@ function getPatternOpeningLine(c: CustomerTrend): BriefPart {
   // MODERATE predictability with severe overdue
   if (predictability === 'MODERATE' && daysOverdue > 60) {
     return {
-      text: `${name} — Patrón moderado (cada ~${gapDays} días). **${daysOverdue} días sin comprar**.`,
+      text: i18next.t('brief.customer.patternModerateOverdue', '{{name}} \u2014 Patr\u00F3n moderado (cada ~{{gapDays}} d\u00EDas). **{{daysOverdue}} d\u00EDas sin comprar**.', { name, gapDays, daysOverdue }),
       type: 'warning'
     };
   }
@@ -709,7 +715,7 @@ function getPatternOpeningLine(c: CustomerTrend): BriefPart {
   // ERRATIC customer with severe overdue
   if (predictability === 'ERRATIC' && daysOverdue > 90) {
     return {
-      text: `${name} — Patrón errático pero ${daysOverdue} días es mucho tiempo sin comprar.`,
+      text: i18next.t('brief.customer.patternErraticOverdue', '{{name}} \u2014 Patr\u00F3n err\u00E1tico pero {{daysOverdue}} d\u00EDas es mucho tiempo sin comprar.', { name, daysOverdue }),
       type: 'warning'
     };
   }
@@ -717,7 +723,7 @@ function getPatternOpeningLine(c: CustomerTrend): BriefPart {
   // ERRATIC customer (don't worry too much about overdue)
   if (predictability === 'ERRATIC') {
     return {
-      text: `${name} — Compras muy irregulares (promedio ${gapDays} días pero con mucha variación).`,
+      text: i18next.t('brief.customer.patternErratic', '{{name}} \u2014 Compras muy irregulares (promedio {{gapDays}} d\u00EDas pero con mucha variaci\u00F3n).', { name, gapDays }),
       type: 'normal'
     };
   }
@@ -742,7 +748,7 @@ function getPatternWarningLine(c: CustomerTrend): BriefPart | null {
   // Critical: CLOCKWORK or PREDICTABLE customer severely overdue
   if ((predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE') && daysOverdue > 60) {
     return {
-      text: `**ALERTA:** Este cliente es muy regular pero lleva ${daysOverdue} días sin comprar. Posible pérdida.`,
+      text: i18next.t('brief.customer.warningCriticalOverdue', '**ALERTA:** Este cliente es muy regular pero lleva {{daysOverdue}} d\u00EDas sin comprar. Posible p\u00E9rdida.', { daysOverdue }),
       type: 'critical'
     };
   }
@@ -750,7 +756,7 @@ function getPatternWarningLine(c: CustomerTrend): BriefPart | null {
   // Warning: Any customer 180+ days overdue
   if (daysOverdue > 180) {
     return {
-      text: `Sin compras hace ${daysOverdue} días. Posiblemente perdido.`,
+      text: i18next.t('brief.customer.warningPossiblyLost', 'Sin compras hace {{daysOverdue}} d\u00EDas. Posiblemente perdido.', { daysOverdue }),
       type: 'critical'
     };
   }
@@ -758,7 +764,7 @@ function getPatternWarningLine(c: CustomerTrend): BriefPart | null {
   // Warning: Good predictability but moderately overdue
   if ((predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE') && daysOverdue > 14) {
     return {
-      text: `Debería haber comprado hace ${daysOverdue} días según su patrón.`,
+      text: i18next.t('brief.customer.warningOverduePattern', 'Deber\u00EDa haber comprado hace {{daysOverdue}} d\u00EDas seg\u00FAn su patr\u00F3n.', { daysOverdue }),
       type: 'warning'
     };
   }
@@ -766,7 +772,7 @@ function getPatternWarningLine(c: CustomerTrend): BriefPart | null {
   // Moderate warning for moderate predictability
   if (predictability === 'MODERATE' && daysOverdue > 30) {
     return {
-      text: `${daysOverdue} días desde última compra, más de lo usual.`,
+      text: i18next.t('brief.customer.warningModerateOverdue', '{{daysOverdue}} d\u00EDas desde \u00FAltima compra, m\u00E1s de lo usual.', { daysOverdue }),
       type: 'warning'
     };
   }
@@ -787,22 +793,22 @@ function getPatternRecommendation(c: CustomerTrend): { recommendation: string; r
 
   // CRITICAL: High-value + highly predictable + severely overdue
   if (tier === 'A' && (predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE') && daysOverdue > 30) {
-    return { recommendation: 'Llamar HOY. Cliente valioso con patrón roto.', recommendationType: 'urgent' };
+    return { recommendation: i18next.t('brief.customer.patRecCritical', 'Llamar HOY. Cliente valioso con patr\u00F3n roto.'), recommendationType: 'urgent' };
   }
 
   // URGENT: Any CLOCKWORK customer overdue
   if (predictability === 'CLOCKWORK' && daysOverdue > 14) {
-    return { recommendation: 'Contactar pronto. Cliente muy regular atrasado.', recommendationType: 'urgent' };
+    return { recommendation: i18next.t('brief.customer.patRecClockworkOverdue', 'Contactar pronto. Cliente muy regular atrasado.'), recommendationType: 'urgent' };
   }
 
   // URGENT: Tier A severely overdue
   if (tier === 'A' && daysOverdue > 60) {
-    return { recommendation: 'Contactar URGENTE. Cliente VIP muy atrasado.', recommendationType: 'urgent' };
+    return { recommendation: i18next.t('brief.customer.patRecTierAOverdue', 'Contactar URGENTE. Cliente VIP muy atrasado.'), recommendationType: 'urgent' };
   }
 
   // ACTION: Predictable customer moderately overdue
   if (predictability === 'PREDICTABLE' && daysOverdue > 14) {
-    return { recommendation: 'Enviar recordatorio, se pasó de su fecha esperada.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.patRecPredictableOverdue', 'Enviar recordatorio, se pas\u00F3 de su fecha esperada.'), recommendationType: 'action' };
   }
 
   // ACTION: Expected date coming soon
@@ -812,18 +818,18 @@ function getPatternRecommendation(c: CustomerTrend): { recommendation: string; r
     const daysUntil = Math.floor((expected.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
     if (daysUntil >= 0 && daysUntil <= 7 && (predictability === 'CLOCKWORK' || predictability === 'PREDICTABLE')) {
-      return { recommendation: 'Contactar esta semana, debería comprar pronto.', recommendationType: 'action' };
+      return { recommendation: i18next.t('brief.customer.patRecExpectedSoon', 'Contactar esta semana, deber\u00EDa comprar pronto.'), recommendationType: 'action' };
     }
   }
 
   // Tier B moderately overdue
   if (tier === 'B' && daysOverdue > 45) {
-    return { recommendation: 'Campaña de reactivación.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.patRecTierBOverdue', 'Campa\u00F1a de reactivaci\u00F3n.'), recommendationType: 'action' };
   }
 
   // Possibly lost customer
   if (daysOverdue > 180) {
-    return { recommendation: 'Posiblemente perdido. Último intento de contacto.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.customer.patRecLost', 'Posiblemente perdido. \u00DAltimo intento de contacto.'), recommendationType: 'action' };
   }
 
   // Fall back to existing recommendation logic
@@ -866,7 +872,7 @@ function getCountryOpeningLine(c: CountryTrend): BriefPart {
   // Dominant + Growing
   if (pct > 80 && change > 10) {
     return {
-      text: `${name} es tu mercado principal (${pct.toFixed(0)}%) y sigue creciendo (+${change.toFixed(0)}%).`,
+      text: i18next.t('brief.country.openingDominantGrowing', '{{name}} es tu mercado principal ({{pct}}%) y sigue creciendo (+{{change}}%).', { name, pct: pct.toFixed(0), change: change.toFixed(0) }),
       type: 'positive'
     };
   }
@@ -874,7 +880,7 @@ function getCountryOpeningLine(c: CountryTrend): BriefPart {
   // Dominant + Stable
   if (pct > 80 && change >= -10 && change <= 10) {
     return {
-      text: `${name} es tu mercado principal (${pct.toFixed(0)}%), manteniéndose estable.`,
+      text: i18next.t('brief.country.openingDominantStable', '{{name}} es tu mercado principal ({{pct}}%), manteni\u00E9ndose estable.', { name, pct: pct.toFixed(0) }),
       type: 'normal'
     };
   }
@@ -882,7 +888,7 @@ function getCountryOpeningLine(c: CountryTrend): BriefPart {
   // Dominant + Declining
   if (pct > 80 && change < -10) {
     return {
-      text: `${name} es tu mercado principal (${pct.toFixed(0)}%) pero está bajando (-${Math.abs(change).toFixed(0)}%).`,
+      text: i18next.t('brief.country.openingDominantDeclining', '{{name}} es tu mercado principal ({{pct}}%) pero est\u00E1 bajando (-{{change}}%).', { name, pct: pct.toFixed(0), change: Math.abs(change).toFixed(0) }),
       type: 'warning'
     };
   }
@@ -890,7 +896,7 @@ function getCountryOpeningLine(c: CountryTrend): BriefPart {
   // Secondary + Growing
   if (pct >= 10 && pct <= 50 && change > 20) {
     return {
-      text: `${name} está creciendo fuerte (+${change.toFixed(0)}%). Mercado en desarrollo.`,
+      text: i18next.t('brief.country.openingSecondaryGrowing', '{{name}} est\u00E1 creciendo fuerte (+{{change}}%). Mercado en desarrollo.', { name, change: change.toFixed(0) }),
       type: 'positive'
     };
   }
@@ -898,7 +904,7 @@ function getCountryOpeningLine(c: CountryTrend): BriefPart {
   // Secondary + Stable
   if (pct >= 10 && pct <= 50) {
     return {
-      text: `${name} representa ${pct.toFixed(0)}% del negocio.`,
+      text: i18next.t('brief.country.openingSecondary', '{{name}} representa {{pct}}% del negocio.', { name, pct: pct.toFixed(0) }),
       type: 'normal'
     };
   }
@@ -906,7 +912,7 @@ function getCountryOpeningLine(c: CountryTrend): BriefPart {
   // Minor + Growing fast
   if (pct < 10 && change > 100) {
     return {
-      text: `${name} es mercado nuevo, apenas comenzando.`,
+      text: i18next.t('brief.country.openingMinorNew', '{{name}} es mercado nuevo, apenas comenzando.', { name }),
       type: 'normal'
     };
   }
@@ -914,14 +920,14 @@ function getCountryOpeningLine(c: CountryTrend): BriefPart {
   // Minor market
   if (pct < 10) {
     return {
-      text: `${name} es un mercado pequeño (${pct.toFixed(0)}%).`,
+      text: i18next.t('brief.country.openingMinor', '{{name}} es un mercado peque\u00F1o ({{pct}}%).', { name, pct: pct.toFixed(0) }),
       type: 'normal'
     };
   }
 
   // Default
   return {
-    text: `${name} representa ${pct.toFixed(0)}% del negocio.`,
+    text: i18next.t('brief.country.openingDefault', '{{name}} representa {{pct}}% del negocio.', { name, pct: pct.toFixed(0) }),
     type: 'normal'
   };
 }
@@ -934,22 +940,22 @@ function getCustomerCountLine(c: CountryTrend): BriefPart {
   const total = c.customer_count || 0;
 
   if (total === 0) {
-    return { text: 'Sin clientes registrados.', type: 'warning' };
+    return { text: i18next.t('brief.country.noCustomers', 'Sin clientes registrados.'), type: 'warning' };
   }
 
   if (total === 1) {
-    return { text: '1 cliente — alto riesgo de concentración.', type: 'warning' };
+    return { text: i18next.t('brief.country.oneCustomer', '1 cliente \u2014 alto riesgo de concentraci\u00F3n.'), type: 'warning' };
   }
 
   if (total <= 3) {
-    return { text: `Solo ${total} clientes — base pequeña.`, type: 'normal' };
+    return { text: i18next.t('brief.country.fewCustomers', 'Solo {{total}} clientes \u2014 base peque\u00F1a.', { total }), type: 'normal' };
   }
 
   if (total >= 10) {
-    return { text: `${total} clientes — base diversificada.`, type: 'positive' };
+    return { text: i18next.t('brief.country.manyCustomers', '{{total}} clientes \u2014 base diversificada.', { total }), type: 'positive' };
   }
 
-  return { text: `${total} clientes activos.`, type: 'normal' };
+  return { text: i18next.t('brief.country.activeCustomers', '{{total}} clientes activos.', { total }), type: 'normal' };
 }
 
 // ============================================================
@@ -965,7 +971,7 @@ function getTopCustomersLine(c: CountryTrend): BriefPart | null {
 
   const names = topCustomers.slice(0, 3).join(', ');
   return {
-    text: `Principales: ${names}.`,
+    text: i18next.t('brief.country.topCustomers', 'Principales: {{names}}.', { names }),
     type: 'normal'
   };
 }
@@ -981,34 +987,34 @@ function getCountryRecommendation(c: CountryTrend): { recommendation: string; re
 
   // Dominant + Declining
   if (pct > 80 && change < -10) {
-    return { recommendation: `Investigar qué está pasando en ${c.country_name}.`, recommendationType: 'urgent' };
+    return { recommendation: i18next.t('brief.country.recDominantDeclining', 'Investigar qu\u00E9 est\u00E1 pasando en {{country}}.', { country: c.country_name }), recommendationType: 'urgent' };
   }
 
   // Secondary + Growing
   if (pct >= 10 && pct <= 50 && change > 20) {
-    return { recommendation: 'Invertir en este mercado, está creciendo.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.country.recSecondaryGrowing', 'Invertir en este mercado, est\u00E1 creciendo.'), recommendationType: 'action' };
   }
 
   // Single customer dependency
   if (customers === 1) {
-    return { recommendation: 'Buscar más clientes para diversificar.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.country.recSingleCustomer', 'Buscar m\u00E1s clientes para diversificar.'), recommendationType: 'action' };
   }
 
   // Few customers
   if (customers <= 3 && pct >= 10) {
-    return { recommendation: 'Desarrollar más clientes para reducir riesgo.', recommendationType: 'action' };
+    return { recommendation: i18next.t('brief.country.recFewCustomers', 'Desarrollar m\u00E1s clientes para reducir riesgo.'), recommendationType: 'action' };
   }
 
   // Small but growing
   if (pct < 10 && change > 50) {
-    return { recommendation: 'Mercado emergente, considerar inversión.', recommendationType: 'monitor' };
+    return { recommendation: i18next.t('brief.country.recEmerging', 'Mercado emergente, considerar inversi\u00F3n.'), recommendationType: 'monitor' };
   }
 
   // Healthy + Growing
   if (customers >= 5 && change > 0) {
-    return { recommendation: 'Mantener estrategia actual.', recommendationType: 'maintain' };
+    return { recommendation: i18next.t('brief.country.recHealthy', 'Mantener estrategia actual.'), recommendationType: 'maintain' };
   }
 
   // Default
-  return { recommendation: 'Monitorear desempeño.', recommendationType: 'monitor' };
+  return { recommendation: i18next.t('brief.country.recDefault', 'Monitorear desempe\u00F1o.'), recommendationType: 'monitor' };
 }

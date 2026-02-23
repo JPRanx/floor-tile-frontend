@@ -249,10 +249,10 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                   <option key={boat.boat_id} value={boat.boat_id}>
                     {boat.vessel_name} — {t('dataHub.inTransit.departure', 'Sale')} {boat.departure_date}
                     {boat.carrier ? ` (${boat.carrier})` : ''}
-                    {boat.draft_status === 'drafting' ? ` — Borrador (${boat.draft_pallets ?? 0} pal.)` : ''}
-                    {boat.draft_status === 'action_needed' ? ' — Requiere revisión' : ''}
-                    {boat.draft_status === 'ordered' ? ' — Ya pedido' : ''}
-                    {boat.draft_status === 'confirmed' ? ' — Confirmado' : ''}
+                    {boat.draft_status === 'drafting' ? ` — ${t('planning.draftStatus.drafting', 'Borrador')} (${boat.draft_pallets ?? 0} pal.)` : ''}
+                    {boat.draft_status === 'action_needed' ? ` — ${t('planning.draftStatus.action_needed', 'Acción requerida')}` : ''}
+                    {boat.draft_status === 'ordered' ? ` — ${t('planning.draftStatus.ordered', 'Pedido enviado')}` : ''}
+                    {boat.draft_status === 'confirmed' ? ` — ${t('planning.draftStatus.confirmed', 'Confirmado')}` : ''}
                     {!boat.draft_status ? ` — ${t('dataHub.inTransit.noDraft', 'Sin borrador')}` : ''}
                     {boat.is_suggested ? ` ★` : ''}
                   </option>

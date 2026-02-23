@@ -315,7 +315,7 @@ export function BLAllocationView({
         <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-indigo-400 text-sm font-medium">
-              Modo edici{'\u00F3'}n: Arrastra productos entre BLs para reorganizar
+              {t('blAllocation.editModeHint', 'Modo edición: Arrastra productos entre BLs para reorganizar')}
             </span>
           </div>
           {hasModifications && (
@@ -324,14 +324,14 @@ export function BLAllocationView({
                 onClick={handleReset}
                 className="px-3 py-1.5 text-sm text-slate-400 hover:text-white border border-slate-700/50 rounded-lg transition-colors"
               >
-                Restablecer
+                {t('blAllocation.reset', 'Restablecer')}
               </button>
               <button
                 onClick={handleSaveModified}
                 disabled={saving}
                 className="px-3 py-1.5 text-sm font-medium bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 rounded-lg hover:bg-emerald-600/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? 'Guardando...' : 'Guardar cambios'}
+                {saving ? t('blAllocation.saving', 'Guardando...') : t('blAllocation.saveChanges', 'Guardar cambios')}
               </button>
             </div>
           )}

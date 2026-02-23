@@ -778,13 +778,13 @@ export function OrderBuilder() {
 
       let errorMsg: string;
       if (failedUrl.includes('warehouse-orders')) {
-        errorMsg = 'Error al guardar pedido. Exportación cancelada.';
+        errorMsg = t('orderBuilder.exportErrorSave', 'Error al guardar pedido. Exportación cancelada.');
       } else if (failedUrl.includes('factory-orders')) {
-        errorMsg = 'Error al crear orden de fábrica.';
+        errorMsg = t('orderBuilder.exportErrorFactory', 'Error al crear orden de fábrica.');
       } else if (apiMessage) {
         errorMsg = apiMessage;
       } else {
-        errorMsg = 'Error al exportar. Verifica tu conexión e intenta de nuevo.';
+        errorMsg = t('orderBuilder.exportErrorGeneric', 'Error al exportar. Verifica tu conexión e intenta de nuevo.');
       }
       setExportError(errorMsg);
       setTimeout(() => setExportError(null), 5000);
@@ -1031,7 +1031,7 @@ export function OrderBuilder() {
             <div className="flex flex-wrap gap-x-3 gap-y-1">
               {staleItems.map(item => (
                 <span key={item.type}>
-                  {item.label}: {item.daysAgo === null ? 'Sin datos' : `hace ${item.daysAgo} días`}
+                  {item.label}: {item.daysAgo === null ? t('common.noData', 'Sin datos') : t('common.daysAgoLabel', 'hace {{count}} días', { count: item.daysAgo })}
                 </span>
               ))}
             </div>

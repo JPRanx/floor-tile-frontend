@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { dataHubApi } from '../requests/dataHub';
 import type { UnfulfilledDemandPreview, UnfulfilledDemandResponse, UnfulfilledDemandModification } from '../requests/dataHub';
 import { LoadingSpinner } from './LoadingSpinner';
@@ -20,6 +21,7 @@ const columns: EditableColumn[] = [
 ];
 
 export function UnfulfilledDemandCard({ onUploadSuccess }: Props) {
+  const { t } = useTranslation();
   const [dragOver, setDragOver] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
@@ -184,8 +186,8 @@ export function UnfulfilledDemandCard({ onUploadSuccess }: Props) {
     <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h3 className="font-semibold text-gray-900">Productos Faltantes</h3>
-          <p className="text-sm text-gray-500">Demanda no satisfecha por agotamiento</p>
+          <h3 className="font-semibold text-gray-900">{t('unfulfilledDemand.title', 'Productos Faltantes')}</h3>
+          <p className="text-sm text-gray-500">{t('unfulfilledDemand.subtitle', 'Demanda no satisfecha por agotamiento')}</p>
         </div>
         <span className="text-2xl">{'\u26A0\uFE0F'}</span>
       </div>
