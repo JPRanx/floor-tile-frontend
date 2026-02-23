@@ -655,6 +655,9 @@ export interface OrderBuilderResponse {
   // Shipping cost config (for shipping estimate calculations)
   shipping_cost_config?: ShippingCostConfig;
 
+  // Simulation horizon: the date the forward simulation projects stock through
+  simulation_horizon_date?: string;
+
   // V2: Factory-scoped fields (present when factory_id query param is used)
   factory_id?: string;
   factory_name?: string;

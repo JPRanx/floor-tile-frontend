@@ -3,11 +3,17 @@ import type { StabilityForecast } from '../requests/orderBuilder';
 
 interface StabilityForecastCardProps {
   forecast: StabilityForecast;
+  simulationHorizonDate?: string;
   onViewDetails: () => void;
 }
 
-export function StabilityForecastCard({ forecast, onViewDetails }: StabilityForecastCardProps) {
+export function StabilityForecastCard({ forecast, simulationHorizonDate, onViewDetails }: StabilityForecastCardProps) {
   const { t } = useTranslation();
+
+  const formatHorizonDate = (dateStr: string) => {
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
 
   // Get status icon and color
   const getStatusDisplay = () => {
@@ -83,9 +89,17 @@ export function StabilityForecastCard({ forecast, onViewDetails }: StabilityFore
       </div>
 
       {/* Status Message */}
-      <p className="text-sm text-slate-300 mb-4">
+      <p className="text-sm text-slate-300 mb-2">
         {forecast.status_message}
       </p>
+
+      {/* Simulation Horizon */}
+      {simulationHorizonDate && (
+        <p className="text-xs text-slate-500 mb-4">
+          {t('stabilityForecast.horizon', 'Proyectando inventario hasta')}{' '}
+          <span className="text-slate-400 font-medium">{formatHorizonDate(simulationHorizonDate)}</span>
+        </p>
+      )}
 
       {/* Progress Bar */}
       <div className="mb-4">
