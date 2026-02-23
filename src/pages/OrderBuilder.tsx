@@ -217,10 +217,12 @@ export function OrderBuilder() {
         ...result.consider,
         ...result.well_covered,
         ...result.your_call,
-      ].map((p) => ({
-        ...p,
-        selected_m2: Number(p.full_calculation_breakdown?.selection?.final_selected_m2 ?? p.selected_pallets * M2_PER_PALLET),
-      }));
+      ].map((p) => {
+        const baseM2 = p.selected_pallets * M2_PER_PALLET;
+        const availCap = p.availability_breakdown?.total_available_m2;
+        const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
+        return { ...p, selected_m2: cappedM2 };
+      });
       setProducts(allProducts);
 
       // Auto-select recommended BLs on initial load — backend already used
@@ -270,11 +272,14 @@ export function OrderBuilder() {
         if (p.product_id === productId) {
           const newSelected = !p.is_selected;
           const newPallets = newSelected ? p.coverage_gap_pallets : 0;
+          const baseM2 = newPallets * M2_PER_PALLET;
+          const availCap = p.availability_breakdown?.total_available_m2;
+          const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
           return {
             ...p,
             is_selected: newSelected,
             selected_pallets: newPallets,
-            selected_m2: newPallets * M2_PER_PALLET,
+            selected_m2: cappedM2,
           };
         }
         return p;
@@ -282,15 +287,18 @@ export function OrderBuilder() {
     );
   };
 
-  // Handle pallet input change: pallets → m² = pallets × 134.4
+  // Handle pallet input change: pallets → m² = pallets × 134.4, capped at available
   const handleQuantityChange = (productId: string, pallets: number) => {
     setProducts((prev) =>
       prev.map((p) => {
         if (p.product_id === productId) {
+          const baseM2 = pallets * M2_PER_PALLET;
+          const availCap = p.availability_breakdown?.total_available_m2;
+          const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
           return {
             ...p,
             selected_pallets: pallets,
-            selected_m2: pallets * M2_PER_PALLET,
+            selected_m2: cappedM2,
             is_selected: pallets > 0,
           };
         }
@@ -299,17 +307,19 @@ export function OrderBuilder() {
     );
   };
 
-  // Handle m² input change: pallets = FLOOR(m² / 134.4), preserve exact m²
+  // Handle m² input change: pallets = FLOOR(m² / 134.4), capped at available
   const handleM2Change = (productId: string, m2: number) => {
     setProducts((prev) =>
       prev.map((p) => {
         if (p.product_id === productId) {
-          const pallets = Math.floor(m2 / M2_PER_PALLET);
+          const availCap = p.availability_breakdown?.total_available_m2;
+          const cappedM2 = availCap != null ? Math.min(m2, Number(availCap)) : m2;
+          const pallets = Math.floor(cappedM2 / M2_PER_PALLET);
           return {
             ...p,
             selected_pallets: pallets,
-            selected_m2: m2, // Preserve exact m² value entered by user
-            is_selected: m2 > 0,
+            selected_m2: cappedM2,
+            is_selected: cappedM2 > 0,
           };
         }
         return p;
@@ -366,10 +376,12 @@ export function OrderBuilder() {
         ...result.consider,
         ...result.well_covered,
         ...result.your_call,
-      ].map((p) => ({
-        ...p,
-        selected_m2: Number(p.full_calculation_breakdown?.selection?.final_selected_m2 ?? p.selected_pallets * M2_PER_PALLET),
-      }));
+      ].map((p) => {
+        const baseM2 = p.selected_pallets * M2_PER_PALLET;
+        const availCap = p.availability_breakdown?.total_available_m2;
+        const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
+        return { ...p, selected_m2: cappedM2 };
+      });
       setProducts(allProducts);
       // Clear removed products after successful recalculate
       setRemovedSkus(new Set());
@@ -458,11 +470,14 @@ export function OrderBuilder() {
           setProducts(prev => prev.map(p => {
             const draftItem = draft.items.find(d => d.product_id === p.product_id);
             if (draftItem) {
+              const baseM2 = draftItem.selected_pallets * M2_PER_PALLET;
+              const availCap = p.availability_breakdown?.total_available_m2;
+              const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
               return {
                 ...p,
                 is_selected: (p.factory_available_m2 ?? 0) > 0,
                 selected_pallets: draftItem.selected_pallets,
-                selected_m2: draftItem.selected_pallets * M2_PER_PALLET,
+                selected_m2: cappedM2,
               };
             }
             return p;
@@ -1142,12 +1157,18 @@ export function OrderBuilder() {
                 draftAgeDays={draftAgeDays}
                 onAcceptAll={() => {
                   // Accept all: reset selections to current OB recommendations
-                  const updated = products.map(p => ({
-                    ...p,
-                    selected_pallets: p.coverage_gap_pallets || 0,
-                    selected_m2: (p.coverage_gap_pallets || 0) * M2_PER_PALLET,
-                    is_selected: (p.coverage_gap_pallets || 0) > 0,
-                  }));
+                  const updated = products.map(p => {
+                    const pallets = p.coverage_gap_pallets || 0;
+                    const baseM2 = pallets * M2_PER_PALLET;
+                    const availCap = p.availability_breakdown?.total_available_m2;
+                    const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
+                    return {
+                      ...p,
+                      selected_pallets: pallets,
+                      selected_m2: cappedM2,
+                      is_selected: pallets > 0,
+                    };
+                  });
                   setProducts(updated);
                   setDraftChangedSources([]);
                   setDraftChangesDismissed(true);
