@@ -403,7 +403,7 @@ export function PlanningView() {
           ) : null;
 
           // Title line based on signal type
-          let titleContent: JSX.Element;
+          let titleContent;
           if (!sig.is_overdue) {
             // Normal: unchanged
             titleContent = (
