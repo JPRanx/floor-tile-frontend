@@ -1113,12 +1113,12 @@ export function OrderBuilder() {
             )}
 
             {/* Forward Simulation Indicator */}
-            {products.some(p => p.uses_forward_simulation) && data?.boat.arrival_date && (
+            {products.some(p => p.uses_forward_simulation) && data?.boat.departure_date && (
               <div className="flex items-center gap-2 px-4 py-2 text-xs text-slate-400">
                 <span className="text-blue-400">&#x1F4CA;</span>
                 <span>
-                  {t('orderBuilder.simulatedTo', 'Simulado al {{date}} — stock proyectado considera barcos anteriores', {
-                    date: new Date(data.boat.arrival_date).toLocaleDateString('es', { month: 'short', day: 'numeric' })
+                  {t('orderBuilder.simulatedTo', 'Proyección para zarpe del {{date}} — considera stock comprometido en barcos anteriores', {
+                    date: new Date(data.boat.departure_date).toLocaleDateString('es', { month: 'short', day: 'numeric' })
                   })}
                 </span>
               </div>
