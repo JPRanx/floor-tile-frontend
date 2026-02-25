@@ -324,6 +324,9 @@ export interface OrderBuilderProduct {
   projected_stock_m2: number | null;
   earlier_drafts_consumed_m2: number | null;
   uses_forward_simulation: boolean;
+
+  // Dynamic unit support (m² for tiles, uds for furniture)
+  pallet_conversion_factor?: number;
 }
 
 export interface OrderBuilderBoat {
@@ -659,6 +662,10 @@ export interface OrderBuilderResponse {
 
   // Shipping cost config (for shipping estimate calculations)
   shipping_cost_config?: ShippingCostConfig;
+
+  // Dynamic unit support (m² for tiles, uds for furniture)
+  unit_label?: string;
+  is_unit_based?: boolean;
 
   // V2: Factory-scoped fields (present when factory_id query param is used)
   factory_id?: string;

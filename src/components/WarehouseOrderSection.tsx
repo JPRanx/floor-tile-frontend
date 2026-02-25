@@ -19,6 +19,8 @@ interface WarehouseOrderSectionProps {
   blLoading?: boolean;
   onRemove?: (sku: string) => void;
   removedSkus?: Set<string>;
+  unitLabel?: string;
+  isUnitBased?: boolean;
 }
 
 export function WarehouseOrderSection({
@@ -31,6 +33,8 @@ export function WarehouseOrderSection({
   blLoading,
   onRemove,
   removedSkus = new Set(),
+  unitLabel,
+  isUnitBased,
 }: WarehouseOrderSectionProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
@@ -40,10 +44,14 @@ export function WarehouseOrderSection({
   const withSiesa = products.filter((p) => p.factory_available_m2 > 0);
   const withoutSiesa = products.filter((p) => !p.factory_available_m2 || p.factory_available_m2 <= 0);
 
+  const unitSuffix = isUnitBased ? 'uds' : 'm²';
   const selectedProducts = products.filter((p) => p.is_selected);
   const selectedCount = selectedProducts.length;
   const totalPallets = selectedProducts.reduce((sum, p) => sum + p.selected_pallets, 0);
-  const totalM2 = totalPallets * 134.4;
+  const totalQty = selectedProducts.reduce((sum, p) => {
+    const factor = p.pallet_conversion_factor || 134.4;
+    return sum + p.selected_pallets * factor;
+  }, 0);
 
   // Sort: selected first, then alphabetically by SKU
   const sortProducts = (list: OrderBuilderProductWithM2[]) =>
@@ -107,8 +115,8 @@ export function WarehouseOrderSection({
                 <div className="text-xs text-slate-400">{t('common.containers', 'contenedores')}</div>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-lg font-bold text-emerald-400">{formatM2(totalM2)}</div>
-                <div className="text-xs text-slate-400">m²</div>
+                <div className="text-lg font-bold text-emerald-400">{formatM2(totalQty)}</div>
+                <div className="text-xs text-slate-400">{unitSuffix}</div>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-3">
                 <div className="text-lg font-bold text-slate-300">{summary?.bl_count || 1}</div>
@@ -128,6 +136,8 @@ export function WarehouseOrderSection({
                 onM2Change={onM2Change}
                 onRemove={onRemove}
                 isRemoved={removedSkus.has(product.sku)}
+                unitLabel={unitLabel}
+                isUnitBased={isUnitBased}
               />
             ))}
           </div>
@@ -163,6 +173,8 @@ export function WarehouseOrderSection({
                       onM2Change={onM2Change}
                       onRemove={onRemove}
                       isRemoved={removedSkus.has(product.sku)}
+                      unitLabel={unitLabel}
+                      isUnitBased={isUnitBased}
                     />
                   ))}
                 </div>
@@ -177,7 +189,7 @@ export function WarehouseOrderSection({
                 <div className="text-sm text-emerald-300">
                   <span className="font-medium">{t('orderBuilder.readyToShip', 'Listo para enviar')}:</span>
                   <span className="ml-2">
-                    {formatM2(totalM2)} m² ({totalPallets} {t('common.pallets', 'paletas')})
+                    {formatM2(totalQty)} {unitSuffix} ({totalPallets} {t('common.pallets', 'paletas')})
                   </span>
                 </div>
                 {onAllocateToBLs && (

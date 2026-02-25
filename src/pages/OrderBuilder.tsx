@@ -218,7 +218,8 @@ export function OrderBuilder() {
         ...result.well_covered,
         ...result.your_call,
       ].map((p) => {
-        const baseM2 = p.selected_pallets * M2_PER_PALLET;
+        const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
+        const baseM2 = p.selected_pallets * conversionFactor;
         const availCap = p.availability_breakdown?.total_available_m2;
         const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
         return { ...p, selected_m2: cappedM2 };
@@ -272,7 +273,8 @@ export function OrderBuilder() {
         if (p.product_id === productId) {
           const newSelected = !p.is_selected;
           const newPallets = newSelected ? p.coverage_gap_pallets : 0;
-          const baseM2 = newPallets * M2_PER_PALLET;
+          const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
+          const baseM2 = newPallets * conversionFactor;
           const availCap = p.availability_breakdown?.total_available_m2;
           const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
           return {
@@ -287,12 +289,13 @@ export function OrderBuilder() {
     );
   };
 
-  // Handle pallet input change: pallets → m² = pallets × 134.4, capped at available
+  // Handle pallet input change: pallets → m²/uds = pallets × conversion_factor, capped at available
   const handleQuantityChange = (productId: string, pallets: number) => {
     setProducts((prev) =>
       prev.map((p) => {
         if (p.product_id === productId) {
-          const baseM2 = pallets * M2_PER_PALLET;
+          const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
+          const baseM2 = pallets * conversionFactor;
           const availCap = p.availability_breakdown?.total_available_m2;
           const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
           return {
@@ -307,14 +310,15 @@ export function OrderBuilder() {
     );
   };
 
-  // Handle m² input change: pallets = FLOOR(m² / 134.4), capped at available
+  // Handle m²/uds input change: pallets = FLOOR(value / conversion_factor), capped at available
   const handleM2Change = (productId: string, m2: number) => {
     setProducts((prev) =>
       prev.map((p) => {
         if (p.product_id === productId) {
+          const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
           const availCap = p.availability_breakdown?.total_available_m2;
           const cappedM2 = availCap != null ? Math.min(m2, Number(availCap)) : m2;
-          const pallets = Math.floor(cappedM2 / M2_PER_PALLET);
+          const pallets = Math.floor(cappedM2 / conversionFactor);
           return {
             ...p,
             selected_pallets: pallets,
@@ -377,7 +381,8 @@ export function OrderBuilder() {
         ...result.well_covered,
         ...result.your_call,
       ].map((p) => {
-        const baseM2 = p.selected_pallets * M2_PER_PALLET;
+        const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
+        const baseM2 = p.selected_pallets * conversionFactor;
         const availCap = p.availability_breakdown?.total_available_m2;
         const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
         return { ...p, selected_m2: cappedM2 };
@@ -470,12 +475,13 @@ export function OrderBuilder() {
           setProducts(prev => prev.map(p => {
             const draftItem = draft.items.find(d => d.product_id === p.product_id);
             if (draftItem) {
+              const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
               const availCap = p.availability_breakdown?.total_available_m2;
               const maxAvailM2 = availCap != null ? Number(availCap) : Infinity;
               // Cap pallets at what's physically available
-              const maxPallets = maxAvailM2 <= 0 ? 0 : maxAvailM2 < Infinity ? Math.max(1, Math.floor(maxAvailM2 / M2_PER_PALLET)) : draftItem.selected_pallets;
+              const maxPallets = maxAvailM2 <= 0 ? 0 : maxAvailM2 < Infinity ? Math.max(1, Math.floor(maxAvailM2 / conversionFactor)) : draftItem.selected_pallets;
               const cappedPallets = Math.min(draftItem.selected_pallets, maxPallets);
-              const baseM2 = cappedPallets * M2_PER_PALLET;
+              const baseM2 = cappedPallets * conversionFactor;
               const cappedM2 = Math.min(baseM2, maxAvailM2);
               return {
                 ...p,
@@ -541,7 +547,7 @@ export function OrderBuilder() {
     // Find removed products in original data
     const removedProducts = products.filter((p) => removedSkus.has(p.sku));
     const freedPallets = removedProducts.reduce((sum, p) => sum + (p.coverage_gap_pallets || 0), 0);
-    const freedM2 = freedPallets * M2_PER_PALLET;
+    const freedM2 = removedProducts.reduce((sum, p) => sum + (p.coverage_gap_pallets || 0) * (p.pallet_conversion_factor || M2_PER_PALLET), 0);
     const freedContainers = Math.ceil(freedPallets / CONTAINER_MAX_PALLETS);
 
     return { m2: freedM2, pallets: freedPallets, containers: freedContainers };
@@ -1163,7 +1169,8 @@ export function OrderBuilder() {
                   // Accept all: reset selections to current OB recommendations
                   const updated = products.map(p => {
                     const pallets = p.coverage_gap_pallets || 0;
-                    const baseM2 = pallets * M2_PER_PALLET;
+                    const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
+                    const baseM2 = pallets * conversionFactor;
                     const availCap = p.availability_breakdown?.total_available_m2;
                     const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
                     return {
@@ -1213,7 +1220,7 @@ export function OrderBuilder() {
                   .map((p) => ({
                     sku: p.sku,
                     pallets: p.coverage_gap_pallets || 0,
-                    m2: (p.coverage_gap_pallets || 0) * M2_PER_PALLET,
+                    m2: (p.coverage_gap_pallets || 0) * (p.pallet_conversion_factor || M2_PER_PALLET),
                   }))}
                 freedCapacity={freedCapacity}
                 onRecalculate={handleRecalculate}
@@ -1235,6 +1242,8 @@ export function OrderBuilder() {
                 blLoading={blLoading}
                 onRemove={handleRemoveProduct}
                 removedSkus={removedSkus}
+                unitLabel={data.unit_label}
+                isUnitBased={data.is_unit_based}
               />
 
               {/* Section 2: Add to Production — Piggyback on scheduled items */}
