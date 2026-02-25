@@ -550,6 +550,7 @@ export function PlanningView() {
               isSelected={selectedFactoryId === factory.id}
               onSelect={() => handleFactorySelect(factory.id)}
               onBoatClick={(boatId) => handleBoatClick(factory.id, boatId)}
+              onDirectAccess={() => navigate(`/order-builder?factory_id=${factory.id}`)}
             />
           ))}
         </div>

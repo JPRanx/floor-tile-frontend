@@ -11,6 +11,7 @@ interface FactoryLaneProps {
   isSelected: boolean;
   onSelect: () => void;
   onBoatClick: (boatId: string) => void;
+  onDirectAccess?: () => void;
 }
 
 export function FactoryLane({
@@ -20,6 +21,7 @@ export function FactoryLane({
   isSelected,
   onSelect,
   onBoatClick,
+  onDirectAccess,
 }: FactoryLaneProps) {
   const { t } = useTranslation();
   const [showAllEstimated, setShowAllEstimated] = useState(false);
@@ -138,12 +140,20 @@ export function FactoryLane({
         );
       })()}
 
-      {/* Empty state */}
+      {/* Empty state — no boats */}
       {!loading && horizon && horizon.projections.length === 0 && (
-        <div className="px-5 pb-4 pt-1">
+        <div className="px-5 pb-4 pt-1 flex items-center gap-3">
           <span className="text-slate-600 text-xs">
             {t('planning.noBoats', 'Sin barcos en el horizonte')}
           </span>
+          {onDirectAccess && (
+            <button
+              onClick={onDirectAccess}
+              className="px-3 py-1 text-xs font-medium text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg transition-colors"
+            >
+              {t('planning.openOrderBuilder', 'Abrir Order Builder')} →
+            </button>
+          )}
         </div>
       )}
     </div>
