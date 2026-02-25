@@ -26,6 +26,7 @@ interface OrderBuilderProductCardProps {
   isRemoved?: boolean;
   unitLabel?: string;
   isUnitBased?: boolean;
+  capabilities?: { has_factory_inventory: boolean; has_production: boolean };
 }
 
 export function OrderBuilderProductCard({
@@ -37,6 +38,7 @@ export function OrderBuilderProductCard({
   isRemoved = false,
   unitLabel,
   isUnitBased = false,
+  capabilities = { has_factory_inventory: true, has_production: true },
 }: OrderBuilderProductCardProps) {
   const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
@@ -340,34 +342,36 @@ export function OrderBuilderProductCard({
           )}
 
           {/* Factory Available (SIESA) */}
-          {product.factory_available_m2 > 0 ? (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">🏭</span>
-              <span className="text-purple-300 font-medium">
-                {formatM2(product.factory_available_m2)} {unitSuffix}
-              </span>
-              <span className="text-xs text-slate-500">{t('orderBuilderProduct.atFactory', 'at factory')}</span>
-              {product.factory_fill_status && product.factory_fill_status !== 'not_needed' && product.factory_fill_status !== 'unknown' && (
-                <span className={`text-xs ${factoryFillStyles[product.factory_fill_status].textColor}`}>
-                  {factoryFillStyles[product.factory_fill_status].icon}{' '}
-                  {product.factory_fill_status === 'single_lot' && t('orderBuilderProduct.singleLot', 'single lot')}
-                  {product.factory_fill_status === 'mixed_lots' && t('orderBuilderProduct.mixedLots', 'mixed lots')}
-                  {product.factory_fill_status === 'needs_production' && t('orderBuilderProduct.needsProduction', 'needs production')}
-                  {product.factory_fill_status === 'no_stock' && t('orderBuilderProduct.noStock', 'no stock')}
+          {capabilities.has_factory_inventory && (
+            product.factory_available_m2 > 0 ? (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-500">🏭</span>
+                <span className="text-purple-300 font-medium">
+                  {formatM2(product.factory_available_m2)} {unitSuffix}
                 </span>
-              )}
-            </div>
-          ) : product.suggested_pallets > 0 ? (
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-slate-500">🏭</span>
-              <span className="text-orange-400 font-medium">
-                {t('orderBuilderProduct.siesaNoStock', 'SIESA: No stock')}
-              </span>
-            </div>
-          ) : null}
+                <span className="text-xs text-slate-500">{t('orderBuilderProduct.atFactory', 'at factory')}</span>
+                {product.factory_fill_status && product.factory_fill_status !== 'not_needed' && product.factory_fill_status !== 'unknown' && (
+                  <span className={`text-xs ${factoryFillStyles[product.factory_fill_status].textColor}`}>
+                    {factoryFillStyles[product.factory_fill_status].icon}{' '}
+                    {product.factory_fill_status === 'single_lot' && t('orderBuilderProduct.singleLot', 'single lot')}
+                    {product.factory_fill_status === 'mixed_lots' && t('orderBuilderProduct.mixedLots', 'mixed lots')}
+                    {product.factory_fill_status === 'needs_production' && t('orderBuilderProduct.needsProduction', 'needs production')}
+                    {product.factory_fill_status === 'no_stock' && t('orderBuilderProduct.noStock', 'no stock')}
+                  </span>
+                )}
+              </div>
+            ) : product.suggested_pallets > 0 ? (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-slate-500">🏭</span>
+                <span className="text-orange-400 font-medium">
+                  {t('orderBuilderProduct.siesaNoStock', 'SIESA: No stock')}
+                </span>
+              </div>
+            ) : null
+          )}
 
           {/* Production Schedule Status (from Programa de Produccion) */}
-          {product.production_status && product.production_status !== 'not_scheduled' && (
+          {capabilities.has_production && product.production_status && product.production_status !== 'not_scheduled' && (
             <div className="flex items-center gap-2 text-sm">
               <span className="text-slate-500">
                 {product.production_status === 'completed' && !product.factory_available_m2
@@ -664,7 +668,7 @@ export function OrderBuilderProductCard({
             )}
 
             {/* Factory Status */}
-            {product.factory_status === 'in_production' && (
+            {capabilities.has_factory_inventory && product.factory_status === 'in_production' && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
                   {t('orderBuilderProduct.factory', 'Fábrica')}
@@ -687,7 +691,7 @@ export function OrderBuilderProductCard({
               </div>
             )}
 
-            {product.factory_status === 'not_scheduled' && product.is_selected && (
+            {capabilities.has_factory_inventory && product.factory_status === 'not_scheduled' && product.is_selected && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
                   {t('orderBuilderProduct.factory', 'Fábrica')}
@@ -700,7 +704,7 @@ export function OrderBuilderProductCard({
             )}
 
             {/* Availability Breakdown */}
-            {product.availability_breakdown && (
+            {capabilities.has_factory_inventory && product.availability_breakdown && (
               <div className="p-3 border-b border-slate-700/50">
                 <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
                   {t('orderBuilderProduct.availability', 'Disponibilidad para este barco')}

@@ -205,6 +205,7 @@
     "priorityView": "Vista por Prioridad",
     "warehouseOrder": "Pedido de Almacén",
     "warehouseOrderDesc": "Enviar desde stock SIESA en el barco seleccionado",
+    "warehouseOrderDescSimple": "Productos para pedido",
     "addToProduction": "Agregar a Producción",
     "addToProductionDesc": "Añadir a items programados · Listo en 4-7 días",
     "newFactoryRequest": "Nueva Solicitud de Fábrica",

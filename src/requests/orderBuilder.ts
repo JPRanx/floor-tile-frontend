@@ -612,7 +612,16 @@ export interface ShippingCostConfig {
   per_container_total_usd: number;
 }
 
+export interface FactoryCapabilities {
+  has_factory_inventory: boolean;  // SIESA/factory finished goods
+  has_logistics: boolean;          // boats, BLs, shipping estimate
+  has_production: boolean;         // production schedules, piggyback
+}
+
 export interface OrderBuilderResponse {
+  // Factory capabilities (undefined = all-true backward compat)
+  capabilities?: FactoryCapabilities;
+
   // Boat info
   boat: OrderBuilderBoat;
   next_boat: OrderBuilderBoat | null;

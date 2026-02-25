@@ -14,6 +14,9 @@ export interface Factory {
   sort_order: number;
   created_at: string;
   updated_at: string;
+  has_factory_inventory: boolean;
+  has_logistics: boolean;
+  has_production: boolean;
 }
 
 export const factoriesApi = {

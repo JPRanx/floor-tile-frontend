@@ -21,6 +21,7 @@ interface WarehouseOrderSectionProps {
   removedSkus?: Set<string>;
   unitLabel?: string;
   isUnitBased?: boolean;
+  capabilities?: { has_factory_inventory: boolean; has_logistics: boolean; has_production: boolean };
 }
 
 export function WarehouseOrderSection({
@@ -35,14 +36,16 @@ export function WarehouseOrderSection({
   removedSkus = new Set(),
   unitLabel,
   isUnitBased,
+  capabilities = { has_factory_inventory: true, has_logistics: true, has_production: true },
 }: WarehouseOrderSectionProps) {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(true);
   const [showNoSiesa, setShowNoSiesa] = useState(false);
 
-  // Split products by SIESA availability
-  const withSiesa = products.filter((p) => p.factory_available_m2 > 0);
-  const withoutSiesa = products.filter((p) => !p.factory_available_m2 || p.factory_available_m2 <= 0);
+  // Split products by SIESA availability (skip split when factory inventory isn't available)
+  const showSiesaSplit = capabilities.has_factory_inventory;
+  const withSiesa = showSiesaSplit ? products.filter((p) => p.factory_available_m2 > 0) : products;
+  const withoutSiesa = showSiesaSplit ? products.filter((p) => !p.factory_available_m2 || p.factory_available_m2 <= 0) : [];
 
   const unitSuffix = isUnitBased ? 'uds' : 'm²';
   const selectedProducts = products.filter((p) => p.is_selected);
@@ -86,7 +89,9 @@ export function WarehouseOrderSection({
               )}
             </h2>
             <p className="text-sm text-emerald-400/80 mt-0.5">
-              {t('orderBuilder.warehouseOrderDesc', 'Enviar desde inventario SIESA en barco seleccionado')}
+              {capabilities.has_factory_inventory
+                ? t('orderBuilder.warehouseOrderDesc', 'Enviar desde inventario SIESA en barco seleccionado')
+                : t('orderBuilder.warehouseOrderDescSimple', 'Productos para pedido')}
               {summary?.boat_name && (
                 <span className="ml-1 text-slate-400">· {summary.boat_name}</span>
               )}
@@ -103,25 +108,29 @@ export function WarehouseOrderSection({
         <div className="px-5 pb-5 border-t border-emerald-500/30">
           {/* Summary Stats */}
           {selectedCount > 0 && (
-            <div className="pt-4 grid grid-cols-4 gap-4 text-center">
+            <div className={`pt-4 grid gap-4 text-center ${capabilities.has_logistics ? 'grid-cols-4' : 'grid-cols-2'}`}>
               <div className="bg-slate-800/50 rounded-lg p-3">
                 <div className="text-2xl font-bold text-emerald-400">{totalPallets}</div>
                 <div className="text-xs text-slate-400">{t('common.pallets', 'paletas')}</div>
               </div>
-              <div className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-2xl font-bold text-emerald-400">
-                  {Math.ceil(totalPallets / 14)}
+              {capabilities.has_logistics && (
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-2xl font-bold text-emerald-400">
+                    {Math.ceil(totalPallets / 14)}
+                  </div>
+                  <div className="text-xs text-slate-400">{t('common.containers', 'contenedores')}</div>
                 </div>
-                <div className="text-xs text-slate-400">{t('common.containers', 'contenedores')}</div>
-              </div>
+              )}
               <div className="bg-slate-800/50 rounded-lg p-3">
                 <div className="text-lg font-bold text-emerald-400">{formatM2(totalQty)}</div>
                 <div className="text-xs text-slate-400">{unitSuffix}</div>
               </div>
-              <div className="bg-slate-800/50 rounded-lg p-3">
-                <div className="text-lg font-bold text-slate-300">{summary?.bl_count || 1}</div>
-                <div className="text-xs text-slate-400">{t('blAllocation.bls', 'BLs')}</div>
-              </div>
+              {capabilities.has_logistics && (
+                <div className="bg-slate-800/50 rounded-lg p-3">
+                  <div className="text-lg font-bold text-slate-300">{summary?.bl_count || 1}</div>
+                  <div className="text-xs text-slate-400">{t('blAllocation.bls', 'BLs')}</div>
+                </div>
+              )}
             </div>
           )}
 
@@ -138,6 +147,7 @@ export function WarehouseOrderSection({
                 isRemoved={removedSkus.has(product.sku)}
                 unitLabel={unitLabel}
                 isUnitBased={isUnitBased}
+                capabilities={capabilities}
               />
             ))}
           </div>
@@ -175,6 +185,7 @@ export function WarehouseOrderSection({
                       isRemoved={removedSkus.has(product.sku)}
                       unitLabel={unitLabel}
                       isUnitBased={isUnitBased}
+                      capabilities={capabilities}
                     />
                   ))}
                 </div>
@@ -192,7 +203,7 @@ export function WarehouseOrderSection({
                     {formatM2(totalQty)} {unitSuffix} ({totalPallets} {t('common.pallets', 'paletas')})
                   </span>
                 </div>
-                {onAllocateToBLs && (
+                {capabilities.has_logistics && onAllocateToBLs && (
                   <button
                     onClick={onAllocateToBLs}
                     disabled={blLoading}

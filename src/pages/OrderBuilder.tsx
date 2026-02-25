@@ -10,6 +10,7 @@ import type {
   DemandForecastResponse,
   BLAllocationReport,
   GenerateReportRequest,
+  FactoryCapabilities,
 } from '../requests/orderBuilder';
 import { boatsApi } from '../requests/boats';
 import { factoryOrdersApi } from '../requests/factoryOrders';
@@ -1028,6 +1029,11 @@ export function OrderBuilder() {
 
   if (!data) return null;
 
+  const capabilities: FactoryCapabilities = data.capabilities ?? {
+    has_factory_inventory: true,
+    has_logistics: true,
+    has_production: true,
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 px-4 sm:px-6 lg:px-8 py-8 pb-24">
@@ -1071,10 +1077,11 @@ export function OrderBuilder() {
           availableBLs={data.available_bls}
           recommendedBLsReason={data.recommended_bls_reason}
           shippableBLs={data.shippable_bls}
+          capabilities={capabilities}
         />
 
         {/* BL Allocation View - shown when allocation is generated */}
-        {showBLView && blAllocationReport && (
+        {capabilities.has_logistics && showBLView && blAllocationReport && (
           <BLAllocationView
             report={blAllocationReport}
             onBack={handleBackToProducts}
@@ -1244,22 +1251,27 @@ export function OrderBuilder() {
                 removedSkus={removedSkus}
                 unitLabel={data.unit_label}
                 isUnitBased={data.is_unit_based}
+                capabilities={capabilities}
               />
 
               {/* Section 2: Add to Production — Piggyback on scheduled items */}
-              <AddToProductionSection
-                summary={data.add_to_production_summary}
-              />
+              {capabilities.has_production && (
+                <AddToProductionSection
+                  summary={data.add_to_production_summary}
+                />
+              )}
 
               {/* Section 3: Factory Request — New production requests */}
-              <FactoryRequestSection
-                summary={data.factory_request_summary}
-              />
+              {capabilities.has_production && (
+                <FactoryRequestSection
+                  summary={data.factory_request_summary}
+                />
+              )}
             </div>
 
 
             {/* Liquidation Clearance — deactivated products with factory stock */}
-            {data.liquidation_clearance && data.liquidation_clearance.length > 0 && (
+            {capabilities.has_factory_inventory && data.liquidation_clearance && data.liquidation_clearance.length > 0 && (
               <LiquidationClearanceSection products={data.liquidation_clearance} />
             )}
           </div>
@@ -1267,7 +1279,7 @@ export function OrderBuilder() {
           {/* Summary Column (1/3 width on desktop) */}
           <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             {/* 1. Stability Forecast - TOP */}
-            {data.stability_forecast && (
+            {capabilities.has_logistics && data.stability_forecast && (
               <StabilityForecastCard
                 forecast={data.stability_forecast}
                 boatName={data.boat.name}
@@ -1284,7 +1296,7 @@ export function OrderBuilder() {
             />
 
             {/* 2b. Shipping Estimate */}
-            {data?.shipping_cost_config && (
+            {capabilities.has_logistics && data?.shipping_cost_config && (
               <ShippingEstimate
                 totalM2={Number(summary.total_m2)}
                 costConfig={data.shipping_cost_config}
@@ -1298,7 +1310,9 @@ export function OrderBuilder() {
               loading={demandLoading}
             />
             <OrderBuilderAlerts alerts={alerts} />
-            <UnableToShipAlert unableToShip={data?.unable_to_ship || null} />
+            {capabilities.has_factory_inventory && (
+              <UnableToShipAlert unableToShip={data?.unable_to_ship || null} />
+            )}
 
             {/* 4. Pending Orders - Shows existing orders for visibility */}
             <PendingOrdersCard
@@ -1335,18 +1349,20 @@ export function OrderBuilder() {
               </button>
 
               {/* Allocate to BLs Button */}
-              <button
-                onClick={handleAllocateToBLs}
-                disabled={blLoading || products.filter((p) => p.is_selected && p.selected_pallets > 0).length === 0}
-                className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-              >
-                {blLoading
-                  ? t('blAllocation.allocating', 'Asignando...')
-                  : t('blAllocation.allocateToBLs', 'Asignar a BLs')}
-              </button>
+              {capabilities.has_logistics && (
+                <button
+                  onClick={handleAllocateToBLs}
+                  disabled={blLoading || products.filter((p) => p.is_selected && p.selected_pallets > 0).length === 0}
+                  className="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold rounded-xl hover:from-indigo-500 hover:to-indigo-400 transition-all duration-300 shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                >
+                  {blLoading
+                    ? t('blAllocation.allocating', 'Asignando...')
+                    : t('blAllocation.allocateToBLs', 'Asignar a BLs')}
+                </button>
+              )}
 
               {/* Export - only after BL allocation */}
-              {blAllocationReport && (
+              {capabilities.has_logistics && blAllocationReport && (
                 <button
                   onClick={handleExport}
                   disabled={exporting}
@@ -1394,7 +1410,7 @@ export function OrderBuilder() {
       )}
 
       {/* Sticky Shipment Summary Bar — hidden during BL allocation view */}
-      {!showBLView && <StickyShipmentBar
+      {capabilities.has_logistics && !showBLView && <StickyShipmentBar
         totalPallets={summary.total_pallets}
         totalM2={summary.total_m2}
         totalContainers={summary.total_containers}

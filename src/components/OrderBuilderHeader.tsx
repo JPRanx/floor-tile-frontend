@@ -20,6 +20,8 @@ interface OrderBuilderHeaderProps {
   recommendedBLsReason: string;
   // Shippable BLs (what can actually fill gaps)
   shippableBLs: number;
+  // Factory capabilities — controls visibility of logistics sections
+  capabilities?: { has_logistics: boolean };
 }
 
 export function OrderBuilderHeader({
@@ -34,6 +36,7 @@ export function OrderBuilderHeader({
   availableBLs,
   recommendedBLsReason,
   shippableBLs,
+  capabilities = { has_logistics: true },
 }: OrderBuilderHeaderProps) {
   const { t } = useTranslation();
 
@@ -106,7 +109,7 @@ export function OrderBuilderHeader({
           </div>
 
           {/* Boat Selector */}
-          {availableBoats.length > 0 && (
+          {capabilities.has_logistics && availableBoats.length > 0 && (
             <div className="flex-shrink-0">
               <label htmlFor="boat-selector" className="block text-xs font-medium text-slate-500 mb-1.5 uppercase tracking-wide">
                 {t('orderBuilder.selectBoat', 'Seleccionar barco')}
@@ -133,7 +136,7 @@ export function OrderBuilderHeader({
       </div>
 
       {/* Timeline Section */}
-      {hasBoat && (
+      {capabilities.has_logistics && hasBoat && (
         <div className="px-6 py-4 bg-slate-900/30 border-t border-slate-700/30">
           <div className="text-xs font-semibold text-slate-500 mb-3 uppercase tracking-wider">{t('orderBuilder.timeline.title', 'Línea de tiempo')}</div>
 
@@ -219,7 +222,7 @@ export function OrderBuilderHeader({
       )}
 
       {/* BL Selector Section */}
-      <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700/30">
+      {capabilities.has_logistics && <div className="px-6 py-4 bg-slate-900/50 border-t border-slate-700/30">
         <div className="flex flex-col gap-3">
           {/* BL Count Selector - Always visible */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -306,7 +309,7 @@ export function OrderBuilderHeader({
             )}
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }
