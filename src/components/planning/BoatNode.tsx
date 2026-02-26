@@ -28,10 +28,21 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const deadline = getDeadlineStyle(projection.days_until_siesa_deadline ?? projection.days_until_order_deadline);
   const hasDraft = projection.is_active;
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
+  const { critical, urgent, soon } = projection.urgency_breakdown;
+  const needsAttention = critical > 0 || urgent > 0;
+  const nothingToSend = !needsAttention && soon === 0 && !hasDraft;
 
   const palletsText = hasDraft
     ? `${projection.projected_pallets_min}p`
     : `~${projection.projected_pallets_min}p`;
+
+  const nodeStyle = isCompleted
+    ? 'bg-emerald-900/10 border-emerald-500/20 opacity-60 hover:opacity-80'
+    : nothingToSend
+      ? 'bg-slate-800/20 border-slate-700/20 opacity-40 hover:opacity-70'
+      : needsAttention
+        ? 'bg-slate-800/40 border-orange-500/40 hover:bg-slate-800/60 hover:border-orange-400/60'
+        : 'bg-slate-800/40 border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/60';
 
   return (
     <button
@@ -39,20 +50,30 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
       className={`
         flex-shrink-0 w-40 rounded-xl border p-3 text-left
         transition-all duration-200 cursor-pointer
-        ${isCompleted
-          ? 'bg-slate-800/15 border-slate-700/20 opacity-60 hover:opacity-80'
-          : 'bg-slate-800/40 border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/60'
-        }
+        ${nodeStyle}
       `}
     >
       {/* Boat name + date */}
       <div className="text-white text-sm font-medium truncate">{projection.boat_name}</div>
       <div className="text-slate-500 text-xs mt-0.5">{formatDateShort(projection.departure_date, i18n.language)}</div>
 
-      {/* Pallets + confidence */}
+      {/* Pallets + urgency badges */}
       <div className="flex items-center justify-between mt-2">
         <span className="text-slate-400 text-xs">{palletsText}</span>
-        {!hasDraft && (
+        {!isCompleted && needsAttention ? (
+          <div className="flex gap-1">
+            {critical > 0 && (
+              <span className="text-[10px] px-1 py-0.5 rounded bg-red-500/15 text-red-400 font-medium">
+                {critical} crit
+              </span>
+            )}
+            {urgent > 0 && (
+              <span className="text-[10px] px-1 py-0.5 rounded bg-orange-500/15 text-orange-400 font-medium">
+                {urgent} urg
+              </span>
+            )}
+          </div>
+        ) : !hasDraft && !isCompleted ? (
           <div className="flex gap-0.5">
             {['very_high', 'high', 'medium', 'low', 'very_low'].map((level, i) => {
               const levels = ['very_high', 'high', 'medium', 'low', 'very_low'];
@@ -66,7 +87,7 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
               );
             })}
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Status / deadline row */}
