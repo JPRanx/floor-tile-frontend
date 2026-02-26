@@ -28,7 +28,8 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const deadline = getDeadlineStyle(projection.days_until_siesa_deadline ?? projection.days_until_order_deadline);
   const hasDraft = projection.is_active;
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
-  const { critical, urgent, soon } = projection.urgency_breakdown;
+  const { critical, urgent, soon, actionable } = projection.urgency_breakdown;
+  const totalNeed = critical + urgent + soon;
   const needsAttention = critical > 0 || urgent > 0;
   const nothingToSend = !needsAttention && soon === 0 && !hasDraft;
 
@@ -62,15 +63,30 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
         <span className="text-slate-400 text-xs">{palletsText}</span>
         {!isCompleted && needsAttention ? (
           <div className="flex gap-1">
-            {critical > 0 && (
-              <span className="text-[10px] px-1 py-0.5 rounded bg-red-500/15 text-red-400 font-medium">
-                {critical} crit
-              </span>
-            )}
-            {urgent > 0 && (
-              <span className="text-[10px] px-1 py-0.5 rounded bg-orange-500/15 text-orange-400 font-medium">
-                {urgent} urg
-              </span>
+            {actionable > 0 ? (
+              <>
+                <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-medium">
+                  {actionable} {t('planning.toShip')}
+                </span>
+                {totalNeed > actionable && (
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-slate-500/10 text-slate-500">
+                    +{totalNeed - actionable}
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                {critical > 0 && (
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-red-500/15 text-red-400 font-medium">
+                    {critical} crit
+                  </span>
+                )}
+                {urgent > 0 && (
+                  <span className="text-[10px] px-1 py-0.5 rounded bg-orange-500/15 text-orange-400 font-medium">
+                    {urgent} urg
+                  </span>
+                )}
+              </>
             )}
           </div>
         ) : !hasDraft && !isCompleted ? (

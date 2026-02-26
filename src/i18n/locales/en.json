@@ -1143,6 +1143,7 @@
     "prod": "prod",
     "critShort": "crit",
     "urgShort": "urg",
+    "toShip": "ship",
     "supplyFactory": "SIESA {{m2}} m²",
     "supplyProduction": "Production {{m2}} m²",
     "supplyInTransit": "In transit {{m2}} m²",

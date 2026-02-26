@@ -8,6 +8,7 @@ export interface UrgencyBreakdown {
   urgent: number;
   soon: number;
   ok: number;
+  actionable: number;
 }
 
 export interface SupplySource {
