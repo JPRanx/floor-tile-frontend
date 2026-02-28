@@ -33,6 +33,7 @@ import { FactoryRequestSection } from '../components/FactoryRequestSection';
 import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { draftsApi } from '../requests/drafts';
+import type { DraftStatus } from '../requests/drafts';
 import { PlanningView } from './PlanningView';
 import { RecalculateBar } from '../components/RecalculateBar';
 import { StabilityForecastCard } from '../components/StabilityForecastCard';
@@ -116,6 +117,11 @@ export function OrderBuilder() {
   const [draftAgeDays, setDraftAgeDays] = useState(0);
   const [draftChangesDismissed, setDraftChangesDismissed] = useState(false);
   const draftLoadedRef = useRef(false);
+
+  // Draft lifecycle state — tracks current draft ID and status for ordered/confirmed guards
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [currentDraftStatus, setCurrentDraftStatus] = useState<DraftStatus | null>(null);
+  const isReadOnly = currentDraftStatus === 'ordered' || currentDraftStatus === 'confirmed';
 
   // 5c: Staleness banner state
   const [freshness, setFreshness] = useState<DataFreshnessResponse | null>(null);
@@ -269,6 +275,7 @@ export function OrderBuilder() {
   };
 
   const handleToggleSelect = (productId: string) => {
+    if (isReadOnly) return;
     setProducts((prev) =>
       prev.map((p) => {
         if (p.product_id === productId) {
@@ -294,6 +301,7 @@ export function OrderBuilder() {
 
   // Handle pallet input change: pallets → m²/uds = pallets × conversion_factor, capped at available
   const handleQuantityChange = (productId: string, pallets: number) => {
+    if (isReadOnly) return;
     setProducts((prev) =>
       prev.map((p) => {
         if (p.product_id === productId) {
@@ -410,6 +418,8 @@ export function OrderBuilder() {
   // V2: Save function with retry logic (exponential backoff: 1s → 2s → 4s)
   const performSave = useCallback(async (retryAttempt = 0) => {
     if (!isDetailView || !selectedFactoryId || !selectedBoatId || products.length === 0) return;
+    // Don't auto-save ordered/confirmed drafts — they're locked
+    if (currentDraftStatus === 'ordered' || currentDraftStatus === 'confirmed') return;
 
     try {
       setDraftSaveStatus('saving');
@@ -426,11 +436,12 @@ export function OrderBuilder() {
             suggested_pallets: p.suggested_pallets,
           },
         }));
-      await draftsApi.save({
+      const savedDraft = await draftsApi.save({
         boat_id: selectedBoatId,
         factory_id: selectedFactoryId,
         items,
       });
+      if (!currentDraftId) setCurrentDraftId(savedDraft.id);
       setDraftSaveStatus('saved');
       setTimeout(() => setDraftSaveStatus('idle'), 2000);
     } catch (err: unknown) {
@@ -449,7 +460,7 @@ export function OrderBuilder() {
         setDraftSaveStatus('error');
       }
     }
-  }, [isDetailView, selectedFactoryId, selectedBoatId, products, MAX_SAVE_RETRIES]);
+  }, [isDetailView, selectedFactoryId, selectedBoatId, products, MAX_SAVE_RETRIES, currentDraftStatus, currentDraftId]);
 
   // V2: Auto-save draft when products change (debounced)
   useEffect(() => {
@@ -476,6 +487,10 @@ export function OrderBuilder() {
     const loadDraft = async () => {
       try {
         const draft = await draftsApi.getDraft(selectedBoatId, selectedFactoryId);
+        if (draft) {
+          setCurrentDraftId(draft.id);
+          setCurrentDraftStatus(draft.status);
+        }
         if (draft && draft.items.length > 0) {
           // Restore selections from draft (respect current SIESA stock)
           setProducts(prev => prev.map(p => {
@@ -540,9 +555,11 @@ export function OrderBuilder() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDetailView, selectedFactoryId, selectedBoatId, data]); // data dependency ensures products are loaded first
 
-  // Reset draft loaded flag when switching boat/factory
+  // Reset draft loaded flag and draft state when switching boat/factory
   useEffect(() => {
     draftLoadedRef.current = false;
+    setCurrentDraftId(null);
+    setCurrentDraftStatus(null);
   }, [selectedBoatId, selectedFactoryId]);
 
 
@@ -786,7 +803,17 @@ export function OrderBuilder() {
       // 6. Show success message
       setExportSuccess(t('orderBuilder.exportSuccess', { pvNumber }));
 
-      // 7. Refresh pending orders list
+      // 7. Mark draft as "ordered" → triggers cascade (flags later boats)
+      if (currentDraftId) {
+        try {
+          await draftsApi.updateStatus(currentDraftId, 'ordered');
+          setCurrentDraftStatus('ordered');
+        } catch (statusErr) {
+          console.error('Failed to mark draft as ordered:', statusErr);
+        }
+      }
+
+      // 8. Refresh pending orders list
       fetchPendingOrders();
 
       // Clear success message after 5 seconds
@@ -1224,6 +1251,21 @@ export function OrderBuilder() {
               />
             )}
 
+            {/* Read-only banner for ordered/confirmed drafts */}
+            {isReadOnly && (
+              <div className="mx-4 my-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-4 py-3 flex items-center gap-3">
+                <span className="text-blue-400 text-lg">&#x1F4E8;</span>
+                <div>
+                  <p className="text-sm font-medium text-blue-300">
+                    {t('orderBuilder.readOnlyTitle', 'Pedido enviado')}
+                  </p>
+                  <p className="text-xs text-blue-400/70">
+                    {t('orderBuilder.readOnlyDescription', 'Este borrador ya fue exportado y no se puede modificar.')}
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Recalculate Bar - Show when products are removed */}
             {removedSkus.size > 0 && (
               <RecalculateBar
@@ -1370,10 +1412,10 @@ export function OrderBuilder() {
               {capabilities.has_logistics && blAllocationReport && (
                 <button
                   onClick={handleExport}
-                  disabled={exporting}
+                  disabled={exporting || isReadOnly}
                   className="w-full px-4 py-3 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-semibold rounded-xl hover:from-emerald-500 hover:to-emerald-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                 >
-                  {exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
+                  {isReadOnly ? t('orderBuilder.alreadyExported', 'Ya exportado') : exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
                 </button>
               )}
               <button
@@ -1428,6 +1470,7 @@ export function OrderBuilder() {
         isExporting={exporting}
         isBLLoading={blLoading}
         hasBLAllocation={blAllocationReport !== null}
+        isReadOnly={isReadOnly}
       />}
     </div>
   );

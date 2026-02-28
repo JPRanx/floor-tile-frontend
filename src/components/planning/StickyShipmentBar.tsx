@@ -13,6 +13,7 @@ interface StickyShipmentBarProps {
   isExporting: boolean;
   isBLLoading: boolean;
   hasBLAllocation: boolean;
+  isReadOnly?: boolean;
 }
 
 function getContainerColorClass(percent: number): string {
@@ -34,6 +35,7 @@ export function StickyShipmentBar({
   isExporting,
   isBLLoading,
   hasBLAllocation,
+  isReadOnly = false,
 }: StickyShipmentBarProps) {
   const { t } = useTranslation();
 
@@ -43,8 +45,8 @@ export function StickyShipmentBar({
     : 0;
   const containerColorClass = getContainerColorClass(containerPercent);
 
-  const blDisabled = isBLLoading || selectedCount === 0;
-  const exportDisabled = isExporting || selectedCount === 0;
+  const blDisabled = isBLLoading || selectedCount === 0 || isReadOnly;
+  const exportDisabled = isExporting || selectedCount === 0 || isReadOnly;
 
   return (
     <div
