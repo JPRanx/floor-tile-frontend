@@ -273,10 +273,12 @@ export function OrderBuilder() {
       prev.map((p) => {
         if (p.product_id === productId) {
           const newSelected = !p.is_selected;
-          const newPallets = newSelected ? p.coverage_gap_pallets : 0;
           const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
-          const baseM2 = newPallets * conversionFactor;
           const availCap = p.availability_breakdown?.total_available_m2;
+          // Cap pallets at SIESA availability so pallets and m2 stay consistent
+          const maxPallets = availCap != null ? Math.floor(Number(availCap) / conversionFactor) : Infinity;
+          const newPallets = newSelected ? Math.min(p.coverage_gap_pallets, maxPallets) : 0;
+          const baseM2 = newPallets * conversionFactor;
           const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
           return {
             ...p,
@@ -296,14 +298,17 @@ export function OrderBuilder() {
       prev.map((p) => {
         if (p.product_id === productId) {
           const conversionFactor = p.pallet_conversion_factor || M2_PER_PALLET;
-          const baseM2 = pallets * conversionFactor;
           const availCap = p.availability_breakdown?.total_available_m2;
+          // Cap pallets at SIESA availability so pallets and m2 stay consistent
+          const maxPallets = availCap != null ? Math.floor(Number(availCap) / conversionFactor) : Infinity;
+          const cappedPallets = Math.min(pallets, maxPallets);
+          const baseM2 = cappedPallets * conversionFactor;
           const cappedM2 = availCap != null ? Math.min(baseM2, Number(availCap)) : baseM2;
           return {
             ...p,
-            selected_pallets: pallets,
+            selected_pallets: cappedPallets,
             selected_m2: cappedM2,
-            is_selected: pallets > 0,
+            is_selected: cappedPallets > 0,
           };
         }
         return p;
