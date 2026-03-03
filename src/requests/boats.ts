@@ -115,8 +115,11 @@ export const boatsApi = {
   /**
    * Get available boats (not yet departed)
    */
-  getAvailable: async (): Promise<BoatListResponse> => {
-    const response = await api.get('/boats/available');
+  getAvailable: async (includeId?: string): Promise<BoatListResponse> => {
+    const params = new URLSearchParams();
+    if (includeId) params.set('include_id', includeId);
+    const query = params.toString();
+    const response = await api.get(`/boats/available${query ? `?${query}` : ''}`);
     return response.data;
   },
 

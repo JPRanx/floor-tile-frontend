@@ -191,7 +191,7 @@ export function OrderBuilder() {
   useEffect(() => {
     const fetchBoats = async () => {
       try {
-        const response = await boatsApi.getAvailable();
+        const response = await boatsApi.getAvailable(urlBoatId || undefined);
         // Backend returns array directly, boats.ts wraps so response IS the array
         const boats = Array.isArray(response) ? response : (response.data || []);
         setAvailableBoats(boats);
