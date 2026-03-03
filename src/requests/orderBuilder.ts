@@ -1067,6 +1067,7 @@ export interface RecalculateRequest {
   boat_id?: string;
   num_bls: number;
   excluded_skus: string[];
+  factory_id?: string;
 }
 
 // Request type for report generation

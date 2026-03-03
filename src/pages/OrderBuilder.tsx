@@ -386,6 +386,7 @@ export function OrderBuilder() {
         boat_id: selectedBoatId,
         num_bls: numBLs,
         excluded_skus: Array.from(removedSkus),
+        factory_id: selectedFactoryId || undefined,
       });
       setData(result);
       // Reset local state with new products (use backend Decimal value)
