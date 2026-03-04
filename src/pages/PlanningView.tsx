@@ -163,9 +163,10 @@ export function PlanningView() {
       for (const p of result.projections ?? []) {
         const si = p.stability_impact;
         const products = p.product_details ?? [];
-        const selected = products.filter((pd: { suggested_pallets: number }) => pd.suggested_pallets > 0);
-        console.log(`[PV DEBUG] ${p.boat_name} (${p.boat_id?.slice(0,8)}): ${products.length} products, ${selected.length} with pallets`);
-        console.log(`[PV DEBUG]   Products: ${selected.map((pd: { sku: string; suggested_pallets: number; urgency: string }) => `${pd.sku}(${pd.suggested_pallets}p,${pd.urgency})`).join(', ')}`);
+        const withPallets = products.filter((pd) => pd.suggested_pallets > 0);
+        const shippable = products.filter((pd) => pd.shippable_pallets > 0);
+        console.log(`[PV DEBUG] ${p.boat_name}: ${withPallets.length} need pallets, ${shippable.length} can ship`);
+        console.log(`[PV DEBUG]   Need: ${withPallets.map((pd) => `${pd.sku}(need=${pd.suggested_pallets},ship=${pd.shippable_pallets})`).join(', ')}`);
         if (si) {
           console.log(`[PV DEBUG]   Stability: recovering=${si.recovering_count}, blocked=${si.blocked_count}, stabilizes=${si.stabilizes_count}`);
         }

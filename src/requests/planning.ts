@@ -28,6 +28,7 @@ export interface ProductProjection {
   urgency: 'critical' | 'urgent' | 'soon' | 'ok';
   coverage_gap_m2: number;
   suggested_pallets: number;
+  shippable_pallets: number;
   supply_breakdown: SupplySource | null;
   is_draft_committed: boolean;
 }

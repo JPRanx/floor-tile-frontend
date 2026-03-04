@@ -218,10 +218,12 @@ export function OrderBuilder() {
       // DEBUG: full product comparison trace
       console.log('[OB DEBUG] ===== ORDER BUILDER RESPONSE =====');
       console.log('[OB DEBUG] Boat:', result.boat?.name, '| boat_id:', boatId, '| factory_id:', selectedFactoryId);
-      console.log('[OB DEBUG] HIGH_PRIORITY:', result.high_priority?.map((p: { sku: string; selected_pallets: number; is_selected: boolean; priority: string }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
-      console.log('[OB DEBUG] CONSIDER:', result.consider?.map((p: { sku: string; selected_pallets: number; is_selected: boolean }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
-      console.log('[OB DEBUG] WELL_COVERED:', result.well_covered?.map((p: { sku: string; selected_pallets: number; is_selected: boolean }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
-      console.log('[OB DEBUG] YOUR_CALL:', result.your_call?.map((p: { sku: string; selected_pallets: number; is_selected: boolean }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
+      const fmtProduct = (p: { sku: string; selected_pallets: number; suggested_pallets: number; is_selected: boolean }) =>
+        `${p.sku}(sel=${p.selected_pallets},sug=${p.suggested_pallets},on=${p.is_selected})`;
+      console.log('[OB DEBUG] HIGH_PRIORITY:', result.high_priority?.map(fmtProduct));
+      console.log('[OB DEBUG] CONSIDER:', result.consider?.map(fmtProduct));
+      console.log('[OB DEBUG] WELL_COVERED:', result.well_covered?.map(fmtProduct));
+      console.log('[OB DEBUG] YOUR_CALL:', result.your_call?.map(fmtProduct));
       console.log('[OB DEBUG] stability:', JSON.stringify({
         status: result.stability_forecast?.status,
         stable: result.stability_forecast?.stable_count,

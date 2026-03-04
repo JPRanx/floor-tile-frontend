@@ -125,6 +125,7 @@ function ProductList({
 }
 
 function ProductRow({ product }: { product: ProductProjection }) {
+  const pallets = product.shippable_pallets ?? product.suggested_pallets;
   return (
     <div className="flex items-center justify-between gap-2 py-0.5">
       <div className="flex items-center gap-1.5 min-w-0">
@@ -133,9 +134,9 @@ function ProductRow({ product }: { product: ProductProjection }) {
           {product.sku}
         </span>
       </div>
-      {product.suggested_pallets > 0 && (
+      {pallets > 0 && (
         <span className="text-[11px] text-slate-500 flex-shrink-0">
-          {product.suggested_pallets}p
+          {pallets}p
         </span>
       )}
     </div>
@@ -320,8 +321,12 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
       ? 'border-dashed border-slate-600/30'
       : 'border-dashed border-slate-700/40';
 
+  // Shippable pallets: what factory can actually supply (matches OB selection)
+  const shippableTotal = projection.product_details.reduce(
+    (sum, p) => sum + (p.shippable_pallets ?? p.suggested_pallets), 0
+  );
   const palletsText = isActive
-    ? `${projection.projected_pallets_min}`
+    ? `${shippableTotal}`
     : `~${projection.projected_pallets_min}-${projection.projected_pallets_max}`;
 
   // SIESA order deadline
@@ -331,7 +336,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
   const canQuickAccept = onQuickAccept
     && !isCompleted
     && !isActive
-    && projection.product_details.some((p) => p.suggested_pallets > 0);
+    && projection.product_details.some((p) => (p.shippable_pallets ?? p.suggested_pallets) > 0);
 
   // Compact mode for ordered/confirmed boats
   if (compact && isCompleted) {
