@@ -10,6 +10,14 @@ interface StabilityForecastCardProps {
 
 export function StabilityForecastCard({ forecast, boatName, orderDeadline, onViewDetails }: StabilityForecastCardProps) {
   const { t } = useTranslation();
+  // DEBUG: trace what this component renders
+  console.log('[StabilityCard DEBUG] Rendering for:', boatName, {
+    status: forecast.status,
+    stable: forecast.stable_count,
+    recovering: forecast.recovering_products?.length,
+    blocked: forecast.blocker_count,
+    progress: forecast.recovery_progress_pct,
+  });
 
   const formatDeadline = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');

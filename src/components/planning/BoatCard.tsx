@@ -206,6 +206,13 @@ function formatDeadlineText(daysLeft: number, dateStr: string, label: string, t:
 function StabilitySection({ impact }: { impact: StabilityImpact }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  // DEBUG: trace what BoatCard stability section renders
+  console.log('[BoatCard StabilitySection DEBUG]', {
+    stabilizes: impact.stabilizes_count,
+    recovering: impact.recovering_count,
+    blocked: impact.blocked_count,
+    progress: `${impact.progress_before_pct}->${impact.progress_after_pct}`,
+  });
 
   const hasAny = impact.stabilizes_count > 0 || impact.recovering_count > 0 || impact.blocked_count > 0;
   if (!hasAny && impact.progress_before_pct === impact.progress_after_pct) return null;

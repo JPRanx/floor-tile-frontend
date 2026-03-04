@@ -157,6 +157,14 @@ export function PlanningView() {
     setHorizonLoading((prev) => new Set(prev).add(factoryId));
     try {
       const result = await planningApi.getHorizon(factoryId, 3);
+      // DEBUG: trace stability data from Planning API
+      console.log('[PV DEBUG] Factory:', result.factory_name, 'Boats:', result.projections?.length);
+      result.projections?.forEach((p: { boat_name: string; stability_impact?: { recovering_count?: number; blocked_count?: number; stabilizes_count?: number; progress_before_pct?: number; progress_after_pct?: number } }) => {
+        const si = p.stability_impact;
+        if (si) {
+          console.log(`[PV DEBUG] ${p.boat_name}: recovering=${si.recovering_count}, blocked=${si.blocked_count}, stabilizes=${si.stabilizes_count}, progress=${si.progress_before_pct}->${si.progress_after_pct}`);
+        }
+      });
       setHorizons((prev) => {
         const next = new Map(prev);
         next.set(factoryId, result);

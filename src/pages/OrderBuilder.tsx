@@ -215,6 +215,17 @@ export function OrderBuilder() {
       setLoading(true);
       setError(null);
       const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId, factory_id: selectedFactoryId || undefined });
+      // DEBUG: trace stability data from API
+      console.log('[OB DEBUG] API response boat:', result.boat?.name);
+      console.log('[OB DEBUG] stability_forecast:', JSON.stringify({
+        status: result.stability_forecast?.status,
+        stable: result.stability_forecast?.stable_count,
+        recovering: result.stability_forecast?.recovering_products?.length,
+        blocked: result.stability_forecast?.blocker_count,
+        progress: result.stability_forecast?.recovery_progress_pct,
+        recovering_skus: result.stability_forecast?.recovering_products?.map((r: { sku: string }) => r.sku),
+        blocked_skus: result.stability_forecast?.blockers?.map((b: { sku: string }) => b.sku),
+      }));
       setData(result);
       // V2: Extract factory timeline if present
       // Flatten all products into a single array for local state
