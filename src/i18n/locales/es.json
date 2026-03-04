@@ -1199,7 +1199,8 @@
     "reviewReason": {
       "needsReview": "Borrador necesita revisión",
       "earlierModified": "Borrador anterior modificado",
-      "earlierDeleted": "Borrador anterior eliminado"
+      "earlierDeleted": "Borrador anterior eliminado",
+      "dataFreshness": "Datos actualizados desde último guardado"
     },
     "draftContext": {
       "basedOnSingle": "Basado en borrador de {{boat}} ({{pallets}} paletas)",

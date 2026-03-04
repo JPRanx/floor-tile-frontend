@@ -14,14 +14,50 @@ import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
 import { PipelineStrip } from '../components/planning/PipelineStrip';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
+import { FactoryOrderSignalCard } from '../components/planning/FactoryOrderSignalCard';
+import { FactoryTimeline } from '../components/planning/FactoryTimeline';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
-function formatFactorySignalDate(dateStr: string, lang: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toLocaleDateString(lang === 'es' ? 'es-CO' : 'en-US', {
-    day: 'numeric',
-    month: 'short',
+interface TimelineMilestone {
+  key: string;
+  label: string;
+  date: string;
+  passed: boolean;
+  is_current: boolean;
+}
+
+function buildTimeline(p: BoatProjection | undefined): { milestones: TimelineMilestone[]; current_milestone: string } | null {
+  if (!p) return null;
+  const today = new Date().toISOString().slice(0, 10);
+  const milestones: TimelineMilestone[] = [];
+
+  if (p.production_request_date) milestones.push({
+    key: 'factory_request_cutoff', label: 'Solicitud producción',
+    date: p.production_request_date, passed: p.production_request_date < today, is_current: false,
   });
+  if (p.siesa_order_date) milestones.push({
+    key: 'piggyback_cutoff', label: 'Pedido SIESA',
+    date: p.siesa_order_date, passed: p.siesa_order_date < today, is_current: false,
+  });
+  if (p.order_by_date) milestones.push({
+    key: 'order_deadline', label: 'Cierre pedido',
+    date: p.order_by_date, passed: p.order_by_date < today, is_current: false,
+  });
+  milestones.push({
+    key: 'departure', label: 'Zarpe',
+    date: p.departure_date, passed: p.departure_date < today, is_current: false,
+  });
+  milestones.push({
+    key: 'arrival', label: 'Llegada',
+    date: p.arrival_date, passed: p.arrival_date < today, is_current: false,
+  });
+
+  // "Current" = first future milestone (the next thing that needs to happen)
+  const firstFutureIdx = milestones.findIndex(m => !m.passed);
+  if (firstFutureIdx >= 0) milestones[firstFutureIdx].is_current = true;
+  else milestones[milestones.length - 1].is_current = true;
+
+  return { milestones, current_milestone: milestones.find(m => m.is_current)?.key ?? '' };
 }
 
 export function PlanningView() {
@@ -47,6 +83,9 @@ export function PlanningView() {
 
   // Estimated boats visibility
   const [showAllEstimated, setShowAllEstimated] = useState(false);
+
+  // Focal boat for timeline (index into actionBoats)
+  const [focalBoatIdx, setFocalBoatIdx] = useState(0);
 
   // Inline notifications (4a)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -369,163 +408,9 @@ export function PlanningView() {
         />
 
         {/* Factory Order Signal */}
-        {selectedHorizon?.factory_order_signal && (() => {
-          const sig = selectedHorizon.factory_order_signal;
-          const st = sig.signal_type;
-
-          // Card color: amber for actionable/in-progress, red for critical, slate for calm
-          const cardClass = sig.is_overdue
-            ? (st === 'in_production' || st === 'order_today')
-              ? 'bg-amber-500/10 border-amber-500/30'
-              : 'bg-red-500/10 border-red-500/30'
-            : (sig.days_until_order != null && sig.days_until_order <= 14)
-              ? 'bg-amber-500/10 border-amber-500/30'
-              : 'bg-slate-800/30 border-slate-700/50';
-
-          // Text color
-          const textClass = sig.is_overdue
-            ? (st === 'in_production' || st === 'order_today') ? 'text-amber-300' : 'text-red-300'
-            : (sig.days_until_order != null && sig.days_until_order <= 14) ? 'text-amber-300' : 'text-slate-300';
-
-          // Icon: factory for in_production/on_track, warning for critical
-          const icon = (!sig.is_overdue || st === 'in_production') ? '\u{1F3ED}' : '\u26A0\uFE0F';
-
-          // Boat suffix helper
-          const boatSuffix = sig.target_boat_name ? (
-            <span className="ml-1">
-              {' '}{sig.target_boat_name}
-              {sig.target_boat_departure && (
-                <span className="opacity-70 ml-1">
-                  ({formatFactorySignalDate(sig.target_boat_departure, i18n.language)})
-                </span>
-              )}
-            </span>
-          ) : null;
-
-          // Title line based on signal type
-          let titleContent;
-          if (!sig.is_overdue) {
-            // Normal: unchanged
-            titleContent = (
-              <>
-                {t('planning.factorySignal.title', 'Próximo pedido fábrica')}
-                {sig.next_order_date && (
-                  <>
-                    {': '}
-                    {formatFactorySignalDate(sig.next_order_date, i18n.language)}
-                    {sig.days_until_order != null && (
-                      <span className="ml-1 opacity-70">({sig.days_until_order}d)</span>
-                    )}
-                    {boatSuffix && <>{' — '}{t('planning.factorySignal.for', 'para')}{boatSuffix}</>}
-                  </>
-                )}
-              </>
-            );
-          } else {
-            switch (st) {
-              case 'in_production':
-                titleContent = (
-                  <>
-                    {t('planning.factorySignal.inProduction', 'En producción')}
-                    {sig.limiting_production_delivery && (
-                      <>
-                        {' — '}
-                        {t('planning.factorySignal.estDelivery', 'entrega est.')}
-                        {' '}
-                        {formatFactorySignalDate(sig.limiting_production_delivery, i18n.language)}
-                      </>
-                    )}
-                    {boatSuffix && <>{' — '}{t('planning.factorySignal.for', 'para')}{boatSuffix}</>}
-                  </>
-                );
-                break;
-              case 'production_delayed':
-                titleContent = (
-                  <>
-                    {t('planning.factorySignal.productionDelayed', 'Producción retrasada')}
-                    {sig.target_boat_name && (
-                      <>
-                        {' — '}
-                        {t('planning.factorySignal.wontMake', 'no alcanza')}
-                        {' '}{sig.target_boat_name}
-                      </>
-                    )}
-                  </>
-                );
-                break;
-              case 'order_today':
-                titleContent = (
-                  <>
-                    {t('planning.factorySignal.orderToday', 'Ordena hoy')}
-                    {sig.target_boat_name && (
-                      <>
-                        {' — '}
-                        {t('planning.factorySignal.canMake', 'alcanza')}
-                        {boatSuffix}
-                      </>
-                    )}
-                  </>
-                );
-                break;
-              case 'no_production':
-                titleContent = (
-                  <>
-                    {t('planning.factorySignal.noProduction', 'No alcanza producción')}
-                    {sig.target_boat_name && (
-                      <>
-                        {' — '}
-                        {t('planning.factorySignal.nextBoat', 'próximo barco')}:{boatSuffix}
-                      </>
-                    )}
-                  </>
-                );
-                break;
-              default:
-                titleContent = (
-                  <>
-                    {t('planning.factorySignal.overdue', 'Pedido fábrica vencido')}
-                    {sig.next_order_date && (
-                      <>
-                        {': '}
-                        {formatFactorySignalDate(sig.next_order_date, i18n.language)}
-                        {sig.days_until_order != null && (
-                          <span className="ml-1 opacity-70">({sig.days_until_order}d)</span>
-                        )}
-                      </>
-                    )}
-                  </>
-                );
-            }
-          }
-
-          return (
-            <div className={`rounded-xl border px-5 py-3 flex items-center justify-between ${cardClass}`}>
-              <div className="flex items-center gap-3">
-                <span className="text-lg">{icon}</span>
-                <div>
-                  <div className={`text-sm font-medium ${textClass}`}>
-                    {titleContent}
-                  </div>
-                  {sig.limiting_product_sku && (
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      {t('planning.factorySignal.limitedBy', 'Limitado por')}: {sig.limiting_product_sku}
-                      {sig.effective_coverage_days != null && (
-                        <span className="ml-2">
-                          ({sig.effective_coverage_days}d {t('planning.factorySignal.coverage', 'cobertura')})
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {(sig.product_count != null && sig.product_count > 0) && (
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      ~{sig.estimated_pallets} paletas, {sig.product_count} productos
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+        {selectedHorizon?.factory_order_signal && (
+          <FactoryOrderSignalCard signal={selectedHorizon.factory_order_signal} lang={i18n.language} />
+        )}
 
         {/* Inline notification (4a) */}
         {notification && (
@@ -612,6 +497,11 @@ export function PlanningView() {
               </div>
             </div>
 
+            {/* Focal boat timeline */}
+            {actionBoats.length > 0 && (
+              <FactoryTimeline timeline={buildTimeline(actionBoats[Math.min(focalBoatIdx, actionBoats.length - 1)])} />
+            )}
+
             {/* Action-needed boats */}
             {actionBoats.length > 0 && (() => {
               const realAction = actionBoats.filter((p) => !p.is_estimated);
@@ -628,7 +518,7 @@ export function PlanningView() {
                     {t('planning.actionNeeded', 'Requiere accion')} ({visibleAction.length}{hiddenEstimatedCount > 0 ? `+${hiddenEstimatedCount}` : ''})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {visibleAction.map((projection) => (
+                    {visibleAction.map((projection, idx) => (
                       <BoatCard
                         key={projection.boat_id}
                         projection={projection}
@@ -637,6 +527,8 @@ export function PlanningView() {
                         onQuickAccept={handleQuickAccept}
                         onExport={handleExportFromCard}
                         isAccepting={acceptingBoatId === projection.boat_id}
+                        isSelected={idx === Math.min(focalBoatIdx, visibleAction.length - 1)}
+                        onSelect={() => setFocalBoatIdx(idx)}
                       />
                     ))}
                   </div>

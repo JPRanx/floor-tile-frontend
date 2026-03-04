@@ -1199,7 +1199,8 @@
     "reviewReason": {
       "needsReview": "Draft needs review",
       "earlierModified": "Earlier draft modified",
-      "earlierDeleted": "Earlier draft deleted"
+      "earlierDeleted": "Earlier draft deleted",
+      "dataFreshness": "Data updated since last save"
     },
     "draftContext": {
       "basedOnSingle": "Based on draft from {{boat}} ({{pallets}} pallets)",

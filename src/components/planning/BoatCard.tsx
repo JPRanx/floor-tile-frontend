@@ -13,6 +13,10 @@ interface BoatCardProps {
   isAccepting?: boolean;
   /** Render in compact mode for completed/ordered boats */
   compact?: boolean;
+  /** Highlight as focal boat (timeline synced to this card) */
+  isSelected?: boolean;
+  /** Called when card is clicked to set it as the focal boat */
+  onSelect?: () => void;
 }
 
 const DRAFT_BADGE_CONFIG: Record<DraftStatus, { label: string; classes: string }> = {
@@ -40,6 +44,7 @@ function translateReviewReason(reason: string, t: any): string {
     'draft_needs_review': 'planning.reviewReason.needsReview',
     'earlier_draft_modified': 'planning.reviewReason.earlierModified',
     'earlier_draft_deleted': 'planning.reviewReason.earlierDeleted',
+    'data_freshness': 'planning.reviewReason.dataFreshness',
   };
   const key = knownKeys[reason];
   return key ? t(key) : reason;
@@ -295,7 +300,7 @@ function StabilitySection({ impact }: { impact: StabilityImpact }) {
   );
 }
 
-export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, compact }: BoatCardProps) {
+export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, compact, isSelected, onSelect }: BoatCardProps) {
   const { t, i18n } = useTranslation();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
@@ -362,10 +367,12 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
 
   return (
     <div
+      onClick={onSelect}
       className={`
         bg-slate-800/30 backdrop-blur-xl rounded-2xl border ${borderStyle}
         shadow-xl transition-all duration-200 hover:bg-slate-800/50 hover:border-slate-600/60
-        flex flex-col
+        flex flex-col ${onSelect ? 'cursor-pointer' : ''}
+        ${isSelected ? 'ring-1 ring-indigo-500/40' : ''}
       `}
     >
       {/* SIESA order deadline banner */}

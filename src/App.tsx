@@ -15,7 +15,8 @@ function App() {
     <BrowserRouter>
       <Layout>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<PlanningView />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/data-hub" element={<DataHub />} />
           <Route path="/boats" element={<Boats />} />
           <Route path="/planning" element={<PlanningView />} />
