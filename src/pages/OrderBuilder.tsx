@@ -215,16 +215,18 @@ export function OrderBuilder() {
       setLoading(true);
       setError(null);
       const result = await orderBuilderApi.get({ num_bls: blCount, boat_id: boatId, factory_id: selectedFactoryId || undefined });
-      // DEBUG: trace stability data from API
-      console.log('[OB DEBUG] API response boat:', result.boat?.name);
-      console.log('[OB DEBUG] stability_forecast:', JSON.stringify({
+      // DEBUG: full product comparison trace
+      console.log('[OB DEBUG] ===== ORDER BUILDER RESPONSE =====');
+      console.log('[OB DEBUG] Boat:', result.boat?.name, '| boat_id:', boatId, '| factory_id:', selectedFactoryId);
+      console.log('[OB DEBUG] HIGH_PRIORITY:', result.high_priority?.map((p: { sku: string; selected_pallets: number; is_selected: boolean; priority: string }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
+      console.log('[OB DEBUG] CONSIDER:', result.consider?.map((p: { sku: string; selected_pallets: number; is_selected: boolean }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
+      console.log('[OB DEBUG] WELL_COVERED:', result.well_covered?.map((p: { sku: string; selected_pallets: number; is_selected: boolean }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
+      console.log('[OB DEBUG] YOUR_CALL:', result.your_call?.map((p: { sku: string; selected_pallets: number; is_selected: boolean }) => `${p.sku} (${p.selected_pallets}p, sel=${p.is_selected})`));
+      console.log('[OB DEBUG] stability:', JSON.stringify({
         status: result.stability_forecast?.status,
         stable: result.stability_forecast?.stable_count,
         recovering: result.stability_forecast?.recovering_products?.length,
         blocked: result.stability_forecast?.blocker_count,
-        progress: result.stability_forecast?.recovery_progress_pct,
-        recovering_skus: result.stability_forecast?.recovering_products?.map((r: { sku: string }) => r.sku),
-        blocked_skus: result.stability_forecast?.blockers?.map((b: { sku: string }) => b.sku),
       }));
       setData(result);
       // V2: Extract factory timeline if present

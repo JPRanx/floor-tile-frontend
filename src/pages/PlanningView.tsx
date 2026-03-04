@@ -157,12 +157,17 @@ export function PlanningView() {
     setHorizonLoading((prev) => new Set(prev).add(factoryId));
     try {
       const result = await planningApi.getHorizon(factoryId, 3);
-      // DEBUG: trace stability data from Planning API
+      // DEBUG: full product comparison trace
+      console.log('[PV DEBUG] ===== PLANNING VIEW RESPONSE =====');
       console.log('[PV DEBUG] Factory:', result.factory_name, 'Boats:', result.projections?.length);
       for (const p of result.projections ?? []) {
         const si = p.stability_impact;
+        const products = p.product_details ?? [];
+        const selected = products.filter((pd: { suggested_pallets: number }) => pd.suggested_pallets > 0);
+        console.log(`[PV DEBUG] ${p.boat_name} (${p.boat_id?.slice(0,8)}): ${products.length} products, ${selected.length} with pallets`);
+        console.log(`[PV DEBUG]   Products: ${selected.map((pd: { sku: string; suggested_pallets: number; urgency: string }) => `${pd.sku}(${pd.suggested_pallets}p,${pd.urgency})`).join(', ')}`);
         if (si) {
-          console.log(`[PV DEBUG] ${p.boat_name}: recovering=${si.recovering_count}, blocked=${si.blocked_count}, stabilizes=${si.stabilizes_count}, progress=${si.progress_before_pct}->${si.progress_after_pct}`);
+          console.log(`[PV DEBUG]   Stability: recovering=${si.recovering_count}, blocked=${si.blocked_count}, stabilizes=${si.stabilizes_count}`);
         }
       }
       setHorizons((prev) => {
