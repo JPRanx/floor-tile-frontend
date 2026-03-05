@@ -75,15 +75,19 @@ function ProductList({
   onToggle: () => void;
 }) {
   const { t } = useTranslation();
-  const priorityProducts = products.filter(
+  // Only show products that can actually ship (matches OB selection)
+  const shippable = products.filter((p) => (p.shippable_pallets ?? p.suggested_pallets) > 0);
+  const priorityProducts = shippable.filter(
     (p) => p.urgency === 'critical' || p.urgency === 'urgent'
   );
-  const otherProducts = products.filter(
+  const otherProducts = shippable.filter(
     (p) => p.urgency !== 'critical' && p.urgency !== 'urgent'
   );
 
   const visibleOthers = showAll ? otherProducts : otherProducts.slice(0, Math.max(0, MAX_VISIBLE_PRODUCTS - priorityProducts.length));
   const hiddenCount = showAll ? 0 : otherProducts.length - visibleOthers.length;
+
+  if (shippable.length === 0) return null;
 
   return (
     <div className="space-y-1">
