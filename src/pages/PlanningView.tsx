@@ -288,8 +288,11 @@ export function PlanningView() {
     let totalOk = 0;
     let totalProducts = 0;
 
+    const HARD_DEADLINE_DAYS = 10;
     for (const p of selectedHorizon.projections) {
-      if (p.draft_status === 'ordered' || p.draft_status === 'confirmed') {
+      const isOrdered = p.draft_status === 'ordered' || p.draft_status === 'confirmed';
+      const isPastCutoff = p.days_until_departure <= HARD_DEADLINE_DAYS && !p.is_estimated;
+      if (isOrdered || isPastCutoff) {
         completed.push(p);
       } else {
         action.push(p);

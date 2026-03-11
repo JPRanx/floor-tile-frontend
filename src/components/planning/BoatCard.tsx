@@ -318,6 +318,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
   const isActive = projection.is_active;
   const isEstimated = projection.is_estimated;
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
+  const isPastCutoff = !isEstimated && projection.days_until_departure <= 10;
 
   const borderStyle = isActive
     ? 'border-slate-700/50'
@@ -342,12 +343,13 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
     && !isActive
     && projection.product_details.some((p) => (p.shippable_pallets ?? p.suggested_pallets) > 0);
 
-  // Compact mode for ordered/confirmed boats
-  if (compact && isCompleted) {
+  // Compact mode for ordered/confirmed/past-cutoff boats
+  if (compact && (isCompleted || isPastCutoff)) {
+    const icon = isCompleted ? '\u{2705}' : '\u{23F3}'; // ✅ for ordered, ⏳ for past cutoff
     return (
       <div className="bg-slate-800/20 rounded-xl border border-slate-700/30 px-5 py-3 flex items-center justify-between opacity-70">
         <div className="flex items-center gap-3 min-w-0">
-          <span className="text-sm">{'\u{2705}'}</span>
+          <span className="text-sm">{icon}</span>
           <span className="text-white font-medium truncate">{projection.boat_name}</span>
           <span className="text-slate-500 text-sm">{formatDateShort(projection.departure_date, i18n.language)}</span>
         </div>
