@@ -193,20 +193,6 @@ const URGENCY_TEXT: Record<string, string> = {
   ok: 'text-slate-400',
 };
 
-function getUrgencyStyle(daysLeft: number): { classes: string; level: 'overdue' | 'now' | 'thisWeek' | 'soon' | 'onTrack' } {
-  if (daysLeft < 0) return { classes: 'bg-red-500/15 border-red-500/30 text-red-300', level: 'overdue' };
-  if (daysLeft <= 3) return { classes: 'bg-red-500/15 border-red-500/30 text-red-300', level: 'now' };
-  if (daysLeft <= 7) return { classes: 'bg-orange-500/15 border-orange-500/30 text-orange-300', level: 'thisWeek' };
-  if (daysLeft <= 14) return { classes: 'bg-amber-500/10 border-amber-500/20 text-amber-300', level: 'soon' };
-  return { classes: 'bg-slate-500/10 border-slate-500/20 text-slate-400', level: 'onTrack' };
-}
-
-function formatDeadlineText(daysLeft: number, dateStr: string, label: string, t: (k: string, d: string, o?: Record<string, unknown>) => string, lang: string): string {
-  const date = formatDateShort(dateStr, lang);
-  if (daysLeft < 0) return `${label}: ${t('planning.deadline.overdue', 'Vencido hace {{days}}d', { days: Math.abs(daysLeft) })}`;
-  if (daysLeft <= 3) return `${label}: ${t('planning.deadline.now', 'Ahora — {{date}}', { date })}`;
-  return `${label}: ${date} (${daysLeft}d)`;
-}
 
 function StabilitySection({ impact }: { impact: StabilityImpact }) {
   const { t } = useTranslation();
@@ -334,8 +320,6 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
     ? `${shippableTotal}`
     : `~${projection.projected_pallets_min}-${projection.projected_pallets_max}`;
 
-  // SIESA order deadline
-  const siesaDays = projection.days_until_siesa_deadline;
 
 
   const canQuickAccept = onQuickAccept
@@ -393,25 +377,8 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
         ${isSelected ? 'ring-1 ring-indigo-500/40' : ''}
       `}
     >
-      {/* SIESA order deadline banner */}
-      {!isCompleted && siesaDays != null && (
-        <div className="mx-5 mt-4 space-y-1.5">
-          {/* SIESA order deadline — Ashley's primary action deadline */}
-          {siesaDays != null && projection.siesa_order_date && (
-            <div className={`px-3 py-1.5 rounded-lg border text-xs font-medium ${getUrgencyStyle(siesaDays).classes}`}>
-              {formatDeadlineText(
-                siesaDays,
-                projection.siesa_order_date,
-                t('planning.siesaOrder', 'Pedido SIESA'),
-                t, i18n.language
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Header: vessel name + dates */}
-      <div className={`px-5 ${!isCompleted && siesaDays != null ? 'pt-3' : 'pt-5'} pb-3 flex items-start justify-between`}>
+      <div className="px-5 pt-5 pb-3 flex items-start justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-lg flex-shrink-0">
             {isActive ? '\u{1F6A2}' : isEstimated ? '\u{1F4C5}' : '\u{1F310}'}
