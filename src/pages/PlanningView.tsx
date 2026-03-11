@@ -17,7 +17,7 @@ import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPrevie
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export function PlanningView() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [factories, setFactories] = useState<Factory[]>([]);

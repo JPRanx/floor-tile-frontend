@@ -74,7 +74,7 @@ export function OrderBuilder() {
 
   // Demand forecast state
   const [demandForecast, setDemandForecast] = useState<DemandForecastResponse | null>(null);
-  const [demandLoading, setDemandLoading] = useState(false);
+  const [, setDemandLoading] = useState(false);
 
   // BL Allocation state
   const [numBLs, setNumBLs] = useState(0); // 0 = auto (backend resolves to recommended)
