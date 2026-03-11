@@ -6,7 +6,6 @@ import type {
   OrderBuilderResponse,
   OrderBuilderProduct,
   OrderBuilderSummary as SummaryType,
-  OrderBuilderAlert,
   DemandForecastResponse,
   BLAllocationReport,
   GenerateReportRequest,
@@ -23,9 +22,7 @@ import { OrderBuilderHeader } from '../components/OrderBuilderHeader';
 
 import { OrderBuilderSummary } from '../components/OrderBuilderSummary';
 import { ShippingEstimate } from '../components/ShippingEstimate';
-import { OrderBuilderAlerts } from '../components/OrderBuilderAlerts';
 import { UnableToShipAlert } from '../components/UnableToShipAlert';
-import { CallBeforeOrderingAlert } from '../components/CallBeforeOrderingAlert';
 import { BLAllocationView } from '../components/BLAllocationView';
 import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
 import { AddToProductionSection } from '../components/AddToProductionSection';
@@ -958,88 +955,6 @@ export function OrderBuilder() {
   })();
 
   // Recalculate alerts based on current selection
-  const alerts: OrderBuilderAlert[] = (() => {
-    const alertList: OrderBuilderAlert[] = [];
-
-    // Warehouse exceeded
-    if (summary.warehouse_after_delivery > WAREHOUSE_MAX_PALLETS) {
-      const over = summary.warehouse_after_delivery - WAREHOUSE_MAX_PALLETS;
-      alertList.push({
-        type: 'blocked',
-        icon: '🚫',
-        product_sku: null,
-        message: t('orderBuilder.alerts.warehouseExceeded', 'Excede bodega en {{over}} paletas. Elimina algunos artículos.', { over }),
-      });
-    } else if (summary.warehouse_utilization_after > 95) {
-      alertList.push({
-        type: 'warning',
-        icon: '⚠️',
-        product_sku: null,
-        message: t('orderBuilder.alerts.warehouseHigh', 'Bodega estará al {{pct}}% después de entrega', { pct: Math.round(summary.warehouse_utilization_after) }),
-      });
-    }
-
-    // Boat exceeded
-    if (summary.total_containers > summary.boat_max_containers) {
-      alertList.push({
-        type: 'blocked',
-        icon: '🚫',
-        product_sku: null,
-        message: t('orderBuilder.alerts.boatExceeded', 'Excede capacidad del barco ({{used}}/{{max}} contenedores)', { used: summary.total_containers, max: summary.boat_max_containers }),
-      });
-    }
-
-    // Room for more
-    if (
-      summary.boat_remaining_containers > 0 &&
-      summary.warehouse_utilization_after < 90
-    ) {
-      alertList.push({
-        type: 'suggestion',
-        icon: '💡',
-        product_sku: null,
-        message: t('orderBuilder.alerts.roomForMore', 'Espacio para {{count}} contenedor(es) más', { count: summary.boat_remaining_containers }),
-      });
-    }
-
-    // HIGH_PRIORITY not selected
-    const highPriority = products.filter((p) => p.priority === 'HIGH_PRIORITY');
-    for (const p of highPriority) {
-      if (!p.is_selected) {
-        alertList.push({
-          type: 'warning',
-          icon: '⚠️',
-          product_sku: p.sku,
-          message: t('orderBuilder.alerts.highPriorityUnselected', 'ALTA PRIORIDAD pero no seleccionado — riesgo de desabasto'),
-        });
-      }
-    }
-
-    // LOW confidence selected
-    const selected = products.filter((p) => p.is_selected);
-    for (const p of selected) {
-      if (p.confidence === 'LOW') {
-        alertList.push({
-          type: 'warning',
-          icon: '⚠️',
-          product_sku: p.sku,
-          message: p.confidence_reason,
-        });
-      }
-    }
-
-    // Booking deadline
-    if (data?.boat.days_until_deadline != null && data.boat.days_until_deadline <= 3) {
-      alertList.unshift({
-        type: 'warning',
-        icon: '⏰',
-        product_sku: null,
-        message: t('orderBuilder.alerts.bookingDeadline', '¡Fecha límite de reserva en {{days}} días!', { days: data.boat.days_until_deadline }),
-      });
-    }
-
-    return alertList;
-  })();
 
 
   // V2: Show Planning View if no factory_id in URL
@@ -1368,11 +1283,6 @@ export function OrderBuilder() {
             )}
 
             {/* 3. Alerts */}
-            <CallBeforeOrderingAlert
-              alerts={demandForecast?.overdue_alerts || []}
-              loading={demandLoading}
-            />
-            <OrderBuilderAlerts alerts={alerts} />
             {capabilities.has_factory_inventory && (
               <UnableToShipAlert unableToShip={data?.unable_to_ship || null} />
             )}

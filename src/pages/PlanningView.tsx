@@ -14,51 +14,7 @@ import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
 import { PipelineStrip } from '../components/planning/PipelineStrip';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
-import { FactoryOrderSignalCard } from '../components/planning/FactoryOrderSignalCard';
-import { FactoryTimeline } from '../components/planning/FactoryTimeline';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-
-interface TimelineMilestone {
-  key: string;
-  label: string;
-  date: string;
-  passed: boolean;
-  is_current: boolean;
-}
-
-function buildTimeline(p: BoatProjection | undefined): { milestones: TimelineMilestone[]; current_milestone: string } | null {
-  if (!p) return null;
-  const today = new Date().toISOString().slice(0, 10);
-  const milestones: TimelineMilestone[] = [];
-
-  if (p.production_request_date) milestones.push({
-    key: 'factory_request_cutoff', label: 'Solicitud producción',
-    date: p.production_request_date, passed: p.production_request_date < today, is_current: false,
-  });
-  if (p.siesa_order_date) milestones.push({
-    key: 'piggyback_cutoff', label: 'Pedido SIESA',
-    date: p.siesa_order_date, passed: p.siesa_order_date < today, is_current: false,
-  });
-  if (p.order_by_date) milestones.push({
-    key: 'order_deadline', label: 'Cierre pedido',
-    date: p.order_by_date, passed: p.order_by_date < today, is_current: false,
-  });
-  milestones.push({
-    key: 'departure', label: 'Zarpe',
-    date: p.departure_date, passed: p.departure_date < today, is_current: false,
-  });
-  milestones.push({
-    key: 'arrival', label: 'Llegada',
-    date: p.arrival_date, passed: p.arrival_date < today, is_current: false,
-  });
-
-  // "Current" = first future milestone (the next thing that needs to happen)
-  const firstFutureIdx = milestones.findIndex(m => !m.passed);
-  if (firstFutureIdx >= 0) milestones[firstFutureIdx].is_current = true;
-  else milestones[milestones.length - 1].is_current = true;
-
-  return { milestones, current_milestone: milestones.find(m => m.is_current)?.key ?? '' };
-}
 
 export function PlanningView() {
   const { t, i18n } = useTranslation();
@@ -83,9 +39,6 @@ export function PlanningView() {
 
   // Estimated boats visibility
   const [showAllEstimated, setShowAllEstimated] = useState(false);
-
-  // Focal boat for timeline (index into actionBoats)
-  const [focalBoatIdx, setFocalBoatIdx] = useState(0);
 
   // Inline notifications (4a)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -421,11 +374,6 @@ export function PlanningView() {
           loading={selectedFactoryId != null && horizonLoading.has(selectedFactoryId)}
         />
 
-        {/* Factory Order Signal */}
-        {selectedHorizon?.factory_order_signal && (
-          <FactoryOrderSignalCard signal={selectedHorizon.factory_order_signal} lang={i18n.language} />
-        )}
-
         {/* Inline notification (4a) */}
         {notification && (
           <div className={`mx-4 mt-2 px-4 py-2 rounded-lg text-sm flex items-center justify-between ${
@@ -511,11 +459,6 @@ export function PlanningView() {
               </div>
             </div>
 
-            {/* Focal boat timeline */}
-            {actionBoats.length > 0 && (
-              <FactoryTimeline timeline={buildTimeline(actionBoats[Math.min(focalBoatIdx, actionBoats.length - 1)])} />
-            )}
-
             {/* Action-needed boats */}
             {actionBoats.length > 0 && (() => {
               const realAction = actionBoats.filter((p) => !p.is_estimated);
@@ -532,7 +475,7 @@ export function PlanningView() {
                     {t('planning.actionNeeded', 'Requiere accion')} ({visibleAction.length}{hiddenEstimatedCount > 0 ? `+${hiddenEstimatedCount}` : ''})
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {visibleAction.map((projection, idx) => (
+                    {visibleAction.map((projection) => (
                       <BoatCard
                         key={projection.boat_id}
                         projection={projection}
@@ -541,8 +484,6 @@ export function PlanningView() {
                         onQuickAccept={handleQuickAccept}
                         onExport={handleExportFromCard}
                         isAccepting={acceptingBoatId === projection.boat_id}
-                        isSelected={idx === Math.min(focalBoatIdx, visibleAction.length - 1)}
-                        onSelect={() => setFocalBoatIdx(idx)}
                       />
                     ))}
                   </div>
