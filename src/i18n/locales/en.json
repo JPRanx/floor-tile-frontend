@@ -262,7 +262,11 @@
     "minPerProduct": "Min: 1 container per product",
     "exportErrorSave": "Error saving order. Export cancelled.",
     "exportErrorFactory": "Error creating factory order.",
-    "exportErrorGeneric": "Export error. Check connection and try again."
+    "exportErrorGeneric": "Export error. Check connection and try again.",
+    "readOnlyTitle": "Order sent",
+    "readOnlyDescription": "This draft has been exported and cannot be modified.",
+    "departedTitle": "Boat departed",
+    "departedDescription": "This boat has already departed. Read only."
   },
   "recommendations": {
     "title": "Order Recommendations",

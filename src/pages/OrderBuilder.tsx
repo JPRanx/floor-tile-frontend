@@ -118,7 +118,9 @@ export function OrderBuilder() {
   // Draft lifecycle state — tracks current draft ID and status for ordered/confirmed guards
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [currentDraftStatus, setCurrentDraftStatus] = useState<DraftStatus | null>(null);
-  const isReadOnly = currentDraftStatus === 'ordered' || currentDraftStatus === 'confirmed';
+  const selectedBoat = availableBoats.find(b => b.id === selectedBoatId);
+  const isBoatDeparted = selectedBoat?.status === 'departed' || selectedBoat?.status === 'arrived';
+  const isReadOnly = currentDraftStatus === 'ordered' || currentDraftStatus === 'confirmed' || isBoatDeparted;
 
   // 5c: Staleness banner state
   const [freshness, setFreshness] = useState<DataFreshnessResponse | null>(null);
@@ -1182,16 +1184,26 @@ export function OrderBuilder() {
               />
             )}
 
-            {/* Read-only banner for ordered/confirmed drafts */}
+            {/* Read-only banner for departed boats or ordered/confirmed drafts */}
             {isReadOnly && (
-              <div className="mx-4 my-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-4 py-3 flex items-center gap-3">
-                <span className="text-blue-400 text-lg">&#x1F4E8;</span>
+              <div className={`mx-4 my-2 rounded-lg px-4 py-3 flex items-center gap-3 ${
+                isBoatDeparted
+                  ? 'bg-slate-500/10 border border-slate-500/20'
+                  : 'bg-blue-500/10 border border-blue-500/20'
+              }`}>
+                <span className={`text-lg ${isBoatDeparted ? 'text-slate-400' : 'text-blue-400'}`}>
+                  {isBoatDeparted ? '\u{1F6A2}' : '\u{1F4E8}'}
+                </span>
                 <div>
-                  <p className="text-sm font-medium text-blue-300">
-                    {t('orderBuilder.readOnlyTitle', 'Pedido enviado')}
+                  <p className={`text-sm font-medium ${isBoatDeparted ? 'text-slate-300' : 'text-blue-300'}`}>
+                    {isBoatDeparted
+                      ? t('orderBuilder.departedTitle', 'Barco despachado')
+                      : t('orderBuilder.readOnlyTitle', 'Pedido enviado')}
                   </p>
-                  <p className="text-xs text-blue-400/70">
-                    {t('orderBuilder.readOnlyDescription', 'Este borrador ya fue exportado y no se puede modificar.')}
+                  <p className={`text-xs ${isBoatDeparted ? 'text-slate-400/70' : 'text-blue-400/70'}`}>
+                    {isBoatDeparted
+                      ? t('orderBuilder.departedDescription', 'Este barco ya partió. Solo lectura.')
+                      : t('orderBuilder.readOnlyDescription', 'Este borrador ya fue exportado y no se puede modificar.')}
                   </p>
                 </div>
               </div>

@@ -262,7 +262,11 @@
     "minPerProduct": "Mín: 1 contenedor por producto",
     "exportErrorSave": "Error al guardar pedido. Exportación cancelada.",
     "exportErrorFactory": "Error al crear orden de fábrica.",
-    "exportErrorGeneric": "Error al exportar. Verifica tu conexión e intenta de nuevo."
+    "exportErrorGeneric": "Error al exportar. Verifica tu conexión e intenta de nuevo.",
+    "readOnlyTitle": "Pedido enviado",
+    "readOnlyDescription": "Este borrador ya fue exportado y no se puede modificar.",
+    "departedTitle": "Barco despachado",
+    "departedDescription": "Este barco ya partió. Solo lectura."
   },
   "recommendations": {
     "title": "Recomendaciones de Pedido",
