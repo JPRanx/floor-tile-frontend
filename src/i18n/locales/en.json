@@ -1136,6 +1136,13 @@
       "pallets": "~{{count}}p",
       "targetBoat": "→ est. {{date}}"
     },
+    "productionCycles": "Production requests",
+    "siesaOrders": "SIESA orders",
+    "monthCycle": {
+      "products": "{{count}} prod",
+      "pallets": "~{{count}}p",
+      "capacityLabel": "quota"
+    },
     "products": "Products",
     "showMore": "+ {{count}} more...",
     "showLess": "Show less",
@@ -1391,5 +1398,10 @@
       "recHealthy": "Maintain current strategy.",
       "recDefault": "Monitor performance."
     }
+  },
+  "factoryRequests": {
+    "title": "Production Request",
+    "comingSoon": "Coming soon",
+    "backToPlanning": "Back to Planning"
   }
 }

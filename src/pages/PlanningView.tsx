@@ -5,6 +5,8 @@ import { factoriesApi } from '../requests/factories';
 import type { Factory } from '../requests/factories';
 import { planningApi } from '../requests/planning';
 import type { PlanningHorizonResponse, BoatProjection } from '../requests/planning';
+import { factoryRequestsApi } from '../requests/factoryRequests';
+import type { FactoryRequestCycle } from '../requests/factoryRequests';
 import { draftsApi } from '../requests/drafts';
 import { boatsApi } from '../requests/boats';
 import { dataHubApi } from '../requests/dataHub';
@@ -27,6 +29,9 @@ export function PlanningView() {
   // Horizon data per factory
   const [horizons, setHorizons] = useState<Map<string, PlanningHorizonResponse>>(new Map());
   const [horizonLoading, setHorizonLoading] = useState<Set<string>>(new Set());
+
+  // Factory request cycles per factory
+  const [factoryRequestCycles, setFactoryRequestCycles] = useState<Map<string, FactoryRequestCycle[]>>(new Map());
 
   // Selected factory for detail view
   const [selectedFactoryId, setSelectedFactoryId] = useState<string | null>(null);
@@ -142,16 +147,30 @@ export function PlanningView() {
     }
   }, []);
 
+  const fetchFactoryRequests = useCallback(async (factoryId: string) => {
+    try {
+      const result = await factoryRequestsApi.getHorizon(factoryId);
+      setFactoryRequestCycles(prev => {
+        const next = new Map(prev);
+        next.set(factoryId, result.cycles);
+        return next;
+      });
+    } catch (err) {
+      console.error('Failed to load factory request cycles:', err);
+    }
+  }, []);
+
   useEffect(() => {
     const activeFactories = factories.filter((f) => f.active);
     for (const factory of activeFactories) {
       fetchHorizon(factory.id);
+      fetchFactoryRequests(factory.id);
     }
     // Auto-select first active factory
     if (activeFactories.length > 0 && !selectedFactoryId) {
       setSelectedFactoryId(activeFactories[0].id);
     }
-  }, [factories, fetchHorizon, selectedFactoryId]);
+  }, [factories, fetchHorizon, fetchFactoryRequests, selectedFactoryId]);
 
   const handleFactorySelect = (factoryId: string) => {
     setSelectedFactoryId((prev) => (prev === factoryId ? null : factoryId));
@@ -401,6 +420,8 @@ export function PlanningView() {
               onSelect={() => handleFactorySelect(factory.id)}
               onBoatClick={(boatId) => handleBoatClick(factory.id, boatId)}
               onDirectAccess={() => navigate(`/order-builder?factory_id=${factory.id}`)}
+              cycles={factoryRequestCycles.get(factory.id) ?? []}
+              onCycleClick={(month) => navigate(`/factory-requests?factory_id=${factory.id}&month=${month}`)}
             />
           ))}
         </div>

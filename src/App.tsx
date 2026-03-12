@@ -9,6 +9,7 @@ import { PlanningView } from './pages/PlanningView';
 import { Intelligence } from './pages/Intelligence';
 import { ProductManagement } from './pages/ProductManagement';
 import { ConfigPage } from './pages/ConfigPage';
+import { FactoryRequestBuilder } from './pages/FactoryRequestBuilder';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/boats" element={<Boats />} />
           <Route path="/planning" element={<PlanningView />} />
           <Route path="/order-builder" element={<OrderBuilder />} />
+          <Route path="/factory-requests" element={<FactoryRequestBuilder />} />
           <Route path="/intelligence" element={<Intelligence />} />
           <Route path="/products" element={<ProductManagement />} />
           <Route path="/config" element={<ConfigPage />} />

@@ -23,7 +23,7 @@ export function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config'].includes(location.pathname);
+  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
@@ -62,7 +62,7 @@ export function Layout({ children }: LayoutProps) {
             <nav className="hidden md:flex space-x-4">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path
-                  || (item.path === '/' && (location.pathname === '/order-builder' || location.pathname === '/planning'));
+                  || (item.path === '/' && ['/order-builder', '/planning', '/factory-requests'].includes(location.pathname));
                 return (
                   <Link
                     key={item.path}
@@ -113,7 +113,7 @@ export function Layout({ children }: LayoutProps) {
             <nav className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path
-                  || (item.path === '/' && (location.pathname === '/order-builder' || location.pathname === '/planning'));
+                  || (item.path === '/' && ['/order-builder', '/planning', '/factory-requests'].includes(location.pathname));
                 return (
                   <Link
                     key={item.path}
