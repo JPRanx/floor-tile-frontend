@@ -46,19 +46,9 @@ export function FactoryLane({
   const totalUrgent = horizon?.projections.reduce((s, p) => s + p.urgency_breakdown.urgent, 0) ?? 0;
   const boatCount = horizon?.projections.length ?? 0;
 
-  // Most urgent deadline
-  const mostUrgentDeadline = horizon?.projections
-    .filter((p) => p.draft_status !== 'ordered' && p.draft_status !== 'confirmed')
-    .reduce((min, p) => {
-      const days = p.days_until_siesa_deadline ?? p.days_until_order_deadline;
-      if (days == null) return min;
-      if (min == null) return days;
-      return days < min ? days : min;
-    }, null as number | null);
-
-  const urgencyIndicator = mostUrgentDeadline != null && mostUrgentDeadline <= 3
+  const urgencyIndicator = totalCritical > 0
     ? 'border-red-500/40'
-    : mostUrgentDeadline != null && mostUrgentDeadline <= 7
+    : totalUrgent > 0
     ? 'border-orange-500/30'
     : 'border-slate-700/40';
 

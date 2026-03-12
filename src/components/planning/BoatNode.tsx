@@ -7,15 +7,6 @@ interface BoatNodeProps {
   onClick: () => void;
 }
 
-function getDeadlineStyle(daysLeft: number | null): { badge: string; classes: string } {
-  if (daysLeft == null) return { badge: '', classes: '' };
-  if (daysLeft < 0) return { badge: '_OVERDUE_', classes: 'text-red-400 bg-red-500/15 border-red-500/30' };
-  if (daysLeft <= 3) return { badge: `${daysLeft}d`, classes: 'text-red-400 bg-red-500/15 border-red-500/30' };
-  if (daysLeft <= 7) return { badge: `${daysLeft}d`, classes: 'text-orange-400 bg-orange-500/15 border-orange-500/30' };
-  if (daysLeft <= 14) return { badge: `${daysLeft}d`, classes: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
-  return { badge: `${daysLeft}d`, classes: 'text-slate-500 bg-slate-500/10 border-slate-500/20' };
-}
-
 const STATUS_ICON: Record<string, string> = {
   drafting: '\u{270F}\u{FE0F}',
   action_needed: '\u{26A0}\u{FE0F}',
@@ -25,7 +16,6 @@ const STATUS_ICON: Record<string, string> = {
 
 export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const { t, i18n } = useTranslation();
-  const deadline = getDeadlineStyle(projection.days_until_siesa_deadline ?? projection.days_until_order_deadline);
   const hasDraft = projection.is_active;
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
   const { critical, urgent, soon, actionable } = projection.urgency_breakdown;
@@ -114,11 +104,6 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
           </span>
         ) : (
           <span className="text-[10px] text-slate-600">{t('planning.noReview')}</span>
-        )}
-        {deadline.badge && !isCompleted && (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${deadline.classes}`}>
-            {deadline.badge === '_OVERDUE_' ? t('planning.deadlineOverdue') : deadline.badge}
-          </span>
         )}
       </div>
     </button>
