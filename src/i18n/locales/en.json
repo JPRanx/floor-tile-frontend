@@ -1117,7 +1117,20 @@
     "productionRequest": "Request production",
     "deadline": {
       "overdue": "Overdue {{days}}d",
-      "now": "Now — {{date}}"
+      "now": "Now — {{date}}",
+      "planBy": "Plan by {{date}}",
+      "orderNow": "Order now"
+    },
+    "factoryRequest": {
+      "title": "Production request",
+      "onTrack": "On track",
+      "inProduction": "In production",
+      "orderToday": "Order today",
+      "reviewSignal": "Review signal",
+      "delayed": "Delayed",
+      "products": "{{count}} products",
+      "pallets": "~{{count}}p",
+      "targetBoat": "→ est. {{date}}"
     },
     "products": "Products",
     "showMore": "+ {{count}} more...",

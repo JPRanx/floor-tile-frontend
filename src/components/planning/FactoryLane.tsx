@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { PlanningHorizonResponse } from '../../requests/planning';
 import type { Factory } from '../../requests/factories';
 import { BoatNode } from './BoatNode';
+import { FactoryRequestCard } from './FactoryRequestCard';
 
 interface FactoryLaneProps {
   factory: Factory;
@@ -102,6 +103,10 @@ export function FactoryLane({
         return (
           <div className="px-5 pb-4 pt-1">
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+              {horizon?.factory_order_signal &&
+               horizon.factory_order_signal.signal_type !== 'no_production' && (
+                <FactoryRequestCard signal={horizon.factory_order_signal} />
+              )}
               {visible.map((projection) => (
                 <BoatNode
                   key={projection.boat_id}

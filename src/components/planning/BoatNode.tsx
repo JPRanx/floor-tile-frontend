@@ -23,6 +23,25 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const needsAttention = critical > 0 || urgent > 0;
   const nothingToSend = !needsAttention && soon === 0 && !hasDraft;
 
+  // Deadline signal for boats without drafts
+  const siesaDays = projection.days_until_siesa_deadline;
+  const depDays = projection.days_until_departure;
+  let deadlineText: string | null = null;
+  let deadlineColor = '';
+
+  if (!isCompleted && !hasDraft && siesaDays !== null) {
+    const muted = projection.is_estimated; // estimated boats always muted — dates aren't confirmed
+    if (siesaDays > 0 && siesaDays <= 10) {
+      deadlineText = t('planning.deadline.planBy', {
+        date: formatDateShort(projection.siesa_order_date!, i18n.language)
+      });
+      deadlineColor = muted ? 'text-slate-500' : 'text-amber-400';
+    } else if (siesaDays <= 0 && depDays > 10) {
+      deadlineText = t('planning.deadline.orderNow');
+      deadlineColor = muted ? 'text-slate-500' : 'text-red-400';
+    }
+  }
+
   const palletsText = hasDraft
     ? `${projection.projected_pallets_min}p`
     : `~${projection.projected_pallets_min}p`;
@@ -101,6 +120,10 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
         {projection.draft_status ? (
           <span className="text-[10px] text-slate-400">
             {STATUS_ICON[projection.draft_status] || ''} {projection.draft_status === 'drafting' ? t('planning.draftStatus.drafting') : projection.draft_status === 'ordered' ? t('planning.draftStatus.ordered') : projection.draft_status === 'confirmed' ? t('planning.draftStatus.confirmed') : t('planning.draftStatus.action_needed')}
+          </span>
+        ) : deadlineText ? (
+          <span className={`text-[10px] font-medium ${deadlineColor}`}>
+            {deadlineText}
           </span>
         ) : (
           <span className="text-[10px] text-slate-600">{t('planning.noReview')}</span>

@@ -1117,7 +1117,20 @@
     "productionRequest": "Solicitar producción",
     "deadline": {
       "overdue": "Vencido hace {{days}}d",
-      "now": "Ahora — {{date}}"
+      "now": "Ahora — {{date}}",
+      "planBy": "Planificar {{date}}",
+      "orderNow": "Ordenar ya"
+    },
+    "factoryRequest": {
+      "title": "Solicitud producción",
+      "onTrack": "En camino",
+      "inProduction": "En producción",
+      "orderToday": "Pedir hoy",
+      "reviewSignal": "Revisar señal",
+      "delayed": "Retrasada",
+      "products": "{{count}} productos",
+      "pallets": "~{{count}}p",
+      "targetBoat": "→ est. {{date}}"
     },
     "products": "Productos",
     "showMore": "+ {{count}} más...",
