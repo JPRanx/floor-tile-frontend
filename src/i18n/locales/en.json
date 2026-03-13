@@ -1402,6 +1402,32 @@
   "factoryRequests": {
     "title": "Production Request",
     "comingSoon": "Coming soon",
-    "backToPlanning": "Back to Planning"
+    "backToPlanning": "Back to Planning",
+    "loadError": "Error loading data",
+    "leadTime": "lead time",
+    "products": "prod.",
+    "quota": "quota",
+    "export": "Generate request",
+    "noProducts": "No products need production",
+    "noStock": "No stock {{days}}d",
+    "lowStock": "Stock {{days}}d",
+    "okStock": "Stock {{days}}d",
+    "capacityRef": "Monthly capacity: {{quota}}",
+    "boatSchedule": "Upcoming boats",
+    "productionReaches": "production reaches",
+    "siesaOnly": "SIESA only",
+    "timeline": {
+      "orderToday": "Order today",
+      "production": "Production",
+      "toPort": "To port",
+      "ships": "Ships on",
+      "arrives": "Arrives warehouse"
+    },
+    "col": {
+      "stock": "Stock",
+      "velocity": "Velocity",
+      "suggested": "Suggested",
+      "quantity": "Quantity"
+    }
   }
 }

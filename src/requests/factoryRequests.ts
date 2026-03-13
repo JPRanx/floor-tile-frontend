@@ -28,13 +28,24 @@ export interface FactoryRequestSummary {
   order_now_count: number;
 }
 
+export interface UpcomingBoat {
+  boat_name: string;
+  departure_date: string;
+  arrival_date: string;
+  days_until_departure: number;
+  is_estimated: boolean;
+  can_receive_production: boolean;
+}
+
 export interface FactoryRequestHorizonResponse {
   factory_id: string;
   factory_name: string;
   production_lead_days: number;
   transport_to_port_days: number;
+  monthly_quota_m2: number;
   estimated_ready_date: string;
   products: FactoryRequestProduct[];
+  upcoming_boats: UpcomingBoat[];
   factory_order_signal: Record<string, unknown> | null;
   summary: FactoryRequestSummary;
   generated_at: string;

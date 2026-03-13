@@ -118,6 +118,9 @@ export interface PlanningHorizonResponse {
   horizon_months: number;
   generated_at: string;
   projections: BoatProjection[];
+  production_lead_days: number;
+  transport_to_port_days: number;
+  monthly_quota_m2: number;
   factory_order_signal: FactoryOrderSignal | null;
 }
 

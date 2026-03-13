@@ -1400,8 +1400,34 @@
     }
   },
   "factoryRequests": {
-    "title": "Solicitud de Producción",
+    "title": "Solicitud de Produccion",
     "comingSoon": "Disponible pronto",
-    "backToPlanning": "Volver al Planning"
+    "backToPlanning": "Volver al Planning",
+    "loadError": "Error al cargar datos",
+    "leadTime": "tiempo de entrega",
+    "products": "prod.",
+    "quota": "cuota",
+    "export": "Generar solicitud",
+    "noProducts": "No hay productos que necesiten produccion",
+    "noStock": "Sin stock {{days}}d",
+    "lowStock": "Stock {{days}}d",
+    "okStock": "Stock {{days}}d",
+    "capacityRef": "Capacidad mensual: {{quota}}",
+    "boatSchedule": "Proximos barcos",
+    "productionReaches": "produccion alcanza",
+    "siesaOnly": "solo SIESA",
+    "timeline": {
+      "orderToday": "Pedir hoy",
+      "production": "Produccion",
+      "toPort": "Al puerto",
+      "ships": "Embarca",
+      "arrives": "Llega bodega"
+    },
+    "col": {
+      "stock": "Stock",
+      "velocity": "Velocidad",
+      "suggested": "Sugerido",
+      "quantity": "Cantidad"
+    }
   }
 }
