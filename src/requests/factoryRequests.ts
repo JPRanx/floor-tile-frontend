@@ -11,6 +11,7 @@ export interface FactoryRequestCycleItem {
   velocity_m2_day: number;
   coverage_days: number;
   estimated_ready_date: string | null;
+  target_boat_id: string | null;
   target_boat: string | null;
   target_boat_departure: string | null;
   urgency: string;
