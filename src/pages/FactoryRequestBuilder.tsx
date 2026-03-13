@@ -58,7 +58,7 @@ export function FactoryRequestBuilder() {
     return {
       products: items.length,
       pallets,
-      m2: items.reduce((s, p) => s + p.total_factory_need_m2, 0),
+      m2: items.reduce((s, p) => s + Number(p.total_factory_need_m2), 0),
       containers: Math.ceil(pallets / PALLETS_PER_CONTAINER),
     };
   }, [data, selected]);
@@ -241,7 +241,7 @@ export function FactoryRequestBuilder() {
                       <span className="text-slate-200 font-medium">{p.sku}</span>
                       {p.trend_direction !== 'stable' && (
                         <span className={`ml-1.5 text-[9px] ${p.trend_direction === 'up' ? 'text-emerald-500' : 'text-red-400'}`}>
-                          {p.trend_direction === 'up' ? '\u2191' : '\u2193'}{Math.abs(p.trend_adjustment_pct).toFixed(0)}%
+                          {p.trend_direction === 'up' ? '\u2191' : '\u2193'}{Math.abs(Number(p.trend_adjustment_pct)).toFixed(0)}%
                         </span>
                       )}
                     </td>
@@ -254,7 +254,7 @@ export function FactoryRequestBuilder() {
                       <span className="text-indigo-400 font-medium">{p.total_factory_need_pallets}</span>
                     </td>
                     <td className="pr-3 py-2.5 text-right text-slate-500">
-                      {Math.round(p.total_factory_need_m2).toLocaleString()}
+                      {Math.round(Number(p.total_factory_need_m2)).toLocaleString()}
                     </td>
                     <td className="pr-3 py-2.5">
                       <span className="text-slate-400 text-xs">{p.first_gap_boat}</span>
@@ -273,7 +273,7 @@ export function FactoryRequestBuilder() {
                       )}
                     </td>
                     <td className="pr-4 py-2.5 text-right text-slate-500 text-xs">
-                      {p.daily_velocity_m2.toFixed(1)} m²/d
+                      {Number(p.daily_velocity_m2).toFixed(1)} m²/d
                     </td>
                   </tr>
                 );
