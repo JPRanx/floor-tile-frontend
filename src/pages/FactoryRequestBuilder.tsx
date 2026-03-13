@@ -1,6 +1,6 @@
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { factoryRequestsApi } from '../requests/factoryRequests';
 import type { FactoryRequestHorizonResponse, FactoryRequestProduct } from '../requests/factoryRequests';
 
@@ -87,7 +87,7 @@ export function FactoryRequestBuilder() {
     if (pallets === 0) return null;
     const full = Math.floor(pallets / PALLETS_PER_CONTAINER);
     const rem = pallets % PALLETS_PER_CONTAINER;
-    const bars: JSX.Element[] = [];
+    const bars: ReactNode[] = [];
     for (let i = 0; i < full; i++) {
       bars.push(<div key={`f${i}`} className="h-3 w-6 rounded-sm bg-indigo-500" title={`${PALLETS_PER_CONTAINER}p`} />);
     }
