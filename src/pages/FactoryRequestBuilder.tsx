@@ -2,30 +2,17 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { factoryRequestsApi } from '../requests/factoryRequests';
-import type { FactoryRequestCycle, FactoryRequestCycleItem } from '../requests/factoryRequests';
+import type { FactoryRequestHorizonResponse, FactoryRequestProduct } from '../requests/factoryRequests';
 
-// Container constants (match backend/config/shipping.py)
-const PALLETS_PER_CONTAINER = 13; // ~13.73 by weight, floor to be safe
-const M2_PER_PALLET = 134.4;
-
-interface BoatGroup {
-  boatId: string | null;
-  boatName: string;
-  departure: string | null;
-  items: FactoryRequestCycleItem[];
-}
-
-const URGENCY_ORDER: Record<string, number> = { critical: 0, urgent: 1, soon: 2, ok: 3 };
+const PALLETS_PER_CONTAINER = 13;
 
 export function FactoryRequestBuilder() {
   const { t, i18n } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const month = searchParams.get('month') || '';
   const factoryId = searchParams.get('factory_id') || '';
 
-  const [cycle, setCycle] = useState<FactoryRequestCycle | null>(null);
-  const [factoryName, setFactoryName] = useState('');
+  const [data, setData] = useState<FactoryRequestHorizonResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -35,63 +22,19 @@ export function FactoryRequestBuilder() {
     setLoading(true);
     setError(null);
     try {
-      const data = await factoryRequestsApi.getHorizon(factoryId);
-      setFactoryName(data.factory_name);
-      const match = data.cycles.find(c => c.month === month);
-      if (match) {
-        setCycle(match);
-        // Select all requestable items by default
-        setSelected(new Set(match.items.filter(i => i.should_request).map(i => i.product_id)));
-      } else {
-        setError(t('factoryRequests.noCycleFound', 'No se encontraron datos para este mes'));
-      }
+      const result = await factoryRequestsApi.getHorizon(factoryId);
+      setData(result);
+      setSelected(new Set(result.products.map(p => p.product_id)));
     } catch {
       setError(t('factoryRequests.loadError', 'Error al cargar datos'));
     } finally {
       setLoading(false);
     }
-  }, [factoryId, month, t]);
+  }, [factoryId, t]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Format month
-  const monthDisplay = month
-    ? new Intl.DateTimeFormat(i18n.language, { month: 'long', year: 'numeric' }).format(new Date(month + '-01'))
-    : '';
-
-  // Group items by target boat
-  const boatGroups = useMemo((): BoatGroup[] => {
-    if (!cycle) return [];
-    const groupMap = new Map<string, BoatGroup>();
-
-    // Sort items by urgency first
-    const sorted = [...cycle.items].sort((a, b) =>
-      (URGENCY_ORDER[a.urgency] ?? 9) - (URGENCY_ORDER[b.urgency] ?? 9)
-    );
-
-    for (const item of sorted) {
-      const key = item.target_boat_id || '_unassigned';
-      if (!groupMap.has(key)) {
-        groupMap.set(key, {
-          boatId: item.target_boat_id,
-          boatName: item.target_boat || t('factoryRequests.noBoat', 'Sin barco asignado'),
-          departure: item.target_boat_departure,
-          items: [],
-        });
-      }
-      groupMap.get(key)!.items.push(item);
-    }
-
-    // Boats with departures first (sorted by date), unassigned last
-    return [...groupMap.values()].sort((a, b) => {
-      if (!a.departure && b.departure) return 1;
-      if (a.departure && !b.departure) return -1;
-      if (a.departure && b.departure) return a.departure.localeCompare(b.departure);
-      return 0;
-    });
-  }, [cycle, t]);
-
-  // Selection helpers
+  // Selection
   const toggleItem = (id: string) => {
     setSelected(prev => {
       const next = new Set(prev);
@@ -100,82 +43,62 @@ export function FactoryRequestBuilder() {
     });
   };
 
-  const toggleBoatGroup = (group: BoatGroup) => {
-    const ids = group.items.map(i => i.product_id);
-    const allSelected = ids.every(id => selected.has(id));
-    setSelected(prev => {
-      const next = new Set(prev);
-      ids.forEach(id => allSelected ? next.delete(id) : next.add(id));
-      return next;
-    });
+  const toggleAll = () => {
+    if (!data) return;
+    const allIds = data.products.map(p => p.product_id);
+    const allSelected = allIds.every(id => selected.has(id));
+    setSelected(allSelected ? new Set() : new Set(allIds));
   };
 
-  // Compute selected stats per group
-  const groupStats = (group: BoatGroup) => {
-    const selectedItems = group.items.filter(i => selected.has(i.product_id));
-    const pallets = selectedItems.reduce((sum, i) => sum + i.request_pallets, 0);
-    const m2 = selectedItems.reduce((sum, i) => sum + i.request_m2, 0);
-    const containers = Math.ceil(pallets / PALLETS_PER_CONTAINER);
-    const lastContainerPallets = pallets % PALLETS_PER_CONTAINER || (pallets > 0 ? PALLETS_PER_CONTAINER : 0);
-    const lastContainerPct = Math.round((lastContainerPallets / PALLETS_PER_CONTAINER) * 100);
-    return { pallets, m2, containers, lastContainerPct, count: selectedItems.length };
-  };
-
-  // Total selected stats
-  const totalStats = useMemo(() => {
-    if (!cycle) return { pallets: 0, m2: 0, containers: 0, products: 0 };
-    const items = cycle.items.filter(i => selected.has(i.product_id));
-    const pallets = items.reduce((sum, i) => sum + i.request_pallets, 0);
-    const m2 = items.reduce((sum, i) => sum + i.request_m2, 0);
+  // Live totals
+  const totals = useMemo(() => {
+    if (!data) return { products: 0, pallets: 0, m2: 0, containers: 0 };
+    const items = data.products.filter(p => selected.has(p.product_id));
+    const pallets = items.reduce((s, p) => s + p.total_factory_need_pallets, 0);
     return {
-      pallets,
-      m2,
-      containers: Math.ceil(pallets / PALLETS_PER_CONTAINER),
       products: items.length,
+      pallets,
+      m2: items.reduce((s, p) => s + p.total_factory_need_m2, 0),
+      containers: Math.ceil(pallets / PALLETS_PER_CONTAINER),
     };
-  }, [cycle, selected]);
+  }, [data, selected]);
 
-  const urgencyBadge = (item: FactoryRequestCycleItem) => {
-    const styles: Record<string, string> = {
-      critical: 'bg-red-500/20 text-red-400',
-      urgent: 'bg-orange-500/20 text-orange-400',
-      soon: 'bg-amber-500/20 text-amber-400',
-      ok: 'bg-slate-500/20 text-slate-400',
+  const urgencyBadge = (p: FactoryRequestProduct) => {
+    const cfg: Record<string, { bg: string; text: string; label: string }> = {
+      overdue: { bg: 'bg-red-500/20', text: 'text-red-400', label: 'VENCIDO' },
+      order_now: { bg: 'bg-amber-500/20', text: 'text-amber-400', label: 'PEDIR YA' },
+      upcoming: { bg: 'bg-slate-500/20', text: 'text-slate-400', label: 'PROXIMO' },
     };
-    const labels: Record<string, string> = {
-      critical: 'CRITICO',
-      urgent: 'URGENTE',
-      soon: 'PRONTO',
-      ok: 'OK',
-    };
-    return (
-      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${styles[item.urgency] || styles.ok}`}>
-        {labels[item.urgency] || item.urgency.toUpperCase()}
-      </span>
-    );
+    const c = cfg[p.urgency] || cfg.upcoming;
+    return <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${c.bg} ${c.text}`}>{c.label}</span>;
   };
 
-  // Container fill visualization
+  const urgencyAccent = (p: FactoryRequestProduct) => {
+    if (p.urgency === 'overdue') return 'border-l-2 border-l-red-500/60';
+    if (p.urgency === 'order_now') return 'border-l-2 border-l-amber-500/60';
+    return '';
+  };
+
+  const formatDate = (d: string) =>
+    new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(new Date(d));
+
+  // Container bar
   const containerBar = (pallets: number) => {
     if (pallets === 0) return null;
-    const fullContainers = Math.floor(pallets / PALLETS_PER_CONTAINER);
-    const remainder = pallets % PALLETS_PER_CONTAINER;
+    const full = Math.floor(pallets / PALLETS_PER_CONTAINER);
+    const rem = pallets % PALLETS_PER_CONTAINER;
     const bars: JSX.Element[] = [];
-
-    for (let i = 0; i < fullContainers; i++) {
-      bars.push(
-        <div key={`full-${i}`} className="h-3 w-8 rounded-sm bg-indigo-500" title={`${PALLETS_PER_CONTAINER}p`} />
-      );
+    for (let i = 0; i < full; i++) {
+      bars.push(<div key={`f${i}`} className="h-3 w-6 rounded-sm bg-indigo-500" title={`${PALLETS_PER_CONTAINER}p`} />);
     }
-    if (remainder > 0) {
-      const pct = Math.round((remainder / PALLETS_PER_CONTAINER) * 100);
+    if (rem > 0) {
+      const pct = Math.round((rem / PALLETS_PER_CONTAINER) * 100);
       bars.push(
-        <div key="partial" className="h-3 w-8 rounded-sm bg-slate-700 overflow-hidden" title={`${remainder}p (${pct}%)`}>
-          <div className="h-full bg-indigo-500/60 rounded-sm" style={{ width: `${pct}%` }} />
+        <div key="r" className="h-3 w-6 rounded-sm bg-slate-700 overflow-hidden" title={`${rem}p (${pct}%)`}>
+          <div className="h-full bg-indigo-500/60" style={{ width: `${pct}%` }} />
         </div>
       );
     }
-
     return <div className="flex items-center gap-0.5">{bars}</div>;
   };
 
@@ -187,11 +110,11 @@ export function FactoryRequestBuilder() {
     );
   }
 
-  if (error || !cycle) {
+  if (error || !data) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-center space-y-4">
-          <p className="text-red-400">{error || t('factoryRequests.noCycleFound', 'No se encontraron datos')}</p>
+          <p className="text-red-400">{error || t('factoryRequests.loadError', 'Error')}</p>
           <button onClick={() => navigate('/')}
             className="px-4 py-2 text-sm text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-lg transition-colors">
             {'\u2190'} {t('factoryRequests.backToPlanning', 'Volver al Planning')}
@@ -200,6 +123,11 @@ export function FactoryRequestBuilder() {
       </div>
     );
   }
+
+  const allSelected = data.products.length > 0 && data.products.every(p => selected.has(p.product_id));
+  const someSelected = data.products.some(p => selected.has(p.product_id));
+  const readyDisplay = formatDate(data.estimated_ready_date);
+  const leadDays = data.production_lead_days + data.transport_to_port_days;
 
   return (
     <div className="min-h-screen bg-slate-950">
@@ -214,25 +142,27 @@ export function FactoryRequestBuilder() {
               </button>
               <div className="h-5 w-px bg-slate-700" />
               <div>
-                <h1 className="text-base font-semibold text-white capitalize">{monthDisplay}</h1>
-                <p className="text-[11px] text-slate-500">{factoryName}</p>
+                <h1 className="text-base font-semibold text-white">
+                  {t('factoryRequests.title', 'Solicitud de Produccion')}
+                </h1>
+                <p className="text-[11px] text-slate-500">
+                  {data.factory_name} · {leadDays}d {t('factoryRequests.leadTime', 'tiempo de entrega')} · {t('factoryRequests.readyBy', 'Listo')} {readyDisplay}
+                </p>
               </div>
             </div>
 
             {/* Live totals */}
-            <div className="flex items-center gap-4 text-xs">
-              <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50">
-                <span className="text-slate-500">{t('factoryRequests.selected', 'Seleccionados')}:</span>
-                <span className="text-white font-medium">{totalStats.products}</span>
+            <div className="flex items-center gap-3">
+              {containerBar(totals.pallets)}
+              <div className="flex items-center gap-3 px-3 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs">
+                <span className="text-white font-medium">{totals.products}</span>
                 <span className="text-slate-600">|</span>
-                <span className="text-indigo-400 font-medium">{totalStats.pallets}p</span>
+                <span className="text-indigo-400 font-medium">{totals.pallets}p</span>
                 <span className="text-slate-600">|</span>
-                <span className="text-slate-300">{Math.round(totalStats.m2).toLocaleString()} m²</span>
+                <span className="text-slate-300">{Math.round(totals.m2).toLocaleString()} m²</span>
                 <span className="text-slate-600">|</span>
                 <span className="text-slate-300">
-                  {totalStats.containers} {totalStats.containers === 1
-                    ? t('factoryRequests.container', 'contenedor')
-                    : t('factoryRequests.containers', 'contenedores')}
+                  {totals.containers} cont.
                 </span>
               </div>
             </div>
@@ -240,141 +170,117 @@ export function FactoryRequestBuilder() {
         </div>
       </div>
 
-      {/* Boat groups */}
-      <div className="max-w-6xl mx-auto px-4 py-4 space-y-6">
-        {boatGroups.map(group => {
-          const stats = groupStats(group);
-          const allSelected = group.items.every(i => selected.has(i.product_id));
-          const someSelected = group.items.some(i => selected.has(i.product_id));
-          const departureDisplay = group.departure
-            ? new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(new Date(group.departure))
-            : null;
+      {/* Urgency summary strip */}
+      {data.summary.overdue_count > 0 && (
+        <div className="border-b border-red-500/20 bg-red-500/5">
+          <div className="max-w-6xl mx-auto px-4 py-2 flex items-center gap-2 text-xs">
+            <span className="text-red-400 font-medium">
+              {data.summary.overdue_count} {t('factoryRequests.overdueProducts', 'productos vencidos')}
+            </span>
+            <span className="text-red-400/50">—</span>
+            <span className="text-red-400/70">
+              {t('factoryRequests.overdueExplain', 'La brecha ya existe en barcos que la produccion no puede alcanzar')}
+            </span>
+          </div>
+        </div>
+      )}
 
-          return (
-            <div key={group.boatId || '_unassigned'} className="rounded-xl border border-slate-800 overflow-hidden">
-              {/* Boat header */}
-              <div className="px-4 py-3 bg-slate-900/50 flex items-center justify-between">
-                <div className="flex items-center gap-3">
+      {/* Product table */}
+      <div className="max-w-6xl mx-auto px-4 py-4">
+        {data.products.length === 0 ? (
+          <div className="text-center py-16 text-slate-500">
+            {t('factoryRequests.noProducts', 'No hay productos que necesiten produccion')}
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-[10px] text-slate-600 uppercase tracking-wider border-b border-slate-800">
+                <th className="pl-3 pr-2 pb-2 w-8">
                   <input
                     type="checkbox"
                     checked={allSelected}
                     ref={el => { if (el) el.indeterminate = someSelected && !allSelected; }}
-                    onChange={() => toggleBoatGroup(group)}
-                    className="w-4 h-4 rounded border-slate-600 text-indigo-500 focus:ring-indigo-500/50 bg-slate-800"
+                    onChange={toggleAll}
+                    className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-500 focus:ring-indigo-500/50 bg-slate-800"
                   />
-                  <div>
-                    <span className={`font-medium ${group.boatId ? 'text-white' : 'text-slate-500 italic'}`}>
-                      {group.boatName}
-                    </span>
-                    {departureDisplay && (
-                      <span className="ml-2 text-slate-500 text-xs">
-                        {t('factoryRequests.departs', 'Sale')} {departureDisplay}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  {/* Container fill bars */}
-                  {containerBar(stats.pallets)}
-
-                  {/* Stats */}
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
-                    <span>{stats.count}/{group.items.length} {t('factoryRequests.products', 'productos')}</span>
-                    <span className="text-indigo-400 font-medium">{stats.pallets}p</span>
-                    <span>
-                      {stats.containers} {stats.containers === 1 ? 'cont.' : 'cont.'}
-                      {stats.containers > 0 && (
-                        <span className="text-slate-600 ml-1">({stats.lastContainerPct}%)</span>
+                </th>
+                <th className="pr-3 pb-2">{t('factoryRequests.col.urgency', 'Estado')}</th>
+                <th className="pr-3 pb-2">SKU</th>
+                <th className="pr-3 pb-2 text-right">{t('factoryRequests.col.stock', 'Stock')}</th>
+                <th className="pr-3 pb-2 text-right">Pallets</th>
+                <th className="pr-3 pb-2 text-right">m²</th>
+                <th className="pr-3 pb-2">{t('factoryRequests.col.gapFrom', 'Brecha en')}</th>
+                <th className="pr-3 pb-2">{t('factoryRequests.col.shipsOn', 'Embarca en')}</th>
+                <th className="pr-4 pb-2 text-right">{t('factoryRequests.col.velocity', 'Velocidad')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.products.map(p => {
+                const isSelected = selected.has(p.product_id);
+                return (
+                  <tr
+                    key={p.product_id}
+                    onClick={() => toggleItem(p.product_id)}
+                    className={`border-b border-slate-800/20 cursor-pointer transition-colors ${urgencyAccent(p)} ${
+                      isSelected
+                        ? 'bg-indigo-500/5 hover:bg-indigo-500/10'
+                        : 'opacity-40 hover:opacity-60 hover:bg-slate-800/20'
+                    }`}
+                  >
+                    <td className="pl-3 pr-2 py-2.5">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleItem(p.product_id)}
+                        onClick={e => e.stopPropagation()}
+                        className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-500 focus:ring-indigo-500/50 bg-slate-800"
+                      />
+                    </td>
+                    <td className="pr-3 py-2.5">{urgencyBadge(p)}</td>
+                    <td className="pr-3 py-2.5">
+                      <span className="text-slate-200 font-medium">{p.sku}</span>
+                      {p.trend_direction !== 'stable' && (
+                        <span className={`ml-1.5 text-[9px] ${p.trend_direction === 'up' ? 'text-emerald-500' : 'text-red-400'}`}>
+                          {p.trend_direction === 'up' ? '\u2191' : '\u2193'}{Math.abs(p.trend_adjustment_pct).toFixed(0)}%
+                        </span>
                       )}
-                    </span>
-                  </div>
-
-                  {/* OB link */}
-                  {group.boatId && (
-                    <button
-                      onClick={() => navigate(`/order-builder?boat_id=${group.boatId}`)}
-                      className="px-2.5 py-1 text-[11px] font-medium text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-md transition-colors"
-                    >
-                      Order Builder {'\u2192'}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Product rows */}
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-[10px] text-slate-600 uppercase tracking-wider">
-                    <th className="pl-4 pr-2 py-1.5 w-8"></th>
-                    <th className="pr-3 py-1.5">{t('factoryRequests.col.urgency', 'Estado')}</th>
-                    <th className="pr-3 py-1.5">SKU</th>
-                    <th className="pr-3 py-1.5 text-right">{t('factoryRequests.col.coverage', 'Cobertura')}</th>
-                    <th className="pr-3 py-1.5 text-right">{t('factoryRequests.col.gap', 'Deficit')}</th>
-                    <th className="pr-3 py-1.5 text-right">Pallets</th>
-                    <th className="pr-3 py-1.5 text-right">m²</th>
-                    <th className="pr-4 py-1.5 text-right">{t('factoryRequests.col.readyDate', 'Listo')}</th>
+                    </td>
+                    <td className="pr-3 py-2.5 text-right">
+                      <span className={p.days_of_stock_at_first_gap < 0 ? 'text-red-400' : p.days_of_stock_at_first_gap < 14 ? 'text-amber-400' : 'text-slate-400'}>
+                        {p.days_of_stock_at_first_gap}d
+                      </span>
+                    </td>
+                    <td className="pr-3 py-2.5 text-right">
+                      <span className="text-indigo-400 font-medium">{p.total_factory_need_pallets}</span>
+                    </td>
+                    <td className="pr-3 py-2.5 text-right text-slate-500">
+                      {Math.round(p.total_factory_need_m2).toLocaleString()}
+                    </td>
+                    <td className="pr-3 py-2.5">
+                      <span className="text-slate-400 text-xs">{p.first_gap_boat}</span>
+                      <span className="text-slate-600 text-[10px] ml-1">{formatDate(p.first_gap_departure)}</span>
+                    </td>
+                    <td className="pr-3 py-2.5">
+                      {p.ships_on_boat ? (
+                        <button
+                          onClick={e => { e.stopPropagation(); navigate(`/order-builder?boat_id=${p.ships_on_boat_id}`); }}
+                          className="text-indigo-400 hover:text-indigo-300 text-xs transition-colors"
+                        >
+                          {p.ships_on_boat} {'\u2192'}
+                        </button>
+                      ) : (
+                        <span className="text-slate-600 text-xs">{'\u2014'}</span>
+                      )}
+                    </td>
+                    <td className="pr-4 py-2.5 text-right text-slate-500 text-xs">
+                      {p.daily_velocity_m2.toFixed(1)} m²/d
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {group.items.map(item => {
-                    const isSelected = selected.has(item.product_id);
-                    return (
-                      <tr
-                        key={item.product_id}
-                        onClick={() => toggleItem(item.product_id)}
-                        className={`border-t border-slate-800/20 cursor-pointer transition-colors ${
-                          isSelected
-                            ? 'bg-indigo-500/5 hover:bg-indigo-500/10'
-                            : 'opacity-40 hover:opacity-60 hover:bg-slate-800/20'
-                        }`}
-                      >
-                        <td className="pl-4 pr-2 py-2">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleItem(item.product_id)}
-                            onClick={e => e.stopPropagation()}
-                            className="w-3.5 h-3.5 rounded border-slate-600 text-indigo-500 focus:ring-indigo-500/50 bg-slate-800"
-                          />
-                        </td>
-                        <td className="pr-3 py-2">{urgencyBadge(item)}</td>
-                        <td className="pr-3 py-2">
-                          <span className="text-slate-200 font-medium">{item.sku}</span>
-                          {item.is_low_volume && (
-                            <span className="ml-2 text-[9px] text-slate-600">{item.low_volume_reason}</span>
-                          )}
-                        </td>
-                        <td className="pr-3 py-2 text-right">
-                          <span className={
-                            item.coverage_days < 30 ? 'text-red-400' :
-                            item.coverage_days < 60 ? 'text-amber-400' : 'text-slate-400'
-                          }>
-                            {Math.round(item.coverage_days)}d
-                          </span>
-                        </td>
-                        <td className="pr-3 py-2 text-right text-slate-400">
-                          {Math.round(item.gap_m2).toLocaleString()}
-                        </td>
-                        <td className="pr-3 py-2 text-right">
-                          <span className="text-indigo-400 font-medium">{item.request_pallets}</span>
-                        </td>
-                        <td className="pr-3 py-2 text-right text-slate-500">
-                          {Math.round(item.request_m2).toLocaleString()}
-                        </td>
-                        <td className="pr-4 py-2 text-right text-slate-500 text-xs">
-                          {item.estimated_ready_date
-                            ? new Intl.DateTimeFormat(i18n.language, { day: 'numeric', month: 'short' }).format(new Date(item.estimated_ready_date))
-                            : '\u2014'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          );
-        })}
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );

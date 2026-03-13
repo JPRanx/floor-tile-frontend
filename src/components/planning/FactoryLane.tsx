@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PlanningHorizonResponse } from '../../requests/planning';
+import type { PlanningHorizonResponse, FactoryOrderSignal } from '../../requests/planning';
 import type { Factory } from '../../requests/factories';
-import type { FactoryRequestCycle } from '../../requests/factoryRequests';
 import { BoatNode } from './BoatNode';
-import { MonthCycleCard } from './FactoryRequestCard';
+import { FactorySignalCard } from './FactoryRequestCard';
 
 interface FactoryLaneProps {
   factory: Factory;
@@ -14,8 +13,8 @@ interface FactoryLaneProps {
   onSelect: () => void;
   onBoatClick: (boatId: string) => void;
   onDirectAccess?: () => void;
-  cycles: FactoryRequestCycle[];
-  onCycleClick: (month: string) => void;
+  factoryOrderSignal: FactoryOrderSignal | null;
+  onFactoryRequestClick: () => void;
 }
 
 export function FactoryLane({
@@ -26,8 +25,8 @@ export function FactoryLane({
   onSelect,
   onBoatClick,
   onDirectAccess,
-  cycles,
-  onCycleClick,
+  factoryOrderSignal,
+  onFactoryRequestClick,
 }: FactoryLaneProps) {
   const { t } = useTranslation();
   const [showAllEstimated, setShowAllEstimated] = useState(false);
@@ -107,56 +106,40 @@ export function FactoryLane({
 
         return (
           <div className="px-5 pb-4 pt-1 space-y-3">
-            {/* Production request cycles */}
-            {cycles.length > 0 && (
-              <div>
-                <div className="text-[10px] font-medium text-indigo-400/60 uppercase tracking-wider mb-1.5">
-                  {t('planning.productionCycles', 'Solicitudes de produccion')}
-                </div>
-                <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                  {cycles.map((cycle) => (
-                    <MonthCycleCard
-                      key={cycle.month}
-                      cycle={cycle}
-                      onClick={() => onCycleClick(cycle.month)}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* SIESA orders (boats) */}
-            <div>
-              {cycles.length > 0 && (
-                <div className="text-[10px] font-medium text-slate-500/60 uppercase tracking-wider mb-1.5">
-                  {t('planning.siesaOrders', 'Pedidos SIESA')}
-                </div>
+            {/* Factory signal card + boat nodes in a single row */}
+            <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+              {/* Factory production signal */}
+              {factoryOrderSignal && factoryOrderSignal.signal_type !== 'no_production' && (
+                <FactorySignalCard
+                  signal={factoryOrderSignal}
+                  onClick={onFactoryRequestClick}
+                />
               )}
-              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                {visible.map((projection) => (
-                  <BoatNode
-                    key={projection.boat_id}
-                    projection={projection}
-                    onClick={() => onBoatClick(projection.boat_id)}
-                  />
-                ))}
-                {hiddenCount > 0 && (
-                  <button
-                    onClick={() => setShowAllEstimated(true)}
-                    className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
-                  >
-                    {t('planning.estimatedMore', { count: hiddenCount })}
-                  </button>
-                )}
-                {showAllEstimated && estimated.length > 3 && (
-                  <button
-                    onClick={() => setShowAllEstimated(false)}
-                    className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
-                  >
-                    {t('planning.showLess')}
-                  </button>
-                )}
-              </div>
+
+              {/* Boat nodes */}
+              {visible.map((projection) => (
+                <BoatNode
+                  key={projection.boat_id}
+                  projection={projection}
+                  onClick={() => onBoatClick(projection.boat_id)}
+                />
+              ))}
+              {hiddenCount > 0 && (
+                <button
+                  onClick={() => setShowAllEstimated(true)}
+                  className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
+                >
+                  {t('planning.estimatedMore', { count: hiddenCount })}
+                </button>
+              )}
+              {showAllEstimated && estimated.length > 3 && (
+                <button
+                  onClick={() => setShowAllEstimated(false)}
+                  className="flex-shrink-0 w-[140px] h-[72px] rounded-lg border border-dashed border-slate-700/50 flex items-center justify-center text-xs text-slate-500 hover:text-slate-400 hover:border-slate-600/50 transition-colors"
+                >
+                  {t('planning.showLess')}
+                </button>
+              )}
             </div>
           </div>
         );
@@ -165,21 +148,13 @@ export function FactoryLane({
       {/* Empty state — no boats */}
       {!loading && horizon && horizon.projections.length === 0 && (
         <div className="px-5 pb-4 pt-1 space-y-3">
-          {/* Still show cycles even if no boats */}
-          {cycles.length > 0 && (
-            <div>
-              <div className="text-[10px] font-medium text-indigo-400/60 uppercase tracking-wider mb-1.5">
-                {t('planning.productionCycles', 'Solicitudes de produccion')}
-              </div>
-              <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-                {cycles.map((cycle) => (
-                  <MonthCycleCard
-                    key={cycle.month}
-                    cycle={cycle}
-                    onClick={() => onCycleClick(cycle.month)}
-                  />
-                ))}
-              </div>
+          {/* Still show factory signal even if no boats */}
+          {factoryOrderSignal && factoryOrderSignal.signal_type !== 'no_production' && (
+            <div className="flex gap-3">
+              <FactorySignalCard
+                signal={factoryOrderSignal}
+                onClick={onFactoryRequestClick}
+              />
             </div>
           )}
           <div className="flex items-center gap-3">
