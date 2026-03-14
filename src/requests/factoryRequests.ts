@@ -14,7 +14,7 @@ export interface FactoryRequestProduct {
   estimated_ready_date: string;
   daily_velocity_m2: number;
   days_of_stock_at_first_gap: number;
-  urgency: 'overdue' | 'order_now' | 'upcoming';
+  urgency: 'sin_stock' | 'critico' | 'pedir_ahora' | 'planificar';
   trend_direction: string;
   trend_adjustment_pct: number;
 }
@@ -24,8 +24,8 @@ export interface FactoryRequestSummary {
   total_pallets: number;
   total_m2: number;
   total_containers: number;
-  overdue_count: number;
-  order_now_count: number;
+  sin_stock_count: number;
+  critico_count: number;
 }
 
 export interface UpcomingBoat {
