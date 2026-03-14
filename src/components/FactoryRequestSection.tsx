@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import type { FactoryRequestSummary, FactoryRequestItem } from '../requests/orderBuilder';
 import { formatM2 } from '../utils/formatters';
 
 interface FactoryRequestSectionProps {
   summary: FactoryRequestSummary | null;
+  factoryId?: string;
   onItemSelect?: (item: FactoryRequestItem, selected: boolean) => void;
   onItemQuantityChange?: (item: FactoryRequestItem, pallets: number) => void;
 }
 
 export function FactoryRequestSection({
   summary,
+  factoryId,
   onItemSelect,
   onItemQuantityChange,
 }: FactoryRequestSectionProps) {
@@ -177,7 +180,7 @@ export function FactoryRequestSection({
             ))}
           </div>
 
-          {/* Section Footer - Totals */}
+          {/* Section Footer - Totals + Link to Factory Request Builder */}
           <div className="mt-4 pt-4 border-t border-slate-600/30">
             <div className="flex items-center justify-between">
               <div className="text-sm text-slate-300">
@@ -188,13 +191,16 @@ export function FactoryRequestSection({
                   {formatM2(selectedTotalM2)} m² ({selectedTotalPallets} {t('common.pallets', 'paletas')})
                 </span>
               </div>
-              {selectedItems.size > 0 && (
-                <button className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white text-sm font-medium rounded-lg transition-colors">
-                  {t('orderBuilder.exportFactoryRequest', 'Exportar Solicitud')}
-                </button>
+              {factoryId && (
+                <Link
+                  to={`/factory-requests?factory_id=${factoryId}`}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  {t('orderBuilder.openFactoryRequest', 'Ver solicitud de produccion')} →
+                </Link>
               )}
             </div>
-            {selectedItems.size > 0 && (
+            {summary.estimated_ready && (
               <p className="text-xs text-slate-500 mt-2">
                 {t('orderBuilder.estimatedReady', 'Listo estimado')}: {summary.estimated_ready}
               </p>

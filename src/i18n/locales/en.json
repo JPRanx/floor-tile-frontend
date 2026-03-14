@@ -232,6 +232,7 @@
     "request": "REQUEST",
     "totalRequest": "Total request",
     "exportFactoryRequest": "Export Factory Request",
+    "openFactoryRequest": "View production request",
     "estimatedReady": "Estimated ready",
     "readyToShip": "Ready to ship",
     "producedPendingSiesa": "produced — pending SIESA entry",

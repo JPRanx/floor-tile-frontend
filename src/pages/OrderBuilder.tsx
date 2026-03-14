@@ -1255,6 +1255,7 @@ export function OrderBuilder() {
               {capabilities.has_production && (
                 <FactoryRequestSection
                   summary={data.factory_request_summary}
+                  factoryId={selectedFactoryId || undefined}
                 />
               )}
             </div>

@@ -232,6 +232,7 @@
     "request": "SOLICITAR",
     "totalRequest": "Solicitud total",
     "exportFactoryRequest": "Exportar Solicitud de Fábrica",
+    "openFactoryRequest": "Ver solicitud de produccion",
     "estimatedReady": "Listo estimado",
     "readyToShip": "Listo para enviar",
     "producedPendingSiesa": "producido — pendiente ingreso SIESA",
