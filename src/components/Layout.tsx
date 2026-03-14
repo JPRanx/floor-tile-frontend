@@ -9,12 +9,8 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', labelKey: 'nav.orderBuilder' },
+  { path: '/dashboard', labelKey: 'nav.inventory' },
   { path: '/data-hub', labelKey: 'nav.dataHub' },
-  { path: '/boats', labelKey: 'nav.boats' },
-  { path: '/intelligence', labelKey: 'nav.intelligence' },
-  { path: '/dashboard', labelKey: 'nav.dashboard' },
-  { path: '/products', labelKey: 'nav.products' },
-  { path: '/config', labelKey: 'nav.config' },
 ];
 
 export function Layout({ children }: LayoutProps) {

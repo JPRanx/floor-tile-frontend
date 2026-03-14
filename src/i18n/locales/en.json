@@ -33,6 +33,7 @@
   "nav": {
     "appName": "CM Tarragona S.A.",
     "dashboard": "Dashboard",
+    "inventory": "Inventory",
     "dataHub": "Data Hub",
     "upload": "Upload",
     "orderBuilder": "Order Builder",
@@ -46,8 +47,8 @@
     "config": "Configuration"
   },
   "dashboard": {
-    "title": "Dashboard",
-    "subtitle": "Stockout status overview",
+    "title": "Inventory",
+    "subtitle": "Warehouse inventory status",
     "highPriority": "High Priority",
     "consider": "Consider",
     "wellCovered": "Well Covered",

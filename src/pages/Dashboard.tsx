@@ -6,7 +6,6 @@ import type { StockoutSummary } from '../requests/dashboard';
 import { inventoryApi } from '../requests/inventory';
 import { productsApi } from '../requests/products';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { TopMoversWidget, AlertsWidget, OverdueCustomersWidget } from '../components/dashboard';
 import { StockCoverage } from '../components/shared';
 import { formatDateUTC } from '../utils/dateUtils';
 import { WAREHOUSE_MAX_M2 } from '../constants/inventory';
@@ -229,13 +228,6 @@ export function Dashboard() {
             ) : null;
           })()}
         </div>
-      </div>
-
-      {/* Intelligence Widgets */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <TopMoversWidget periodDays={365} />
-        <AlertsWidget periodDays={365} />
-        <OverdueCustomersWidget limit={5} />
       </div>
 
       {/* Product Table */}

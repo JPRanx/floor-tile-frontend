@@ -33,6 +33,7 @@
   "nav": {
     "appName": "CM Tarragona S.A.",
     "dashboard": "Panel",
+    "inventory": "Inventario",
     "dataHub": "Centro de Datos",
     "upload": "Subir Datos",
     "orderBuilder": "Crear Pedido",
@@ -46,8 +47,8 @@
     "config": "Configuración"
   },
   "dashboard": {
-    "title": "Panel",
-    "subtitle": "Resumen del estado de agotamiento",
+    "title": "Inventario",
+    "subtitle": "Estado del inventario en bodega",
     "highPriority": "Alta Prioridad",
     "consider": "Considerar",
     "wellCovered": "Bien Cubierto",
