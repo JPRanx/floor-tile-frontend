@@ -91,6 +91,17 @@ export function FactoryRequestBuilder() {
     return { text: t('factoryRequests.okStock', { days, defaultValue: 'Stock {{days}}d' }), color: 'text-emerald-400' };
   };
 
+  // Urgency badge
+  const urgencyBadge = (urgency: string) => {
+    switch (urgency) {
+      case 'sin_stock': return { text: t('factoryRequests.urgency.sinStock', 'Sin stock'), color: 'text-red-400 bg-red-500/10' };
+      case 'critico': return { text: t('factoryRequests.urgency.critico', 'Critico'), color: 'text-orange-400 bg-orange-500/10' };
+      case 'pedir_ahora': return { text: t('factoryRequests.urgency.pedirAhora', 'Pedir ahora'), color: 'text-amber-400 bg-amber-500/10' };
+      case 'planificar': return { text: t('factoryRequests.urgency.planificar', 'Planificar'), color: 'text-slate-400 bg-slate-500/10' };
+      default: return { text: urgency, color: 'text-slate-400 bg-slate-500/10' };
+    }
+  };
+
   // Row accent based on stock
   const rowAccent = (p: FactoryRequestProduct, isSelected: boolean) => {
     if (!isSelected) return '';
@@ -108,7 +119,7 @@ export function FactoryRequestBuilder() {
         'SKU': p.sku,
         'Cantidad (pallets)': quantities.get(p.product_id) ?? p.total_factory_need_pallets,
         'm\u00B2': (quantities.get(p.product_id) ?? p.total_factory_need_pallets) * M2_PER_PALLET,
-        'Prioridad': p.urgency === 'overdue' ? 'Vencido' : p.urgency === 'order_now' ? 'Pedir ya' : 'Proximo',
+        'Prioridad': p.urgency === 'sin_stock' ? 'Sin stock' : p.urgency === 'critico' ? 'Critico' : p.urgency === 'pedir_ahora' ? 'Pedir ahora' : 'Planificar',
         'Velocidad (m\u00B2/d)': Number(p.daily_velocity_m2).toFixed(1),
       }));
 
@@ -355,12 +366,17 @@ export function FactoryRequestBuilder() {
                       />
                     </td>
                     <td className="pr-3 py-2.5">
-                      <span className="text-slate-200 font-medium">{p.sku}</span>
-                      {p.trend_direction !== 'stable' && (
-                        <span className={`ml-1.5 text-[10px] ${p.trend_direction === 'up' ? 'text-emerald-500' : 'text-red-400'}`}>
-                          {p.trend_direction === 'up' ? '\u2191' : '\u2193'}{Math.abs(Number(p.trend_adjustment_pct)).toFixed(0)}%
-                        </span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-200 font-medium">{p.sku}</span>
+                        {p.trend_direction !== 'stable' && (
+                          <span className={`text-[10px] ${p.trend_direction === 'up' ? 'text-emerald-500' : 'text-red-400'}`}>
+                            {p.trend_direction === 'up' ? '\u2191' : '\u2193'}{Math.abs(Number(p.trend_adjustment_pct)).toFixed(0)}%
+                          </span>
+                        )}
+                        {(() => { const badge = urgencyBadge(p.urgency); return (
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${badge.color}`}>{badge.text}</span>
+                        ); })()}
+                      </div>
                     </td>
                     <td className="pr-3 py-2.5">
                       <span className={`text-xs ${stock.color}`}>{stock.text}</span>

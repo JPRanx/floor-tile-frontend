@@ -1428,6 +1428,12 @@
       "velocity": "Velocidad",
       "suggested": "Sugerido",
       "quantity": "Cantidad"
+    },
+    "urgency": {
+      "sinStock": "Sin stock",
+      "critico": "Critico",
+      "pedirAhora": "Pedir ahora",
+      "planificar": "Planificar"
     }
   }
 }
