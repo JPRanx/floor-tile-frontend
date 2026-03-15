@@ -28,6 +28,7 @@ import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
 import { AddToProductionSection } from '../components/AddToProductionSection';
 import { FactoryRequestSection } from '../components/FactoryRequestSection';
 import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
+import { DepartedBoatSummary } from '../components/DepartedBoatSummary';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { draftsApi } from '../requests/drafts';
 import type { DraftStatus } from '../requests/drafts';
@@ -119,7 +120,10 @@ export function OrderBuilder() {
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [currentDraftStatus, setCurrentDraftStatus] = useState<DraftStatus | null>(null);
   const selectedBoat = availableBoats.find(b => b.id === selectedBoatId);
-  const isBoatDeparted = selectedBoat?.status === 'departed' || selectedBoat?.status === 'arrived';
+  const isBoatDepartedByDate = data?.boat?.departure_date
+    ? new Date(data.boat.departure_date) < new Date()
+    : false;
+  const isBoatDeparted = selectedBoat?.status === 'departed' || selectedBoat?.status === 'arrived' || isBoatDepartedByDate;
   const isReadOnly = currentDraftStatus === 'ordered' || currentDraftStatus === 'confirmed' || isBoatDeparted;
 
   // 5c: Staleness banner state
@@ -993,6 +997,31 @@ export function OrderBuilder() {
   }
 
   if (!data) return null;
+
+  // Early return for departed boats — show receipt view, not editor
+  if (isBoatDeparted) {
+    const shippedProducts = products
+      .filter(p => p.selected_pallets > 0)
+      .map(p => ({
+        sku: p.sku,
+        selected_pallets: p.selected_pallets,
+        selected_m2: p.selected_m2 || p.selected_pallets * (p.pallet_conversion_factor || 134.4),
+      }));
+
+    return (
+      <DepartedBoatSummary
+        boat={{
+          name: data.boat.name,
+          departure_date: data.boat.departure_date,
+          arrival_date: data.boat.arrival_date,
+          carrier: data.boat.carrier,
+        }}
+        products={shippedProducts}
+        draftStatus={currentDraftStatus}
+        onBack={() => navigate('/planning')}
+      />
+    );
+  }
 
   const capabilities: FactoryCapabilities = data.capabilities ?? {
     has_factory_inventory: true,

@@ -17,6 +17,7 @@ const STATUS_ICON: Record<string, string> = {
 export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const { t, i18n } = useTranslation();
   const hasDraft = projection.is_active;
+  const isDeparted = new Date(projection.departure_date) < new Date();
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
   const { critical, urgent, soon, actionable } = projection.urgency_breakdown;
   const totalNeed = critical + urgent + soon;
@@ -46,13 +47,17 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
     ? `${projection.projected_pallets_min}p`
     : `~${projection.projected_pallets_min}p`;
 
-  const nodeStyle = isCompleted
-    ? 'bg-emerald-900/10 border-emerald-500/20 opacity-60 hover:opacity-80'
-    : nothingToSend
-      ? 'bg-slate-800/20 border-slate-700/20 opacity-40 hover:opacity-70'
-      : needsAttention
-        ? 'bg-slate-800/40 border-orange-500/40 hover:bg-slate-800/60 hover:border-orange-400/60'
-        : 'bg-slate-800/40 border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/60';
+  const nodeStyle = isDeparted
+    ? hasDraft
+      ? 'bg-slate-800/10 border-emerald-700/10 opacity-40'
+      : 'bg-slate-800/10 border-slate-700/10 opacity-30'
+    : isCompleted
+      ? 'bg-emerald-900/10 border-emerald-500/20 opacity-60 hover:opacity-80'
+      : nothingToSend
+        ? 'bg-slate-800/20 border-slate-700/20 opacity-40 hover:opacity-70'
+        : needsAttention
+          ? 'bg-slate-800/40 border-orange-500/40 hover:bg-slate-800/60 hover:border-orange-400/60'
+          : 'bg-slate-800/40 border-slate-700/40 hover:bg-slate-800/60 hover:border-slate-600/60';
 
   return (
     <button
@@ -117,7 +122,11 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
 
       {/* Status / deadline row */}
       <div className="flex items-center justify-between mt-2 gap-1">
-        {projection.draft_status ? (
+        {isDeparted ? (
+          <span className="text-[10px] text-slate-500">
+            {hasDraft ? '🚢 ' + t('departed.shipped', 'Enviado') : '— ' + t('departed.noOrder', 'Sin pedido')}
+          </span>
+        ) : projection.draft_status ? (
           <span className="text-[10px] text-slate-400">
             {STATUS_ICON[projection.draft_status] || ''} {projection.draft_status === 'drafting' ? t('planning.draftStatus.drafting') : projection.draft_status === 'ordered' ? t('planning.draftStatus.ordered') : projection.draft_status === 'confirmed' ? t('planning.draftStatus.confirmed') : t('planning.draftStatus.action_needed')}
           </span>

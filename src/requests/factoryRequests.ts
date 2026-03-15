@@ -17,6 +17,7 @@ export interface FactoryRequestProduct {
   urgency: 'sin_stock' | 'critico' | 'pedir_ahora' | 'planificar';
   trend_direction: string;
   trend_adjustment_pct: number;
+  act_by_date: string | null;
 }
 
 export interface FactoryRequestSummary {
@@ -51,11 +52,70 @@ export interface FactoryRequestHorizonResponse {
   generated_at: string;
 }
 
+export interface FactoryRequestSubmissionItem {
+  product_id: string;
+  sku: string;
+  pallets: number;
+  m2: number;
+  urgency: string;
+}
+
+export interface FactoryRequestSubmissionCreate {
+  factory_id: string;
+  factory_name: string;
+  items: FactoryRequestSubmissionItem[];
+  total_pallets: number;
+  total_m2: number;
+  total_containers: number;
+  notes?: string;
+}
+
+export interface FactoryRequestSubmissionResponse {
+  id: string;
+  factory_id: string;
+  factory_name: string;
+  total_pallets: number;
+  total_m2: number;
+  total_containers: number;
+  product_count: number;
+  submitted_at: string;
+  notes?: string;
+}
+
+export interface FactoryRequestLastSubmission {
+  id: string;
+  submitted_at: string;
+  total_pallets: number;
+  total_m2: number;
+  total_containers: number;
+  product_count: number;
+  days_ago: number;
+}
+
 export const factoryRequestsApi = {
   getHorizon: async (factoryId: string): Promise<FactoryRequestHorizonResponse> => {
     const response = await api.get<FactoryRequestHorizonResponse>(
       `/factory-requests/horizon/${factoryId}`
     );
     return response.data;
+  },
+
+  recordSubmission: async (data: FactoryRequestSubmissionCreate): Promise<FactoryRequestSubmissionResponse> => {
+    const response = await api.post<FactoryRequestSubmissionResponse>(
+      '/factory-requests/submissions',
+      data
+    );
+    return response.data;
+  },
+
+  getLastSubmission: async (factoryId: string): Promise<FactoryRequestLastSubmission | null> => {
+    try {
+      const response = await api.get<FactoryRequestLastSubmission>(
+        `/factory-requests/submissions/last/${factoryId}`
+      );
+      return response.data;
+    } catch {
+      return null; // 404 = no submissions yet
+    }
   },
 };

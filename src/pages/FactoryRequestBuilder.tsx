@@ -2,7 +2,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { factoryRequestsApi } from '../requests/factoryRequests';
-import type { FactoryRequestHorizonResponse, FactoryRequestProduct } from '../requests/factoryRequests';
+import type { FactoryRequestHorizonResponse, FactoryRequestProduct, FactoryRequestLastSubmission } from '../requests/factoryRequests';
 import * as XLSX from 'xlsx';
 
 const M2_PER_PALLET = 134.4;
@@ -19,14 +19,20 @@ export function FactoryRequestBuilder() {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [quantities, setQuantities] = useState<Map<string, number>>(new Map());
+  const [lastSubmission, setLastSubmission] = useState<FactoryRequestLastSubmission | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!factoryId) return;
     setLoading(true);
     setError(null);
     try {
-      const result = await factoryRequestsApi.getHorizon(factoryId);
+      const [result, lastSub] = await Promise.all([
+        factoryRequestsApi.getHorizon(factoryId),
+        factoryRequestsApi.getLastSubmission(factoryId),
+      ]);
       setData(result);
+      setLastSubmission(lastSub);
       setSelected(new Set(result.products.map(p => p.product_id)));
       setQuantities(new Map(result.products.map(p => [p.product_id, p.total_factory_need_pallets])));
     } catch {
@@ -110,12 +116,11 @@ export function FactoryRequestBuilder() {
     return '';
   };
 
-  // Excel export
-  const exportToExcel = () => {
+  // Excel export + submission tracking
+  const exportToExcel = async () => {
     if (!data) return;
-    const rows = data.products
-      .filter(p => selected.has(p.product_id))
-      .map(p => ({
+    const selectedProducts = data.products.filter(p => selected.has(p.product_id));
+    const rows = selectedProducts.map(p => ({
         'SKU': p.sku,
         'Cantidad (pallets)': quantities.get(p.product_id) ?? p.total_factory_need_pallets,
         'm\u00B2': (quantities.get(p.product_id) ?? p.total_factory_need_pallets) * M2_PER_PALLET,
@@ -124,11 +129,9 @@ export function FactoryRequestBuilder() {
       }));
 
     const ws = XLSX.utils.json_to_sheet(rows);
-    // Set column widths
     ws['!cols'] = [{ wch: 25 }, { wch: 18 }, { wch: 12 }, { wch: 12 }, { wch: 15 }];
 
-    // Add totals row
-    const totalRow = rows.length + 2; // +1 header, +1 for 0-index
+    const totalRow = rows.length + 2;
     XLSX.utils.sheet_add_aoa(ws, [
       ['TOTAL', totals.pallets, Math.round(totals.m2), `${totals.containers} contenedores`, '']
     ], { origin: `A${totalRow}` });
@@ -137,6 +140,39 @@ export function FactoryRequestBuilder() {
     XLSX.utils.book_append_sheet(wb, ws, 'Solicitud');
     const filename = `Solicitud_Produccion_${data.factory_name.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
     XLSX.writeFile(wb, filename);
+
+    // Record submission in backend
+    setSubmitting(true);
+    try {
+      const submission = await factoryRequestsApi.recordSubmission({
+        factory_id: data.factory_id,
+        factory_name: data.factory_name,
+        items: selectedProducts.map(p => ({
+          product_id: p.product_id,
+          sku: p.sku,
+          pallets: quantities.get(p.product_id) ?? p.total_factory_need_pallets,
+          m2: (quantities.get(p.product_id) ?? p.total_factory_need_pallets) * M2_PER_PALLET,
+          urgency: p.urgency,
+        })),
+        total_pallets: totals.pallets,
+        total_m2: totals.m2,
+        total_containers: totals.containers,
+      });
+      setLastSubmission({
+        id: submission.id,
+        submitted_at: submission.submitted_at,
+        total_pallets: submission.total_pallets,
+        total_m2: submission.total_m2,
+        total_containers: submission.total_containers,
+        product_count: submission.product_count,
+        days_ago: 0,
+      });
+    } catch {
+      // Non-fatal — Excel was already downloaded
+      console.error('Failed to record submission');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Loading state
@@ -223,10 +259,12 @@ export function FactoryRequestBuilder() {
               </div>
               <button
                 onClick={exportToExcel}
-                disabled={totals.products === 0}
+                disabled={totals.products === 0 || submitting}
                 className="px-4 py-1.5 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg transition-colors"
               >
-                {t('factoryRequests.export', 'Generar solicitud')}
+                {submitting
+                  ? t('factoryRequests.submitting', 'Registrando...')
+                  : t('factoryRequests.export', 'Generar solicitud')}
               </button>
             </div>
           </div>
@@ -234,6 +272,25 @@ export function FactoryRequestBuilder() {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-4 space-y-4">
+        {/* Last submission banner */}
+        {lastSubmission && (
+          <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/20 text-xs">
+            <span className="text-emerald-400">&#x2713;</span>
+            <span className="text-emerald-300/80">
+              {t('factoryRequests.lastSubmission', 'Ultima solicitud')}: {' '}
+              {lastSubmission.days_ago === 0
+                ? t('factoryRequests.today', 'hoy')
+                : t('factoryRequests.daysAgo', 'hace {{count}} dias', { count: lastSubmission.days_ago })}
+              {' \u00B7 '}
+              {lastSubmission.product_count} {t('factoryRequests.products', 'prod.')}
+              {' \u00B7 '}
+              {lastSubmission.total_pallets}p
+              {' \u00B7 '}
+              {Math.round(Number(lastSubmission.total_m2)).toLocaleString()} m{'\u00B2'}
+            </span>
+          </div>
+        )}
+
         {/* Timeline strip */}
         <div className="bg-slate-900/50 border border-slate-800/50 rounded-lg px-5 py-3">
           <div className="flex items-center justify-between text-xs">
@@ -377,6 +434,21 @@ export function FactoryRequestBuilder() {
                           <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${badge.color}`}>{badge.text}</span>
                         ); })()}
                       </div>
+                      {/* Act-by deadline label */}
+                      {p.act_by_date ? (() => {
+                        const daysUntil = Math.ceil((new Date(p.act_by_date).getTime() - Date.now()) / 86400000);
+                        const isUrgent = daysUntil <= 7;
+                        return (
+                          <div className={`text-[10px] mt-0.5 ${isUrgent ? 'text-amber-400' : 'text-slate-500'}`}>
+                            {t('factoryRequests.actBy', 'Pedir antes del')} {formatDate(p.act_by_date)}
+                            {isUrgent && daysUntil > 0 && ` (${daysUntil}d)`}
+                          </div>
+                        );
+                      })() : (p.urgency === 'sin_stock' || p.urgency === 'critico') ? (
+                        <div className="text-[10px] mt-0.5 text-red-400">
+                          {t('factoryRequests.actNow', 'Pedir ya — plazo vencido')}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="pr-3 py-2.5">
                       <span className={`text-xs ${stock.color}`}>{stock.text}</span>
