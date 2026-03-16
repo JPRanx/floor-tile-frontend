@@ -11,6 +11,7 @@ const navItems = [
   { path: '/', labelKey: 'nav.orderBuilder' },
   { path: '/dashboard', labelKey: 'nav.inventory' },
   { path: '/data-hub', labelKey: 'nav.dataHub' },
+  { path: '/products', labelKey: 'nav.products' },
 ];
 
 export function Layout({ children }: LayoutProps) {
