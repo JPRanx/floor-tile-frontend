@@ -36,6 +36,10 @@ const DRAFT_BADGE_CONFIG: Record<DraftStatus, { label: string; classes: string }
     label: 'planning.draftStatus.confirmed',
     classes: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
   },
+  skipped: {
+    label: 'planning.draftStatus.skipped',
+    classes: 'bg-slate-600/20 text-slate-400 border-slate-600/30',
+  },
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
