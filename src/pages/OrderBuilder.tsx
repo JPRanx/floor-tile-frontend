@@ -26,7 +26,7 @@ import { UnableToShipAlert } from '../components/UnableToShipAlert';
 import { BLAllocationView } from '../components/BLAllocationView';
 import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
 import { AddToProductionSection } from '../components/AddToProductionSection';
-import { FactoryRequestSection } from '../components/FactoryRequestSection';
+
 import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
 import { DepartedBoatSummary } from '../components/DepartedBoatSummary';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -775,21 +775,6 @@ export function OrderBuilder() {
       }
 
       // 3. Close feedback loops — write to production_schedule so OB reads it back
-      // Section 3: Factory request items → INSERT production_schedule rows
-      const factoryRequestItems = data?.factory_request_summary?.items
-        ?.filter((item) => item.is_selected && item.request_m2 > 0) || [];
-      if (factoryRequestItems.length > 0) {
-        await productionScheduleApi.createFromOrderBuilder(
-          factoryRequestItems.map((item) => ({
-            product_id: item.product_id,
-            sku: item.sku,
-            referencia: item.description || item.sku,
-            requested_m2: Number(item.request_m2),
-          })),
-          departureDateStr,
-        );
-      }
-
       // Section 2: Piggyback items → UPDATE production_schedule.requested_m2
       const piggybackItems = data?.add_to_production_summary?.items
         ?.filter((item) => item.is_selected && item.suggested_additional_m2 > 0) || [];
@@ -910,21 +895,12 @@ export function OrderBuilder() {
           pallets: item.suggested_additional_pallets,
         })) || [];
 
-      // Get selected factory request items
-      const factoryItems = data.factory_request_summary?.items
-        .filter((item) => item.is_selected)
-        .map((item) => ({
-          product_id: item.product_id,
-          sku: item.sku,
-          pallets: item.gap_pallets,
-        })) || [];
-
       const request: GenerateReportRequest = {
         boat_id: selectedBoatId,
         num_bls: numBLs,
         warehouse_items: warehouseItems,
         add_to_production_items: addItems,
-        factory_request_items: factoryItems,
+        factory_request_items: [],
       };
 
       const blob = await orderBuilderApi.generateReport(request);
@@ -1121,11 +1097,6 @@ export function OrderBuilder() {
                 {t('orderBuilder.addToProduction', 'Agregar a Producción')}: {data.add_to_production_summary.product_count}
               </span>
             )}
-            {data.factory_request_summary && data.factory_request_summary.product_count > 0 && (
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 border border-slate-500/30">
-                {t('orderBuilder.factoryRequest', 'Solicitud de Fábrica')}: {data.factory_request_summary.product_count}
-              </span>
-            )}
           </div>
         )}
 
@@ -1303,12 +1274,13 @@ export function OrderBuilder() {
                 />
               )}
 
-              {/* Section 3: Factory Request — New production requests */}
+              {/* Link to Production Command Center */}
               {capabilities.has_production && (
-                <FactoryRequestSection
-                  summary={data.factory_request_summary}
-                  factoryId={selectedFactoryId || undefined}
-                />
+                <div className="bg-slate-800/30 border border-slate-700/20 rounded-xl p-4 text-center">
+                  <a href={`/factory-requests?factory_id=${selectedFactoryId}`} className="text-blue-400 hover:text-blue-300 text-sm">
+                    {t('productionCenter.goToCenter', 'Para producci\u00F3n \u2192 Centro de Producci\u00F3n')}
+                  </a>
+                </div>
               )}
             </div>
 

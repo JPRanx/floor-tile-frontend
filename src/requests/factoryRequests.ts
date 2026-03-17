@@ -38,6 +38,29 @@ export interface UpcomingBoat {
   can_receive_production: boolean;
 }
 
+export interface InProductionItem {
+  product_id: string;
+  sku: string;
+  production_status: 'scheduled' | 'in_progress' | 'completed';
+  requested_m2: number;
+  completed_m2: number;
+  scheduled_date: string | null;
+  target_boat: string | null;
+  target_boat_departure: string | null;
+  daily_velocity_m2: number | null;
+  days_of_stock_at_first_gap: number | null;
+  urgency: string | null;
+  piggyback_m2: number | null;
+}
+
+export interface BoatProductionGroup {
+  boat_name: string;
+  departure_date: string;
+  arrival_date: string;
+  products: Array<{ sku: string; m2: number; source: 'production' | 'blind_spot' }>;
+  total_m2: number;
+}
+
 export interface FactoryRequestHorizonResponse {
   factory_id: string;
   factory_name: string;
@@ -50,6 +73,8 @@ export interface FactoryRequestHorizonResponse {
   factory_order_signal: Record<string, unknown> | null;
   summary: FactoryRequestSummary;
   generated_at: string;
+  in_production: InProductionItem[];
+  by_boat: BoatProductionGroup[];
 }
 
 export interface FactoryRequestSubmissionItem {

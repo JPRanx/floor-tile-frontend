@@ -1437,5 +1437,22 @@
       "pedirAhora": "Order now",
       "planificar": "Plan ahead"
     }
+  },
+  "productionCenter": {
+    "title": "Production Center",
+    "needsProduction": "Needs Production",
+    "inProduction": "In Production",
+    "byBoat": "By Boat",
+    "blindSpotNote": "Not in production \u2014 request needed",
+    "piggyback": "Consider adding {{m2}} m\u00b2 more",
+    "goToCenter": "For production \u2192 Production Center",
+    "status": {
+      "completed": "Completed",
+      "in_progress": "In Progress",
+      "scheduled": "Scheduled"
+    },
+    "noBlindSpots": "All products with needs have production scheduled",
+    "noInProduction": "No products currently in production",
+    "targetBoat": "Target boat"
   }
 }
