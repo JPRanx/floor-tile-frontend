@@ -1,6 +1,6 @@
 import api from './api';
 
-export type DraftStatus = 'drafting' | 'action_needed' | 'ordered' | 'confirmed';
+export type DraftStatus = 'drafting' | 'action_needed' | 'ordered' | 'confirmed' | 'skipped';
 
 export interface DraftItem {
   id: string;

@@ -1,7 +1,7 @@
 import api from './api';
 
 export type ConfidenceLevel = 'very_high' | 'high' | 'medium' | 'low' | 'very_low';
-export type DraftStatus = 'drafting' | 'action_needed' | 'ordered' | 'confirmed';
+export type DraftStatus = 'drafting' | 'action_needed' | 'ordered' | 'confirmed' | 'skipped';
 
 export interface UrgencyBreakdown {
   critical: number;

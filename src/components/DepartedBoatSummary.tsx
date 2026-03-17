@@ -67,6 +67,10 @@ export function DepartedBoatSummary({ boat, products, draftStatus, onBack }: Dep
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                 {t('departed.exported', 'Exportado')}
               </span>
+            ) : draftStatus === 'skipped' ? (
+              <span className="px-3 py-1 rounded-full text-xs font-medium bg-slate-500/15 text-slate-400 border border-slate-500/20">
+                {t('departed.skipped', 'Pasado — sin envío')}
+              </span>
             ) : draftStatus === 'drafting' ? (
               <span className="px-3 py-1 rounded-full text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/20">
                 {t('departed.draftNotExported', 'Borrador no exportado')}

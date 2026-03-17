@@ -12,12 +12,14 @@ const STATUS_ICON: Record<string, string> = {
   action_needed: '\u{26A0}\u{FE0F}',
   ordered: '\u{1F4E8}',
   confirmed: '\u{2705}',
+  skipped: '\u{23ED}\u{FE0F}',
 };
 
 export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const { t, i18n } = useTranslation();
   const hasDraft = projection.is_active;
   const isDeparted = new Date(projection.departure_date) < new Date();
+  const isSkipped = projection.draft_status === 'skipped';
   const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
   const { critical, urgent, soon, actionable } = projection.urgency_breakdown;
   const totalNeed = critical + urgent + soon;
@@ -51,6 +53,8 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
     ? hasDraft
       ? 'bg-slate-800/10 border-emerald-700/10 opacity-40'
       : 'bg-slate-800/10 border-slate-700/10 opacity-30'
+    : isSkipped
+      ? 'bg-slate-800/10 border-amber-500/15 opacity-40 hover:opacity-60'
     : isCompleted
       ? 'bg-emerald-900/10 border-emerald-500/20 opacity-60 hover:opacity-80'
       : nothingToSend

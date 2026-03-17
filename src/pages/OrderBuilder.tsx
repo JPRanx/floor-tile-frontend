@@ -124,7 +124,7 @@ export function OrderBuilder() {
     ? new Date(data.boat.departure_date) < new Date()
     : false;
   const isBoatDeparted = selectedBoat?.status === 'departed' || selectedBoat?.status === 'arrived' || isBoatDepartedByDate;
-  const isReadOnly = currentDraftStatus === 'ordered' || currentDraftStatus === 'confirmed' || isBoatDeparted;
+  const isReadOnly = currentDraftStatus === 'ordered' || currentDraftStatus === 'confirmed' || currentDraftStatus === 'skipped' || isBoatDeparted;
 
   // 5c: Staleness banner state
   const [freshness, setFreshness] = useState<DataFreshnessResponse | null>(null);
@@ -863,6 +863,29 @@ export function OrderBuilder() {
     }
   };
 
+  // Skip this boat — no products to ship
+  const handleSkipBoat = async () => {
+    if (!selectedBoatId || !selectedFactoryId) return;
+    try {
+      if (currentDraftId) {
+        // Draft exists — update status to skipped
+        await draftsApi.updateStatus(currentDraftId, 'skipped');
+      } else {
+        // No draft — create one with skipped status and no items
+        const draft = await draftsApi.save({
+          boat_id: selectedBoatId,
+          factory_id: selectedFactoryId,
+          notes: 'Barco pasado — sin productos para enviar',
+          items: [],
+        });
+        await draftsApi.updateStatus(draft.id, 'skipped');
+      }
+      setCurrentDraftStatus('skipped');
+    } catch (err) {
+      console.error('Failed to skip boat:', err);
+    }
+  };
+
   // Generate comprehensive report with reasoning
   const handleGenerateReport = async () => {
     if (!data) return;
@@ -1386,12 +1409,28 @@ export function OrderBuilder() {
                   {isReadOnly ? t('orderBuilder.alreadyExported', 'Ya exportado') : exporting ? t('orderBuilder.exporting') : t('orderBuilder.exportOrder')}
                 </button>
               )}
-              <button
-                onClick={handleReset}
-                className="w-full px-4 py-2.5 bg-slate-800/50 text-slate-300 font-medium rounded-xl border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-all duration-300"
-              >
-                {t('orderBuilder.resetToSuggested')}
-              </button>
+              {/* Skip Boat Button — only when not already ordered/skipped */}
+              {!isReadOnly && (
+                <button
+                  onClick={handleSkipBoat}
+                  className="w-full px-4 py-2.5 bg-amber-500/10 text-amber-400 font-medium rounded-xl border border-amber-500/30 hover:bg-amber-500/20 hover:text-amber-300 transition-all duration-300"
+                >
+                  {t('orderBuilder.skipBoat', 'Pasar — Sin productos')}
+                </button>
+              )}
+              {currentDraftStatus === 'skipped' && (
+                <div className="text-center text-sm text-amber-400/80 py-1">
+                  {t('orderBuilder.boatSkipped', 'Barco pasado — sin envío')}
+                </div>
+              )}
+              {!isReadOnly && (
+                <button
+                  onClick={handleReset}
+                  className="w-full px-4 py-2.5 bg-slate-800/50 text-slate-300 font-medium rounded-xl border border-slate-700/50 hover:bg-slate-700/50 hover:text-white transition-all duration-300"
+                >
+                  {t('orderBuilder.resetToSuggested')}
+                </button>
+              )}
             </div>
 
             {/* Export Error Message */}
