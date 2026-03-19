@@ -1139,6 +1139,16 @@
       "pallets": "~{{count}}p",
       "targetBoat": "→ est. {{date}}"
     },
+    "productionStatus": {
+      "ok": "Producción",
+      "pending": "pendientes",
+      "blindSpots": "sin producción",
+      "inProduction": "en producción",
+      "actBy": "pedir antes del",
+      "lastSubmission": "Última solicitud",
+      "daysAgo": "hace {{count}}d",
+      "viewCenter": "Ver centro de producción"
+    },
     "productionCycles": "Solicitudes de producción",
     "siesaOrders": "Pedidos SIESA",
     "monthCycle": {

@@ -1,9 +1,18 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { PlanningHorizonResponse, FactoryOrderSignal } from '../../requests/planning';
+import type { PlanningHorizonResponse } from '../../requests/planning';
 import type { Factory } from '../../requests/factories';
 import { BoatNode } from './BoatNode';
-import { FactorySignalCard } from './FactoryRequestCard';
+
+export interface ProductionStatus {
+  blindSpotCount: number;
+  inProductionCount: number;
+  mostUrgentSku: string | null;
+  mostUrgentActBy: string | null;
+  lastSubmissionDaysAgo: number | null;
+  sinStockCount: number;
+  criticoCount: number;
+}
 
 interface FactoryLaneProps {
   factory: Factory;
@@ -13,8 +22,8 @@ interface FactoryLaneProps {
   onSelect: () => void;
   onBoatClick: (boatId: string) => void;
   onDirectAccess?: () => void;
-  factoryOrderSignal: FactoryOrderSignal | null;
-  onFactoryRequestClick: () => void;
+  productionStatus: ProductionStatus | null;
+  onProductionClick: () => void;
 }
 
 export function FactoryLane({
@@ -25,8 +34,8 @@ export function FactoryLane({
   onSelect,
   onBoatClick,
   onDirectAccess,
-  factoryOrderSignal,
-  onFactoryRequestClick,
+  productionStatus,
+  onProductionClick,
 }: FactoryLaneProps) {
   const { t } = useTranslation();
   const [showAllEstimated, setShowAllEstimated] = useState(false);
@@ -57,6 +66,9 @@ export function FactoryLane({
     ? 'border-orange-500/30'
     : 'border-slate-700/40';
 
+  // Production needs attention?
+  const needsProductionAttention = productionStatus != null && productionStatus.blindSpotCount > 0;
+
   return (
     <div
       className={`
@@ -82,6 +94,19 @@ export function FactoryLane({
           )}
         </div>
         <div className="flex items-center gap-3">
+          {/* Production status badge in header */}
+          {productionStatus != null && !needsProductionAttention && (
+            <span className="text-emerald-500/70 text-xs flex items-center gap-1">
+              {'\u2713'} {t('planning.productionStatus.ok', 'Producción')}
+            </span>
+          )}
+          {needsProductionAttention && (
+            <span className={`text-xs font-medium flex items-center gap-1 ${
+              productionStatus.sinStockCount > 0 ? 'text-red-400' : 'text-amber-400'
+            }`}>
+              {'\u{1F4CB}'} {productionStatus.blindSpotCount} {t('planning.productionStatus.pending', 'pendientes')}
+            </span>
+          )}
           {totalCritical > 0 && (
             <span className="text-red-400 text-xs font-medium">{totalCritical} {t('planning.critShort')}</span>
           )}
@@ -93,6 +118,55 @@ export function FactoryLane({
           </span>
         </div>
       </button>
+
+      {/* Production attention row — contextual expansion (Option B) */}
+      {needsProductionAttention && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onProductionClick(); }}
+          className="w-full px-5 py-3 border-t border-dashed border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-colors text-left"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="flex items-center gap-2 text-sm">
+                <span className={`font-medium ${
+                  productionStatus.sinStockCount > 0 ? 'text-red-400' : 'text-amber-400'
+                }`}>
+                  {productionStatus.blindSpotCount} {t('planning.productionStatus.blindSpots', 'sin producción')}
+                </span>
+                {productionStatus.inProductionCount > 0 && (
+                  <>
+                    <span className="text-slate-600">{'\u00B7'}</span>
+                    <span className="text-emerald-400/80">
+                      {productionStatus.inProductionCount} {t('planning.productionStatus.inProduction', 'en producción')}
+                    </span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                {productionStatus.mostUrgentSku && (
+                  <span className="truncate">
+                    {productionStatus.mostUrgentSku}
+                    {productionStatus.mostUrgentActBy && (
+                      <> — {t('planning.productionStatus.actBy', 'pedir antes del')} {new Date(productionStatus.mostUrgentActBy).toLocaleDateString('es', { day: 'numeric', month: 'short' })}</>
+                    )}
+                  </span>
+                )}
+                {productionStatus.lastSubmissionDaysAgo != null && (
+                  <>
+                    <span className="text-slate-700">{'\u00B7'}</span>
+                    <span>
+                      {t('planning.productionStatus.lastSubmission', 'Última solicitud')}: {t('planning.productionStatus.daysAgo', 'hace {{count}}d', { count: productionStatus.lastSubmissionDaysAgo })}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            <span className="text-indigo-400 text-xs font-medium flex-shrink-0 ml-3">
+              {t('planning.productionStatus.viewCenter', 'Ver centro de producción')} {'\u2192'}
+            </span>
+          </div>
+        </button>
+      )}
 
       {/* Boat nodes (always visible, scrollable) */}
       {!loading && horizon && horizon.projections.length > 0 && (() => {
@@ -106,17 +180,8 @@ export function FactoryLane({
 
         return (
           <div className="px-5 pb-4 pt-1 space-y-3">
-            {/* Factory signal card + boat nodes in a single row */}
             <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
-              {/* Factory production signal */}
-              {factoryOrderSignal && factoryOrderSignal.signal_type !== 'no_production' && (
-                <FactorySignalCard
-                  signal={factoryOrderSignal}
-                  onClick={onFactoryRequestClick}
-                />
-              )}
-
-              {/* Boat nodes */}
+              {/* Boat nodes only — no production card in scroll */}
               {visible.map((projection) => (
                 <BoatNode
                   key={projection.boat_id}
@@ -148,15 +213,6 @@ export function FactoryLane({
       {/* Empty state — no boats */}
       {!loading && horizon && horizon.projections.length === 0 && (
         <div className="px-5 pb-4 pt-1 space-y-3">
-          {/* Still show factory signal even if no boats */}
-          {factoryOrderSignal && factoryOrderSignal.signal_type !== 'no_production' && (
-            <div className="flex gap-3">
-              <FactorySignalCard
-                signal={factoryOrderSignal}
-                onClick={onFactoryRequestClick}
-              />
-            </div>
-          )}
           <div className="flex items-center gap-3">
             <span className="text-slate-600 text-xs">
               {t('planning.noBoats', 'Sin barcos en el horizonte')}

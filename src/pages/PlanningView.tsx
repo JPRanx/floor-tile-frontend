@@ -9,7 +9,9 @@ import { draftsApi } from '../requests/drafts';
 import { boatsApi } from '../requests/boats';
 import { dataHubApi } from '../requests/dataHub';
 import type { DataFreshnessResponse } from '../requests/dataHub';
+import { factoryRequestsApi } from '../requests/factoryRequests';
 import { FactoryLane } from '../components/planning/FactoryLane';
+import type { ProductionStatus } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
 import { PipelineStrip } from '../components/planning/PipelineStrip';
@@ -50,6 +52,9 @@ export function PlanningView() {
 
   // Horizon fetch error tracking (4d)
   const [horizonErrors, setHorizonErrors] = useState<Set<string>>(new Set());
+
+  // Production CC data per factory
+  const [productionStatuses, setProductionStatuses] = useState<Map<string, ProductionStatus>>(new Map());
 
   // 5c: Staleness banner state
   const [freshness, setFreshness] = useState<DataFreshnessResponse | null>(null);
@@ -142,16 +147,49 @@ export function PlanningView() {
     }
   }, []);
 
+  // Fetch production status from Production CC API
+  const fetchProductionStatus = useCallback(async (factoryId: string) => {
+    try {
+      const [horizon, lastSub] = await Promise.all([
+        factoryRequestsApi.getHorizon(factoryId),
+        factoryRequestsApi.getLastSubmission(factoryId),
+      ]);
+
+      const blindSpots = horizon.products ?? [];
+      const inProd = horizon.in_production ?? [];
+      const mostUrgent = blindSpots.length > 0 ? blindSpots[0] : null;
+
+      const status: ProductionStatus = {
+        blindSpotCount: blindSpots.length,
+        inProductionCount: inProd.length,
+        mostUrgentSku: mostUrgent?.sku ?? null,
+        mostUrgentActBy: mostUrgent?.act_by_date ?? null,
+        lastSubmissionDaysAgo: lastSub?.days_ago ?? null,
+        sinStockCount: horizon.summary?.sin_stock_count ?? 0,
+        criticoCount: horizon.summary?.critico_count ?? 0,
+      };
+
+      setProductionStatuses((prev) => {
+        const next = new Map(prev);
+        next.set(factoryId, status);
+        return next;
+      });
+    } catch (err) {
+      console.error(`Failed to load production status for factory ${factoryId}:`, err);
+    }
+  }, []);
+
   useEffect(() => {
     const activeFactories = factories.filter((f) => f.active);
     for (const factory of activeFactories) {
       fetchHorizon(factory.id);
+      fetchProductionStatus(factory.id);
     }
     // Auto-select first active factory
     if (activeFactories.length > 0 && !selectedFactoryId) {
       setSelectedFactoryId(activeFactories[0].id);
     }
-  }, [factories, fetchHorizon, selectedFactoryId]);
+  }, [factories, fetchHorizon, fetchProductionStatus, selectedFactoryId]);
 
   const handleFactorySelect = (factoryId: string) => {
     setSelectedFactoryId((prev) => (prev === factoryId ? null : factoryId));
@@ -401,8 +439,8 @@ export function PlanningView() {
               onSelect={() => handleFactorySelect(factory.id)}
               onBoatClick={(boatId) => handleBoatClick(factory.id, boatId)}
               onDirectAccess={() => navigate(`/order-builder?factory_id=${factory.id}`)}
-              factoryOrderSignal={horizons.get(factory.id)?.factory_order_signal ?? null}
-              onFactoryRequestClick={() => navigate(`/factory-requests?factory_id=${factory.id}`)}
+              productionStatus={productionStatuses.get(factory.id) ?? null}
+              onProductionClick={() => navigate(`/factory-requests?factory_id=${factory.id}`)}
             />
           ))}
         </div>
