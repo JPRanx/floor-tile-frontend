@@ -345,12 +345,11 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
           m2: item.selected_pallets * 134.4,
         }))
       : projection.product_details
-          .filter((p: ProductProjection) => (p.shippable_pallets ?? p.suggested_pallets) > 0)
-          .map((p: ProductProjection) => ({
-            sku: p.sku,
-            pallets: p.shippable_pallets ?? p.suggested_pallets,
-            m2: (p.shippable_pallets ?? p.suggested_pallets) * 134.4,
-          }));
+          .filter((p: ProductProjection) => p.suggested_pallets > 0 || p.shippable_pallets > 0)
+          .map((p: ProductProjection) => {
+            const pallets = p.suggested_pallets || p.shippable_pallets;
+            return { sku: p.sku, pallets, m2: pallets * 134.4 };
+          });
 
     const totalPallets = receiptProducts.reduce((sum, p) => sum + p.pallets, 0);
     const totalM2 = receiptProducts.reduce((sum, p) => sum + p.m2, 0);
