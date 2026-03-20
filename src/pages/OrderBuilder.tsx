@@ -28,7 +28,6 @@ import { WarehouseOrderSection } from '../components/WarehouseOrderSection';
 import { AddToProductionSection } from '../components/AddToProductionSection';
 
 import { LiquidationClearanceSection } from '../components/order-builder/LiquidationClearanceSection';
-import { DepartedBoatSummary } from '../components/DepartedBoatSummary';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { draftsApi } from '../requests/drafts';
 import type { DraftStatus } from '../requests/drafts';
@@ -997,30 +996,6 @@ export function OrderBuilder() {
 
   if (!data) return null;
 
-  // Early return for departed boats — show receipt view, not editor
-  if (isBoatDeparted) {
-    const shippedProducts = products
-      .filter(p => p.selected_pallets > 0)
-      .map(p => ({
-        sku: p.sku,
-        selected_pallets: p.selected_pallets,
-        selected_m2: p.selected_m2 || p.selected_pallets * (p.pallet_conversion_factor || 134.4),
-      }));
-
-    return (
-      <DepartedBoatSummary
-        boat={{
-          name: data.boat.name,
-          departure_date: data.boat.departure_date,
-          arrival_date: data.boat.arrival_date,
-          carrier: data.boat.carrier,
-        }}
-        products={shippedProducts}
-        draftStatus={currentDraftStatus}
-        onBack={() => navigate('/planning')}
-      />
-    );
-  }
 
   const capabilities: FactoryCapabilities = data.capabilities ?? {
     has_factory_inventory: true,
