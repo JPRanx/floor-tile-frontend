@@ -338,13 +338,16 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
     const icon = isCompleted ? '\u{2705}' : '\u{23F3}';
 
     // Build product list from best available source
-    const receiptProducts = projection.has_bl_allocation
+    const blItems = projection.has_bl_allocation && projection.draft_bl_items.length > 0
       ? projection.draft_bl_items.map((item: DraftBLItem) => ({
           sku: item.sku,
           pallets: item.selected_pallets,
           m2: item.selected_pallets * 134.4,
         }))
-      : projection.product_details
+      : null;
+
+    const receiptProducts = blItems
+      ?? projection.product_details
           .filter((p: ProductProjection) => p.suggested_pallets > 0 || p.shippable_pallets > 0)
           .map((p: ProductProjection) => {
             const pallets = p.suggested_pallets || p.shippable_pallets;
