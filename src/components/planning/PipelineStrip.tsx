@@ -14,7 +14,8 @@ interface StageCount {
 export function PipelineStrip({ horizon }: PipelineStripProps) {
   const { t } = useTranslation();
 
-  if (!horizon || horizon.projections.length === 0) return null;
+  const totalBoats = (horizon?.projections.length ?? 0) + (horizon?.completed?.length ?? 0);
+  if (!horizon || totalBoats === 0) return null;
 
   let drafting = 0;
   let ordered = 0;
@@ -24,13 +25,13 @@ export function PipelineStrip({ horizon }: PipelineStripProps) {
   for (const p of horizon.projections) {
     if (p.draft_status === 'drafting' || p.draft_status === 'action_needed') {
       drafting++;
-    } else if (p.draft_status === 'ordered') {
-      ordered++;
-    } else if (p.draft_status === 'confirmed') {
-      confirmed++;
     } else if (p.draft_status == null) {
       noDraft++;
     }
+  }
+  for (const c of (horizon.completed ?? [])) {
+    if (c.draft_status === 'ordered') ordered++;
+    else if (c.draft_status === 'confirmed') confirmed++;
   }
 
   const stages: StageCount[] = [

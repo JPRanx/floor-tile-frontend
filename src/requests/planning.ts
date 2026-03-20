@@ -40,6 +40,26 @@ export interface DraftBLItem {
   bl_number: number;
 }
 
+export interface CompletedBoatItem {
+  product_id: string;
+  sku: string;
+  selected_pallets: number;
+  bl_number: number | null;
+}
+
+export interface CompletedBoat {
+  boat_id: string;
+  boat_name: string;
+  departure_date: string;
+  arrival_date: string;
+  days_until_departure: number;
+  carrier: string | null;
+  draft_status: string;
+  draft_id: string;
+  items: CompletedBoatItem[];
+  has_bl_allocation: boolean;
+}
+
 export interface StabilityImpact {
   stabilizes_count: number;
   stabilizes_products: string[];
@@ -118,6 +138,7 @@ export interface PlanningHorizonResponse {
   horizon_months: number;
   generated_at: string;
   projections: BoatProjection[];
+  completed: CompletedBoat[];
   production_lead_days: number;
   transport_to_port_days: number;
   monthly_quota_m2: number;

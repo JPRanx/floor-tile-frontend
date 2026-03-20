@@ -11,8 +11,6 @@ interface BoatCardProps {
   onQuickAccept?: (projection: BoatProjection) => void;
   onExport?: (boatId: string) => void;
   isAccepting?: boolean;
-  /** Render in compact mode for completed/ordered boats */
-  compact?: boolean;
   /** Highlight as focal boat (timeline synced to this card) */
   isSelected?: boolean;
   /** Called when card is clicked to set it as the focal boat */
@@ -302,7 +300,7 @@ function StabilitySection({ impact }: { impact: StabilityImpact }) {
   );
 }
 
-export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, compact, isSelected, onSelect }: BoatCardProps) {
+export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onExport, isAccepting, isSelected, onSelect }: BoatCardProps) {
   const { t, i18n } = useTranslation();
   const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
@@ -330,130 +328,6 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
     && !isCompleted
     && !isActive
     && projection.product_details.some((p) => (p.shippable_pallets ?? p.suggested_pallets) > 0);
-
-  // Compact mode for ordered/confirmed/past-cutoff boats — expandable receipt
-  const [receiptExpanded, setReceiptExpanded] = useState(false);
-
-  if (compact && (isCompleted || isPastCutoff)) {
-    const icon = isCompleted ? '\u{2705}' : '\u{23F3}';
-
-    // Build product list from best available source
-    const blItems = projection.has_bl_allocation && projection.draft_bl_items.length > 0
-      ? projection.draft_bl_items.map((item: DraftBLItem) => ({
-          sku: item.sku,
-          pallets: item.selected_pallets,
-          m2: item.selected_pallets * 134.4,
-        }))
-      : null;
-
-    const receiptProducts = blItems
-      ?? projection.product_details
-          .filter((p: ProductProjection) => p.suggested_pallets > 0 || p.shippable_pallets > 0)
-          .map((p: ProductProjection) => {
-            const pallets = p.suggested_pallets || p.shippable_pallets;
-            return { sku: p.sku, pallets, m2: pallets * 134.4 };
-          });
-
-    const totalPallets = receiptProducts.reduce((sum, p) => sum + p.pallets, 0);
-    const totalM2 = receiptProducts.reduce((sum, p) => sum + p.m2, 0);
-    const hasProducts = receiptProducts.length > 0;
-
-    const fmtDate = (iso: string) =>
-      new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short' });
-
-    return (
-      <div className="bg-slate-800/20 rounded-xl border border-slate-700/30 opacity-70">
-        {/* Collapsed header row */}
-        <button
-          onClick={() => setReceiptExpanded(!receiptExpanded)}
-          className="w-full px-5 py-3 flex items-center justify-between hover:bg-slate-800/30 transition-colors rounded-xl"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <span className="text-sm">{icon}</span>
-            <span className="text-white font-medium truncate">{projection.boat_name}</span>
-            <span className="text-slate-500 text-sm">{formatDateShort(projection.departure_date, i18n.language)}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            {projection.draft_status && (
-              <span
-                className={`
-                  inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border
-                  ${DRAFT_BADGE_CONFIG[projection.draft_status].classes}
-                `}
-              >
-                {t(DRAFT_BADGE_CONFIG[projection.draft_status].label)}
-              </span>
-            )}
-            <span className="text-slate-500 text-xs">{receiptExpanded ? '▴' : '▾'}</span>
-          </div>
-        </button>
-
-        {/* Expanded receipt */}
-        {receiptExpanded && (
-          <div className="px-5 pb-4 space-y-3">
-            {/* Date & carrier line */}
-            <div className="text-sm text-slate-400">
-              {t('departed.dates', 'Despachado {{dep}} → Llegada {{arr}}', {
-                dep: fmtDate(projection.departure_date),
-                arr: fmtDate(projection.arrival_date),
-              })}
-              {projection.carrier && (
-                <span className="text-slate-500 ml-2 uppercase text-xs tracking-wider">{projection.carrier}</span>
-              )}
-            </div>
-
-            {hasProducts ? (
-              <>
-                {/* Product table */}
-                <div className="bg-slate-900/50 border border-slate-800/50 rounded-lg overflow-hidden">
-                  <div className="grid grid-cols-[1fr_60px_80px] px-3 py-2 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-800/50">
-                    <span>SKU</span>
-                    <span className="text-right">{t('departed.pallets', 'Paletas')}</span>
-                    <span className="text-right">m²</span>
-                  </div>
-                  {receiptProducts.map((p) => (
-                    <div key={p.sku} className="grid grid-cols-[1fr_60px_80px] px-3 py-2 border-b border-slate-800/30 last:border-b-0">
-                      <span className="text-sm text-slate-300 truncate">{p.sku}</span>
-                      <span className="text-sm text-slate-300 text-right tabular-nums">{p.pallets}</span>
-                      <span className="text-sm text-slate-300 text-right tabular-nums">
-                        {p.m2.toLocaleString('es', { maximumFractionDigits: 0 })}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="grid grid-cols-[1fr_60px_80px] px-3 py-2.5 bg-slate-800/30 border-t border-slate-700/30">
-                    <span className="text-sm font-medium text-white">TOTAL</span>
-                    <span className="text-sm font-medium text-white text-right tabular-nums">{totalPallets}</span>
-                    <span className="text-sm font-medium text-white text-right tabular-nums">
-                      {totalM2.toLocaleString('es', { maximumFractionDigits: 0 })}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Container estimate + export */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500">
-                    ~{Math.ceil(totalPallets / 13)} {t('departed.containers', 'contenedor(es)')}
-                  </span>
-                  {onExport && projection.has_bl_allocation && (
-                    <button
-                      onClick={() => onExport(projection.boat_id)}
-                      className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
-                    >
-                      {t('planning.export', 'Exportar')}
-                    </button>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-slate-500 text-sm">{t('departed.noOrder', 'Sin pedido para este barco')}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <div

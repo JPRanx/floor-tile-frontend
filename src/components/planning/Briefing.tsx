@@ -28,8 +28,10 @@ export function Briefing({ horizon, loading }: BriefingProps) {
   }
 
   const projections = horizon.projections;
+  const completedCount = horizon.completed?.length ?? 0;
+  const totalBoats = projections.length + completedCount;
 
-  if (projections.length === 0) {
+  if (totalBoats === 0) {
     return (
       <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
         <InfoIcon />
@@ -38,17 +40,11 @@ export function Briefing({ horizon, loading }: BriefingProps) {
     );
   }
 
-  let completedCount = 0;
   let pendingCount = 0;
   let avgCoverageDays = 0;
   let coverageCount = 0;
 
   for (const p of projections) {
-    const isCompleted = p.draft_status === 'ordered' || p.draft_status === 'confirmed';
-    if (isCompleted) {
-      completedCount++;
-      continue;
-    }
     pendingCount++;
     for (const prod of p.product_details) {
       if (prod.days_of_stock_at_arrival > 0) {

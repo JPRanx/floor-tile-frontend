@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { factoriesApi } from '../requests/factories';
 import type { Factory } from '../requests/factories';
 import { planningApi } from '../requests/planning';
-import type { PlanningHorizonResponse, BoatProjection } from '../requests/planning';
+import type { PlanningHorizonResponse, BoatProjection, CompletedBoat } from '../requests/planning';
 import { draftsApi } from '../requests/drafts';
 import { boatsApi } from '../requests/boats';
 import { dataHubApi } from '../requests/dataHub';
@@ -17,6 +17,97 @@ import { Briefing } from '../components/planning/Briefing';
 import { PipelineStrip } from '../components/planning/PipelineStrip';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
 import { LoadingSpinner } from '../components/LoadingSpinner';
+
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('es', { day: 'numeric', month: 'short' });
+
+function CompletedBoatCard({ boat, onExport }: { boat: CompletedBoat; onExport?: (boatId: string) => void }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const hasProducts = boat.items.length > 0;
+  const totalPallets = boat.items.reduce((sum, it) => sum + it.selected_pallets, 0);
+  const totalM2 = totalPallets * 134.4;
+
+  return (
+    <div className="bg-slate-800/20 rounded-xl border border-slate-700/30 opacity-70">
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full px-5 py-3 flex items-center justify-between hover:bg-slate-800/30 transition-colors rounded-xl"
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="text-sm">{'\u{2705}'}</span>
+          <span className="text-white font-medium truncate">{boat.boat_name}</span>
+          <span className="text-slate-500 text-sm">{fmtDate(boat.departure_date)}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+            {t('planning.draftStatus.ordered', 'Ordenado')}
+          </span>
+          <span className="text-slate-500 text-xs">{expanded ? '\u25B4' : '\u25BE'}</span>
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="px-5 pb-4 space-y-3">
+          <div className="text-sm text-slate-400">
+            {t('departed.dates', 'Despachado {{dep}} \u2192 Llegada {{arr}}', {
+              dep: fmtDate(boat.departure_date),
+              arr: fmtDate(boat.arrival_date),
+            })}
+            {boat.carrier && (
+              <span className="text-slate-500 ml-2 uppercase text-xs tracking-wider">{boat.carrier}</span>
+            )}
+          </div>
+
+          {hasProducts ? (
+            <>
+              <div className="bg-slate-900/50 border border-slate-800/50 rounded-lg overflow-hidden">
+                <div className="grid grid-cols-[1fr_60px_80px] px-3 py-2 text-xs text-slate-500 uppercase tracking-wider border-b border-slate-800/50">
+                  <span>SKU</span>
+                  <span className="text-right">{t('departed.pallets', 'Paletas')}</span>
+                  <span className="text-right">m²</span>
+                </div>
+                {boat.items.map((item) => (
+                  <div key={item.product_id} className="grid grid-cols-[1fr_60px_80px] px-3 py-2 border-b border-slate-800/30 last:border-b-0">
+                    <span className="text-sm text-slate-300 truncate">{item.sku}</span>
+                    <span className="text-sm text-slate-300 text-right tabular-nums">{item.selected_pallets}</span>
+                    <span className="text-sm text-slate-300 text-right tabular-nums">
+                      {(item.selected_pallets * 134.4).toLocaleString('es', { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+                ))}
+                <div className="grid grid-cols-[1fr_60px_80px] px-3 py-2.5 bg-slate-800/30 border-t border-slate-700/30">
+                  <span className="text-sm font-medium text-white">TOTAL</span>
+                  <span className="text-sm font-medium text-white text-right tabular-nums">{totalPallets}</span>
+                  <span className="text-sm font-medium text-white text-right tabular-nums">
+                    {totalM2.toLocaleString('es', { maximumFractionDigits: 0 })}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">
+                  ~{Math.ceil(totalPallets / 13)} {t('departed.containers', 'contenedor(es)')}
+                </span>
+                {onExport && boat.has_bl_allocation && (
+                  <button
+                    onClick={() => onExport(boat.boat_id)}
+                    className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors font-medium"
+                  >
+                    {t('planning.export', 'Exportar')}
+                  </button>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-slate-500 text-sm">{t('departed.noOrder', 'Sin pedido para este barco')}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PlanningView() {
   const { t } = useTranslation();
@@ -316,25 +407,17 @@ export function PlanningView() {
 
   // Split into action vs completed for detail view
   const { actionBoats, completedBoats, healthStats } = useMemo(() => {
-    if (!selectedHorizon) return { actionBoats: [], completedBoats: [], healthStats: null };
+    if (!selectedHorizon) return { actionBoats: [] as BoatProjection[], completedBoats: [] as CompletedBoat[], healthStats: null };
 
     const action: BoatProjection[] = [];
-    const completed: BoatProjection[] = [];
     let totalCritical = 0;
     let totalUrgent = 0;
     let totalSoon = 0;
     let totalOk = 0;
     let totalProducts = 0;
 
-    const HARD_DEADLINE_DAYS = 10;
     for (const p of selectedHorizon.projections) {
-      const isOrdered = p.draft_status === 'ordered' || p.draft_status === 'confirmed';
-      const isPastCutoff = p.days_until_departure <= HARD_DEADLINE_DAYS && !p.is_estimated;
-      if (isOrdered || isPastCutoff) {
-        completed.push(p);
-      } else {
-        action.push(p);
-      }
+      action.push(p);
       totalCritical += p.urgency_breakdown.critical;
       totalUrgent += p.urgency_breakdown.urgent;
       totalSoon += p.urgency_breakdown.soon;
@@ -346,7 +429,7 @@ export function PlanningView() {
 
     return {
       actionBoats: action,
-      completedBoats: completed,
+      completedBoats: selectedHorizon.completed ?? [],
       healthStats: { totalCritical, totalUrgent, totalSoon, totalOk, totalProducts },
     };
   }, [selectedHorizon]);
@@ -550,21 +633,15 @@ export function PlanningView() {
               );
             })()}
 
-            {/* Completed boats */}
+            {/* Completed boats — historical records from draft, not projections */}
             {completedBoats.length > 0 && (
               <div className="space-y-2">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   {t('planning.completed', 'Completados')} ({completedBoats.length})
                 </h3>
                 <div className="space-y-2">
-                  {completedBoats.map((projection) => (
-                    <BoatCard
-                      key={projection.boat_id}
-                      projection={projection}
-                      onDrillIn={handleDrillIn}
-                      onExport={handleExportFromCard}
-                      compact
-                    />
+                  {completedBoats.map((boat) => (
+                    <CompletedBoatCard key={boat.boat_id} boat={boat} onExport={handleExportFromCard} />
                   ))}
                 </div>
               </div>
