@@ -10,13 +10,17 @@ import { Intelligence } from './pages/Intelligence';
 import { ProductManagement } from './pages/ProductManagement';
 import { ConfigPage } from './pages/ConfigPage';
 import { FactoryRequestBuilder } from './pages/FactoryRequestBuilder';
+import { HorizonView } from './pages/HorizonView';
+import { HorizonBoat } from './pages/HorizonBoat';
 
 function App() {
   return (
     <BrowserRouter>
       <Layout>
         <Routes>
-          <Route path="/" element={<PlanningView />} />
+          <Route path="/" element={<HorizonView />} />
+          <Route path="/horizon" element={<HorizonView />} />
+          <Route path="/horizon/boat" element={<HorizonBoat />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/data-hub" element={<DataHub />} />
           <Route path="/boats" element={<Boats />} />
