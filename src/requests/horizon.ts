@@ -17,6 +17,7 @@ export interface HorizonProduct {
   can_ship_pallets: number;
   allocated_pallets: number;
   factory_available_m2: number;
+  factory_max_pallets: number;
   is_draft_committed: boolean;
 }
 

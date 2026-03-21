@@ -42,6 +42,7 @@ export function HorizonBoat() {
   const [saved, setSaved] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [skipDismissed, setSkipDismissed] = useState(false);
 
   useEffect(() => {
     if (!factoryId || !boatId) return;
@@ -76,7 +77,7 @@ export function HorizonBoat() {
 
         // Sort: critical first, then by days_of_stock
         rows.sort((a, b) => {
-          const order = { critical: 0, urgent: 1, soon: 2, ok: 3 };
+          const order: Record<string, number> = { critical: 0, urgent: 1, soon: 2, ok: 3 };
           const diff = (order[a.urgency] ?? 4) - (order[b.urgency] ?? 4);
           if (diff !== 0) return diff;
           return a.days_of_stock - b.days_of_stock;
@@ -102,10 +103,29 @@ export function HorizonBoat() {
     setSaved(false);
   };
 
+  const skipBoat = async () => {
+    // Zero everything, save, go back — one-click decision
+    try {
+      await draftsApi.save({
+        boat_id: boatId,
+        factory_id: factoryId,
+        items: [],
+      });
+      navigate('/horizon');
+    } catch {
+      setError('Failed to save');
+    }
+  };
+
   const totals = useMemo(() => {
     const pallets = products.reduce((sum, p) => sum + p.user_pallets, 0);
     return { pallets, containers: Math.floor(pallets / 13), m2: pallets * 134.4 };
   }, [products]);
+
+  const overAllocated = useMemo(() =>
+    products.filter((p) => p.user_pallets > p.factory_max_pallets && p.user_pallets > 0),
+    [products]
+  );
 
   const saveDraft = async () => {
     if (!data) return;
@@ -164,6 +184,7 @@ export function HorizonBoat() {
         boat_id: boatId,
         boat_name: data.boat.boat_name,
         boat_departure: data.boat.departure_date,
+        factory_id: factoryId,
         products: confirmProducts,
       });
       // Mark draft as ordered
@@ -171,8 +192,10 @@ export function HorizonBoat() {
         await draftsApi.updateStatus(data.boat.draft_id, 'ordered');
       }
       setConfirmed(true);
-    } catch {
-      setError('Failed to confirm order');
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { detail?: string } } };
+      const detail = axiosErr?.response?.data?.detail;
+      setError(detail || 'Failed to confirm order');
     } finally {
       setConfirming(false);
     }
@@ -219,6 +242,44 @@ export function HorizonBoat() {
         </div>
       </div>
 
+      {/* Skip recommendation */}
+      {!isOrdered && boat.skip_recommended && !skipDismissed && (
+        <div className="mb-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-red-400 text-sm font-medium">No llena un envio minimo</p>
+              <p className="text-red-500/70 text-xs mt-0.5">{boat.skip_reason}</p>
+            </div>
+            <div className="flex gap-2 ml-4 shrink-0">
+              <button
+                onClick={skipBoat}
+                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs rounded"
+              >
+                Ignorar barco
+              </button>
+              <button
+                onClick={() => setSkipDismissed(true)}
+                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded"
+              >
+                Continuar de todos modos
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Over-allocation warning */}
+      {!isOrdered && overAllocated.length > 0 && (
+        <div className="mb-3 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+          <p className="text-amber-400 text-sm font-medium">
+            {overAllocated.length} producto{overAllocated.length > 1 ? 's' : ''} excede{overAllocated.length === 1 ? '' : 'n'} stock de fabrica
+          </p>
+          <p className="text-amber-500/70 text-xs mt-1">
+            {overAllocated.map((p) => p.sku).join(', ')} — ajusta antes de confirmar
+          </p>
+        </div>
+      )}
+
       {/* Action bar — hidden for ordered boats */}
       {!isOrdered && (
         <div className="flex gap-3 mb-4">
@@ -244,8 +305,12 @@ export function HorizonBoat() {
           {saved && !confirmed && (
             <button
               onClick={confirmOrder}
-              disabled={confirming}
-              className="px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm rounded disabled:opacity-50"
+              disabled={confirming || overAllocated.length > 0}
+              className={`px-4 py-2 text-white text-sm rounded disabled:opacity-50 ${
+                overAllocated.length > 0
+                  ? 'bg-slate-600 cursor-not-allowed'
+                  : 'bg-green-600 hover:bg-green-500'
+              }`}
             >
               {confirming ? 'Confirmando...' : 'Confirmar pedido'}
             </button>
@@ -262,12 +327,12 @@ export function HorizonBoat() {
           <thead>
             <tr className="border-b border-slate-700 text-left text-xs text-slate-500 uppercase">
               <th className="px-4 py-2">SKU</th>
-              <th className="px-3 py-2 text-right">Vel/dia</th>
-              <th className="px-3 py-2 text-right">Stock</th>
-              <th className="px-3 py-2 text-right">Dias</th>
-              <th className="px-3 py-2 text-right">Brecha</th>
-              <th className="px-3 py-2 text-right">Sugerido</th>
-              <th className="px-3 py-2 text-right">Fabrica</th>
+              <th className="px-3 py-2 text-right">Vel/dia <span className="text-emerald-600" title="Real: promedio 90 dias de ventas">●</span></th>
+              <th className="px-3 py-2 text-right">Stock <span className="text-emerald-600" title="Real: ultimo inventario SIESA">●</span></th>
+              <th className="px-3 py-2 text-right">Dias <span className="text-emerald-600" title="Real: stock actual / velocidad">●</span></th>
+              <th className="px-3 py-2 text-right">Brecha <span className="text-violet-500" title="Proyectado: stock simulado vs colchon de seguridad">◆</span></th>
+              <th className="px-3 py-2 text-right">Sugerido <span className="text-violet-500" title="Proyectado: pallets para cerrar brecha">◆</span></th>
+              <th className="px-3 py-2 text-right">Fabrica <span className="text-violet-500" title="Proyectado: SIESA menos barcos anteriores">◆</span></th>
               <th className="px-3 py-2 text-center">{isOrdered ? 'Enviado' : 'Pallets'}</th>
             </tr>
           </thead>
@@ -288,20 +353,38 @@ export function HorizonBoat() {
                 <td className="px-3 py-2 text-center">
                   {isOrdered ? (
                     <span className="text-slate-200 text-sm font-medium">{p.user_pallets}</span>
-                  ) : (
-                    <input
-                      type="number"
-                      min={0}
-                      value={p.user_pallets}
-                      onChange={(e) => updatePallets(p.product_id, parseInt(e.target.value) || 0)}
-                      className="w-16 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-center text-slate-200 text-sm focus:border-blue-500 focus:outline-none"
-                    />
-                  )}
+                  ) : (() => {
+                    const over = p.user_pallets > p.factory_max_pallets;
+                    return (
+                      <div className="inline-flex flex-col items-center">
+                        <input
+                          type="number"
+                          min={0}
+                          value={p.user_pallets}
+                          onChange={(e) => updatePallets(p.product_id, parseInt(e.target.value) || 0)}
+                          className={`w-16 bg-slate-900 border rounded px-2 py-1 text-center text-sm focus:outline-none ${
+                            over
+                              ? 'border-amber-500 text-amber-300 focus:border-amber-400'
+                              : 'border-slate-600 text-slate-200 focus:border-blue-500'
+                          }`}
+                        />
+                        {over && (
+                          <span className="text-[10px] text-amber-500 mt-0.5">max {p.factory_max_pallets}p</span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-2 flex gap-4 text-[10px] text-slate-600">
+        <span><span className="text-emerald-600">●</span> Dato real (SIESA/ventas)</span>
+        <span><span className="text-violet-500">◆</span> Proyectado por el sistema</span>
       </div>
 
       {/* Next boat context */}
