@@ -59,7 +59,7 @@ function SlideOut({ customer, onClose }: { customer: CustomerTrend; onClose: () 
   const fmtDate = (d: string | null) =>
     d ? new Date(d + 'T00:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }) : '-';
 
-  const totalProductRevenue = customer.top_products.reduce((s, p) => s + p.total_usd, 0);
+  const totalProductRevenue = customer.top_products.reduce((s, p) => s + p.total_revenue_usd, 0);
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
@@ -170,13 +170,13 @@ function SlideOut({ customer, onClose }: { customer: CustomerTrend; onClose: () 
                   </thead>
                   <tbody>
                     {customer.top_products.map((p: ProductPurchase) => {
-                      const pricePerM2 = p.total_m2 > 0 ? p.total_usd / p.total_m2 : 0;
-                      const share = totalProductRevenue > 0 ? (p.total_usd / totalProductRevenue) * 100 : 0;
+                      const pricePerM2 = p.total_m2 > 0 ? p.total_revenue_usd / p.total_m2 : 0;
+                      const share = totalProductRevenue > 0 ? (p.total_revenue_usd / totalProductRevenue) * 100 : 0;
                       return (
                         <tr key={p.sku} className="border-b border-slate-700/50 hover:bg-slate-700/30">
                           <td className="px-3 py-2 text-slate-200 font-medium">{p.sku}</td>
                           <td className="px-3 py-2 text-right text-slate-400">{fmt(p.total_m2)}</td>
-                          <td className="px-3 py-2 text-right text-slate-300">{fmtUsd(p.total_usd)}</td>
+                          <td className="px-3 py-2 text-right text-slate-300">{fmtUsd(p.total_revenue_usd)}</td>
                           <td className="px-3 py-2 text-right text-emerald-400 font-medium">${pricePerM2.toFixed(2)}</td>
                           <td className="px-3 py-2 text-right text-slate-500">{share.toFixed(0)}%</td>
                         </tr>
