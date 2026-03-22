@@ -23,8 +23,11 @@ function urgencyBg(urgency: string) {
   }
 }
 
+const M2_PER_PALLET = 134.4;
+
 interface ProductRow extends HorizonProduct {
   user_pallets: number;
+  user_m2: number;
 }
 
 export function HorizonBoat() {
@@ -64,14 +67,14 @@ export function HorizonBoat() {
         }
         const hasDraft = Object.keys(draftPallets).length > 0;
 
-        const rows: ProductRow[] = (res.boat.products || []).map((p) => ({
-          ...p,
-          user_pallets: isOrderedBoat
-            ? p.allocated_pallets               // Confirmed: show locked numbers
+        const rows: ProductRow[] = (res.boat.products || []).map((p) => {
+          const pallets = isOrderedBoat
+            ? p.allocated_pallets
             : hasDraft
-              ? (draftPallets[p.product_id] ?? 0) // Ashley's WIP draft
-              : p.can_ship_pallets,               // Brain's suggestion
-        }));
+              ? (draftPallets[p.product_id] ?? 0)
+              : p.can_ship_pallets;
+          return { ...p, user_pallets: pallets, user_m2: pallets * M2_PER_PALLET };
+        });
 
         // Sort: critical first, then by days_of_stock
         rows.sort((a, b) => {
@@ -88,15 +91,29 @@ export function HorizonBoat() {
   }, [factoryId, boatId]);
 
   const updatePallets = (productId: string, value: number) => {
+    const pallets = Math.max(0, value);
     setProducts((prev) =>
-      prev.map((p) => p.product_id === productId ? { ...p, user_pallets: Math.max(0, value) } : p)
+      prev.map((p) => p.product_id === productId
+        ? { ...p, user_pallets: pallets, user_m2: pallets * M2_PER_PALLET }
+        : p)
+    );
+    setSaved(false);
+  };
+
+  const updateM2 = (productId: string, value: number) => {
+    const m2 = Math.max(0, value);
+    const pallets = Math.floor(m2 / M2_PER_PALLET);
+    setProducts((prev) =>
+      prev.map((p) => p.product_id === productId
+        ? { ...p, user_pallets: pallets, user_m2: m2 }
+        : p)
     );
     setSaved(false);
   };
 
   const resetToSuggestions = () => {
     setProducts((prev) =>
-      prev.map((p) => ({ ...p, user_pallets: p.can_ship_pallets }))
+      prev.map((p) => ({ ...p, user_pallets: p.can_ship_pallets, user_m2: p.can_ship_pallets * M2_PER_PALLET }))
     );
     setSaved(false);
   };
@@ -117,7 +134,8 @@ export function HorizonBoat() {
 
   const totals = useMemo(() => {
     const pallets = products.reduce((sum, p) => sum + p.user_pallets, 0);
-    return { pallets, containers: Math.floor(pallets / 13), m2: pallets * 134.4 };
+    const m2 = products.reduce((sum, p) => sum + p.user_m2, 0);
+    return { pallets, containers: Math.floor(pallets / 13), m2 };
   }, [products]);
 
   const overAllocated = useMemo(() =>
@@ -288,7 +306,7 @@ export function HorizonBoat() {
               <th className="px-3 py-2 text-right">Brecha <span className="text-violet-500" title="Proyectado: stock simulado vs colchon de seguridad">◆</span></th>
               <th className="px-3 py-2 text-right">Sugerido <span className="text-violet-500" title="Proyectado: pallets para cerrar brecha">◆</span></th>
               <th className="px-3 py-2 text-right">Fabrica <span className="text-violet-500" title="Proyectado: SIESA menos barcos anteriores">◆</span></th>
-              <th className="px-3 py-2 text-center">{isOrdered ? 'Enviado' : 'Pallets'}</th>
+              <th className="px-3 py-2 text-center">{isOrdered ? 'Enviado' : 'Pallets / m\u00B2'}</th>
             </tr>
           </thead>
           <tbody>
@@ -305,26 +323,43 @@ export function HorizonBoat() {
                 <td className="px-3 py-2 text-right text-slate-300">{p.coverage_gap_m2 > 0 ? Math.round(p.coverage_gap_m2).toLocaleString() : '-'}</td>
                 <td className="px-3 py-2 text-right text-slate-300">{p.suggested_pallets || '-'}</td>
                 <td className="px-3 py-2 text-right text-slate-500">{Math.round(p.factory_available_m2).toLocaleString()}</td>
-                <td className="px-3 py-2 text-center">
+                <td className="px-3 py-1.5 text-center">
                   {isOrdered ? (
-                    <span className="text-slate-200 text-sm font-medium">{p.user_pallets}</span>
+                    <span className="text-slate-200 text-sm font-medium">{p.user_pallets}p</span>
                   ) : (() => {
                     const over = p.user_pallets > p.factory_max_pallets;
+                    const borderClass = over
+                      ? 'border-amber-500 text-amber-300 focus:border-amber-400'
+                      : 'border-slate-600 text-slate-200 focus:border-blue-500';
                     return (
-                      <div className="inline-flex flex-col items-center">
-                        <input
-                          type="number"
-                          min={0}
-                          value={p.user_pallets}
-                          onChange={(e) => updatePallets(p.product_id, parseInt(e.target.value) || 0)}
-                          className={`w-16 bg-slate-900 border rounded px-2 py-1 text-center text-sm focus:outline-none ${
-                            over
-                              ? 'border-amber-500 text-amber-300 focus:border-amber-400'
-                              : 'border-slate-600 text-slate-200 focus:border-blue-500'
-                          }`}
-                        />
+                      <div className="inline-flex flex-col items-center gap-0.5">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={0}
+                            value={p.user_pallets}
+                            onChange={(e) => updatePallets(p.product_id, parseInt(e.target.value) || 0)}
+                            className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-sm focus:outline-none ${borderClass}`}
+                          />
+                          <span className="text-[10px] text-slate-600">p</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="number"
+                            min={0}
+                            step={10}
+                            value={Math.round(p.user_m2)}
+                            onChange={(e) => updateM2(p.product_id, parseFloat(e.target.value) || 0)}
+                            className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-[11px] focus:outline-none ${
+                              over
+                                ? 'border-amber-500/50 text-amber-400/70 focus:border-amber-400'
+                                : 'border-slate-700 text-slate-500 focus:border-blue-500'
+                            }`}
+                          />
+                          <span className="text-[10px] text-slate-600">m&sup2;</span>
+                        </div>
                         {over && (
-                          <span className="text-[10px] text-amber-500 mt-0.5">max {p.factory_max_pallets}p</span>
+                          <span className="text-[10px] text-amber-500">max {p.factory_max_pallets}p</span>
                         )}
                       </div>
                     );
