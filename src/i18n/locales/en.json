@@ -44,6 +44,7 @@
     "pipeline": "Pipeline",
     "analytics": "Financial",
     "intelligence": "Intelligence",
+    "customers": "Customers",
     "products": "Products",
     "config": "Configuration"
   },
