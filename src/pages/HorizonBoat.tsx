@@ -40,8 +40,6 @@ export function HorizonBoat() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-  const [confirmed, setConfirmed] = useState(false);
   const [skipDismissed, setSkipDismissed] = useState(false);
 
   useEffect(() => {
@@ -173,33 +171,6 @@ export function HorizonBoat() {
     }
   };
 
-  const confirmOrder = async () => {
-    if (!data || !window.confirm('Confirmar pedido? Esto crea una orden de fabrica y no se puede deshacer.')) return;
-    setConfirming(true);
-    try {
-      const confirmProducts = products
-        .filter((p) => p.user_pallets > 0)
-        .map((p) => ({ product_id: p.product_id, sku: p.sku, pallets: p.user_pallets }));
-      await api.post('/order-builder/confirm', {
-        boat_id: boatId,
-        boat_name: data.boat.boat_name,
-        boat_departure: data.boat.departure_date,
-        factory_id: factoryId,
-        products: confirmProducts,
-      });
-      // Mark draft as ordered
-      if (data.boat.draft_id) {
-        await draftsApi.updateStatus(data.boat.draft_id, 'ordered');
-      }
-      setConfirmed(true);
-    } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { detail?: string } } };
-      const detail = axiosErr?.response?.data?.detail;
-      setError(detail || 'Failed to confirm order');
-    } finally {
-      setConfirming(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -232,7 +203,7 @@ export function HorizonBoat() {
           <button onClick={() => navigate('/horizon')} className="text-xs text-slate-500 hover:text-slate-300 mb-1">&larr; {t('common.back', 'Volver')}</button>
           <h1 className="text-xl font-bold text-slate-100">
             {boat.boat_name}
-            {isOrdered && <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-normal">CONFIRMADO</span>}
+            {isOrdered && <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-normal">DESPACHADO</span>}
           </h1>
           <p className="text-sm text-slate-400">{fmtDate} &middot; {boat.days_until_departure} dias &middot; {boat.carrier}</p>
         </div>
@@ -275,7 +246,7 @@ export function HorizonBoat() {
             {overAllocated.length} producto{overAllocated.length > 1 ? 's' : ''} excede{overAllocated.length === 1 ? '' : 'n'} stock de fabrica
           </p>
           <p className="text-amber-500/70 text-xs mt-1">
-            {overAllocated.map((p) => p.sku).join(', ')} — ajusta antes de confirmar
+            {overAllocated.map((p) => p.sku).join(', ')} — excede disponibilidad SIESA
           </p>
         </div>
       )}
@@ -302,22 +273,6 @@ export function HorizonBoat() {
           >
             Exportar Excel
           </button>
-          {saved && !confirmed && (
-            <button
-              onClick={confirmOrder}
-              disabled={confirming || overAllocated.length > 0}
-              className={`px-4 py-2 text-white text-sm rounded disabled:opacity-50 ${
-                overAllocated.length > 0
-                  ? 'bg-slate-600 cursor-not-allowed'
-                  : 'bg-green-600 hover:bg-green-500'
-              }`}
-            >
-              {confirming ? 'Confirmando...' : 'Confirmar pedido'}
-            </button>
-          )}
-          {confirmed && (
-            <span className="px-4 py-2 text-green-400 text-sm">Pedido confirmado</span>
-          )}
         </div>
       )}
 
