@@ -184,6 +184,11 @@ export function HorizonBoat() {
       a.download = `orden_${data.boat.boat_name}_${data.boat.departure_date}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
+
+      // Mark draft as ordered after successful export
+      if (data.boat.draft_id) {
+        await draftsApi.updateStatus(data.boat.draft_id, 'ordered');
+      }
     } catch {
       setError('Failed to export');
     }
