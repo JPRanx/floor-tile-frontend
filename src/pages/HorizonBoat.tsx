@@ -307,6 +307,7 @@ export function HorizonBoat() {
               <th className="px-4 py-2">SKU</th>
               <th className="px-3 py-2 text-right">Vel/dia <span className="text-emerald-600" title="Real: promedio 90 dias de ventas">●</span></th>
               <th className="px-3 py-2 text-right">Stock <span className="text-emerald-600" title="Real: ultimo inventario SIESA">●</span></th>
+              <th className="px-3 py-2 text-right">Disponible <span className="text-violet-500" title="Proyectado: bodega + en transito">◆</span></th>
               <th className="px-3 py-2 text-right">Dias <span className="text-emerald-600" title="Real: stock actual / velocidad">●</span></th>
               <th className="px-3 py-2 text-right">Brecha <span className="text-violet-500" title="Proyectado: stock simulado vs colchon de seguridad">◆</span></th>
               <th className="px-3 py-2 text-right">Sugerido <span className="text-violet-500" title="Proyectado: pallets para cerrar brecha">◆</span></th>
@@ -322,6 +323,12 @@ export function HorizonBoat() {
                 </td>
                 <td className="px-3 py-2 text-right text-slate-300">{p.daily_velocity_m2.toFixed(1)}</td>
                 <td className="px-3 py-2 text-right text-slate-300">{Math.round(p.current_stock_m2).toLocaleString()}</td>
+                <td className="px-3 py-2 text-right text-slate-300">
+                  {Math.round(p.running_stock_m2).toLocaleString()}
+                  {p.running_stock_m2 > p.current_stock_m2 && (
+                    <span className="text-[10px] text-blue-400 ml-1" title="Incluye stock en transito">+T</span>
+                  )}
+                </td>
                 <td className="px-3 py-2 text-right">
                   <span className={urgencyColor(p.urgency)}>{p.days_of_stock === 999 ? '-' : p.days_of_stock.toFixed(0)}</span>
                 </td>
