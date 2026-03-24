@@ -19,7 +19,6 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
   const [file, setFile] = useState<File | null>(null);
   const [parseResult, setParseResult] = useState<InTransitParseResponse | null>(null);
   const [uploadResult, setUploadResult] = useState<InTransitUploadResponse | null>(null);
-  const [selectedBoatId, setSelectedBoatId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [missingColumns, setMissingColumns] = useState<string[]>([]);
   const [foundColumns, setFoundColumns] = useState<string[]>([]);
@@ -53,7 +52,6 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     setErrorMessage(null);
     setParseResult(null);
     setUploadResult(null);
-    setSelectedBoatId(null);
     setShowUnmatched(false);
     setShowDetails(false);
     setShowReconciliation(false);
@@ -64,9 +62,6 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     try {
       const data = await dataHubApi.parseInTransit(f);
       setParseResult(data);
-      // Pre-select suggested boat
-      const suggested = data.candidate_boats.find(b => b.is_suggested);
-      if (suggested) setSelectedBoatId(suggested.boat_id);
       setUploadState('preview');
     } catch (err: unknown) {
       const axiosErr = err as { response?: { data?: { error?: { message?: string; details?: { missing_columns?: string[]; found_columns?: string[] } }; detail?: string } } };
@@ -87,7 +82,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     setUploadState('uploading');
 
     try {
-      const data = await dataHubApi.uploadInTransit(file, selectedBoatId || undefined);
+      const data = await dataHubApi.uploadInTransit(file);
       setUploadResult(data);
       setUploadState('success');
       onUploadSuccess?.();
@@ -140,7 +135,6 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     setFile(null);
     setParseResult(null);
     setUploadResult(null);
-    setSelectedBoatId(null);
     setErrorMessage(null);
     setMissingColumns([]);
     setFoundColumns([]);
@@ -157,7 +151,8 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
     handleReset();
   };
 
-  const selectedBoat = parseResult?.candidate_boats.find(b => b.boat_id === selectedBoatId);
+  const matchedCount = parseResult?.booking_matches?.filter(m => m.boat_id).length ?? 0;
+  const unmatchedOrderCount = parseResult?.booking_matches?.filter(m => !m.boat_id).length ?? 0;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -232,43 +227,55 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
         {/* Preview state — show products + boat selector */}
         {uploadState === 'preview' && parseResult && (
           <div className="space-y-5">
-            {/* Boat selector */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {t('dataHub.inTransit.selectBoat', 'Seleccionar barco')}
-              </label>
-              <select
-                value={selectedBoatId || ''}
-                onChange={(e) => setSelectedBoatId(e.target.value || null)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="">
-                  {t('dataHub.inTransit.noBoatSelected', 'Sin barco — solo actualizar inventario')}
-                </option>
-                {parseResult.candidate_boats.map((boat) => (
-                  <option key={boat.boat_id} value={boat.boat_id}>
-                    {boat.vessel_name} — {t('dataHub.inTransit.departure', 'Sale')} {boat.departure_date}
-                    {boat.carrier ? ` (${boat.carrier})` : ''}
-                    {boat.draft_status === 'drafting' ? ` — ${t('planning.draftStatus.drafting', 'Borrador')} (${boat.draft_pallets ?? 0} pal.)` : ''}
-                    {boat.draft_status === 'action_needed' ? ` — ${t('planning.draftStatus.action_needed', 'Acción requerida')}` : ''}
-                    {boat.draft_status === 'ordered' ? ` — ${t('planning.draftStatus.ordered', 'Pedido enviado')}` : ''}
-                    {boat.draft_status === 'confirmed' ? ` — ${t('planning.draftStatus.confirmed', 'Confirmado')}` : ''}
-                    {!boat.draft_status ? ` — ${t('dataHub.inTransit.noDraft', 'Sin borrador')}` : ''}
-                    {boat.is_suggested ? ` ★` : ''}
-                  </option>
-                ))}
-              </select>
-              {selectedBoat && !selectedBoat.draft_status && (
-                <p className="mt-1.5 text-xs text-amber-600">
-                  {t('dataHub.inTransit.noDraftWarning', 'Este barco no tiene borrador — solo se actualizará el inventario en tránsito.')}
-                </p>
-              )}
-              {selectedBoat && (selectedBoat.draft_status === 'ordered' || selectedBoat.draft_status === 'confirmed') && (
-                <p className="mt-1.5 text-xs text-amber-600">
-                  {t('dataHub.inTransit.alreadyOrderedWarning', 'Este barco ya fue marcado como pedido/confirmado.')}
-                </p>
-              )}
-            </div>
+            {/* Booking matches — auto-matched orders to boats */}
+            {parseResult.booking_matches && parseResult.booking_matches.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                  {t('dataHub.inTransit.bookingMatches', 'Ordenes por barco (auto-matching)')}
+                </h4>
+                <div className="space-y-2">
+                  {parseResult.booking_matches.map((match, i) => (
+                    <div
+                      key={i}
+                      className={`flex items-center justify-between rounded-lg border p-3 text-sm ${
+                        match.boat_id
+                          ? 'bg-green-50 border-green-200'
+                          : 'bg-amber-50 border-amber-200'
+                      }`}
+                    >
+                      <div>
+                        <span className="font-medium text-gray-900">{match.factura}</span>
+                        {match.booking_number && (
+                          <span className="ml-2 text-xs text-gray-500">#{match.booking_number}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-gray-600">
+                          {match.items_count} prod. / {match.total_m2.toLocaleString()} m²
+                        </span>
+                        {match.boat_id ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs font-medium">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            {match.vessel_name}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-medium">
+                            {t('dataHub.inTransit.noBoatMatch', 'Sin barco')}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {unmatchedOrderCount > 0 && (
+                  <p className="mt-2 text-xs text-amber-600">
+                    {unmatchedOrderCount} {t('dataHub.inTransit.ordersNoBoat', 'orden(es) sin barco asignado — suba Tabla de Booking primero')}
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Summary bar */}
             <div className="flex gap-3">
@@ -338,8 +345,8 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
               onClick={handleConfirm}
               className="w-full px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              {selectedBoatId && selectedBoat?.draft_status === 'drafting'
-                ? t('dataHub.inTransit.confirmUpload', 'Subir y marcar como pedido')
+              {matchedCount > 0
+                ? t('dataHub.inTransit.confirmUploadMatched', `Subir despacho (${matchedCount} barco${matchedCount > 1 ? 's' : ''} detectado${matchedCount > 1 ? 's' : ''})`)
                 : t('dataHub.inTransit.confirmUploadNoDraft', 'Subir inventario en tránsito')
               }
             </button>

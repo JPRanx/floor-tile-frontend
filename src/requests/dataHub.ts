@@ -213,11 +213,22 @@ export interface CandidateBoat {
   is_suggested: boolean;
 }
 
+export interface BookingMatch {
+  factura: string;
+  booking_number: string | null;
+  boat_id: string | null;
+  vessel_name: string | null;
+  etd: string | null;
+  items_count: number;
+  total_m2: number;
+}
+
 export interface InTransitParseResponse {
   products: InTransitUploadDetail[];
   total_m2: number;
   unmatched_skus: string[];
   candidate_boats: CandidateBoat[];
+  booking_matches: BookingMatch[];
 }
 
 export interface SIESAPreviewLot {
