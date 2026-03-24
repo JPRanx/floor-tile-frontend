@@ -35,7 +35,7 @@ function UrgencyDots({ breakdown }: { breakdown: BoatProjection['urgency_breakdo
   );
 }
 
-function BoatCard({ boat, onClick }: { boat: BoatProjection; onClick: () => void }) {
+function BoatCard({ boat, onClick, onIgnore }: { boat: BoatProjection; onClick: () => void; onIgnore: (boatId: string) => void }) {
   const dep = new Date(boat.departure_date + 'T00:00:00');
   const fmtDate = dep.toLocaleDateString('es', { day: 'numeric', month: 'short' });
 
@@ -48,39 +48,50 @@ function BoatCard({ boat, onClick }: { boat: BoatProjection; onClick: () => void
   const borderClass = stateColors[boat.state] || stateColors.FUTURE;
 
   return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left border rounded-lg p-4 hover:brightness-110 transition ${borderClass} ${boat.skip_recommended ? 'opacity-50' : ''}`}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <div>
-          <h3 className="font-semibold text-slate-100 text-sm">{boat.boat_name}</h3>
-          <p className="text-xs text-slate-400">{fmtDate} &middot; {boat.days_until_departure}d</p>
-        </div>
-        <div className="flex gap-1.5 items-center">
-          {boat.draft_status && boat.draft_status !== 'ordered' && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">
-              BORRADOR
+    <div className={`relative border rounded-lg p-4 transition ${borderClass} ${boat.skip_recommended ? 'opacity-50' : ''}`}>
+      <button
+        onClick={onClick}
+        className="w-full text-left hover:brightness-110 transition"
+      >
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="font-semibold text-slate-100 text-sm">{boat.boat_name}</h3>
+            <p className="text-xs text-slate-400">{fmtDate} &middot; {boat.days_until_departure}d</p>
+          </div>
+          <div className="flex gap-1.5 items-center">
+            {boat.draft_status && boat.draft_status !== 'ordered' && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">
+                BORRADOR
+              </span>
+            )}
+            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
+              {boat.state === 'ORDERED' ? 'CONFIRMADO' : boat.state}
             </span>
-          )}
-          <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
-            {boat.state === 'ORDERED' ? 'CONFIRMADO' : boat.state}
-          </span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex justify-between items-end">
-        <div>
-          <p className="text-lg font-bold text-slate-100">{boat.total_pallets} <span className="text-xs font-normal text-slate-400">pallets</span></p>
-          <p className="text-xs text-slate-500">{boat.total_containers} cont &middot; {boat.product_count} prod</p>
+        <div className="flex justify-between items-end">
+          <div>
+            <p className="text-lg font-bold text-slate-100">{boat.total_pallets} <span className="text-xs font-normal text-slate-400">pallets</span></p>
+            <p className="text-xs text-slate-500">{boat.total_containers} cont &middot; {boat.product_count} prod</p>
+          </div>
+          <UrgencyDots breakdown={boat.urgency_breakdown} />
         </div>
-        <UrgencyDots breakdown={boat.urgency_breakdown} />
-      </div>
 
-      {boat.skip_recommended && (
-        <p className="mt-2 text-xs text-red-400 italic">{boat.skip_reason}</p>
+        {boat.skip_recommended && (
+          <p className="mt-2 text-xs text-red-400 italic">{boat.skip_reason}</p>
+        )}
+      </button>
+      {boat.state !== 'ORDERED' && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onIgnore(boat.boat_id); }}
+          className="absolute top-2 right-2 text-xs text-slate-600 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-slate-700/50"
+          title="Ignorar barco"
+        >
+          &times;
+        </button>
       )}
-    </button>
+    </div>
   );
 }
 
@@ -104,7 +115,7 @@ export function HorizonView() {
   }, []);
 
   // Load horizon when factory changes
-  useEffect(() => {
+  const fetchHorizon = () => {
     if (!factoryId) return;
     setLoading(true);
     setError(null);
@@ -112,10 +123,21 @@ export function HorizonView() {
       .then(setData)
       .catch((err) => setError(err?.message || 'Failed to load horizon'))
       .finally(() => setLoading(false));
-  }, [factoryId]);
+  };
+
+  useEffect(() => { fetchHorizon(); }, [factoryId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const openBoat = (boatId: string) => {
     navigate(`/horizon/boat?factory=${factoryId}&boat=${boatId}`);
+  };
+
+  const ignoreBoat = async (boatId: string) => {
+    try {
+      await horizonApi.ignoreBoat(boatId);
+      fetchHorizon();
+    } catch {
+      setError('Error al ignorar barco');
+    }
   };
 
   if (loading) {
@@ -182,6 +204,7 @@ export function HorizonView() {
             key={boat.boat_id}
             boat={boat}
             onClick={() => openBoat(boat.boat_id)}
+            onIgnore={ignoreBoat}
           />
         ))}
       </div>

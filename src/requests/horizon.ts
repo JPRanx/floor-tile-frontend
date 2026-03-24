@@ -140,4 +140,12 @@ export const horizonApi = {
     const response = await api.get(`/v2/horizon/${factoryId}/${boatId}`);
     return response.data;
   },
+
+  ignoreBoat: async (boatId: string): Promise<void> => {
+    await api.patch(`/v2/horizon/boats/${boatId}/ignore`);
+  },
+
+  restoreBoat: async (boatId: string): Promise<void> => {
+    await api.patch(`/v2/horizon/boats/${boatId}/restore`);
+  },
 };
