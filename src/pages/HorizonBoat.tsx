@@ -60,7 +60,7 @@ export function HorizonBoat() {
 
         // Build pallet map from user's draft (if she saved one)
         const draftPallets: Record<string, number> = {};
-        if (draft && draft.status === 'drafting' && draft.items) {
+        if (draft && draft.status !== 'ordered' && draft.status !== 'confirmed' && draft.items) {
           for (const item of draft.items) {
             draftPallets[item.product_id] = item.selected_pallets;
           }
