@@ -28,7 +28,7 @@ export interface BoatProjection {
   arrival_date: string;
   days_until_departure: number;
   carrier: string;
-  state: 'ORDERED' | 'PLANNING' | 'FUTURE';
+  state: 'DISPATCHED' | 'CONFIRMED' | 'ORDERED' | 'PLANNING' | 'FUTURE';
   draft_status: string | null;
   draft_id: string | null;
   total_pallets: number;

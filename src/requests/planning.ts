@@ -101,6 +101,7 @@ export interface BoatProjection {
   has_bl_allocation: boolean;
   is_estimated: boolean;
   carrier: string | null;
+  state?: string;
   is_draft_locked: boolean;
   blocking_boat_name: string | null;
   has_earlier_drafts: boolean;

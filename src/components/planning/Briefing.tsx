@@ -57,10 +57,12 @@ export function Briefing({ horizon, loading }: BriefingProps) {
 
   let sentence: string;
 
-  if (pendingCount === 0 && completedCount > 0) {
+  const confirmedCount = projections.filter(p => p.draft_status === 'ordered' || p.draft_status === 'confirmed').length;
+
+  if (pendingCount === 0 && confirmedCount > 0) {
     sentence = t('planning.briefing.allConfirmed');
-  } else if (pendingCount > 0 && completedCount > 0) {
-    sentence = t('planning.briefing.mixed', { completed: completedCount, pending: pendingCount });
+  } else if (pendingCount > 0 && confirmedCount > 0) {
+    sentence = t('planning.briefing.mixed', { completed: confirmedCount, pending: pendingCount });
   } else if (avgCoverage > 0) {
     sentence = t('planning.briefing.allGood', { days: avgCoverage });
   } else {
@@ -69,7 +71,7 @@ export function Briefing({ horizon, loading }: BriefingProps) {
 
   return (
     <div className="flex items-center gap-2 bg-gray-800/50 rounded-lg px-3 py-2">
-      {completedCount > 0 && pendingCount === 0 ? <CheckIcon /> : <InfoIcon />}
+      {confirmedCount > 0 && pendingCount === 0 ? <CheckIcon /> : <InfoIcon />}
       <span className="text-sm font-medium text-emerald-300/80">
         {sentence}
       </span>

@@ -80,10 +80,11 @@ export function ProductManagement() {
     fetchLiquidation();
   }, []);
 
-  // Filter products by search
-  const filteredProducts = products.filter((p) =>
-    p.sku.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter and sort products: by tier (A first), then SKU
+  const tierOrder: Record<string, number> = { A: 0, B: 1, C: 2 };
+  const filteredProducts = products
+    .filter((p) => p.sku.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => (tierOrder[a.tier ?? ''] ?? 3) - (tierOrder[b.tier ?? ''] ?? 3) || a.sku.localeCompare(b.sku));
 
   // Handle single product deactivation
   const handleDeactivate = (product: Product) => {
