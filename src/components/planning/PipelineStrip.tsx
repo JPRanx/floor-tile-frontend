@@ -23,7 +23,7 @@ export function PipelineStrip({ horizon }: PipelineStripProps) {
   let dispatched = 0;
 
   for (const p of horizon.projections) {
-    if (p.state === 'DISPATCHED') dispatched++;
+    if (p.state === 'DISPATCHED' || p.state === 'CONFIRMED') dispatched++;
     else if (p.draft_status === 'ordered') ordered++;
     else if (p.draft_status === 'confirmed') confirmed++;
     else if (p.draft_status === 'drafting' || p.draft_status === 'action_needed') drafting++;
