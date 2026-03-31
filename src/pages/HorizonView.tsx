@@ -197,27 +197,6 @@ export function HorizonView() {
         </div>
       )}
 
-      {/* Completed boats (last 2 for context) */}
-      {data.completed.length > 0 && (
-        <div className="mb-4">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">{t('planning.completed', 'Completados')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-            {data.completed.slice(-2).map((boat) => (
-              <div key={boat.boat_id} className="border border-slate-700/50 rounded-lg p-3 opacity-50 bg-slate-800/30">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-400">{boat.boat_name}</span>
-                  <span className="text-xs text-slate-500">{boat.state === 'DISPATCHED' ? '✓ Despachado' : boat.draft_status === 'ordered' ? '📦 Ordenado' : boat.state}</span>
-                </div>
-                <p className="text-xs text-slate-500">{boat.departure_date} → {boat.arrival_date}</p>
-                <p className="text-xs text-slate-600 mt-1">
-                  {boat.items.length} productos &middot; {boat.items.reduce((sum, i) => sum + (i.shipped_m2 || 0), 0).toLocaleString()} m²
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Boat grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {data.projections.map((boat) => (
