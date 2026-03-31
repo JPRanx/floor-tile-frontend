@@ -232,7 +232,7 @@ export function HorizonBoat() {
         </div>
         <div className="text-right">
           <p className="text-2xl font-bold text-slate-100">{totals.pallets}</p>
-          <p className="text-xs text-slate-400">{totals.containers} cont &middot; {Math.round(totals.m2).toLocaleString()} m2</p>
+          <p className="text-xs text-slate-400">{totals.containers} cont &middot; {totals.m2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m²</p>
         </div>
       </div>
 
@@ -360,7 +360,7 @@ export function HorizonBoat() {
                             type="number"
                             min={0}
                             step={10}
-                            value={Math.round(p.user_m2)}
+                            value={parseFloat(p.user_m2.toFixed(2))}
                             onChange={(e) => updateM2(p.product_id, parseFloat(e.target.value) || 0)}
                             className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-[11px] focus:outline-none ${
                               over

@@ -290,6 +290,7 @@ export function ProductManagement() {
                 <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">SKU</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Category</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Rotation</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold text-slate-300">Tier</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold text-slate-300">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Reason</th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Date</th>
@@ -320,6 +321,19 @@ export function ProductManagement() {
                   </td>
                   <td className="px-4 py-3 text-slate-300 text-sm">
                     {product.rotation || '-'}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {product.tier ? (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                        product.tier === 'A' ? 'bg-amber-900/50 text-amber-400 border border-amber-500/30'
+                        : product.tier === 'B' ? 'bg-blue-900/50 text-blue-400 border border-blue-500/30'
+                        : 'bg-slate-700/50 text-slate-400 border border-slate-500/30'
+                      }`}>
+                        {product.tier}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 text-xs">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {product.active ? (
@@ -361,7 +375,7 @@ export function ProductManagement() {
               ))}
               {filteredProducts.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                  <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                     No products found
                   </td>
                 </tr>

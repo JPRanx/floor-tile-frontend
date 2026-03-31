@@ -5,6 +5,8 @@ export type InactiveReason = 'DISCONTINUED' | 'NO_STOCK' | 'SEASONAL' | 'REPLACE
 export type Category = 'MADERAS' | 'EXTERIORES' | 'MARMOLIZADOS' | 'OTHER' | 'FURNITURE' | 'SINK' | 'SURCHARGE';
 export type Rotation = 'ALTA' | 'MEDIA-ALTA' | 'MEDIA' | 'BAJA';
 
+export type Tier = 'A' | 'B' | 'C';
+
 export interface Product {
   id: string;
   sku: string;
@@ -14,6 +16,7 @@ export interface Product {
   siesa_item: number | null;
   category: Category;
   rotation: Rotation | null;
+  tier: Tier | null;
   active: boolean;
   fob_cost_usd: number | null;
   inactive_reason: InactiveReason | null;
