@@ -80,7 +80,10 @@ export function Dashboard() {
 
   if (!data) return null;
 
-  const { products } = data;
+  const tierOrder: Record<string, number> = { A: 0, B: 1, C: 2 };
+  const products = [...data.products].sort(
+    (a, b) => (tierOrder[a.tier ?? ''] ?? 3) - (tierOrder[b.tier ?? ''] ?? 3)
+  );
 
   // Calculate warehouse totals from products (convert from string/Decimal to number)
   const totalWarehouseM2 = products.reduce((sum, p) => sum + Number(p.warehouse_qty), 0);
@@ -245,8 +248,8 @@ export function Dashboard() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sticky left-0 z-20 bg-slate-800/50">
                   {t('dashboard.columns.sku')}
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  {t('dashboard.columns.status')}
+                <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
+                  Tier
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
                   {t('dashboard.columns.daysLeft')}
@@ -289,8 +292,18 @@ export function Dashboard() {
                       {product.rotation}
                     </div>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <StatusBadgeDark status={product.status} />
+                  <td className="px-4 py-3 whitespace-nowrap text-center">
+                    {product.tier ? (
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
+                        product.tier === 'A' ? 'bg-amber-900/50 text-amber-400 border border-amber-500/30'
+                        : product.tier === 'B' ? 'bg-blue-900/50 text-blue-400 border border-blue-500/30'
+                        : 'bg-slate-700/50 text-slate-400 border border-slate-500/30'
+                      }`}>
+                        {product.tier}
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 text-xs">-</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-right">
                     <StockCoverage
@@ -377,34 +390,3 @@ function StatusCard({ label, count, color }: StatusCardProps) {
   );
 }
 
-// Status Badge Component - Dark Theme
-interface StatusBadgeDarkProps {
-  status: string;
-}
-
-function StatusBadgeDark({ status }: StatusBadgeDarkProps) {
-  const statusStyles: Record<string, string> = {
-    HIGH_PRIORITY: 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-    CONSIDER: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    WELL_COVERED: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
-    YOUR_CALL: 'bg-slate-600/30 text-slate-400 border-slate-500/30',
-    OUT_OF_STOCK: 'bg-rose-500/20 text-rose-400 border-rose-500/30',
-  };
-
-  const statusLabels: Record<string, string> = {
-    HIGH_PRIORITY: 'High Priority',
-    CONSIDER: 'Consider',
-    WELL_COVERED: 'Well Covered',
-    YOUR_CALL: 'Your Call',
-    OUT_OF_STOCK: 'Out of Stock',
-  };
-
-  const style = statusStyles[status] || statusStyles.YOUR_CALL;
-  const label = statusLabels[status] || status;
-
-  return (
-    <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium border ${style}`}>
-      {label}
-    </span>
-  );
-}

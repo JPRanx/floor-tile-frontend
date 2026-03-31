@@ -35,6 +35,7 @@ export interface ProductStockout {
   stockout_date: string | null;
   status: StockoutStatus;
   status_reason: string;
+  tier: 'A' | 'B' | 'C' | null;
 }
 
 export interface StockoutSummary {
