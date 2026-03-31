@@ -56,7 +56,7 @@ export function HorizonBoat() {
     ])
       .then(([res, draft]) => {
         setData(res);
-        const isOrderedBoat = res.boat.state === 'ORDERED';
+        const isOrderedBoat = res.boat.state === 'ORDERED' || res.boat.state === 'DISPATCHED' || res.boat.state === 'CONFIRMED';
 
         // Build pallet map from user's draft (if she saved one)
         const draftPallets: Record<string, number> = {};
