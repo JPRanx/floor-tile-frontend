@@ -429,7 +429,7 @@ export function PlanningView() {
 
     return {
       actionBoats: action,
-      completedBoats: selectedHorizon.completed ?? [],
+      completedBoats: [],
       healthStats: { totalCritical, totalUrgent, totalSoon, totalOk, totalProducts },
     };
   }, [selectedHorizon]);

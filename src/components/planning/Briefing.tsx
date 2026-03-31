@@ -28,8 +28,7 @@ export function Briefing({ horizon, loading }: BriefingProps) {
   }
 
   const projections = horizon.projections;
-  const completedCount = horizon.completed?.length ?? 0;
-  const totalBoats = projections.length + completedCount;
+  const totalBoats = projections.length;
 
   if (totalBoats === 0) {
     return (

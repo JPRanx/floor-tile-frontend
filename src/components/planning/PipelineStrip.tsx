@@ -14,27 +14,24 @@ interface StageCount {
 export function PipelineStrip({ horizon }: PipelineStripProps) {
   const { t } = useTranslation();
 
-  const totalBoats = (horizon?.projections.length ?? 0) + (horizon?.completed?.length ?? 0);
-  if (!horizon || totalBoats === 0) return null;
+  if (!horizon || !horizon.projections.length) return null;
 
   let drafting = 0;
   let ordered = 0;
   let confirmed = 0;
   let noDraft = 0;
+  let dispatched = 0;
 
   for (const p of horizon.projections) {
-    if (p.draft_status === 'drafting' || p.draft_status === 'action_needed') {
-      drafting++;
-    } else if (p.draft_status == null) {
-      noDraft++;
-    }
-  }
-  for (const c of (horizon.completed ?? [])) {
-    if (c.draft_status === 'ordered') ordered++;
-    else if (c.draft_status === 'confirmed') confirmed++;
+    if (p.state === 'DISPATCHED') dispatched++;
+    else if (p.draft_status === 'ordered') ordered++;
+    else if (p.draft_status === 'confirmed') confirmed++;
+    else if (p.draft_status === 'drafting' || p.draft_status === 'action_needed') drafting++;
+    else noDraft++;
   }
 
   const stages: StageCount[] = [
+    { label: t('planning.pipeline.dispatched', 'Despachado'), count: dispatched, color: 'text-green-400' },
     { label: t('planning.pipeline.noDraft'), count: noDraft, color: 'text-slate-400' },
     { label: t('planning.pipeline.drafts'), count: drafting, color: 'text-slate-300' },
     { label: t('planning.pipeline.ordered'), count: ordered, color: 'text-blue-400' },

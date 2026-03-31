@@ -58,7 +58,7 @@ export function FactoryLane({
   // Compute urgency summary for the lane header
   const totalCritical = horizon?.projections.reduce((s, p) => s + p.urgency_breakdown.critical, 0) ?? 0;
   const totalUrgent = horizon?.projections.reduce((s, p) => s + p.urgency_breakdown.urgent, 0) ?? 0;
-  const boatCount = (horizon?.projections.length ?? 0) + (horizon?.completed?.length ?? 0);
+  const boatCount = horizon?.projections.length ?? 0;
 
   const urgencyIndicator = totalCritical > 0
     ? 'border-red-500/40'

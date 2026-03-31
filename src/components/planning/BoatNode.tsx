@@ -20,7 +20,7 @@ export function BoatNode({ projection, onClick }: BoatNodeProps) {
   const hasDraft = projection.is_active;
   const isDeparted = new Date(projection.departure_date) < new Date();
   const isSkipped = projection.draft_status === 'skipped';
-  const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
+  const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed' || projection.state === 'DISPATCHED';
   const { critical, urgent, soon, actionable } = projection.urgency_breakdown;
   const totalNeed = critical + urgent + soon;
   const needsAttention = critical > 0 || urgent > 0;

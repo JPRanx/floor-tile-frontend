@@ -101,9 +101,7 @@ export interface HorizonResponse {
   production_lead_days: number;
   transport_to_port_days: number;
   monthly_quota_m2: number | null;
-  anchor_boat_id: string | null;
   projections: BoatProjection[];
-  completed: CompletedBoat[];
   production_requests: ProductionRequest[];
   production_pipeline: ProductionPipelineItem[];
   skip_recommendations: Array<{

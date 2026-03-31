@@ -305,7 +305,7 @@ export function BoatCard({ projection, onDrillIn, onPreview, onQuickAccept, onEx
   const [showAllProducts, setShowAllProducts] = useState(false);
   const isActive = projection.is_active;
   const isEstimated = projection.is_estimated;
-  const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed';
+  const isCompleted = projection.draft_status === 'ordered' || projection.draft_status === 'confirmed' || projection.state === 'DISPATCHED';
 
   const borderStyle = isActive
     ? 'border-slate-700/50'
