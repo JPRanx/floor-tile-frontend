@@ -214,20 +214,88 @@ export function HorizonBoat() {
   if (!data) return null;
 
   const boat = data.boat;
-  const isOrdered = boat.state === 'ORDERED';
+  const isLocked = boat.state === 'DISPATCHED' || boat.state === 'CONFIRMED' || boat.state === 'ORDERED';
   const dep = new Date(boat.departure_date + 'T00:00:00');
   const fmtDate = dep.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
 
+  const stateLabel: Record<string, string> = {
+    DISPATCHED: 'Despachado',
+    CONFIRMED: 'Confirmado',
+    ORDERED: 'Ordenado',
+  };
+
+  // Receipt view for locked boats — minimal, read-only
+  if (isLocked) {
+    const shippedProducts = products.filter((p) => p.user_pallets > 0);
+    return (
+      <div className="p-6 max-w-3xl mx-auto">
+        <button onClick={() => navigate('/horizon')} className="text-xs text-slate-500 hover:text-slate-300 mb-1">&larr; Volver</button>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h1 className="text-xl font-bold text-slate-100">{boat.boat_name}</h1>
+            <p className="text-sm text-slate-400">{fmtDate} &middot; {boat.days_until_departure}d &middot; {boat.carrier}</p>
+          </div>
+          <div className="text-right">
+            <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
+              boat.state === 'DISPATCHED' ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+              : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+            }`}>
+              {stateLabel[boat.state] || boat.state}
+            </span>
+            <p className="text-2xl font-bold text-slate-100 mt-2">{totals.pallets} pallets</p>
+            <p className="text-xs text-slate-400">{totals.containers} cont &middot; {totals.m2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m²</p>
+          </div>
+        </div>
+
+        {boat.bl_count && boat.bl_count > 1 && (
+          <p className="text-xs text-slate-500 mb-4">{boat.bl_count} BLs combinados</p>
+        )}
+
+        <div className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-700 text-left text-xs text-slate-500 uppercase">
+                <th className="px-4 py-2">SKU</th>
+                <th className="px-3 py-2 text-right">Pallets</th>
+                <th className="px-3 py-2 text-right">m²</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shippedProducts.map((p) => (
+                <tr key={p.product_id} className="border-b border-slate-700/50">
+                  <td className="px-4 py-2.5 text-slate-200 font-medium">{p.sku}</td>
+                  <td className="px-3 py-2.5 text-right text-slate-300">{p.user_pallets}</td>
+                  <td className="px-3 py-2.5 text-right text-slate-400">{p.user_m2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-slate-600 font-medium">
+                <td className="px-4 py-2.5 text-slate-300">Total</td>
+                <td className="px-3 py-2.5 text-right text-slate-200">{totals.pallets}</td>
+                <td className="px-3 py-2.5 text-right text-slate-300">{totals.m2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        {data.next_boat && (
+          <p className="mt-4 text-xs text-slate-600">
+            Siguiente: {data.next_boat.boat_name} ({data.next_boat.departure_date})
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  // Order Builder view for actionable boats
   return (
     <div className="p-6 max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
           <button onClick={() => navigate('/horizon')} className="text-xs text-slate-500 hover:text-slate-300 mb-1">&larr; {t('common.back', 'Volver')}</button>
-          <h1 className="text-xl font-bold text-slate-100">
-            {boat.boat_name}
-            {isOrdered && <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-normal">DESPACHADO</span>}
-          </h1>
+          <h1 className="text-xl font-bold text-slate-100">{boat.boat_name}</h1>
           <p className="text-sm text-slate-400">{fmtDate} &middot; {boat.days_until_departure} dias &middot; {boat.carrier}</p>
         </div>
         <div className="text-right">
@@ -237,7 +305,7 @@ export function HorizonBoat() {
       </div>
 
       {/* Skip recommendation */}
-      {!isOrdered && boat.skip_recommended && !skipDismissed && (
+      {boat.skip_recommended && !skipDismissed && (
         <div className="mb-3 px-4 py-3 bg-red-500/10 border border-red-500/30 rounded-lg">
           <div className="flex items-center justify-between">
             <div>
@@ -245,16 +313,10 @@ export function HorizonBoat() {
               <p className="text-red-500/70 text-xs mt-0.5">{boat.skip_reason}</p>
             </div>
             <div className="flex gap-2 ml-4 shrink-0">
-              <button
-                onClick={skipBoat}
-                className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs rounded"
-              >
+              <button onClick={skipBoat} className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-xs rounded">
                 Ignorar barco
               </button>
-              <button
-                onClick={() => setSkipDismissed(true)}
-                className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded"
-              >
+              <button onClick={() => setSkipDismissed(true)} className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded">
                 Continuar de todos modos
               </button>
             </div>
@@ -263,7 +325,7 @@ export function HorizonBoat() {
       )}
 
       {/* Over-allocation warning */}
-      {!isOrdered && overAllocated.length > 0 && (
+      {overAllocated.length > 0 && (
         <div className="mb-3 px-4 py-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
           <p className="text-amber-400 text-sm font-medium">
             {overAllocated.length} producto{overAllocated.length > 1 ? 's' : ''} excede{overAllocated.length === 1 ? '' : 'n'} stock de fabrica
@@ -274,30 +336,18 @@ export function HorizonBoat() {
         </div>
       )}
 
-      {/* Action bar — hidden for ordered boats */}
-      {!isOrdered && (
-        <div className="flex gap-3 mb-4">
-          <button
-            onClick={saveDraft}
-            disabled={saving}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded disabled:opacity-50"
-          >
-            {saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar borrador'}
-          </button>
-          <button
-            onClick={resetToSuggestions}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded"
-          >
-            Resetear sugerencias
-          </button>
-          <button
-            onClick={exportExcel}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded"
-          >
-            Exportar Excel
-          </button>
-        </div>
-      )}
+      {/* Action bar */}
+      <div className="flex gap-3 mb-4">
+        <button onClick={saveDraft} disabled={saving} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded disabled:opacity-50">
+          {saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar borrador'}
+        </button>
+        <button onClick={resetToSuggestions} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded">
+          Resetear sugerencias
+        </button>
+        <button onClick={exportExcel} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm rounded">
+          Exportar Excel
+        </button>
+      </div>
 
       {/* Product table */}
       <div className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
@@ -312,73 +362,69 @@ export function HorizonBoat() {
               <th className="px-3 py-2 text-right">Brecha <span className="text-violet-500" title="Proyectado: stock simulado vs colchon de seguridad">◆</span></th>
               <th className="px-3 py-2 text-right">Sugerido <span className="text-violet-500" title="Proyectado: pallets para cerrar brecha">◆</span></th>
               <th className="px-3 py-2 text-right">Fabrica <span className="text-violet-500" title="Proyectado: SIESA menos barcos anteriores">◆</span></th>
-              <th className="px-3 py-2 text-center">{isOrdered ? 'Enviado' : 'Pallets / m\u00B2'}</th>
+              <th className="px-3 py-2 text-center">Pallets / m²</th>
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => (
-              <tr key={p.product_id} className={`border-b border-slate-700/50 ${urgencyBg(p.urgency)}`}>
-                <td className="px-4 py-2">
-                  <span className={`font-medium ${urgencyColor(p.urgency)}`}>{p.sku}</span>
-                </td>
-                <td className="px-3 py-2 text-right text-slate-300">{p.daily_velocity_m2.toFixed(1)}</td>
-                <td className="px-3 py-2 text-right text-slate-300">{Math.round(p.current_stock_m2).toLocaleString()}</td>
-                <td className="px-3 py-2 text-right text-slate-300">
-                  {Math.round(p.running_stock_m2).toLocaleString()}
-                  {p.running_stock_m2 > p.current_stock_m2 && (
-                    <span className="text-[10px] text-blue-400 ml-1" title="Incluye stock en transito">+T</span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <span className={urgencyColor(p.urgency)}>{p.days_of_stock === 999 ? '-' : p.days_of_stock.toFixed(0)}</span>
-                </td>
-                <td className="px-3 py-2 text-right text-slate-300">{p.coverage_gap_m2 > 0 ? Math.round(p.coverage_gap_m2).toLocaleString() : '-'}</td>
-                <td className="px-3 py-2 text-right text-slate-300">{p.suggested_pallets || '-'}</td>
-                <td className="px-3 py-2 text-right text-slate-500">{Math.round(p.factory_available_m2).toLocaleString()}</td>
-                <td className="px-3 py-1.5 text-center">
-                  {isOrdered ? (
-                    <span className="text-slate-200 text-sm font-medium">{p.user_pallets}p</span>
-                  ) : (() => {
-                    const over = p.user_pallets > p.factory_max_pallets;
-                    const borderClass = over
-                      ? 'border-amber-500 text-amber-300 focus:border-amber-400'
-                      : 'border-slate-600 text-slate-200 focus:border-blue-500';
-                    return (
-                      <div className="inline-flex flex-col items-center gap-0.5">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            min={0}
-                            value={p.user_pallets}
-                            onChange={(e) => updatePallets(p.product_id, parseInt(e.target.value) || 0)}
-                            className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-sm focus:outline-none ${borderClass}`}
-                          />
-                          <span className="text-[10px] text-slate-600">p</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="number"
-                            min={0}
-                            step={10}
-                            value={parseFloat(p.user_m2.toFixed(2))}
-                            onChange={(e) => updateM2(p.product_id, parseFloat(e.target.value) || 0)}
-                            className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-[11px] focus:outline-none ${
-                              over
-                                ? 'border-amber-500/50 text-amber-400/70 focus:border-amber-400'
-                                : 'border-slate-700 text-slate-500 focus:border-blue-500'
-                            }`}
-                          />
-                          <span className="text-[10px] text-slate-600">m&sup2;</span>
-                        </div>
-                        {over && (
-                          <span className="text-[10px] text-amber-500">max {p.factory_max_pallets}p</span>
-                        )}
+            {products.map((p) => {
+              const over = p.user_pallets > p.factory_max_pallets;
+              const borderClass = over
+                ? 'border-amber-500 text-amber-300 focus:border-amber-400'
+                : 'border-slate-600 text-slate-200 focus:border-blue-500';
+              return (
+                <tr key={p.product_id} className={`border-b border-slate-700/50 ${urgencyBg(p.urgency)}`}>
+                  <td className="px-4 py-2">
+                    <span className={`font-medium ${urgencyColor(p.urgency)}`}>{p.sku}</span>
+                  </td>
+                  <td className="px-3 py-2 text-right text-slate-300">{p.daily_velocity_m2.toFixed(1)}</td>
+                  <td className="px-3 py-2 text-right text-slate-300">{Math.round(p.current_stock_m2).toLocaleString()}</td>
+                  <td className="px-3 py-2 text-right text-slate-300">
+                    {Math.round(p.running_stock_m2).toLocaleString()}
+                    {p.running_stock_m2 > p.current_stock_m2 && (
+                      <span className="text-[10px] text-blue-400 ml-1" title="Incluye stock en transito">+T</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <span className={urgencyColor(p.urgency)}>{p.days_of_stock === 999 ? '-' : p.days_of_stock.toFixed(0)}</span>
+                  </td>
+                  <td className="px-3 py-2 text-right text-slate-300">{p.coverage_gap_m2 > 0 ? Math.round(p.coverage_gap_m2).toLocaleString() : '-'}</td>
+                  <td className="px-3 py-2 text-right text-slate-300">{p.suggested_pallets || '-'}</td>
+                  <td className="px-3 py-2 text-right text-slate-500">{Math.round(p.factory_available_m2).toLocaleString()}</td>
+                  <td className="px-3 py-1.5 text-center">
+                    <div className="inline-flex flex-col items-center gap-0.5">
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          value={p.user_pallets}
+                          onChange={(e) => updatePallets(p.product_id, parseInt(e.target.value) || 0)}
+                          className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-sm focus:outline-none ${borderClass}`}
+                        />
+                        <span className="text-[10px] text-slate-600">p</span>
                       </div>
-                    );
-                  })()}
-                </td>
-              </tr>
-            ))}
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          min={0}
+                          step={10}
+                          value={parseFloat(p.user_m2.toFixed(2))}
+                          onChange={(e) => updateM2(p.product_id, parseFloat(e.target.value) || 0)}
+                          className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-[11px] focus:outline-none ${
+                            over
+                              ? 'border-amber-500/50 text-amber-400/70 focus:border-amber-400'
+                              : 'border-slate-700 text-slate-500 focus:border-blue-500'
+                          }`}
+                        />
+                        <span className="text-[10px] text-slate-600">m&sup2;</span>
+                      </div>
+                      {over && (
+                        <span className="text-[10px] text-amber-500">max {p.factory_max_pallets}p</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -392,7 +438,7 @@ export function HorizonBoat() {
       {/* Next boat context */}
       {data.next_boat && (
         <p className="mt-4 text-xs text-slate-600">
-          Siguiente barco: {data.next_boat.boat_name} ({data.next_boat.departure_date})
+          Siguiente: {data.next_boat.boat_name} ({data.next_boat.departure_date})
         </p>
       )}
     </div>

@@ -44,6 +44,8 @@ export interface BoatProjection {
   skip_reason: string | null;
   product_count: number;
   products: HorizonProduct[];
+  bl_count?: number;
+  merged_boat_ids?: string[];
 }
 
 export interface CompletedBoat {
