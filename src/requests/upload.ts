@@ -25,6 +25,7 @@ export interface UploadError {
 
 export interface InventoryPreviewRow {
   product_id: string;
+  raw_name: string;
   sku: string;
   warehouse_qty: number;
   in_transit_qty: number;
