@@ -214,6 +214,12 @@ export interface CandidateBoat {
   is_suggested: boolean;
 }
 
+export interface BookingMatchItem {
+  raw_sku: string;
+  sku: string;
+  m2: number;
+}
+
 export interface BookingMatch {
   factura: string;
   booking_number: string | null;
@@ -222,6 +228,7 @@ export interface BookingMatch {
   etd: string | null;
   items_count: number;
   total_m2: number;
+  items: BookingMatchItem[];
 }
 
 export interface InTransitParseResponse {

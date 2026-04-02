@@ -225,32 +225,52 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
           </div>
         )}
 
-        {/* Preview state — Dual Pane */}
+        {/* Preview state — Dual Pane: Boat-centric */}
         {uploadState === 'preview' && parseResult && (
           <div className="flex gap-6 min-h-0">
-            {/* Left: Products table */}
-            <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-700 sticky top-0 z-10">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
-                    <th className="px-3 py-2 text-right text-xs text-slate-400">m² en tránsito</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-700/50">
-                  {parseResult.products.map((p, i) => (
-                    <tr key={i} className="hover:bg-slate-700/30">
-                      <td className="px-3 py-1.5 text-slate-200">{p.sku}</td>
-                      <td className="px-3 py-1.5 text-right text-slate-300">{p.in_transit_m2.toLocaleString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Left: Orders grouped by boat */}
+            <div className="flex-1 min-w-0 overflow-auto max-h-[65vh] space-y-4">
+              {(() => {
+                // Group orders by vessel name
+                const boatGroups: Record<string, typeof parseResult.booking_matches> = {};
+                for (const match of (parseResult.booking_matches || [])) {
+                  const key = match.vessel_name || 'Sin barco';
+                  if (!boatGroups[key]) boatGroups[key] = [];
+                  boatGroups[key].push(match);
+                }
+                return Object.entries(boatGroups).map(([vessel, orders]) => (
+                  <div key={vessel} className="bg-slate-900/50 rounded-lg border border-slate-700/50 overflow-hidden">
+                    <div className="px-3 py-2 bg-slate-700/30 flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-200">{vessel}</span>
+                      <span className="text-xs text-slate-500">
+                        {orders.reduce((s, o) => s + o.items_count, 0)} prod &middot; {orders.reduce((s, o) => s + o.total_m2, 0).toLocaleString()} m²
+                      </span>
+                    </div>
+                    {orders.map((order, oi) => (
+                      <div key={oi}>
+                        <div className="px-3 py-1.5 text-xs text-slate-500 border-b border-slate-700/30 bg-slate-800/30">
+                          {order.factura} {order.booking_number && <span className="text-slate-600 ml-1">{order.booking_number}</span>}
+                        </div>
+                        <table className="w-full text-sm">
+                          <tbody className="divide-y divide-slate-700/30">
+                            {(order.items || []).map((item, ii) => (
+                              <tr key={ii} className="hover:bg-slate-700/20">
+                                <td className="px-3 py-1 text-slate-500 text-xs w-1/3">{item.raw_sku || item.sku}</td>
+                                <td className="px-3 py-1 text-slate-200 font-medium">{item.sku}</td>
+                                <td className="px-3 py-1 text-right text-slate-300">{item.m2.toLocaleString()}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ))}
+                  </div>
+                ));
+              })()}
             </div>
 
             {/* Right: Summary + Confirm */}
             <div className="w-72 shrink-0 flex flex-col gap-4">
-              {/* Summary stats */}
               <div className="space-y-3">
                 <div className="bg-slate-900 rounded-lg p-3">
                   <div className="text-xs text-slate-500">Productos</div>
@@ -260,35 +280,17 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                   <div className="text-xs text-slate-500">Total m²</div>
                   <div className="text-xl font-bold text-slate-200">{parseResult.total_m2.toLocaleString()}</div>
                 </div>
-                {parseResult.unmatched_skus.length > 0 && (
-                  <div className="bg-slate-900 rounded-lg p-3">
-                    <div className="text-xs text-slate-500">SKUs sin match</div>
-                    <div className="text-xl font-bold text-red-400">{parseResult.unmatched_skus.length}</div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Barcos</div>
+                  <div className="text-xl font-bold text-slate-200">
+                    {parseResult.booking_matches?.filter(m => m.boat_id).length || 0}
                   </div>
-                )}
+                </div>
               </div>
 
-              {/* Booking matches section */}
-              {parseResult.booking_matches && parseResult.booking_matches.length > 0 && (
-                <div className="bg-slate-900 rounded-lg p-3">
-                  <div className="text-xs text-slate-500 mb-2">Ordenes por barco</div>
-                  <div className="space-y-1.5 max-h-40 overflow-auto">
-                    {parseResult.booking_matches.map((match, i) => (
-                      <div key={i} className="flex items-center justify-between text-xs">
-                        <span className="text-slate-300 truncate">{match.factura}</span>
-                        {match.boat_id ? (
-                          <span className="text-emerald-400 text-xs shrink-0 ml-2">{match.vessel_name}</span>
-                        ) : (
-                          <span className="text-amber-400 text-xs shrink-0 ml-2">Sin barco</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                  {unmatchedOrderCount > 0 && (
-                    <p className="mt-2 text-xs text-amber-400">
-                      {unmatchedOrderCount} orden(es) sin barco asignado
-                    </p>
-                  )}
+              {unmatchedOrderCount > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  <div className="text-xs text-amber-400">{unmatchedOrderCount} orden(es) sin barco</div>
                 </div>
               )}
 
