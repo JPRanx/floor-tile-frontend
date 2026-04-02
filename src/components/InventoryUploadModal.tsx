@@ -297,6 +297,7 @@ export function InventoryUploadCard({
         isOpen={modalOpen}
         onClose={handleModalClose}
         title={t('inventory.uploadTitle')}
+        wide={uploadState === 'preview'}
       >
         {/* Parsing State */}
         {uploadState === 'parsing' && (
@@ -306,103 +307,100 @@ export function InventoryUploadCard({
           </div>
         )}
 
-        {/* Preview State */}
+        {/* Preview State — Dual Pane */}
         {uploadState === 'preview' && preview && (
-          <div className="space-y-4">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-4 gap-3">
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('inventory.rows', 'Rows')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.row_count}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('inventory.products', 'Products')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.product_count}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3 col-span-2">
-                <div className="text-sm text-slate-500">{t('inventory.snapshotDate', 'Snapshot Date')}</div>
-                <div className="text-lg font-bold text-slate-200">{formatDateForDisplay(preview.snapshot_date)}</div>
-              </div>
+          <div className="flex gap-6 min-h-0">
+            {/* Left: Editable rows table */}
+            <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
+              <EditablePreviewTable
+                rows={preview.rows as unknown as Record<string, unknown>[]}
+                columns={inventoryColumns}
+                rowKeyField="product_id"
+                onModify={handleModify}
+                onDelete={handleDelete}
+                onUndoDelete={handleUndoDelete}
+                modifications={modifications}
+                deletions={deletions}
+              />
             </div>
 
-            {/* Auto-created Products Warning */}
-            {preview.auto_created_count > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-amber-800">
-                    {t('inventory.autoCreatedWarning', { count: preview.auto_created_count, defaultValue: '{{count}} products will be auto-created' })}
+            {/* Right: Summary + Confirm */}
+            <div className="w-72 shrink-0 flex flex-col gap-4">
+              {/* Summary stats */}
+              <div className="space-y-3">
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Productos</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.product_count}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Fecha snapshot</div>
+                  <div className="text-sm font-bold text-slate-200">{formatDateForDisplay(preview.snapshot_date)}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Filas</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.row_count}</div>
+                </div>
+              </div>
+
+              {/* Auto-created Products Warning */}
+              {preview.auto_created_count > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  <div className="text-sm text-amber-400 font-medium">
+                    {preview.auto_created_count} productos se crearán automáticamente
                   </div>
                   <button
                     onClick={() => setShowAutoCreatedList(!showAutoCreatedList)}
-                    className="text-xs text-amber-700 hover:text-amber-900"
+                    className="text-xs text-amber-400/70 hover:text-amber-300 mt-1"
                   >
-                    {showAutoCreatedList ? t('common.hide', 'Hide') : t('common.show', 'Show')}
+                    {showAutoCreatedList ? '\u25BC' : '\u25B6'} ver detalles
                   </button>
-                </div>
-                {showAutoCreatedList && (
-                  <div className="mt-2 max-h-32 overflow-auto">
-                    <div className="text-xs text-amber-700 space-y-1">
+                  {showAutoCreatedList && (
+                    <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                       {preview.auto_created_products.map((sku, i) => (
-                        <div key={i}>• {sku}</div>
+                        <div key={i}>{'\u2022'} {sku}</div>
                       ))}
                     </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  )}
+                </div>
+              )}
 
-            {/* Zero-filled Products Info */}
-            {preview.zero_filled_count > 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium text-blue-800">
-                    {t('inventory.zeroFilledInfo', { count: preview.zero_filled_count, defaultValue: '{{count}} products will get zero-quantity records' })}
+              {/* Zero-filled Products Info */}
+              {preview.zero_filled_count > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  <div className="text-sm text-amber-400 font-medium">
+                    {preview.zero_filled_count} productos con cantidad cero
                   </div>
                   <button
                     onClick={() => setShowZeroFilledList(!showZeroFilledList)}
-                    className="text-xs text-blue-700 hover:text-blue-900"
+                    className="text-xs text-amber-400/70 hover:text-amber-300 mt-1"
                   >
-                    {showZeroFilledList ? t('common.hide', 'Hide') : t('common.show', 'Show')}
+                    {showZeroFilledList ? '\u25BC' : '\u25B6'} ver detalles
                   </button>
-                </div>
-                {showZeroFilledList && (
-                  <div className="mt-2 max-h-32 overflow-auto">
-                    <div className="text-xs text-blue-700 space-y-1">
+                  {showZeroFilledList && (
+                    <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                       {preview.zero_filled_products.map((sku, i) => (
-                        <div key={i}>• {sku}</div>
+                        <div key={i}>{'\u2022'} {sku}</div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2 mt-auto">
+                <button
+                  onClick={handleConfirm}
+                  className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="w-full px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 text-sm"
+                >
+                  Cancelar
+                </button>
               </div>
-            )}
-
-            {/* Editable Preview Table */}
-            <EditablePreviewTable
-              rows={preview.rows as unknown as Record<string, unknown>[]}
-              columns={inventoryColumns}
-              rowKeyField="product_id"
-              onModify={handleModify}
-              onDelete={handleDelete}
-              onUndoDelete={handleUndoDelete}
-              modifications={modifications}
-              deletions={deletions}
-            />
-
-            {/* Confirm / Cancel Buttons */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleConfirm}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-              >
-                {t('inventory.confirmUpload', 'Confirm Upload')}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
             </div>
           </div>
         )}
@@ -417,18 +415,20 @@ export function InventoryUploadCard({
 
         {/* Success State */}
         {uploadState === 'success' && result && (
-          <div className="text-center py-8">
-            <div className="text-5xl mb-4">✅</div>
-            <p className="text-slate-200 font-medium text-lg">
-              {t('inventory.recordsUpdated', { count: result.records_created })}
-            </p>
+          <>
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <h4 className="font-medium text-emerald-400">Carga exitosa</h4>
+              <div className="mt-2 space-y-1 text-sm text-emerald-300/80">
+                <p>{result.records_created} registros actualizados</p>
+              </div>
+            </div>
             <button
               onClick={handleModalClose}
-              className="mt-6 px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors"
+              className="mt-4 w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-lg hover:bg-slate-600"
             >
-              {t('inventory.close')}
+              Cerrar
             </button>
-          </div>
+          </>
         )}
 
         {/* Error State */}

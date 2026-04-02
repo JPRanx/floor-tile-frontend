@@ -273,6 +273,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
         isOpen={modalOpen}
         onClose={handleModalClose}
         title={t('dataHub.inventory.title')}
+        wide={uploadState === 'preview'}
       >
         {/* Parsing State */}
         {uploadState === 'parsing' && (
@@ -282,70 +283,70 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
           </div>
         )}
 
-        {/* Preview State */}
+        {/* Preview State — Dual Pane */}
         {uploadState === 'preview' && preview && (
-          <div className="space-y-4">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.inventory.totalRows', 'Total Rows')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.total_rows}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.inventory.lotsCount', 'Lots')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.lots_count}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.inventory.products', 'Products')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.unique_products}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.inventory.totalM2', 'Total m²')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.total_m2_available.toLocaleString()}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.inventory.totalWeight', 'Total Weight (kg)')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.total_weight_kg.toLocaleString()}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.inventory.containers', 'Containers')}</div>
-                <div className="text-lg font-bold text-slate-200">
-                  {preview.containers_needed} ({preview.container_utilization_pct.toFixed(1)}%)
-                </div>
-              </div>
+          <div className="flex gap-6 min-h-0">
+            {/* Left: Editable lots table */}
+            <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
+              <EditablePreviewTable
+                rows={preview.rows as unknown as Record<string, unknown>[]}
+                columns={siesaColumns}
+                rowKeyField="lot_code"
+                onModify={handleModify}
+                onDelete={handleDelete}
+                onUndoDelete={handleUndoDelete}
+                modifications={modifications}
+                deletions={deletions}
+              />
             </div>
 
-            {/* Match Stats Section */}
-            <div className="space-y-2">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                <div className="text-sm font-medium text-green-800">
-                  {t('dataHub.inventory.matchedBySIESA', { count: preview.matched_by_siesa_item, defaultValue: '{{count}} matched by SIESA item' })}
+            {/* Right: Summary + Confirm */}
+            <div className="w-72 shrink-0 flex flex-col gap-4">
+              {/* Summary stats */}
+              <div className="space-y-3">
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Filas</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.total_rows}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Lotes</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.lots_count}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Productos</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.unique_products}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Total m²</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.total_m2_available.toLocaleString()}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Total kg</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.total_weight_kg.toLocaleString()}</div>
                 </div>
               </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <div className="text-sm font-medium text-amber-800">
-                  {t('dataHub.inventory.matchedByName', { count: preview.matched_by_name, defaultValue: '{{count}} matched by name' })}
-                </div>
+
+              {/* Match rate */}
+              <div className="text-xs text-slate-500 text-center">
+                {preview.match_rate_pct.toFixed(1)}% match rate
               </div>
+
+              {/* Unmatched warnings */}
               {preview.unmatched_count > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-medium text-red-800">
-                      {t('dataHub.inventory.unmatched', { count: preview.unmatched_count, defaultValue: '{{count}} unmatched' })}
-                    </div>
-                    <button
-                      onClick={() => setShowUnmatchedList(!showUnmatchedList)}
-                      className="text-xs text-red-700 hover:text-red-900"
-                    >
-                      {showUnmatchedList ? t('common.hide', 'Hide') : t('common.show', 'Show')}
-                    </button>
-                  </div>
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                  <div className="text-sm text-red-400 font-medium">{preview.unmatched_count} sin match</div>
+                  <button
+                    onClick={() => setShowUnmatchedList(!showUnmatchedList)}
+                    className="text-xs text-red-400/70 hover:text-red-300 mt-1"
+                  >
+                    {showUnmatchedList ? '\u25BC' : '\u25B6'} ver detalles
+                  </button>
                   {showUnmatchedList && (
                     <div className="mt-2 space-y-2 max-h-48 overflow-auto">
-                      <p className="text-xs text-red-600">{t('dataHub.inventory.mapToProduct', 'Map to an existing product:')}</p>
+                      <p className="text-xs text-slate-500">Mapear a producto existente:</p>
                       {preview.unmatched_products.map((prod, i) => (
                         <div key={i} className="flex items-center gap-2">
-                          <span className="text-xs text-red-700 flex-1 truncate" title={prod}>• {prod}</span>
+                          <span className="text-xs text-red-400 flex-1 truncate" title={prod}>{'\u2022'} {prod}</span>
                           <ProductSearchDropdown
                             onSelect={(productId, sku) =>
                               setManualMappings((prev) => ({
@@ -354,7 +355,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                               }))
                             }
                             selectedSku={manualMappings[prod]?.sku || null}
-                            placeholder={t('dataHub.inventory.searchProduct', 'Search...')}
+                            placeholder="Buscar..."
                           />
                         </div>
                       ))}
@@ -362,68 +363,37 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                   )}
                 </div>
               )}
-              <div className="text-sm text-slate-400 text-center">
-                {t('dataHub.inventory.matchRate', { rate: preview.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
-              </div>
-            </div>
 
-            {/* Warehouse Breakdown */}
-            {preview.warehouses.length > 0 && (
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm font-medium text-slate-300 mb-2">
-                  {t('dataHub.inventory.warehouseBreakdown', 'Warehouse Breakdown')}
+              {/* Warehouse Breakdown */}
+              {preview.warehouses.length > 0 && (
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500 mb-2">Bodegas</div>
+                  <div className="space-y-1 text-xs">
+                    {preview.warehouses.map((wh, i) => (
+                      <div key={i} className="flex justify-between text-slate-400">
+                        <span>{wh.name}</span>
+                        <span>{wh.total_m2.toLocaleString()} m²</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="overflow-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-slate-700">
-                      <tr>
-                        <th className="px-2 py-1 text-left">{t('dataHub.inventory.warehouse', 'Warehouse')}</th>
-                        <th className="px-2 py-1 text-right">m²</th>
-                        <th className="px-2 py-1 text-right">kg</th>
-                        <th className="px-2 py-1 text-right">{t('dataHub.inventory.lots', 'Lots')}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {preview.warehouses.map((wh, i) => (
-                        <tr key={i}>
-                          <td className="px-2 py-1">{wh.name}</td>
-                          <td className="px-2 py-1 text-right">{wh.total_m2.toLocaleString()}</td>
-                          <td className="px-2 py-1 text-right">{wh.total_weight_kg.toLocaleString()}</td>
-                          <td className="px-2 py-1 text-right">{wh.lot_count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2 mt-auto">
+                <button
+                  onClick={handleConfirm}
+                  className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="w-full px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 text-sm"
+                >
+                  Cancelar
+                </button>
               </div>
-            )}
-
-            {/* Editable Lots Table */}
-            <EditablePreviewTable
-              rows={preview.rows as unknown as Record<string, unknown>[]}
-              columns={siesaColumns}
-              rowKeyField="lot_code"
-              onModify={handleModify}
-              onDelete={handleDelete}
-              onUndoDelete={handleUndoDelete}
-              modifications={modifications}
-              deletions={deletions}
-            />
-
-            {/* Confirm / Cancel Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleConfirm}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-              >
-                {t('dataHub.inventory.confirmUpload', 'Confirm Upload')}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
             </div>
           </div>
         )}
@@ -439,28 +409,22 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
         {/* Success State */}
         {uploadState === 'success' && result && (
           <>
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <h4 className="font-medium text-green-800">
-                    {t('dataHub.inventory.successTitle', 'Upload Successful')}
-                  </h4>
-                  <div className="mt-2 space-y-1 text-sm text-green-700">
-                    <p>{result.lots_created} {t('dataHub.inventory.lotsCreated', 'lots created')}</p>
-                    <p>{result.unique_products} {t('dataHub.inventory.productsUpdated', 'products updated')}</p>
-                    <p>{result.total_m2_available.toLocaleString()} m² {t('dataHub.inventory.available', 'available')}</p>
-                    <p className="text-green-800 font-medium">
-                      {t('dataHub.inventory.matchRate', { rate: result.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
-                    </p>
-                  </div>
-                </div>
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <h4 className="font-medium text-emerald-400">Carga exitosa</h4>
+              <div className="mt-2 space-y-1 text-sm text-emerald-300/80">
+                <p>{result.lots_created} lotes creados</p>
+                <p>{result.unique_products} productos actualizados</p>
+                <p>{result.total_m2_available.toLocaleString()} m² disponibles</p>
+                <p className="font-medium text-emerald-400">
+                  {result.match_rate_pct.toFixed(1)}% match rate
+                </p>
               </div>
             </div>
             <button
               onClick={handleModalClose}
-              className="mt-4 w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+              className="mt-4 w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-lg hover:bg-slate-600"
             >
-              {t('dataHub.uploadAnother')}
+              Cerrar
             </button>
           </>
         )}

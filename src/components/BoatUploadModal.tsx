@@ -269,6 +269,7 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
         isOpen={modalOpen}
         onClose={handleModalClose}
         title={t('boatUpload.title')}
+        wide={uploadState === 'preview'}
       >
         {/* Parsing State */}
         {uploadState === 'parsing' && (
@@ -278,88 +279,90 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
           </div>
         )}
 
-        {/* Preview State */}
+        {/* Preview State — Dual Pane */}
         {uploadState === 'preview' && preview && (
-          <div className="space-y-4">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-700">{preview.new_boats}</div>
-                <div className="text-xs text-green-600">{t('boatUpload.new', 'New')}</div>
-              </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-700">{preview.updated_boats}</div>
-                <div className="text-xs text-blue-600">{t('boatUpload.updates', 'Updates')}</div>
-              </div>
-              <div className="p-3 bg-slate-900 rounded-lg">
-                <div className="text-2xl font-bold text-slate-300">{preview.skipped_boats}</div>
-                <div className="text-xs text-slate-400">{t('boatUpload.unchanged', 'Unchanged')}</div>
-              </div>
+          <div className="flex gap-6 min-h-0">
+            {/* Left: Editable rows table */}
+            <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
+              <EditablePreviewTable
+                rows={(preview.rows ?? preview.sample_rows) as unknown as Record<string, unknown>[]}
+                columns={boatColumns}
+                rowKeyField="row_index"
+                onModify={handleModify}
+                onDelete={handleDeleteRow}
+                onUndoDelete={handleUndoDelete}
+                modifications={modifications}
+                deletions={deletions}
+              />
             </div>
 
-            {/* Date Range */}
-            {preview.earliest_departure && preview.latest_departure && (
-              <div className="p-3 bg-slate-900 rounded-lg text-sm text-slate-300">
-                <span className="font-medium">{t('boatUpload.dateRange', 'Date range:')}</span>{' '}
-                {formatDateForDisplay(preview.earliest_departure)} – {formatDateForDisplay(preview.latest_departure)}
+            {/* Right: Summary + Confirm */}
+            <div className="w-72 shrink-0 flex flex-col gap-4">
+              {/* Summary stats */}
+              <div className="space-y-3">
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Nuevos</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.new_boats}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Actualizados</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.updated_boats}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Sin cambios</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.skipped_boats}</div>
+                </div>
+                {preview.earliest_departure && preview.latest_departure && (
+                  <div className="bg-slate-900 rounded-lg p-3">
+                    <div className="text-xs text-slate-500">Rango de fechas</div>
+                    <div className="text-sm font-bold text-slate-200">
+                      {formatDateForDisplay(preview.earliest_departure)} – {formatDateForDisplay(preview.latest_departure)}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
 
-            {/* Warnings */}
-            {preview.warnings.length > 0 && (
-              <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm font-medium text-yellow-800">{t('boatUpload.warnings', 'Warnings:')}</p>
-                <ul className="mt-1 text-xs text-yellow-700 space-y-1">
+              {/* Warnings */}
+              {preview.warnings.length > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
                   {preview.warnings.map((warning, i) => (
-                    <li key={i}>{warning}</li>
+                    <div key={i} className="text-xs text-amber-400">{'\u2022'} {warning}</div>
                   ))}
-                </ul>
+                </div>
+              )}
+
+              {/* Skipped Rows */}
+              {preview.skipped_rows.length > 0 && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                  <div className="text-sm text-red-400 font-medium">
+                    {preview.skipped_rows.length} filas omitidas
+                  </div>
+                  <div className="mt-1 text-xs text-slate-400 space-y-0.5">
+                    {preview.skipped_rows.slice(0, 5).map((skip, i) => (
+                      <div key={i}>{'\u2022'} Fila {skip.row}: {skip.reason}</div>
+                    ))}
+                    {preview.skipped_rows.length > 5 && (
+                      <div className="text-slate-500">...y {preview.skipped_rows.length - 5} más</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2 mt-auto">
+                <button
+                  onClick={handleConfirm}
+                  className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="w-full px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 text-sm"
+                >
+                  Cancelar
+                </button>
               </div>
-            )}
-
-            {/* Editable Preview Table */}
-            <EditablePreviewTable
-              rows={(preview.rows ?? preview.sample_rows) as unknown as Record<string, unknown>[]}
-              columns={boatColumns}
-              rowKeyField="row_index"
-              onModify={handleModify}
-              onDelete={handleDeleteRow}
-              onUndoDelete={handleUndoDelete}
-              modifications={modifications}
-              deletions={deletions}
-            />
-
-            {/* Skipped Rows */}
-            {preview.skipped_rows.length > 0 && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm font-medium text-red-800">
-                  {t('boatUpload.skippedRows', 'Skipped rows:')} {preview.skipped_rows.length}
-                </p>
-                <ul className="mt-1 text-xs text-red-700 space-y-1">
-                  {preview.skipped_rows.slice(0, 5).map((skip, i) => (
-                    <li key={i}>Row {skip.row}: {skip.reason}</li>
-                  ))}
-                  {preview.skipped_rows.length > 5 && (
-                    <li>{t('boatUpload.andMore', 'And {count} more...', { count: preview.skipped_rows.length - 5 })}</li>
-                  )}
-                </ul>
-              </div>
-            )}
-
-            {/* Preview Actions */}
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-200"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
-              <button
-                onClick={handleConfirm}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-              >
-                {t('boatUpload.confirm', 'Confirm Upload')}
-              </button>
             </div>
           </div>
         )}
@@ -374,64 +377,55 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
 
         {/* Success State */}
         {uploadState === 'success' && result && (
-          <div className="py-4 text-center">
-            <svg
-              className="mx-auto h-12 w-12 text-green-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <h3 className="mt-3 text-lg font-medium text-slate-200">{t('boatUpload.uploadSuccessful')}</h3>
-            <div className="mt-2 text-sm text-slate-400">
-              <p>{t('boatUpload.boatsImported', { count: result.imported })}</p>
-              <p>{t('boatUpload.boatsUpdated', { count: result.updated })}</p>
-              {result.skipped > 0 && (
-                <p>{t('boatUpload.boatsUpToDate', { count: result.skipped })}</p>
-              )}
+          <>
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <h4 className="font-medium text-emerald-400">Carga exitosa</h4>
+              <div className="mt-2 space-y-1 text-sm text-emerald-300/80">
+                <p>{result.imported} barcos importados</p>
+                <p>{result.updated} barcos actualizados</p>
+                {result.skipped > 0 && (
+                  <p>{result.skipped} sin cambios</p>
+                )}
+              </div>
             </div>
 
             {result.skipped_rows && result.skipped_rows.length > 0 && (
-              <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-left text-sm">
-                <p className="font-medium text-yellow-800">{t('boatUpload.rowsSkipped', 'Rows skipped: {count}', { count: result.skipped_rows.length })}</p>
-                <ul className="mt-1 text-yellow-700 text-xs">
+              <div className="mt-3 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                <div className="text-sm text-amber-400 font-medium">
+                  {result.skipped_rows.length} filas omitidas
+                </div>
+                <div className="mt-1 text-xs text-slate-400 space-y-0.5">
                   {result.skipped_rows.slice(0, 3).map((skip, i) => (
-                    <li key={i}>Row {skip.row}: {skip.reason}</li>
+                    <div key={i}>{'\u2022'} Fila {skip.row}: {skip.reason}</div>
                   ))}
                   {result.skipped_rows.length > 3 && (
-                    <li>{t('boatUpload.andMore', 'And {count} more...', { count: result.skipped_rows.length - 3 })}</li>
+                    <div className="text-slate-500">...y {result.skipped_rows.length - 3} más</div>
                   )}
-                </ul>
+                </div>
               </div>
             )}
 
             {result.errors && result.errors.length > 0 && (
-              <div className="mt-3 p-2 bg-red-50 border border-red-200 rounded text-left text-sm">
-                <p className="font-medium text-red-800">{t('boatUpload.errors', 'Errors:')}</p>
-                <ul className="mt-1 text-red-700 text-xs">
+              <div className="mt-3 bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                <div className="text-sm text-red-400 font-medium">Errores</div>
+                <div className="mt-1 text-xs text-slate-400 space-y-0.5">
                   {result.errors.slice(0, 3).map((err, i) => (
-                    <li key={i}>{err}</li>
+                    <div key={i}>{'\u2022'} {err}</div>
                   ))}
                   {result.errors.length > 3 && (
-                    <li>{t('boatUpload.andMore', 'And {count} more...', { count: result.errors.length - 3 })}</li>
+                    <div className="text-slate-500">...y {result.errors.length - 3} más</div>
                   )}
-                </ul>
+                </div>
               </div>
             )}
 
             <button
               onClick={handleModalClose}
-              className="mt-4 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+              className="mt-4 w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-lg hover:bg-slate-600"
             >
-              {t('shipmentUpload.done')}
+              Cerrar
             </button>
-          </div>
+          </>
         )}
 
         {/* Error State */}

@@ -282,6 +282,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
         isOpen={modalOpen}
         onClose={handleModalClose}
         title={t('dataHub.production.title', 'Production Schedule')}
+        wide={uploadState === 'preview'}
       >
         {/* Parsing State */}
         {uploadState === 'parsing' && (
@@ -291,131 +292,126 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
           </div>
         )}
 
-        {/* Preview State */}
+        {/* Preview State — Dual Pane */}
         {uploadState === 'preview' && preview && (
-          <div className="space-y-4">
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.production.items', 'Items')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.total_rows}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.production.matched', 'Matched')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.matched_to_products}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.production.unmatched', 'Unmatched')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.unmatched_count}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.production.totalM2Requested', 'Total m² Requested')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.total_requested_m2.toLocaleString()}</div>
-              </div>
+          <div className="flex gap-6 min-h-0">
+            {/* Left: Editable rows table */}
+            <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
+              <EditablePreviewTable
+                rows={productionRowsWithIndex as unknown as Record<string, unknown>[]}
+                columns={productionColumns}
+                rowKeyField="_row_index"
+                onModify={handleModify}
+                onDelete={handleDelete}
+                onUndoDelete={handleUndoDelete}
+                modifications={modifications}
+                deletions={deletions}
+              />
             </div>
 
-            {/* Warning: Will replace existing records */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-              <div className="text-sm font-medium text-amber-800">
-                {t('dataHub.production.replaceWarning', 'This will replace {{count}} existing schedule items', { count: preview.existing_records_to_delete })}
+            {/* Right: Summary + Confirm */}
+            <div className="w-72 shrink-0 flex flex-col gap-4">
+              {/* Summary stats */}
+              <div className="space-y-3">
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Items</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.total_rows}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Matched</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.matched_to_products}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Total m²</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.total_requested_m2.toLocaleString()}</div>
+                </div>
               </div>
-            </div>
 
-            {/* Status Breakdown */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="text-sm font-semibold text-blue-900 mb-3">
-                {t('dataHub.production.statusBreakdown', 'Status Breakdown')}
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-700">
-                    {t('dataHub.production.scheduled', 'Scheduled')}
-                  </span>
-                  <span className="font-bold text-blue-900">{preview.status_breakdown.scheduled || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-700">
-                    {t('dataHub.production.inProgress', 'In Progress')}
-                  </span>
-                  <span className="font-bold text-blue-900">{preview.status_breakdown.in_progress || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-blue-700">
-                    {t('dataHub.production.completed', 'Completed')}
-                  </span>
-                  <span className="font-bold text-blue-900">{preview.status_breakdown.completed || 0}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Unmatched Referencias -- Interactive Mapping */}
-            {preview.unmatched_referencias.length > 0 && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <button
-                  onClick={() => setShowUnmatched(!showUnmatched)}
-                  className="text-sm text-red-700 hover:text-red-900 font-medium"
-                >
-                  {showUnmatched ? '▼' : '▶'} {preview.unmatched_referencias.length} {t('dataHub.production.unmatchedItems', 'unmatched items')}
-                </button>
-                {showUnmatched && (
-                  <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
-                    <p className="text-xs text-red-600">{t('dataHub.production.mapToProduct', 'Map to an existing product:')}</p>
-                    {preview.unmatched_referencias.map((ref, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="text-xs text-red-700 flex-1 truncate" title={ref}>• {ref}</span>
-                        <ProductSearchDropdown
-                          onSelect={(productId, sku) =>
-                            setManualMappings((prev) => ({
-                              ...prev,
-                              [ref]: { productId, sku },
-                            }))
-                          }
-                          selectedSku={manualMappings[ref]?.sku || null}
-                          placeholder={t('dataHub.production.searchProduct', 'Search...')}
-                        />
-                      </div>
-                    ))}
+              {/* Status Breakdown */}
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-xs text-slate-500 mb-2">Estado</div>
+                <div className="space-y-1.5 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Programado</span>
+                    <span className="font-bold text-slate-200">{preview.status_breakdown.scheduled || 0}</span>
                   </div>
-                )}
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">En progreso</span>
+                    <span className="font-bold text-slate-200">{preview.status_breakdown.in_progress || 0}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Completado</span>
+                    <span className="font-bold text-slate-200">{preview.status_breakdown.completed || 0}</span>
+                  </div>
+                </div>
               </div>
-            )}
 
-            {/* Additional Warnings */}
-            {preview.warnings.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <div className="text-sm font-medium text-amber-800">{t('dataHub.production.warnings', 'Warnings')}</div>
-                {preview.warnings.map((w, i) => (
-                  <div key={i} className="text-sm text-amber-700 mt-1">• {w}</div>
-                ))}
+              {/* Replace warning */}
+              {preview.existing_records_to_delete > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  <div className="text-xs text-amber-400">
+                    Reemplazará {preview.existing_records_to_delete} registros existentes
+                  </div>
+                </div>
+              )}
+
+              {/* Unmatched warnings */}
+              {preview.unmatched_referencias.length > 0 && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                  <div className="text-sm text-red-400 font-medium">{preview.unmatched_referencias.length} sin match</div>
+                  <button
+                    onClick={() => setShowUnmatched(!showUnmatched)}
+                    className="text-xs text-red-400/70 hover:text-red-300 mt-1"
+                  >
+                    {showUnmatched ? '\u25BC' : '\u25B6'} ver detalles
+                  </button>
+                  {showUnmatched && (
+                    <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
+                      <p className="text-xs text-slate-500">Mapear a producto existente:</p>
+                      {preview.unmatched_referencias.map((ref, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <span className="text-xs text-red-400 flex-1 truncate" title={ref}>{'\u2022'} {ref}</span>
+                          <ProductSearchDropdown
+                            onSelect={(productId, sku) =>
+                              setManualMappings((prev) => ({
+                                ...prev,
+                                [ref]: { productId, sku },
+                              }))
+                            }
+                            selectedSku={manualMappings[ref]?.sku || null}
+                            placeholder="Buscar..."
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Additional Warnings */}
+              {preview.warnings.length > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  {preview.warnings.map((w, i) => (
+                    <div key={i} className="text-xs text-amber-400">{'\u2022'} {w}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2 mt-auto">
+                <button
+                  onClick={handleConfirm}
+                  className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="w-full px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 text-sm"
+                >
+                  Cancelar
+                </button>
               </div>
-            )}
-
-            {/* Editable Rows Table */}
-            <EditablePreviewTable
-              rows={productionRowsWithIndex as unknown as Record<string, unknown>[]}
-              columns={productionColumns}
-              rowKeyField="_row_index"
-              onModify={handleModify}
-              onDelete={handleDelete}
-              onUndoDelete={handleUndoDelete}
-              modifications={modifications}
-              deletions={deletions}
-            />
-
-            {/* Confirm / Cancel Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleConfirm}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-              >
-                {t('dataHub.production.confirm', 'Confirm Upload')}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
             </div>
           </div>
         )}
@@ -431,35 +427,26 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
         {/* Success State */}
         {uploadState === 'success' && result && (
           <>
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <h4 className="font-medium text-green-800">{t('dataHub.production.successTitle', 'Upload Successful')}</h4>
-                  <div className="mt-2 space-y-1 text-sm text-green-700">
-                    <p>{result.matched_to_products} {t('dataHub.production.itemsMatched', 'items matched to products')}</p>
-                    <p>{t('dataHub.production.statusCounts', 'Status: {{scheduled}} scheduled, {{inProgress}} in progress, {{completed}} completed', {
-                      scheduled: result.scheduled_count,
-                      inProgress: result.in_progress_count,
-                      completed: result.completed_count
-                    })}</p>
-                    <p>{t('dataHub.production.totalM2', 'Total: {{requested}} m² requested, {{completed}} m² completed', {
-                      requested: result.total_requested_m2.toLocaleString(),
-                      completed: result.total_completed_m2.toLocaleString()
-                    })}</p>
-                    {result.unmatched_referencias.length > 0 && (
-                      <p className="text-amber-700">
-                        {result.unmatched_referencias.length} {t('dataHub.production.unmatchedWarning', 'items could not be matched')}
-                      </p>
-                    )}
-                  </div>
-                </div>
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <h4 className="font-medium text-emerald-400">Carga exitosa</h4>
+              <div className="mt-2 space-y-1 text-sm text-emerald-300/80">
+                <p>{result.matched_to_products} items vinculados a productos</p>
+                <p>{result.scheduled_count} programados, {result.in_progress_count} en progreso, {result.completed_count} completados</p>
+                <p className="font-medium text-emerald-400">
+                  {result.total_requested_m2.toLocaleString()} m² solicitados · {result.total_completed_m2.toLocaleString()} m² completados
+                </p>
+                {result.unmatched_referencias.length > 0 && (
+                  <p className="text-amber-400">
+                    {result.unmatched_referencias.length} items sin match
+                  </p>
+                )}
               </div>
             </div>
             <button
               onClick={handleReset}
-              className="mt-4 w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+              className="mt-4 w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-lg hover:bg-slate-600"
             >
-              {t('dataHub.uploadAnother', 'Upload Another')}
+              Cerrar
             </button>
           </>
         )}
