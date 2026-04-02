@@ -241,11 +241,13 @@ export interface SIESAPreviewLot {
 }
 
 export interface SIESAPreviewRow {
+  raw_description: string;
   sku: string;
   lot_code: string;
   warehouse_name: string | null;
   factory_available_m2: number;
   weight_kg: number | null;
+  matched_by: string;
 }
 
 export interface SIESAModification {

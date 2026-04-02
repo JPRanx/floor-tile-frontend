@@ -234,7 +234,8 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
               <table className="w-full text-sm">
                 <thead className="bg-slate-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Archivo</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Producto</th>
                     <th className="px-3 py-2 text-left text-xs text-slate-400">Lote</th>
                     <th className="px-3 py-2 text-right text-xs text-slate-400">m²</th>
                   </tr>
@@ -242,7 +243,8 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                 <tbody className="divide-y divide-slate-700/50">
                   {preview.rows.map((row, i) => (
                     <tr key={i} className="hover:bg-slate-700/30">
-                      <td className="px-3 py-1.5 text-slate-200">{row.sku}</td>
+                      <td className="px-3 py-1.5 text-slate-500 text-xs">{row.raw_description || row.sku}</td>
+                      <td className="px-3 py-1.5 text-slate-200 font-medium">{row.sku}</td>
                       <td className="px-3 py-1.5 text-slate-400">{row.lot_code}</td>
                       <td className="px-3 py-1.5 text-right text-slate-300">{row.factory_available_m2.toLocaleString()}</td>
                     </tr>
