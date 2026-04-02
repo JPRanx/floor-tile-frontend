@@ -4,8 +4,6 @@ import { uploadApi } from '../requests/upload';
 import type { InventoryPreview, InventoryUploadResponse } from '../requests/upload';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
-import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
-import type { EditableColumn } from './uploads/EditablePreviewTable';
 import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 interface InventoryUploadCardProps {
@@ -40,8 +38,6 @@ export function InventoryUploadCard({
   const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [showAutoCreatedList, setShowAutoCreatedList] = useState(false);
   const [showZeroFilledList, setShowZeroFilledList] = useState(false);
-  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
-  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -66,7 +62,6 @@ export function InventoryUploadCard({
     } catch (err: unknown) {
       setUploadState('error');
 
-      // Extract error details if available
       const axiosErr = err as { response?: { data?: { error?: { message?: string; details?: Record<string, unknown> & { missing_columns?: string[]; found_columns?: string[] } } } }; message?: string };
       if (axiosErr.response?.data?.error?.details) {
         const details = axiosErr.response.data.error.details;
@@ -97,18 +92,7 @@ export function InventoryUploadCard({
     setUploadState('confirming');
 
     try {
-      const modsArray = Array.from(modifications.entries()).map(([productId, changes]) => ({
-        product_id: productId,
-        ...(changes.warehouse_qty !== undefined ? { warehouse_qty: changes.warehouse_qty as number } : {}),
-        ...(changes.in_transit_qty !== undefined ? { in_transit_qty: changes.in_transit_qty as number } : {}),
-      }));
-      const deletionsArray = Array.from(deletions);
-
-      const payload = modsArray.length > 0 || deletionsArray.length > 0
-        ? { modifications: modsArray, deletions: deletionsArray }
-        : undefined;
-
-      const uploadResult = await uploadApi.confirmInventory(preview.preview_id, payload);
+      const uploadResult = await uploadApi.confirmInventory(preview.preview_id);
       setResult(uploadResult);
       setUploadState('success');
       onUploadSuccess?.();
@@ -178,8 +162,6 @@ export function InventoryUploadCard({
     setResult(null);
     setShowAutoCreatedList(false);
     setShowZeroFilledList(false);
-    setModifications(new Map());
-    setDeletions(new Set());
     setModalOpen(false);
   };
 
@@ -187,36 +169,13 @@ export function InventoryUploadCard({
     handleReset();
   };
 
-  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
-    setModifications((prev) => {
-      const next = new Map(prev);
-      const existing = next.get(rowKey) ?? {};
-      next.set(rowKey, { ...existing, [field]: value });
-      return next;
-    });
-  }, []);
-
-  const handleDelete = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.add(rowKey);
-      return next;
-    });
-  }, []);
-
-  const handleUndoDelete = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.delete(rowKey);
-      return next;
-    });
-  }, []);
-
-  const inventoryColumns: EditableColumn[] = [
-    { key: 'sku', label: 'SKU', editable: false, type: 'text', width: 'w-48' },
-    { key: 'warehouse_qty', label: t('inventory.warehouseQty', 'Bodega (m\u00B2)'), editable: true, type: 'number', width: 'w-32' },
-    { key: 'in_transit_qty', label: t('inventory.inTransitQty', 'En tr\u00E1nsito (m\u00B2)'), editable: true, type: 'number', width: 'w-32' },
-  ];
+  const formatDateForDisplay = (value: string): string => {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+    return value;
+  };
 
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return t('dataHub.never');
@@ -307,21 +266,29 @@ export function InventoryUploadCard({
           </div>
         )}
 
-        {/* Preview State — Dual Pane */}
+        {/* Preview State -- Dual Pane */}
         {uploadState === 'preview' && preview && (
           <div className="flex gap-6 min-h-0">
-            {/* Left: Editable rows table */}
+            {/* Left: Read-only rows table */}
             <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
-              <EditablePreviewTable
-                rows={preview.rows as unknown as Record<string, unknown>[]}
-                columns={inventoryColumns}
-                rowKeyField="product_id"
-                onModify={handleModify}
-                onDelete={handleDelete}
-                onUndoDelete={handleUndoDelete}
-                modifications={modifications}
-                deletions={deletions}
-              />
+              <table className="w-full text-sm">
+                <thead className="bg-slate-700 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-right text-xs text-slate-400">Bodega m²</th>
+                    <th className="px-3 py-2 text-right text-xs text-slate-400">En tránsito m²</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700/50">
+                  {preview.rows.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-700/30">
+                      <td className="px-3 py-1.5 text-slate-200">{row.sku}</td>
+                      <td className="px-3 py-1.5 text-right text-slate-300">{row.warehouse_qty.toLocaleString()}</td>
+                      <td className="px-3 py-1.5 text-right text-slate-300">{row.in_transit_qty.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             {/* Right: Summary + Confirm */}

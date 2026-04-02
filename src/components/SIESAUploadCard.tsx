@@ -1,12 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { dataHubApi } from '../requests/dataHub';
-import type { SIESAPreview, SIESAUploadResponse, SIESAModification } from '../requests/dataHub';
+import type { SIESAPreview, SIESAUploadResponse } from '../requests/dataHub';
 import { LoadingSpinner } from './LoadingSpinner';
-import { ProductSearchDropdown } from './ProductSearchDropdown';
 import { UploadPreviewModal } from './UploadPreviewModal';
-import { EditablePreviewTable } from './uploads/EditablePreviewTable';
-import type { EditableColumn } from './uploads/EditablePreviewTable';
 import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
@@ -19,7 +16,7 @@ interface SIESAUploadCardProps {
 
 export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SIESAUploadCardProps) {
   const { t, i18n } = useTranslation();
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
@@ -29,9 +26,6 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
   const [missingColumns, setMissingColumns] = useState<string[]>([]);
   const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [showUnmatchedList, setShowUnmatchedList] = useState(false);
-  const [manualMappings, setManualMappings] = useState<Record<string, { productId: string; sku: string }>>({});
-  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
-  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -104,23 +98,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setUploadState('confirming');
 
     try {
-      const mappings = Object.entries(manualMappings)
-        .filter(([, v]) => v.productId)
-        .map(([key, v]) => ({ original_key: key, mapped_product_id: v.productId }));
-
-      // Build modifications array from Map
-      const modsArray: SIESAModification[] = Array.from(modifications.entries()).map(([lotCode, changes]) => ({
-        lot_code: lotCode,
-        ...(changes.factory_available_m2 !== undefined ? { factory_available_m2: changes.factory_available_m2 as number } : {}),
-      }));
-      const deletionsArray = Array.from(deletions);
-
-      const uploadResult = await dataHubApi.confirmSIESA(
-        preview.preview_id,
-        mappings.length > 0 ? mappings : undefined,
-        modsArray.length > 0 ? modsArray : undefined,
-        deletionsArray.length > 0 ? deletionsArray : undefined,
-      );
+      const uploadResult = await dataHubApi.confirmSIESA(preview.preview_id);
       setResult(uploadResult);
       setUploadState('success');
       onUploadSuccess?.();
@@ -149,45 +127,12 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
     setMissingColumns([]);
     setFoundColumns([]);
     setShowUnmatchedList(false);
-    setModifications(new Map());
-    setDeletions(new Set());
     setModalOpen(false);
   };
 
   const handleModalClose = () => {
     handleReset();
   };
-
-  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
-    setModifications((prev) => {
-      const next = new Map(prev);
-      const existing = next.get(rowKey) ?? {};
-      next.set(rowKey, { ...existing, [field]: value });
-      return next;
-    });
-  }, []);
-
-  const handleDelete = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.add(rowKey);
-      return next;
-    });
-  }, []);
-
-  const handleUndoDelete = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.delete(rowKey);
-      return next;
-    });
-  }, []);
-
-  const siesaColumns: EditableColumn[] = [
-    { key: 'sku', label: 'SKU', editable: false, type: 'text', width: 'w-48' },
-    { key: 'lot_code', label: 'Lote', editable: false, type: 'text', width: 'w-32' },
-    { key: 'factory_available_m2', label: 'Disponible (m\u00B2)', editable: true, type: 'number', width: 'w-32' },
-  ];
 
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return t('dataHub.never');
@@ -222,8 +167,6 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
           dragOver
             ? 'border-blue-500 bg-blue-50'
-            : file
-            ? 'border-green-500 bg-green-50'
             : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
         }`}
       >
@@ -283,21 +226,29 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
           </div>
         )}
 
-        {/* Preview State — Dual Pane */}
+        {/* Preview State -- Dual Pane */}
         {uploadState === 'preview' && preview && (
           <div className="flex gap-6 min-h-0">
-            {/* Left: Editable lots table */}
+            {/* Left: Read-only lots table */}
             <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
-              <EditablePreviewTable
-                rows={preview.rows as unknown as Record<string, unknown>[]}
-                columns={siesaColumns}
-                rowKeyField="lot_code"
-                onModify={handleModify}
-                onDelete={handleDelete}
-                onUndoDelete={handleUndoDelete}
-                modifications={modifications}
-                deletions={deletions}
-              />
+              <table className="w-full text-sm">
+                <thead className="bg-slate-700 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Lote</th>
+                    <th className="px-3 py-2 text-right text-xs text-slate-400">m²</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700/50">
+                  {preview.rows.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-700/30">
+                      <td className="px-3 py-1.5 text-slate-200">{row.sku}</td>
+                      <td className="px-3 py-1.5 text-slate-400">{row.lot_code}</td>
+                      <td className="px-3 py-1.5 text-right text-slate-300">{row.factory_available_m2.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             {/* Right: Summary + Confirm */}
@@ -342,22 +293,9 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                     {showUnmatchedList ? '\u25BC' : '\u25B6'} ver detalles
                   </button>
                   {showUnmatchedList && (
-                    <div className="mt-2 space-y-2 max-h-48 overflow-auto">
-                      <p className="text-xs text-slate-500">Mapear a producto existente:</p>
+                    <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                       {preview.unmatched_products.map((prod, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <span className="text-xs text-red-400 flex-1 truncate" title={prod}>{'\u2022'} {prod}</span>
-                          <ProductSearchDropdown
-                            onSelect={(productId, sku) =>
-                              setManualMappings((prev) => ({
-                                ...prev,
-                                [prod]: { productId, sku },
-                              }))
-                            }
-                            selectedSku={manualMappings[prod]?.sku || null}
-                            placeholder="Buscar..."
-                          />
-                        </div>
+                        <div key={i}>{'\u2022'} {prod}</div>
                       ))}
                     </div>
                   )}

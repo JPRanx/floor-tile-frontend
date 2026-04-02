@@ -4,8 +4,6 @@ import { boatsApi } from '../requests/boats';
 import type { BoatUploadResult, BoatPreview } from '../requests/boats';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UploadPreviewModal } from './UploadPreviewModal';
-import { EditablePreviewTable, formatDateForDisplay } from './uploads/EditablePreviewTable';
-import type { EditableColumn } from './uploads/EditablePreviewTable';
 import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 interface BoatUploadCardProps {
@@ -27,8 +25,6 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
   const [missingColumns, setMissingColumns] = useState<string[]>([]);
   const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
-  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
-  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (file: File): boolean => {
     return (
@@ -37,6 +33,14 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
       file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
       file.type === 'application/vnd.ms-excel'
     );
+  };
+
+  const formatDateForDisplay = (value: string): string => {
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (match) {
+      return `${match[3]}/${match[2]}/${match[1]}`;
+    }
+    return value;
   };
 
   const formatLastUpdated = (): string => {
@@ -121,20 +125,7 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
     setErrorMessage(null);
 
     try {
-      const modsArray = Array.from(modifications.entries()).map(([rowKey, changes]) => ({
-        row_index: parseInt(rowKey, 10),
-        ...(changes.departure_date !== undefined ? { departure_date: changes.departure_date as string } : {}),
-        ...(changes.arrival_date !== undefined ? { arrival_date: changes.arrival_date as string } : {}),
-        ...(changes.vessel_name !== undefined ? { vessel_name: changes.vessel_name as string } : {}),
-        ...(changes.carrier !== undefined ? { carrier: changes.carrier as string } : {}),
-      }));
-      const deletionsArray = Array.from(deletions).map((k) => parseInt(k, 10));
-
-      const payload = modsArray.length > 0 || deletionsArray.length > 0
-        ? { modifications: modsArray, deletions: deletionsArray }
-        : undefined;
-
-      const uploadResult = await boatsApi.confirmUpload(preview.preview_id, payload);
+      const uploadResult = await boatsApi.confirmUpload(preview.preview_id);
       setResult(uploadResult);
       setUploadState('success');
       onUploadSuccess?.();
@@ -152,8 +143,6 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
     setFile(null);
     setUploadState('idle');
     setModalOpen(false);
-    setModifications(new Map());
-    setDeletions(new Set());
   };
 
   const handleModalClose = () => {
@@ -165,43 +154,9 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
     setErrorMessage(null);
     setMissingColumns([]);
     setFoundColumns([]);
-    setModifications(new Map());
-    setDeletions(new Set());
   };
 
-  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
-    setModifications((prev) => {
-      const next = new Map(prev);
-      const existing = next.get(rowKey) ?? {};
-      next.set(rowKey, { ...existing, [field]: value });
-      return next;
-    });
-  }, []);
-
-  const handleDeleteRow = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.add(rowKey);
-      return next;
-    });
-  }, []);
-
-  const handleUndoDelete = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.delete(rowKey);
-      return next;
-    });
-  }, []);
-
-  const boatColumns: EditableColumn[] = [
-    { key: 'vessel_name', label: 'Buque', editable: true, type: 'text', width: 'w-36' },
-    { key: 'departure_date', label: 'Salida', editable: true, type: 'text', width: 'w-28' },
-    { key: 'arrival_date', label: 'Llegada', editable: true, type: 'text', width: 'w-28' },
-    { key: 'carrier', label: 'Carrier', editable: true, type: 'text', width: 'w-28' },
-    { key: 'origin_port', label: 'Origen', editable: false, type: 'text', width: 'w-28' },
-    { key: 'action', label: 'Acci\u00F3n', editable: false, type: 'text', width: 'w-20' },
-  ];
+  const rows = preview?.rows ?? preview?.sample_rows ?? [];
 
   return (
     <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
@@ -279,21 +234,41 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
           </div>
         )}
 
-        {/* Preview State — Dual Pane */}
+        {/* Preview State -- Dual Pane */}
         {uploadState === 'preview' && preview && (
           <div className="flex gap-6 min-h-0">
-            {/* Left: Editable rows table */}
+            {/* Left: Read-only rows table */}
             <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
-              <EditablePreviewTable
-                rows={(preview.rows ?? preview.sample_rows) as unknown as Record<string, unknown>[]}
-                columns={boatColumns}
-                rowKeyField="row_index"
-                onModify={handleModify}
-                onDelete={handleDeleteRow}
-                onUndoDelete={handleUndoDelete}
-                modifications={modifications}
-                deletions={deletions}
-              />
+              <table className="w-full text-sm">
+                <thead className="bg-slate-700 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Buque</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Salida</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Llegada</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Carrier</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Acción</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700/50">
+                  {rows.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-700/30">
+                      <td className="px-3 py-1.5 text-slate-200">{row.vessel_name || '\u2014'}</td>
+                      <td className="px-3 py-1.5 text-slate-400">{formatDateForDisplay(row.departure_date)}</td>
+                      <td className="px-3 py-1.5 text-slate-400">{formatDateForDisplay(row.arrival_date)}</td>
+                      <td className="px-3 py-1.5 text-slate-400">{row.carrier || '\u2014'}</td>
+                      <td className="px-3 py-1.5">
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          row.action === 'create' ? 'bg-emerald-500/20 text-emerald-400' :
+                          row.action === 'update' ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-slate-600/50 text-slate-400'
+                        }`}>
+                          {row.action}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             {/* Right: Summary + Confirm */}

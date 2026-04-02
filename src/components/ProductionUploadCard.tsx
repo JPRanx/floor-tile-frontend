@@ -1,12 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { productionScheduleApi } from '../requests/productionSchedule';
-import type { ProductionPreview, ProductionImportResult, ProductionModification } from '../requests/productionSchedule';
+import type { ProductionPreview, ProductionImportResult } from '../requests/productionSchedule';
 import { LoadingSpinner } from './LoadingSpinner';
-import { ProductSearchDropdown } from './ProductSearchDropdown';
 import { UploadPreviewModal } from './UploadPreviewModal';
-import { EditablePreviewTable } from './uploads/EditablePreviewTable';
-import type { EditableColumn } from './uploads/EditablePreviewTable';
 import { ParseDiagnosticPanel } from './uploads/ParseDiagnosticPanel';
 
 type UploadState = 'idle' | 'parsing' | 'preview' | 'confirming' | 'success' | 'error';
@@ -19,7 +16,7 @@ interface ProductionUploadCardProps {
 
 export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess }: ProductionUploadCardProps) {
   const { t, i18n } = useTranslation();
-  const [file, setFile] = useState<File | null>(null);
+  const [, setFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [preview, setPreview] = useState<ProductionPreview | null>(null);
@@ -28,10 +25,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
   const [missingColumns, setMissingColumns] = useState<string[]>([]);
   const [foundColumns, setFoundColumns] = useState<string[]>([]);
   const [showUnmatched, setShowUnmatched] = useState(false);
-  const [manualMappings, setManualMappings] = useState<Record<string, { productId: string; sku: string }>>({});
   const [modalOpen, setModalOpen] = useState(false);
-  const [modifications, setModifications] = useState<Map<string, Record<string, unknown>>>(new Map());
-  const [deletions, setDeletions] = useState<Set<string>>(new Set());
 
   const isValidFile = (f: File): boolean => {
     return f.name.endsWith('.xlsx') || f.name.endsWith('.xls') ||
@@ -98,24 +92,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
     if (!preview) return;
     setUploadState('confirming');
     try {
-      const mappings = Object.entries(manualMappings)
-        .filter(([, v]) => v.productId)
-        .map(([key, v]) => ({ original_key: key, mapped_product_id: v.productId }));
-
-      // Build modifications array from Map (key is row_index as string)
-      const modsArray: ProductionModification[] = Array.from(modifications.entries()).map(([rowIdx, changes]) => ({
-        row_index: parseInt(rowIdx, 10),
-        ...(changes.requested_m2 !== undefined ? { requested_m2: changes.requested_m2 as number } : {}),
-        ...(changes.status !== undefined ? { status: changes.status as string } : {}),
-      }));
-      const deletionsArray = Array.from(deletions).map((idx) => parseInt(idx, 10));
-
-      const res = await productionScheduleApi.confirmUpload(
-        preview.preview_id,
-        mappings.length > 0 ? mappings : undefined,
-        modsArray.length > 0 ? modsArray : undefined,
-        deletionsArray.length > 0 ? deletionsArray : undefined,
-      );
+      const res = await productionScheduleApi.confirmUpload(preview.preview_id);
       setResult(res);
       setUploadState('success');
       onUploadSuccess?.();
@@ -141,8 +118,6 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
     setErrorMessage(null);
     setMissingColumns([]);
     setFoundColumns([]);
-    setModifications(new Map());
-    setDeletions(new Set());
     setModalOpen(false);
   };
 
@@ -153,47 +128,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
     setPreview(null);
     setResult(null);
     setErrorMessage(null);
-    setModifications(new Map());
-    setDeletions(new Set());
   };
-
-  const handleModify = useCallback((rowKey: string, field: string, value: unknown) => {
-    setModifications((prev) => {
-      const next = new Map(prev);
-      const existing = next.get(rowKey) ?? {};
-      next.set(rowKey, { ...existing, [field]: value });
-      return next;
-    });
-  }, []);
-
-  const handleDelete = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.add(rowKey);
-      return next;
-    });
-  }, []);
-
-  const handleUndoDelete = useCallback((rowKey: string) => {
-    setDeletions((prev) => {
-      const next = new Set(prev);
-      next.delete(rowKey);
-      return next;
-    });
-  }, []);
-
-  const productionColumns: EditableColumn[] = [
-    { key: 'sku', label: 'SKU', editable: false, type: 'text', width: 'w-40' },
-    { key: 'requested_m2', label: 'Solicitado (m\u00B2)', editable: true, type: 'number', width: 'w-32' },
-    { key: 'status', label: 'Estado', editable: true, type: 'text', width: 'w-28' },
-    { key: 'estimated_delivery_date', label: 'Entrega est.', editable: false, type: 'text', width: 'w-28' },
-  ];
-
-  // Add row_index to each row for use as unique key
-  const productionRowsWithIndex = (preview?.rows || []).map((row, idx) => ({
-    ...row,
-    _row_index: String(idx),
-  }));
 
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return t('dataHub.never', 'Never');
@@ -230,8 +165,6 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
               dragOver
                 ? 'border-blue-500 bg-blue-50'
-                : file
-                ? 'border-green-500 bg-green-50'
                 : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
             }`}
           >
@@ -292,21 +225,39 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
           </div>
         )}
 
-        {/* Preview State — Dual Pane */}
+        {/* Preview State -- Dual Pane */}
         {uploadState === 'preview' && preview && (
           <div className="flex gap-6 min-h-0">
-            {/* Left: Editable rows table */}
+            {/* Left: Read-only rows table */}
             <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
-              <EditablePreviewTable
-                rows={productionRowsWithIndex as unknown as Record<string, unknown>[]}
-                columns={productionColumns}
-                rowKeyField="_row_index"
-                onModify={handleModify}
-                onDelete={handleDelete}
-                onUndoDelete={handleUndoDelete}
-                modifications={modifications}
-                deletions={deletions}
-              />
+              <table className="w-full text-sm">
+                <thead className="bg-slate-700 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-right text-xs text-slate-400">m² Solicitado</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Estado</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Fecha</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-700/50">
+                  {preview.rows.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-700/30">
+                      <td className="px-3 py-1.5 text-slate-200">{row.sku || row.referencia}</td>
+                      <td className="px-3 py-1.5 text-right text-slate-300">{row.requested_m2.toLocaleString()}</td>
+                      <td className="px-3 py-1.5">
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          row.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' :
+                          row.status === 'in_progress' ? 'bg-blue-500/20 text-blue-400' :
+                          'bg-slate-600/50 text-slate-400'
+                        }`}>
+                          {row.status}
+                        </span>
+                      </td>
+                      <td className="px-3 py-1.5 text-slate-400">{row.estimated_delivery_date || '\u2014'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
             {/* Right: Summary + Confirm */}
@@ -366,22 +317,9 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
                     {showUnmatched ? '\u25BC' : '\u25B6'} ver detalles
                   </button>
                   {showUnmatched && (
-                    <div className="mt-2 space-y-2 max-h-48 overflow-y-auto">
-                      <p className="text-xs text-slate-500">Mapear a producto existente:</p>
+                    <div className="mt-2 text-xs text-slate-400 space-y-0.5">
                       {preview.unmatched_referencias.map((ref, i) => (
-                        <div key={i} className="flex items-center gap-2">
-                          <span className="text-xs text-red-400 flex-1 truncate" title={ref}>{'\u2022'} {ref}</span>
-                          <ProductSearchDropdown
-                            onSelect={(productId, sku) =>
-                              setManualMappings((prev) => ({
-                                ...prev,
-                                [ref]: { productId, sku },
-                              }))
-                            }
-                            selectedSku={manualMappings[ref]?.sku || null}
-                            placeholder="Buscar..."
-                          />
-                        </div>
+                        <div key={i}>{'\u2022'} {ref}</div>
                       ))}
                     </div>
                   )}
