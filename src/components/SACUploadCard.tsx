@@ -227,7 +227,8 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
               <table className="w-full text-sm">
                 <thead className="bg-slate-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Archivo</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Producto</th>
                     <th className="px-3 py-2 text-left text-xs text-slate-400">Fecha</th>
                     <th className="px-3 py-2 text-right text-xs text-slate-400">m²</th>
                     <th className="px-3 py-2 text-left text-xs text-slate-400">Cliente</th>
@@ -236,10 +237,16 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
                 <tbody className="divide-y divide-slate-700/50">
                   {preview.sample_rows.map((row, i) => (
                     <tr key={i} className="hover:bg-slate-700/30">
-                      <td className="px-3 py-1.5 text-slate-200 font-medium">{row.sku}</td>
+                      <td className="px-3 py-1.5 text-slate-500 text-xs">{row.raw_sku || row.sku}</td>
+                      <td className="px-3 py-1.5">
+                        <span className="text-slate-200 font-medium">{row.sku}</span>
+                        {row.matched_by === 'unmatched' && (
+                          <span className="ml-1 text-red-400 text-xs">sin match</span>
+                        )}
+                      </td>
                       <td className="px-3 py-1.5 text-slate-400">{row.sale_date}</td>
                       <td className="px-3 py-1.5 text-right text-slate-300">{row.quantity_m2}</td>
-                      <td className="px-3 py-1.5 text-slate-500 truncate max-w-[200px]">{row.customer || '\u2014'}</td>
+                      <td className="px-3 py-1.5 text-slate-500 truncate max-w-[180px]">{row.customer || '\u2014'}</td>
                     </tr>
                   ))}
                 </tbody>
