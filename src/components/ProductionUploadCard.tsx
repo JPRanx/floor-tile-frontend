@@ -233,7 +233,8 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
               <table className="w-full text-sm">
                 <thead className="bg-slate-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Referencia</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Producto</th>
                     <th className="px-3 py-2 text-right text-xs text-slate-400">m² Solicitado</th>
                     <th className="px-3 py-2 text-left text-xs text-slate-400">Estado</th>
                     <th className="px-3 py-2 text-left text-xs text-slate-400">Fecha</th>
@@ -242,7 +243,8 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
                 <tbody className="divide-y divide-slate-700/50">
                   {preview.rows.map((row, i) => (
                     <tr key={i} className="hover:bg-slate-700/30">
-                      <td className="px-3 py-1.5 text-slate-200">{row.sku || row.referencia}</td>
+                      <td className="px-3 py-1.5 text-slate-500 text-xs">{row.referencia}</td>
+                      <td className="px-3 py-1.5 text-slate-200 font-medium">{row.sku || <span className="text-red-400 text-xs">sin match</span>}</td>
                       <td className="px-3 py-1.5 text-right text-slate-300">{row.requested_m2.toLocaleString()}</td>
                       <td className="px-3 py-1.5">
                         <span className={`text-xs px-1.5 py-0.5 rounded ${
