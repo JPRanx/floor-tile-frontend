@@ -155,11 +155,11 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
   const unmatchedOrderCount = parseResult?.booking_matches?.filter(m => !m.boat_id).length ?? 0;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+    <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <h3 className="text-lg font-semibold text-slate-200 mb-1">
         {t('dataHub.inTransit.title', 'Despacho / En Transito')}
       </h3>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-slate-500 mb-4">
         {t('dataHub.inTransit.subtitle', 'Excel de despacho en transito (.xlsx, .xls)')}
       </p>
 
@@ -171,12 +171,12 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
           dragOver
             ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+            : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
         }`}
       >
         <label className="cursor-pointer block">
           <svg
-            className="mx-auto h-10 w-10 text-gray-400"
+            className="mx-auto h-10 w-10 text-slate-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -188,10 +188,10 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
             />
           </svg>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-400">
             {t('dataHub.inTransit.dropzone', 'Arrastra el archivo Excel o haz clic para buscar')}
           </p>
-          <p className="mt-1 text-xs text-gray-500">XLSX, XLS</p>
+          <p className="mt-1 text-xs text-slate-500">XLSX, XLS</p>
           <input
             type="file"
             className="hidden"
@@ -218,7 +218,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
         {uploadState === 'parsing' && (
           <div className="py-12 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-slate-400">
               {t('dataHub.inTransit.parsing', 'Analizando archivo...')}
             </p>
           </div>
@@ -230,7 +230,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
             {/* Booking matches — auto-matched orders to boats */}
             {parseResult.booking_matches && parseResult.booking_matches.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">
+                <h4 className="text-sm font-medium text-slate-300 mb-2">
                   {t('dataHub.inTransit.bookingMatches', 'Ordenes por barco (auto-matching)')}
                 </h4>
                 <div className="space-y-2">
@@ -244,13 +244,13 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                       }`}
                     >
                       <div>
-                        <span className="font-medium text-gray-900">{match.factura}</span>
+                        <span className="font-medium text-slate-200">{match.factura}</span>
                         {match.booking_number && (
-                          <span className="ml-2 text-xs text-gray-500">#{match.booking_number}</span>
+                          <span className="ml-2 text-xs text-slate-500">#{match.booking_number}</span>
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className="text-xs text-gray-600">
+                        <span className="text-xs text-slate-400">
                           {match.items_count} prod. / {match.total_m2.toLocaleString()} m²
                         </span>
                         {match.boat_id ? (
@@ -306,7 +306,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                   {t('dataHub.inTransit.unmatchedSkusLabel', 'SKUs no encontrados en el sistema')}
                 </button>
                 {showUnmatched && (
-                  <div className="mt-2 bg-white rounded p-2 text-xs text-gray-700 max-h-32 overflow-y-auto">
+                  <div className="mt-2 bg-slate-800 rounded p-2 text-xs text-slate-300 max-h-32 overflow-y-auto">
                     {parseResult.unmatched_skus.map((sku, i) => (
                       <div key={i} className="py-0.5">{'\u2022'} {sku}</div>
                     ))}
@@ -317,22 +317,22 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
 
             {/* Products table */}
             <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">
+              <h4 className="text-sm font-medium text-slate-300 mb-2">
                 {t('dataHub.inTransit.parsedProducts', 'Productos en despacho')}
               </h4>
-              <div className="overflow-auto max-h-64 border border-gray-200 rounded-lg">
+              <div className="overflow-auto max-h-64 border border-slate-700 rounded-lg">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
+                  <thead className="bg-slate-900 sticky top-0">
                     <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">SKU</th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">m²</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-slate-500">SKU</th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-slate-500">m²</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {parseResult.products.map((p, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
-                        <td className="px-3 py-1.5 text-gray-900">{p.sku}</td>
-                        <td className="px-3 py-1.5 text-right text-gray-700">{p.in_transit_m2.toLocaleString()}</td>
+                      <tr key={i} className="hover:bg-slate-900">
+                        <td className="px-3 py-1.5 text-slate-200">{p.sku}</td>
+                        <td className="px-3 py-1.5 text-right text-slate-300">{p.in_transit_m2.toLocaleString()}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -357,7 +357,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
         {uploadState === 'uploading' && (
           <div className="py-12 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">
+            <p className="mt-4 text-slate-400">
               {t('dataHub.inTransit.uploading', 'Procesando archivo...')}
             </p>
           </div>
@@ -383,23 +383,23 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                 {t('dataHub.inTransit.successTitle', 'Carga exitosa')}
               </h4>
               <div className="mt-3 grid grid-cols-2 gap-3">
-                <div className="bg-white rounded-lg p-3 border border-green-100">
-                  <div className="text-sm text-gray-500">
+                <div className="bg-slate-800 rounded-lg p-3 border border-green-100">
+                  <div className="text-sm text-slate-500">
                     {t('dataHub.inTransit.productsUpdated', 'Productos actualizados')}
                   </div>
-                  <div className="text-lg font-bold text-gray-900">{uploadResult.products_updated}</div>
+                  <div className="text-lg font-bold text-slate-200">{uploadResult.products_updated}</div>
                 </div>
-                <div className="bg-white rounded-lg p-3 border border-green-100">
-                  <div className="text-sm text-gray-500">
+                <div className="bg-slate-800 rounded-lg p-3 border border-green-100">
+                  <div className="text-sm text-slate-500">
                     {t('dataHub.inTransit.productsReset', 'Productos reseteados')}
                   </div>
-                  <div className="text-lg font-bold text-gray-900">{uploadResult.products_reset}</div>
+                  <div className="text-lg font-bold text-slate-200">{uploadResult.products_reset}</div>
                 </div>
-                <div className="bg-white rounded-lg p-3 border border-green-100 col-span-2">
-                  <div className="text-sm text-gray-500">
+                <div className="bg-slate-800 rounded-lg p-3 border border-green-100 col-span-2">
+                  <div className="text-sm text-slate-500">
                     {t('dataHub.inTransit.totalInTransitM2', 'Total en transito m\u00B2')}
                   </div>
-                  <div className="text-lg font-bold text-gray-900">
+                  <div className="text-lg font-bold text-slate-200">
                     {uploadResult.total_in_transit_m2.toLocaleString()} m²
                   </div>
                 </div>
@@ -429,7 +429,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                   {t('dataHub.inTransit.unmatchedSkus', 'SKUs no encontrados')}
                 </button>
                 {showUnmatched && (
-                  <div className="mt-2 bg-white rounded p-2 text-xs text-gray-700 max-h-32 overflow-y-auto">
+                  <div className="mt-2 bg-slate-800 rounded p-2 text-xs text-slate-300 max-h-32 overflow-y-auto">
                     {uploadResult.unmatched_skus.map((sku, i) => (
                       <div key={i} className="py-0.5">{'\u2022'} {sku}</div>
                     ))}
@@ -516,7 +516,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                 {showReconciliation && uploadResult.reconciliation.items.length > 0 && (
                   <div className="mt-3 overflow-auto max-h-48">
                     <table className="w-full text-sm">
-                      <thead className="bg-white/60">
+                      <thead className="bg-slate-800/60">
                         <tr>
                           <th className="px-2 py-1 text-left">SKU</th>
                           <th className="px-2 py-1 text-right">{t('dataHub.inTransit.dispatchM2', 'Despacho m\u00B2')}</th>
@@ -525,7 +525,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                           <th className="px-2 py-1 text-left">{t('dataHub.inTransit.boat', 'Barco')}</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-200">
+                      <tbody className="divide-y divide-slate-700">
                         {uploadResult.reconciliation.items.map((item, i) => (
                           <tr key={i} className={
                             item.status === 'mismatch' ? 'bg-red-50' :
@@ -540,7 +540,7 @@ export function InTransitUploadCard({ onUploadSuccess }: InTransitUploadCardProp
                             }`}>
                               {item.diff_m2 > 0 ? '+' : ''}{item.diff_m2.toLocaleString()}
                             </td>
-                            <td className="px-2 py-1 text-gray-600">{item.boat_name || '\u2014'}</td>
+                            <td className="px-2 py-1 text-slate-400">{item.boat_name || '\u2014'}</td>
                           </tr>
                         ))}
                       </tbody>

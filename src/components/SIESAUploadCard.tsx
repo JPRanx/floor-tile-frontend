@@ -209,8 +209,8 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <h3 className="text-lg font-semibold text-slate-200 mb-4">
         {t('dataHub.inventory.title')}
       </h3>
 
@@ -224,12 +224,12 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
             ? 'border-blue-500 bg-blue-50'
             : file
             ? 'border-green-500 bg-green-50'
-            : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+            : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
         }`}
       >
         <label className="cursor-pointer block">
           <svg
-            className="mx-auto h-10 w-10 text-gray-400"
+            className="mx-auto h-10 w-10 text-slate-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -241,10 +241,10 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
             />
           </svg>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-400">
             {t('dataHub.inventory.dropzone')}
           </p>
-          <p className="mt-1 text-xs text-gray-500">XLS / XLSX</p>
+          <p className="mt-1 text-xs text-slate-500">XLS / XLSX</p>
           <input
             type="file"
             className="hidden"
@@ -261,7 +261,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
         </div>
       )}
 
-      <div className="mt-4 text-sm text-gray-500">
+      <div className="mt-4 text-sm text-slate-500">
         <p>{t('dataHub.inventory.lastUpload')}: {formatLastUpdated()}</p>
         {recordCount !== undefined && recordCount > 0 && (
           <p>{recordCount.toLocaleString()} {t('dataHub.inventory.lotsCount')}</p>
@@ -278,7 +278,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
         {uploadState === 'parsing' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('dataHub.inventory.parsing', 'Parsing file...')}</p>
+            <p className="mt-4 text-slate-400">{t('dataHub.inventory.parsing', 'Parsing file...')}</p>
           </div>
         )}
 
@@ -287,29 +287,29 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
           <div className="space-y-4">
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.inventory.totalRows', 'Total Rows')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.total_rows}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.inventory.totalRows', 'Total Rows')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.total_rows}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.inventory.lotsCount', 'Lots')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.lots_count}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.inventory.lotsCount', 'Lots')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.lots_count}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.inventory.products', 'Products')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.unique_products}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.inventory.products', 'Products')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.unique_products}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.inventory.totalM2', 'Total m²')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.total_m2_available.toLocaleString()}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.inventory.totalM2', 'Total m²')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.total_m2_available.toLocaleString()}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.inventory.totalWeight', 'Total Weight (kg)')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.total_weight_kg.toLocaleString()}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.inventory.totalWeight', 'Total Weight (kg)')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.total_weight_kg.toLocaleString()}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.inventory.containers', 'Containers')}</div>
-                <div className="text-lg font-bold text-gray-900">
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.inventory.containers', 'Containers')}</div>
+                <div className="text-lg font-bold text-slate-200">
                   {preview.containers_needed} ({preview.container_utilization_pct.toFixed(1)}%)
                 </div>
               </div>
@@ -362,20 +362,20 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
                   )}
                 </div>
               )}
-              <div className="text-sm text-gray-600 text-center">
+              <div className="text-sm text-slate-400 text-center">
                 {t('dataHub.inventory.matchRate', { rate: preview.match_rate_pct.toFixed(1), defaultValue: 'Match rate: {{rate}}%' })}
               </div>
             </div>
 
             {/* Warehouse Breakdown */}
             {preview.warehouses.length > 0 && (
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm font-medium text-gray-700 mb-2">
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm font-medium text-slate-300 mb-2">
                   {t('dataHub.inventory.warehouseBreakdown', 'Warehouse Breakdown')}
                 </div>
                 <div className="overflow-auto">
                   <table className="w-full text-xs">
-                    <thead className="bg-gray-100">
+                    <thead className="bg-slate-700">
                       <tr>
                         <th className="px-2 py-1 text-left">{t('dataHub.inventory.warehouse', 'Warehouse')}</th>
                         <th className="px-2 py-1 text-right">m²</th>
@@ -420,7 +420,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
               </button>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -432,7 +432,7 @@ export function SIESAUploadCard({ lastUpdated, recordCount, onUploadSuccess }: S
         {uploadState === 'confirming' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('dataHub.inventory.saving', 'Saving...')}</p>
+            <p className="mt-4 text-slate-400">{t('dataHub.inventory.saving', 'Saving...')}</p>
           </div>
         )}
 

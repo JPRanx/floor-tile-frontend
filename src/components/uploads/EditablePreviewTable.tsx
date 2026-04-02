@@ -181,9 +181,9 @@ export function EditablePreviewTable({
             setSearchTerm(e.target.value);
             setCurrentPage(1);
           }}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+          className="px-3 py-1.5 text-sm border border-slate-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
         />
-        <div className="text-sm text-gray-500">
+        <div className="text-sm text-slate-500">
           {sortedRows.length} filas
           {modifiedCount > 0 && (
             <span className="ml-2 text-amber-600 font-medium">
@@ -199,14 +199,14 @@ export function EditablePreviewTable({
       </div>
 
       {/* Table */}
-      <div className="overflow-auto border border-gray-200 rounded-lg max-h-[50vh]">
+      <div className="overflow-auto border border-slate-700 rounded-lg max-h-[50vh]">
         <table className="w-full text-sm">
-          <thead className="bg-gray-100 sticky top-0 z-10">
+          <thead className="bg-slate-700 sticky top-0 z-10">
             <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-3 py-2 text-left font-medium text-gray-700 cursor-pointer select-none hover:bg-gray-200 ${col.width ?? ''}`}
+                  className={`px-3 py-2 text-left font-medium text-slate-300 cursor-pointer select-none hover:bg-gray-200 ${col.width ?? ''}`}
                   onClick={() => handleSort(col.key)}
                 >
                   <span className="inline-flex items-center gap-1">
@@ -232,7 +232,7 @@ export function EditablePreviewTable({
                   className={
                     isDeleted
                       ? 'bg-red-50 opacity-50'
-                      : 'hover:bg-gray-50'
+                      : 'hover:bg-slate-900'
                   }
                 >
                   {columns.map((col) => {
@@ -294,7 +294,7 @@ export function EditablePreviewTable({
                     ) : (
                       <button
                         onClick={() => onDelete(rowKey)}
-                        className="text-gray-400 hover:text-red-600 transition-colors"
+                        className="text-slate-500 hover:text-red-600 transition-colors"
                         title="Eliminar fila"
                       >
                         <svg
@@ -320,7 +320,7 @@ export function EditablePreviewTable({
               <tr>
                 <td
                   colSpan={columns.length + 1}
-                  className="px-3 py-8 text-center text-gray-400"
+                  className="px-3 py-8 text-center text-slate-500"
                 >
                   No se encontraron filas
                 </td>
@@ -333,7 +333,7 @@ export function EditablePreviewTable({
       {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
-          <span className="text-gray-500">
+          <span className="text-slate-500">
             Mostrando {(safeCurrentPage - 1) * pageSize + 1}-
             {Math.min(safeCurrentPage * pageSize, sortedRows.length)} de{' '}
             {sortedRows.length}
@@ -342,31 +342,31 @@ export function EditablePreviewTable({
             <button
               onClick={() => setCurrentPage(1)}
               disabled={safeCurrentPage === 1}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent"
+              className="px-2 py-1 rounded border border-slate-600 disabled:opacity-40 hover:bg-slate-700 disabled:hover:bg-transparent"
             >
               &laquo;
             </button>
             <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={safeCurrentPage === 1}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent"
+              className="px-2 py-1 rounded border border-slate-600 disabled:opacity-40 hover:bg-slate-700 disabled:hover:bg-transparent"
             >
               &lsaquo;
             </button>
-            <span className="px-3 py-1 text-gray-700 font-medium">
+            <span className="px-3 py-1 text-slate-300 font-medium">
               {safeCurrentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={safeCurrentPage === totalPages}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent"
+              className="px-2 py-1 rounded border border-slate-600 disabled:opacity-40 hover:bg-slate-700 disabled:hover:bg-transparent"
             >
               &rsaquo;
             </button>
             <button
               onClick={() => setCurrentPage(totalPages)}
               disabled={safeCurrentPage === totalPages}
-              className="px-2 py-1 rounded border border-gray-300 disabled:opacity-40 hover:bg-gray-100 disabled:hover:bg-transparent"
+              className="px-2 py-1 rounded border border-slate-600 disabled:opacity-40 hover:bg-slate-700 disabled:hover:bg-transparent"
             >
               &raquo;
             </button>

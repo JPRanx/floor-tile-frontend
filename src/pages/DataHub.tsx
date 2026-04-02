@@ -5,11 +5,8 @@ import { SACUploadCard } from '../components/SACUploadCard';
 import { InventoryUploadCard } from '../components/InventoryUploadModal';
 import { SIESAUploadCard } from '../components/SIESAUploadCard';
 import { InTransitUploadCard } from '../components/InTransitUploadCard';
-import { UnfulfilledDemandCard } from '../components/UnfulfilledDemandCard';
-import { CommittedOrdersCard } from '../components/CommittedOrdersCard';
 import { BoatUploadCard } from '../components/BoatUploadModal';
 import { ProductionUploadCard } from '../components/ProductionUploadCard';
-import { ShipmentUploadCard } from '../components/ShipmentUploadModal';
 import { UploadHistory } from '../components/UploadHistory';
 import { dataHubApi } from '../requests/dataHub';
 import type { DataFreshnessResponse } from '../requests/dataHub';
@@ -77,29 +74,19 @@ export function DataHub() {
             <InTransitUploadCard
               onUploadSuccess={handleUploadSuccess}
             />
-            <UnfulfilledDemandCard
-              onUploadSuccess={handleUploadSuccess}
-            />
-            <CommittedOrdersCard
-              onUploadSuccess={handleUploadSuccess}
-            />
           </div>
         </div>
 
         {/* Logistics Section */}
         <div>
           <h2 className="text-lg font-semibold text-slate-200 mb-3">{t('dataHub.sections.logistics')}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <BoatUploadCard
               lastUpdated={freshness?.boats.last_updated}
               recordCount={freshness?.boats.record_count}
               onUploadSuccess={handleUploadSuccess}
             />
             <ProductionUploadCard
-              onUploadSuccess={handleUploadSuccess}
-            />
-            <ShipmentUploadCard
-              onSuccess={handleUploadSuccess}
               onUploadSuccess={handleUploadSuccess}
             />
           </div>

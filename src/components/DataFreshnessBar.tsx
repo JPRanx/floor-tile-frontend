@@ -108,9 +108,9 @@ export function DataFreshnessBar() {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
         <div className="flex items-center justify-center h-20">
-          <span className="text-gray-400">{t('common.loading')}</span>
+          <span className="text-slate-500">{t('common.loading')}</span>
         </div>
       </div>
     );
@@ -121,8 +121,8 @@ export function DataFreshnessBar() {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <h3 className="text-sm font-medium text-gray-500 mb-3">{t('dataHub.systemHealth')}</h3>
+    <div className="bg-slate-800 rounded-lg border border-slate-700 p-4">
+      <h3 className="text-sm font-medium text-slate-500 mb-3">{t('dataHub.systemHealth')}</h3>
       <div className="grid grid-cols-3 gap-3">
         <FreshnessItem
           icon="📊"

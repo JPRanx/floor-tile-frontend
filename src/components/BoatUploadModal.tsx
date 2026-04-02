@@ -204,11 +204,11 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
   ];
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+    <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <h3 className="text-lg font-semibold text-slate-200 mb-1">
         {t('boatUpload.title')}
       </h3>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-slate-500 mb-4">
         {t('boatUpload.fileTypes', 'Horario TIBA (.xlsx, .xls)')}
       </p>
 
@@ -220,12 +220,12 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
           dragOver
             ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+            : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
         }`}
       >
         <label className="cursor-pointer block">
           <svg
-            className="mx-auto h-10 w-10 text-gray-400"
+            className="mx-auto h-10 w-10 text-slate-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -237,11 +237,11 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
             />
           </svg>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-400">
             {t('boatUpload.clickToUpload', 'Click to upload')}{' '}
             {t('boatUpload.orDragDrop', 'or drag and drop')}
           </p>
-          <p className="mt-1 text-xs text-gray-500">XLSX, XLS</p>
+          <p className="mt-1 text-xs text-slate-500">XLSX, XLS</p>
           <input
             type="file"
             className="hidden"
@@ -257,7 +257,7 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
         </div>
       )}
 
-      <div className="mt-4 text-sm text-gray-500">
+      <div className="mt-4 text-sm text-slate-500">
         <p>{t('dataHub.production.lastUpload', 'Last upload')}: {formatLastUpdated()}</p>
         {recordCount !== undefined && recordCount > 0 && (
           <p>{recordCount.toLocaleString()} {t('boatUpload.itemsCount', 'schedules')}</p>
@@ -274,7 +274,7 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
         {uploadState === 'parsing' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('boatUpload.parsing', 'Parsing file...')}</p>
+            <p className="mt-4 text-slate-400">{t('boatUpload.parsing', 'Parsing file...')}</p>
           </div>
         )}
 
@@ -291,15 +291,15 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
                 <div className="text-2xl font-bold text-blue-700">{preview.updated_boats}</div>
                 <div className="text-xs text-blue-600">{t('boatUpload.updates', 'Updates')}</div>
               </div>
-              <div className="p-3 bg-gray-50 rounded-lg">
-                <div className="text-2xl font-bold text-gray-700">{preview.skipped_boats}</div>
-                <div className="text-xs text-gray-600">{t('boatUpload.unchanged', 'Unchanged')}</div>
+              <div className="p-3 bg-slate-900 rounded-lg">
+                <div className="text-2xl font-bold text-slate-300">{preview.skipped_boats}</div>
+                <div className="text-xs text-slate-400">{t('boatUpload.unchanged', 'Unchanged')}</div>
               </div>
             </div>
 
             {/* Date Range */}
             {preview.earliest_departure && preview.latest_departure && (
-              <div className="p-3 bg-gray-50 rounded-lg text-sm text-gray-700">
+              <div className="p-3 bg-slate-900 rounded-lg text-sm text-slate-300">
                 <span className="font-medium">{t('boatUpload.dateRange', 'Date range:')}</span>{' '}
                 {formatDateForDisplay(preview.earliest_departure)} – {formatDateForDisplay(preview.latest_departure)}
               </div>
@@ -350,7 +350,7 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
             <div className="flex justify-end gap-3 pt-2">
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+                className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-slate-200"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -368,7 +368,7 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
         {uploadState === 'confirming' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('boatUpload.confirming', 'Saving...')}</p>
+            <p className="mt-4 text-slate-400">{t('boatUpload.confirming', 'Saving...')}</p>
           </div>
         )}
 
@@ -388,8 +388,8 @@ export function BoatUploadCard({ lastUpdated, recordCount, onUploadSuccess }: Bo
                 d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <h3 className="mt-3 text-lg font-medium text-gray-900">{t('boatUpload.uploadSuccessful')}</h3>
-            <div className="mt-2 text-sm text-gray-600">
+            <h3 className="mt-3 text-lg font-medium text-slate-200">{t('boatUpload.uploadSuccessful')}</h3>
+            <div className="mt-2 text-sm text-slate-400">
               <p>{t('boatUpload.boatsImported', { count: result.imported })}</p>
               <p>{t('boatUpload.boatsUpdated', { count: result.updated })}</p>
               {result.skipped > 0 && (

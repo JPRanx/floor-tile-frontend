@@ -49,11 +49,11 @@ export function UploadHistory({ refreshKey }: UploadHistoryProps) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+        <h3 className="text-lg font-semibold text-slate-200 mb-4">
           {t('dataHub.history.title', 'Historial de cargas')}
         </h3>
-        <p className="text-sm text-gray-500 animate-pulse">
+        <p className="text-sm text-slate-500 animate-pulse">
           {t('common.loading', 'Cargando...')}
         </p>
       </div>
@@ -62,11 +62,11 @@ export function UploadHistory({ refreshKey }: UploadHistoryProps) {
 
   if (items.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+        <h3 className="text-lg font-semibold text-slate-200 mb-4">
           {t('dataHub.history.title', 'Historial de cargas')}
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           {t('dataHub.history.empty', 'No hay cargas registradas.')}
         </p>
       </div>
@@ -74,45 +74,45 @@ export function UploadHistory({ refreshKey }: UploadHistoryProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <h3 className="text-lg font-semibold text-slate-200 mb-4">
         {t('dataHub.history.title', 'Historial de cargas')}
       </h3>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">
+            <tr className="border-b border-slate-700">
+              <th className="text-left py-2 px-2 text-slate-500 font-medium">
                 {t('dataHub.history.date', 'Fecha')}
               </th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">
+              <th className="text-left py-2 px-2 text-slate-500 font-medium">
                 {t('dataHub.history.type', 'Tipo')}
               </th>
-              <th className="text-left py-2 px-2 text-gray-500 font-medium">
+              <th className="text-left py-2 px-2 text-slate-500 font-medium">
                 {t('dataHub.history.file', 'Archivo')}
               </th>
-              <th className="text-right py-2 px-2 text-gray-500 font-medium">
+              <th className="text-right py-2 px-2 text-slate-500 font-medium">
                 {t('dataHub.history.rows', 'Filas')}
               </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {items.map((item, i) => (
-              <tr key={i} className="hover:bg-gray-50">
-                <td className="py-2 px-2 text-gray-600 whitespace-nowrap">
+              <tr key={i} className="hover:bg-slate-900">
+                <td className="py-2 px-2 text-slate-400 whitespace-nowrap">
                   {formatDate(item.uploaded_at)}
                 </td>
                 <td className="py-2 px-2">
                   <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                    TYPE_COLORS[item.upload_type] || 'bg-gray-100 text-gray-700'
+                    TYPE_COLORS[item.upload_type] || 'bg-slate-700 text-slate-300'
                   }`}>
                     {item.label}
                   </span>
                 </td>
-                <td className="py-2 px-2 text-gray-900 max-w-[200px] truncate" title={item.filename}>
+                <td className="py-2 px-2 text-slate-200 max-w-[200px] truncate" title={item.filename}>
                   {item.filename}
                 </td>
-                <td className="py-2 px-2 text-right text-gray-600">
+                <td className="py-2 px-2 text-right text-slate-400">
                   {item.row_count > 0 ? item.row_count.toLocaleString() : '—'}
                 </td>
               </tr>

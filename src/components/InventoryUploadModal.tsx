@@ -238,11 +238,11 @@ export function InventoryUploadCard({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-1">
+    <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <h3 className="text-lg font-semibold text-slate-200 mb-1">
         {t('inventory.uploadTitle')}
       </h3>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-slate-500 mb-4">
         {t('inventory.formatHint')}
       </p>
 
@@ -251,7 +251,7 @@ export function InventoryUploadCard({
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
           dragOver
             ? 'border-blue-500 bg-blue-50'
-            : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+            : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -259,7 +259,7 @@ export function InventoryUploadCard({
       >
         <label className="cursor-pointer block">
           <svg
-            className="mx-auto h-10 w-10 text-gray-400"
+            className="mx-auto h-10 w-10 text-slate-500"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -271,10 +271,10 @@ export function InventoryUploadCard({
               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
             />
           </svg>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-slate-400">
             {t('inventory.dragDropExcel')}
           </p>
-          <p className="mt-1 text-xs text-gray-500">XLSX</p>
+          <p className="mt-1 text-xs text-slate-500">XLSX</p>
           <input
             type="file"
             accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -285,7 +285,7 @@ export function InventoryUploadCard({
       </div>
 
       {/* Last Updated Info */}
-      <div className="mt-4 text-sm text-gray-500">
+      <div className="mt-4 text-sm text-slate-500">
         <p>{t('dataHub.inventory.lastUpload')}: {formatLastUpdated()}</p>
         {recordCount !== undefined && recordCount > 0 && (
           <p>{recordCount.toLocaleString()} {t('inventory.records', 'records')}</p>
@@ -302,7 +302,7 @@ export function InventoryUploadCard({
         {uploadState === 'parsing' && (
           <div className="text-center py-12">
             <LoadingSpinner size="lg" />
-            <p className="text-gray-600 mt-4">{t('inventory.parsing', 'Parsing file...')}</p>
+            <p className="text-slate-400 mt-4">{t('inventory.parsing', 'Parsing file...')}</p>
           </div>
         )}
 
@@ -311,17 +311,17 @@ export function InventoryUploadCard({
           <div className="space-y-4">
             {/* Stats Grid */}
             <div className="grid grid-cols-4 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('inventory.rows', 'Rows')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.row_count}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('inventory.rows', 'Rows')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.row_count}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('inventory.products', 'Products')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.product_count}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('inventory.products', 'Products')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.product_count}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3 col-span-2">
-                <div className="text-sm text-gray-500">{t('inventory.snapshotDate', 'Snapshot Date')}</div>
-                <div className="text-lg font-bold text-gray-900">{formatDateForDisplay(preview.snapshot_date)}</div>
+              <div className="bg-slate-900 rounded-lg p-3 col-span-2">
+                <div className="text-sm text-slate-500">{t('inventory.snapshotDate', 'Snapshot Date')}</div>
+                <div className="text-lg font-bold text-slate-200">{formatDateForDisplay(preview.snapshot_date)}</div>
               </div>
             </div>
 
@@ -399,7 +399,7 @@ export function InventoryUploadCard({
               </button>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -411,7 +411,7 @@ export function InventoryUploadCard({
         {uploadState === 'confirming' && (
           <div className="text-center py-12">
             <LoadingSpinner size="lg" />
-            <p className="text-gray-600 mt-4">{t('inventory.saving', 'Saving...')}</p>
+            <p className="text-slate-400 mt-4">{t('inventory.saving', 'Saving...')}</p>
           </div>
         )}
 
@@ -419,7 +419,7 @@ export function InventoryUploadCard({
         {uploadState === 'success' && result && (
           <div className="text-center py-8">
             <div className="text-5xl mb-4">✅</div>
-            <p className="text-gray-900 font-medium text-lg">
+            <p className="text-slate-200 font-medium text-lg">
               {t('inventory.recordsUpdated', { count: result.records_created })}
             </p>
             <button

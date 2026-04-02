@@ -144,11 +144,11 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
   return (
     <>
       {/* Card — always visible on the page */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+      <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+        <h3 className="text-lg font-semibold text-slate-200 mb-1">
           {t('dataHub.sales.title')}
         </h3>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-slate-500 mb-4">
           Ventas SAC (.csv, .xls, .xlsx)
         </p>
 
@@ -160,12 +160,12 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
           className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
             dragOver
               ? 'border-blue-500 bg-blue-50'
-              : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+              : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
           }`}
         >
           <label className="cursor-pointer block">
             <svg
-              className="mx-auto h-10 w-10 text-gray-400"
+              className="mx-auto h-10 w-10 text-slate-500"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -177,10 +177,10 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
                 d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
               />
             </svg>
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-slate-400">
               {t('dataHub.sales.dropzone')}
             </p>
-            <p className="mt-1 text-xs text-gray-500">CSV, XLS, XLSX</p>
+            <p className="mt-1 text-xs text-slate-500">CSV, XLS, XLSX</p>
             <input
               type="file"
               className="hidden"
@@ -196,7 +196,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
           </div>
         )}
 
-        <div className="mt-4 text-sm text-gray-500">
+        <div className="mt-4 text-sm text-slate-500">
           <p>{t('dataHub.sales.lastUpload')}: {formatLastUpdated()}</p>
           {recordCount !== undefined && recordCount > 0 && (
             <p>{recordCount.toLocaleString()} {t('dataHub.sales.salesCount')}</p>
@@ -214,7 +214,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
         {uploadState === 'parsing' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('dataHub.sales.parsing', 'Parsing file...')}</p>
+            <p className="mt-4 text-slate-400">{t('dataHub.sales.parsing', 'Parsing file...')}</p>
           </div>
         )}
 
@@ -223,21 +223,21 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
           <div className="space-y-4">
             {/* Stats Grid — 4 columns for modal space */}
             <div className="grid grid-cols-4 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.sales.rows', 'Rows')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.row_count}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.sales.rows', 'Rows')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.row_count}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.sales.totalM2', 'Total m\u00B2')}</div>
-                <div className="text-lg font-bold text-gray-900">{(preview.total_m2 ?? 0).toLocaleString()}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.sales.totalM2', 'Total m\u00B2')}</div>
+                <div className="text-lg font-bold text-slate-200">{(preview.total_m2 ?? 0).toLocaleString()}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.sales.customers', 'Customers')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.unique_customers}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.sales.customers', 'Customers')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.unique_customers}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.sales.dateRange', 'Date Range')}</div>
-                <div className="text-sm font-bold text-gray-900">
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.sales.dateRange', 'Date Range')}</div>
+                <div className="text-sm font-bold text-slate-200">
                   {preview.date_range_start} – {preview.date_range_end}
                 </div>
               </div>
@@ -288,7 +288,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
                     {showUnmatched ? '\u25BC' : '\u25B6'} {preview.unmatched_products.length} {t('dataHub.sales.unmatchedProducts', 'unmatched products')}
                   </button>
                   {showUnmatched && (
-                    <div className="mt-2 bg-white rounded p-2 text-xs text-gray-700">
+                    <div className="mt-2 bg-slate-800 rounded p-2 text-xs text-slate-300">
                       {preview.unmatched_products.map((product, i) => (
                         <div key={i} className="py-0.5">{'\u2022'} {product}</div>
                       ))}
@@ -319,7 +319,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
             {/* Sample Rows Table — no inline max-h, modal handles scrolling */}
             <div className="overflow-auto">
               <table className="w-full text-sm">
-                <thead className="bg-gray-100">
+                <thead className="bg-slate-700">
                   <tr>
                     <th className="px-2 py-1 text-left">SKU</th>
                     <th className="px-2 py-1 text-left">{t('dataHub.sales.date', 'Date')}</th>
@@ -333,7 +333,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
                       <td className="px-2 py-1">{row.sku}</td>
                       <td className="px-2 py-1">{row.sale_date}</td>
                       <td className="px-2 py-1 text-right">{row.quantity_m2}</td>
-                      <td className="px-2 py-1 text-gray-500">{row.customer || '\u2014'}</td>
+                      <td className="px-2 py-1 text-slate-500">{row.customer || '\u2014'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -350,7 +350,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
               </button>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -362,7 +362,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
         {uploadState === 'confirming' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('dataHub.sales.saving', 'Saving...')}</p>
+            <p className="mt-4 text-slate-400">{t('dataHub.sales.saving', 'Saving...')}</p>
           </div>
         )}
 

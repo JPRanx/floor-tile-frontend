@@ -215,8 +215,8 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+    <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
+      <h3 className="text-lg font-semibold text-slate-200 mb-4">
         {t('dataHub.production.title', 'Production Schedule')}
       </h3>
 
@@ -232,12 +232,12 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
                 ? 'border-blue-500 bg-blue-50'
                 : file
                 ? 'border-green-500 bg-green-50'
-                : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+                : 'border-slate-600 hover:border-blue-400 hover:bg-slate-900'
             }`}
           >
             <label className="cursor-pointer block">
               <svg
-                className="mx-auto h-10 w-10 text-gray-400"
+                className="mx-auto h-10 w-10 text-slate-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -249,10 +249,10 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
               </svg>
-              <p className="mt-2 text-sm text-gray-600">
+              <p className="mt-2 text-sm text-slate-400">
                 {t('dataHub.production.dropzone', 'Drag and drop Excel file or click to browse')}
               </p>
-              <p className="mt-1 text-xs text-gray-500">XLSX, XLS</p>
+              <p className="mt-1 text-xs text-slate-500">XLSX, XLS</p>
               <input
                 type="file"
                 className="hidden"
@@ -268,7 +268,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
             </div>
           )}
 
-          <div className="mt-4 text-sm text-gray-500">
+          <div className="mt-4 text-sm text-slate-500">
             <p>{t('dataHub.production.lastUpload', 'Last upload')}: {formatLastUpdated()}</p>
             {recordCount !== undefined && recordCount > 0 && (
               <p>{recordCount.toLocaleString()} {t('dataHub.production.itemsCount', 'schedule items')}</p>
@@ -287,7 +287,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
         {uploadState === 'parsing' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('dataHub.production.parsing', 'Parsing schedule...')}</p>
+            <p className="mt-4 text-slate-400">{t('dataHub.production.parsing', 'Parsing schedule...')}</p>
           </div>
         )}
 
@@ -296,21 +296,21 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
           <div className="space-y-4">
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.production.items', 'Items')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.total_rows}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.production.items', 'Items')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.total_rows}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.production.matched', 'Matched')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.matched_to_products}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.production.matched', 'Matched')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.matched_to_products}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.production.unmatched', 'Unmatched')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.unmatched_count}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.production.unmatched', 'Unmatched')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.unmatched_count}</div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="text-sm text-gray-500">{t('dataHub.production.totalM2Requested', 'Total m² Requested')}</div>
-                <div className="text-lg font-bold text-gray-900">{preview.total_requested_m2.toLocaleString()}</div>
+              <div className="bg-slate-900 rounded-lg p-3">
+                <div className="text-sm text-slate-500">{t('dataHub.production.totalM2Requested', 'Total m² Requested')}</div>
+                <div className="text-lg font-bold text-slate-200">{preview.total_requested_m2.toLocaleString()}</div>
               </div>
             </div>
 
@@ -412,7 +412,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
               </button>
               <button
                 onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
               >
                 {t('common.cancel', 'Cancel')}
               </button>
@@ -424,7 +424,7 @@ export function ProductionUploadCard({ lastUpdated, recordCount, onUploadSuccess
         {uploadState === 'confirming' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-gray-600">{t('dataHub.production.replacing', 'Replacing schedule...')}</p>
+            <p className="mt-4 text-slate-400">{t('dataHub.production.replacing', 'Replacing schedule...')}</p>
           </div>
         )}
 
