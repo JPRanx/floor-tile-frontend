@@ -279,12 +279,12 @@ export function Dashboard() {
                       {product.sku}
                       {!product.active && (
                         <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-600/50 text-slate-400 border border-slate-500/30">
-                          {t('dashboard.inactive', 'INACTIVE')}
+                          {t('dashboard.inactive', 'INACTIVO')}
                         </span>
                       )}
                       {liquidationIds.has(product.product_id) && (
                         <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                          LIQUIDATION
+                          {t('products.liquidation', 'LIQUIDACIÓN')}
                         </span>
                       )}
                     </div>

@@ -9,10 +9,10 @@ const CATEGORY_LABELS: Record<Category, string> = {
   MADERAS: 'Maderas',
   EXTERIORES: 'Exteriores',
   MARMOLIZADOS: 'Marmolizados',
-  OTHER: 'Other',
-  FURNITURE: 'Furniture',
-  SINK: 'Sink',
-  SURCHARGE: 'Surcharge',
+  OTHER: 'Otros',
+  FURNITURE: 'Muebles',
+  SINK: 'Lavamanos',
+  SURCHARGE: 'Recargos',
 };
 
 export function ProductManagement() {
@@ -197,10 +197,10 @@ export function ProductManagement() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-white">Product Management</h1>
+            <h1 className="text-3xl font-bold text-white">Productos</h1>
             <p className="text-slate-400 mt-1">
-              {total} products total ({products.filter((p) => p.active).length} active,{' '}
-              {products.filter((p) => !p.active).length} inactive)
+              {total} productos ({products.filter((p) => p.active).length} activos,{' '}
+              {products.filter((p) => !p.active).length} inactivos)
             </p>
           </div>
         </div>
@@ -219,7 +219,7 @@ export function ProductManagement() {
             <div className="flex-1 min-w-[200px] max-w-md">
               <input
                 type="text"
-                placeholder="Search by SKU..."
+                placeholder="Buscar por SKU..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
@@ -238,20 +238,20 @@ export function ProductManagement() {
                   }}
                   className="w-4 h-4 rounded bg-slate-700 border-slate-600 text-blue-500 focus:ring-blue-500"
                 />
-                Show Inactive
+                Mostrar Inactivos
               </label>
             </div>
 
             {/* Bulk Actions */}
             {selectedIds.size > 0 && (
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 text-sm">{selectedIds.size} selected</span>
+                <span className="text-slate-400 text-sm">{selectedIds.size} seleccionados</span>
                 {getSelectedActiveCount() > 0 && (
                   <button
                     onClick={handleBulkDeactivate}
                     className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-sm rounded-lg transition-colors"
                   >
-                    Deactivate ({getSelectedActiveCount()})
+                    Desactivar ({getSelectedActiveCount()})
                   </button>
                 )}
                 {getSelectedInactiveCount() > 0 && (
@@ -259,14 +259,14 @@ export function ProductManagement() {
                     onClick={handleBulkReactivate}
                     className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
                   >
-                    Reactivate ({getSelectedInactiveCount()})
+                    Reactivar ({getSelectedInactiveCount()})
                   </button>
                 )}
                 <button
                   onClick={clearSelection}
                   className="px-3 py-1.5 bg-slate-600 hover:bg-slate-500 text-white text-sm rounded-lg transition-colors"
                 >
-                  Clear
+                  Limpiar
                 </button>
               </div>
             )}
@@ -289,13 +289,13 @@ export function ProductManagement() {
                   />
                 </th>
                 <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">SKU</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Category</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Rotation</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Categoría</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Rotación</th>
                 <th className="px-4 py-3 text-center text-sm font-semibold text-slate-300">Tier</th>
-                <th className="px-4 py-3 text-center text-sm font-semibold text-slate-300">Status</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Reason</th>
-                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Date</th>
-                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Actions</th>
+                <th className="px-4 py-3 text-center text-sm font-semibold text-slate-300">Estado</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Razón</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold text-slate-300">Fecha</th>
+                <th className="px-4 py-3 text-right text-sm font-semibold text-slate-300">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700">
@@ -339,11 +339,11 @@ export function ProductManagement() {
                   <td className="px-4 py-3 text-center">
                     {product.active ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-900/50 text-emerald-400 border border-emerald-500/30">
-                        Active
+                        Activo
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900/50 text-red-400 border border-red-500/30">
-                        Inactive
+                        Inactivo
                       </span>
                     )}
                   </td>
@@ -361,14 +361,14 @@ export function ProductManagement() {
                         onClick={() => handleDeactivate(product)}
                         className="px-3 py-1 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 text-sm rounded border border-amber-500/30 transition-colors"
                       >
-                        Deactivate
+                        Desactivar
                       </button>
                     ) : (
                       <button
                         onClick={() => handleReactivate(product)}
                         className="px-3 py-1 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 text-sm rounded border border-emerald-500/30 transition-colors"
                       >
-                        Reactivate
+                        Reactivar
                       </button>
                     )}
                   </td>
@@ -377,7 +377,7 @@ export function ProductManagement() {
               {filteredProducts.length === 0 && (
                 <tr>
                   <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
-                    No products found
+                    No se encontraron productos
                   </td>
                 </tr>
               )}
@@ -389,7 +389,7 @@ export function ProductManagement() {
         {totalPages > 1 && (
           <div className="mt-4 flex justify-between items-center">
             <p className="text-slate-400 text-sm">
-              Page {page} of {totalPages}
+              Página {page} de {totalPages}
             </p>
             <div className="flex gap-2">
               <button
@@ -397,14 +397,14 @@ export function ProductManagement() {
                 disabled={page === 1}
                 className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg transition-colors"
               >
-                Previous
+                Anterior
               </button>
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
                 className="px-4 py-2 bg-slate-700 hover:bg-slate-600 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-lg transition-colors"
               >
-                Next
+                Siguiente
               </button>
             </div>
           </div>
@@ -422,27 +422,27 @@ export function ProductManagement() {
           <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
             <div className="bg-slate-800 rounded-xl p-6 w-full max-w-md mx-4 border border-slate-700">
               <h2 className="text-xl font-bold text-white mb-4">
-                {modalMode === 'deactivate' ? 'Deactivate Product(s)' : 'Reactivate Product(s)'}
+                {modalMode === 'deactivate' ? 'Desactivar Producto(s)' : 'Reactivar Producto(s)'}
               </h2>
 
               {modalProduct ? (
                 <p className="text-slate-300 mb-4">
                   {modalMode === 'deactivate'
-                    ? `Are you sure you want to deactivate "${modalProduct.sku}"?`
-                    : `Are you sure you want to reactivate "${modalProduct.sku}"?`}
+                    ? `¿Desactivar "${modalProduct.sku}"?`
+                    : `¿Reactivar "${modalProduct.sku}"?`}
                 </p>
               ) : (
                 <p className="text-slate-300 mb-4">
                   {modalMode === 'deactivate'
-                    ? `You are about to deactivate ${getSelectedActiveCount()} product(s).`
-                    : `You are about to reactivate ${getSelectedInactiveCount()} product(s).`}
+                    ? `Vas a desactivar ${getSelectedActiveCount()} producto(s).`
+                    : `Vas a reactivar ${getSelectedInactiveCount()} producto(s).`}
                 </p>
               )}
 
               {modalMode === 'deactivate' && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Reason for Deactivation
+                    Razón de Desactivación
                   </label>
                   <select
                     value={selectedReason}
@@ -464,7 +464,7 @@ export function ProductManagement() {
                   disabled={processingAction}
                   className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white rounded-lg transition-colors disabled:opacity-50"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   onClick={confirmAction}
@@ -478,12 +478,12 @@ export function ProductManagement() {
                   {processingAction ? (
                     <span className="flex items-center gap-2">
                       <LoadingSpinner size="sm" />
-                      Processing...
+                      Procesando...
                     </span>
                   ) : modalMode === 'deactivate' ? (
-                    'Deactivate'
+                    'Desactivar'
                   ) : (
-                    'Reactivate'
+                    'Reactivar'
                   )}
                 </button>
               </div>
