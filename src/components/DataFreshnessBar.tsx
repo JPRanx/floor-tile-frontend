@@ -41,27 +41,27 @@ function FreshnessItem({ icon, label, lastUpdated, status }: FreshnessItemProps)
         return {
           icon: '✓',
           text: t('dataHub.fresh'),
-          bgColor: 'bg-green-50',
-          borderColor: 'border-green-200',
-          textColor: 'text-green-700',
-          iconColor: 'text-green-500',
+          bgColor: 'bg-emerald-500/10',
+          borderColor: 'border-emerald-500/30',
+          textColor: 'text-emerald-400',
+          iconColor: 'text-emerald-500',
         };
       case 'stale':
         return {
           icon: '⚠️',
           text: t('dataHub.stale'),
-          bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200',
-          textColor: 'text-yellow-700',
-          iconColor: 'text-yellow-500',
+          bgColor: 'bg-amber-500/10',
+          borderColor: 'border-amber-500/30',
+          textColor: 'text-amber-400',
+          iconColor: 'text-amber-500',
         };
       case 'very_stale':
         return {
           icon: '❌',
           text: t('dataHub.veryStale'),
-          bgColor: 'bg-red-50',
-          borderColor: 'border-red-200',
-          textColor: 'text-red-700',
+          bgColor: 'bg-red-500/10',
+          borderColor: 'border-red-500/30',
+          textColor: 'text-red-400',
           iconColor: 'text-red-500',
         };
     }
