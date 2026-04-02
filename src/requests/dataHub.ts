@@ -41,6 +41,7 @@ export interface SACUploadResponse {
 }
 
 export interface SACPreviewRow {
+  raw_sku: string;
   sku: string;
   sale_date: string;
   quantity_m2: number;
