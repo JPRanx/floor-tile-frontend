@@ -274,17 +274,15 @@ export function InventoryUploadCard({
               <table className="w-full text-sm">
                 <thead className="bg-slate-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Producto</th>
                     <th className="px-3 py-2 text-right text-xs text-slate-400">Bodega m²</th>
-                    <th className="px-3 py-2 text-right text-xs text-slate-400">En tránsito m²</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-700/50">
                   {preview.rows.map((row, i) => (
                     <tr key={i} className="hover:bg-slate-700/30">
-                      <td className="px-3 py-1.5 text-slate-200">{row.sku}</td>
+                      <td className="px-3 py-1.5 text-slate-200 font-medium">{row.sku}</td>
                       <td className="px-3 py-1.5 text-right text-slate-300">{row.warehouse_qty.toLocaleString()}</td>
-                      <td className="px-3 py-1.5 text-right text-slate-300">{row.in_transit_qty.toLocaleString()}</td>
                     </tr>
                   ))}
                 </tbody>
