@@ -8,13 +8,13 @@ interface UploadHistoryProps {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  sales: 'bg-blue-100 text-blue-700',
-  inventory: 'bg-green-100 text-green-700',
-  siesa: 'bg-emerald-100 text-emerald-700',
-  boats: 'bg-purple-100 text-purple-700',
-  in_transit: 'bg-amber-100 text-amber-700',
-  production_schedule: 'bg-indigo-100 text-indigo-700',
-  shipment_pdf: 'bg-pink-100 text-pink-700',
+  sales: 'bg-blue-500/15 text-blue-400 border border-blue-500/30',
+  inventory: 'bg-green-500/15 text-green-400 border border-green-500/30',
+  siesa: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+  boats: 'bg-purple-500/15 text-purple-400 border border-purple-500/30',
+  in_transit: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+  production_schedule: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30',
+  shipment_pdf: 'bg-pink-500/15 text-pink-400 border border-pink-500/30',
 };
 
 function formatDate(iso: string): string {
