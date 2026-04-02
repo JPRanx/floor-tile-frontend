@@ -4,9 +4,10 @@ interface UploadPreviewModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  wide?: boolean;
 }
 
-export function UploadPreviewModal({ isOpen, onClose, title, children }: UploadPreviewModalProps) {
+export function UploadPreviewModal({ isOpen, onClose, title, children, wide }: UploadPreviewModalProps) {
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -42,7 +43,7 @@ export function UploadPreviewModal({ isOpen, onClose, title, children }: UploadP
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className="relative bg-slate-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <div className={`relative bg-slate-800 rounded-lg shadow-xl w-full max-h-[90vh] flex flex-col ${wide ? 'max-w-7xl' : 'max-w-4xl'}`}>
           {/* Sticky Header */}
           <div className="flex items-center justify-between p-5 border-b border-slate-700 flex-shrink-0">
             <h2 className="text-lg font-semibold text-slate-200">{title}</h2>

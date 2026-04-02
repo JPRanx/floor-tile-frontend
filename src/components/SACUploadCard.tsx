@@ -209,151 +209,113 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
         isOpen={modalOpen}
         onClose={handleModalClose}
         title={t('dataHub.sales.title')}
+        wide={uploadState === 'preview'}
       >
         {/* Parsing State */}
         {uploadState === 'parsing' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-slate-400">{t('dataHub.sales.parsing', 'Parsing file...')}</p>
+            <p className="mt-4 text-slate-400">Analizando archivo...</p>
           </div>
         )}
 
-        {/* Preview State */}
+        {/* Preview State — Dual Pane */}
         {uploadState === 'preview' && preview && (
-          <div className="space-y-4">
-            {/* Stats Grid — 4 columns for modal space */}
-            <div className="grid grid-cols-4 gap-3">
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.sales.rows', 'Rows')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.row_count}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.sales.totalM2', 'Total m\u00B2')}</div>
-                <div className="text-lg font-bold text-slate-200">{(preview.total_m2 ?? 0).toLocaleString()}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.sales.customers', 'Customers')}</div>
-                <div className="text-lg font-bold text-slate-200">{preview.unique_customers}</div>
-              </div>
-              <div className="bg-slate-900 rounded-lg p-3">
-                <div className="text-sm text-slate-500">{t('dataHub.sales.dateRange', 'Date Range')}</div>
-                <div className="text-sm font-bold text-slate-200">
-                  {preview.date_range_start} – {preview.date_range_end}
-                </div>
-              </div>
-            </div>
-
-            {/* Match Stats Section */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="text-sm font-semibold text-blue-900 mb-3">
-                {t('dataHub.sales.matchStats', 'Match Statistics')}
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="text-green-700">
-                    <span className="mr-2">{'\u2705'}</span>
-                    {t('dataHub.sales.matchedBySacSku', 'Matched by SAC SKU')}
-                  </span>
-                  <span className="font-bold text-green-900">{preview.matched_by_sac_sku}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-amber-700">
-                    <span className="mr-2">{'\u26A0\uFE0F'}</span>
-                    {t('dataHub.sales.matchedByName', 'Matched by name')}
-                  </span>
-                  <span className="font-bold text-amber-900">{preview.matched_by_name}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-red-700">
-                    <span className="mr-2">{'\u274C'}</span>
-                    {t('dataHub.sales.unmatched', 'Unmatched')}
-                  </span>
-                  <span className="font-bold text-red-900">{preview.unmatched_count}</span>
-                </div>
-                <div className="flex items-center justify-between border-t border-blue-300 pt-2 mt-2">
-                  <span className="text-blue-900 font-medium">
-                    {t('dataHub.sales.matchRate', 'Match Rate')}
-                  </span>
-                  <span className="font-bold text-blue-900">{preview.match_rate_pct}%</span>
-                </div>
-              </div>
-
-              {/* Unmatched Products Expandable List */}
-              {preview.unmatched_products.length > 0 && (
-                <div className="mt-3 pt-3 border-t border-blue-300">
-                  <button
-                    onClick={() => setShowUnmatched(!showUnmatched)}
-                    className="text-sm text-blue-700 hover:text-blue-900 font-medium"
-                  >
-                    {showUnmatched ? '\u25BC' : '\u25B6'} {preview.unmatched_products.length} {t('dataHub.sales.unmatchedProducts', 'unmatched products')}
-                  </button>
-                  {showUnmatched && (
-                    <div className="mt-2 bg-slate-800 rounded p-2 text-xs text-slate-300">
-                      {preview.unmatched_products.map((product, i) => (
-                        <div key={i} className="py-0.5">{'\u2022'} {product}</div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Skipped Non-Tile Warning */}
-              {preview.skipped_non_tile > 0 && (
-                <div className="mt-3 pt-3 border-t border-blue-300 text-sm text-amber-700">
-                  <span className="mr-2">{'\u26A0\uFE0F'}</span>
-                  {preview.skipped_non_tile} {t('dataHub.sales.nonTileFiltered', 'non-tile products filtered')}
-                </div>
-              )}
-            </div>
-
-            {/* Warnings Section */}
-            {preview.warnings.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                <div className="text-sm font-medium text-amber-800">{t('dataHub.sales.warnings', 'Warnings')}</div>
-                {preview.warnings.map((w, i) => (
-                  <div key={i} className="text-sm text-amber-700 mt-1">{'\u2022'} {w}</div>
-                ))}
-              </div>
-            )}
-
-            {/* Sample Rows Table — no inline max-h, modal handles scrolling */}
-            <div className="overflow-auto">
+          <div className="flex gap-6 min-h-0">
+            {/* Left: Parsed rows */}
+            <div className="flex-1 min-w-0 overflow-auto max-h-[65vh]">
               <table className="w-full text-sm">
-                <thead className="bg-slate-700">
+                <thead className="bg-slate-700 sticky top-0 z-10">
                   <tr>
-                    <th className="px-2 py-1 text-left">SKU</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.sales.date', 'Date')}</th>
-                    <th className="px-2 py-1 text-right">m²</th>
-                    <th className="px-2 py-1 text-left">{t('dataHub.sales.customer', 'Customer')}</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">SKU</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Fecha</th>
+                    <th className="px-3 py-2 text-right text-xs text-slate-400">m²</th>
+                    <th className="px-3 py-2 text-left text-xs text-slate-400">Cliente</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-slate-700/50">
                   {preview.sample_rows.map((row, i) => (
-                    <tr key={i}>
-                      <td className="px-2 py-1">{row.sku}</td>
-                      <td className="px-2 py-1">{row.sale_date}</td>
-                      <td className="px-2 py-1 text-right">{row.quantity_m2}</td>
-                      <td className="px-2 py-1 text-slate-500">{row.customer || '\u2014'}</td>
+                    <tr key={i} className="hover:bg-slate-700/30">
+                      <td className="px-3 py-1.5 text-slate-200 font-medium">{row.sku}</td>
+                      <td className="px-3 py-1.5 text-slate-400">{row.sale_date}</td>
+                      <td className="px-3 py-1.5 text-right text-slate-300">{row.quantity_m2}</td>
+                      <td className="px-3 py-1.5 text-slate-500 truncate max-w-[200px]">{row.customer || '\u2014'}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Confirm / Cancel Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleConfirm}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-              >
-                {t('dataHub.sales.confirm', 'Confirm Upload')}
-              </button>
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 bg-gray-200 text-slate-300 rounded-lg hover:bg-gray-300"
-              >
-                {t('common.cancel', 'Cancel')}
-              </button>
+            {/* Right: Summary + Confirm */}
+            <div className="w-72 shrink-0 flex flex-col gap-4">
+              {/* Summary stats */}
+              <div className="space-y-3">
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Filas</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.row_count}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Total m²</div>
+                  <div className="text-xl font-bold text-slate-200">{(preview.total_m2 ?? 0).toLocaleString()}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Clientes</div>
+                  <div className="text-xl font-bold text-slate-200">{preview.unique_customers}</div>
+                </div>
+                <div className="bg-slate-900 rounded-lg p-3">
+                  <div className="text-xs text-slate-500">Rango de fechas</div>
+                  <div className="text-sm font-bold text-slate-200">{preview.date_range_start} – {preview.date_range_end}</div>
+                </div>
+              </div>
+
+              {/* Warnings — only if problems */}
+              {preview.unmatched_count > 0 && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                  <div className="text-sm text-red-400 font-medium">{preview.unmatched_count} sin match</div>
+                  <button
+                    onClick={() => setShowUnmatched(!showUnmatched)}
+                    className="text-xs text-red-400/70 hover:text-red-300 mt-1"
+                  >
+                    {showUnmatched ? '\u25BC' : '\u25B6'} ver detalles
+                  </button>
+                  {showUnmatched && (
+                    <div className="mt-2 text-xs text-slate-400 space-y-0.5">
+                      {preview.unmatched_products.map((p, i) => (
+                        <div key={i}>{'\u2022'} {p}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {preview.warnings.length > 0 && (
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
+                  {preview.warnings.map((w, i) => (
+                    <div key={i} className="text-xs text-amber-400">{'\u2022'} {w}</div>
+                  ))}
+                </div>
+              )}
+
+              {/* Match rate — compact */}
+              <div className="text-xs text-slate-500 text-center">
+                {preview.match_rate_pct}% match rate
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2 mt-auto">
+                <button
+                  onClick={handleConfirm}
+                  className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={handleCancel}
+                  className="w-full px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 text-sm"
+                >
+                  Cancelar
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -362,37 +324,31 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
         {uploadState === 'confirming' && (
           <div className="py-8 text-center">
             <LoadingSpinner size="lg" />
-            <p className="mt-4 text-slate-400">{t('dataHub.sales.saving', 'Saving...')}</p>
+            <p className="mt-4 text-slate-400">Guardando...</p>
           </div>
         )}
 
         {/* Success State */}
         {uploadState === 'success' && result && (
           <>
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-1">
-                  <h4 className="font-medium text-green-800">{t('dataHub.sales.successTitle', 'Upload Successful')}</h4>
-                  <div className="mt-2 space-y-1 text-sm text-green-700">
-                    <p>{result.created} {t('dataHub.sales.recordsCreated', 'records created')}</p>
-                    {result.deleted > 0 && (
-                      <p>{result.deleted} {t('dataHub.sales.recordsDeleted', 'records replaced')}</p>
-                    )}
-                    {result.date_range_start && result.date_range_end && (
-                      <p>{result.date_range_start} – {result.date_range_end}</p>
-                    )}
-                    <p className="font-medium text-green-800">
-                      {result.unique_customers} {t('dataHub.sales.uniqueCustomers', 'unique customers')} · {(result.total_m2_sold ?? 0).toLocaleString()} m²
-                    </p>
-                  </div>
-                </div>
+            <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+              <h4 className="font-medium text-emerald-400">Carga exitosa</h4>
+              <div className="mt-2 space-y-1 text-sm text-emerald-300/80">
+                <p>{result.created} registros creados</p>
+                {result.deleted > 0 && <p>{result.deleted} registros reemplazados</p>}
+                {result.date_range_start && result.date_range_end && (
+                  <p>{result.date_range_start} – {result.date_range_end}</p>
+                )}
+                <p className="font-medium text-emerald-400">
+                  {result.unique_customers} clientes · {(result.total_m2_sold ?? 0).toLocaleString()} m²
+                </p>
               </div>
             </div>
             <button
               onClick={handleReset}
-              className="mt-4 w-full px-4 py-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100"
+              className="mt-4 w-full px-4 py-2 text-sm font-medium text-slate-300 bg-slate-700 rounded-lg hover:bg-slate-600"
             >
-              {t('dataHub.uploadAnother', 'Upload Another')}
+              Cerrar
             </button>
           </>
         )}
@@ -400,7 +356,7 @@ export function SACUploadCard({ lastUpdated, recordCount, onUploadSuccess }: SAC
         {/* Error State */}
         {uploadState === 'error' && (
           <ParseDiagnosticPanel
-            errorMessage={errorMessage || t('dataHub.uploadFailed', 'Upload Failed')}
+            errorMessage={errorMessage || 'Error en la carga'}
             missingColumns={missingColumns}
             foundColumns={foundColumns}
             onRetry={handleReset}
