@@ -86,7 +86,7 @@ export function HorizonBoat() {
         setProducts(rows);
         if (hasDraft) setSaved(true); // She already saved before
       })
-      .catch((err) => setError(err?.message || 'Failed to load boat'))
+      .catch((err) => setError(err?.message || 'Error al cargar barco'))
       .finally(() => setLoading(false));
   }, [factoryId, boatId]);
 
@@ -128,7 +128,7 @@ export function HorizonBoat() {
       });
       navigate('/horizon');
     } catch {
-      setError('Failed to save');
+      setError('Error al guardar');
     }
   };
 
@@ -160,7 +160,7 @@ export function HorizonBoat() {
       });
       setSaved(true);
     } catch {
-      setError('Failed to save draft');
+      setError('Error al guardar borrador');
     } finally {
       setSaving(false);
     }
@@ -190,7 +190,7 @@ export function HorizonBoat() {
         await draftsApi.updateStatus(data.boat.draft_id, 'ordered');
       }
     } catch {
-      setError('Failed to export');
+      setError('Error al exportar');
     }
   };
 

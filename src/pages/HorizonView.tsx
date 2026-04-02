@@ -111,7 +111,7 @@ export function HorizonView() {
       if (list.length > 0) {
         setFactoryId(list[0].id);
       }
-    }).catch(() => setError('Failed to load factories'));
+    }).catch(() => setError('Error al cargar fábricas'));
   }, []);
 
   // Load horizon when factory changes
@@ -121,7 +121,7 @@ export function HorizonView() {
     setError(null);
     horizonApi.getHorizon(factoryId)
       .then(setData)
-      .catch((err) => setError(err?.message || 'Failed to load horizon'))
+      .catch((err) => setError(err?.message || 'Error al cargar horizonte'))
       .finally(() => setLoading(false));
   };
 
