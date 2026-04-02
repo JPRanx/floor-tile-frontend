@@ -37,89 +37,91 @@ export function DataHub() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">{t('dataHub.title')}</h1>
-        <p className="text-gray-600">{t('dataHub.subtitle')}</p>
-      </div>
-
-      {/* System Health Bar */}
-      <DataFreshnessBar key={refreshKey} />
-
-      {/* Sales Section */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">{t('dataHub.sections.sales')}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SACUploadCard
-            lastUpdated={freshness?.sales.last_updated}
-            recordCount={freshness?.sales.record_count}
-            onUploadSuccess={handleUploadSuccess}
-          />
+    <div className="min-h-screen bg-slate-900 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Page Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-white">{t('dataHub.title')}</h1>
+          <p className="text-slate-400">{t('dataHub.subtitle')}</p>
         </div>
-      </div>
 
-      {/* Inventory Section */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">{t('dataHub.sections.inventory')}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <InventoryUploadCard
-            lastUpdated={freshness?.inventory.last_updated}
-            recordCount={freshness?.inventory.record_count}
-            onUploadSuccess={handleUploadSuccess}
-          />
-          <SIESAUploadCard
-            lastUpdated={freshness?.inventory.last_updated}
-            recordCount={freshness?.inventory.record_count}
-            onUploadSuccess={handleUploadSuccess}
-          />
-          <InTransitUploadCard
-            onUploadSuccess={handleUploadSuccess}
-          />
-          <UnfulfilledDemandCard
-            onUploadSuccess={handleUploadSuccess}
-          />
-          <CommittedOrdersCard
-            onUploadSuccess={handleUploadSuccess}
-          />
+        {/* System Health Bar */}
+        <DataFreshnessBar key={refreshKey} />
+
+        {/* Sales Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3">{t('dataHub.sections.sales')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <SACUploadCard
+              lastUpdated={freshness?.sales.last_updated}
+              recordCount={freshness?.sales.record_count}
+              onUploadSuccess={handleUploadSuccess}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Logistics Section */}
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-3">{t('dataHub.sections.logistics')}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <BoatUploadCard
-            lastUpdated={freshness?.boats.last_updated}
-            recordCount={freshness?.boats.record_count}
-            onUploadSuccess={handleUploadSuccess}
-          />
-          <ProductionUploadCard
-            onUploadSuccess={handleUploadSuccess}
-          />
-          <ShipmentUploadCard
-            onSuccess={handleUploadSuccess}
-            onUploadSuccess={handleUploadSuccess}
-          />
+        {/* Inventory Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3">{t('dataHub.sections.inventory')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <InventoryUploadCard
+              lastUpdated={freshness?.inventory.last_updated}
+              recordCount={freshness?.inventory.record_count}
+              onUploadSuccess={handleUploadSuccess}
+            />
+            <SIESAUploadCard
+              lastUpdated={freshness?.inventory.last_updated}
+              recordCount={freshness?.inventory.record_count}
+              onUploadSuccess={handleUploadSuccess}
+            />
+            <InTransitUploadCard
+              onUploadSuccess={handleUploadSuccess}
+            />
+            <UnfulfilledDemandCard
+              onUploadSuccess={handleUploadSuccess}
+            />
+            <CommittedOrdersCard
+              onUploadSuccess={handleUploadSuccess}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Upload History */}
-      <UploadHistory refreshKey={refreshKey} />
+        {/* Logistics Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-slate-200 mb-3">{t('dataHub.sections.logistics')}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <BoatUploadCard
+              lastUpdated={freshness?.boats.last_updated}
+              recordCount={freshness?.boats.record_count}
+              onUploadSuccess={handleUploadSuccess}
+            />
+            <ProductionUploadCard
+              onUploadSuccess={handleUploadSuccess}
+            />
+            <ShipmentUploadCard
+              onSuccess={handleUploadSuccess}
+              onUploadSuccess={handleUploadSuccess}
+            />
+          </div>
+        </div>
 
-      {/* Help Section */}
-      <div className="bg-blue-50 rounded-lg border border-blue-200 p-6">
-        <h3 className="font-medium text-blue-900">{t('dataHub.help.title')}</h3>
-        <div className="mt-3 space-y-2 text-sm text-blue-800">
-          <p>
-            <strong>{t('dataHub.sales.title')}:</strong> {t('dataHub.help.sacDescription')}
-          </p>
-          <p>
-            <strong>{t('dataHub.inventory.title')}:</strong> {t('dataHub.help.siesaDescription')}
-          </p>
-          <p>
-            <strong>{t('dataHub.sections.logistics')}:</strong> {t('dataHub.help.productionDescription')}
-          </p>
+        {/* Upload History */}
+        <UploadHistory refreshKey={refreshKey} />
+
+        {/* Help Section */}
+        <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
+          <h3 className="font-medium text-slate-200">{t('dataHub.help.title')}</h3>
+          <div className="mt-3 space-y-2 text-sm text-slate-400">
+            <p>
+              <strong className="text-slate-300">{t('dataHub.sales.title')}:</strong> {t('dataHub.help.sacDescription')}
+            </p>
+            <p>
+              <strong className="text-slate-300">{t('dataHub.inventory.title')}:</strong> {t('dataHub.help.siesaDescription')}
+            </p>
+            <p>
+              <strong className="text-slate-300">{t('dataHub.sections.logistics')}:</strong> {t('dataHub.help.productionDescription')}
+            </p>
+          </div>
         </div>
       </div>
     </div>

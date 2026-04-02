@@ -21,7 +21,7 @@ export function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers'].includes(location.pathname);
+  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers', '/data-hub'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
