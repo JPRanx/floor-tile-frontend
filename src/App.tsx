@@ -15,6 +15,7 @@ import { FactoryRequestBuilder } from './pages/FactoryRequestBuilder';
 import { HorizonView } from './pages/HorizonView';
 import { HorizonBoat } from './pages/HorizonBoat';
 import { CustomerProfiles } from './pages/CustomerProfiles';
+import { Users } from './pages/Users';
 
 function App() {
   return (
@@ -40,6 +41,7 @@ function App() {
                   <Route path="/customers" element={<CustomerProfiles />} />
                   <Route path="/products" element={<ProductManagement />} />
                   <Route path="/config" element={<ConfigPage />} />
+                  <Route path="/users" element={<Users />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

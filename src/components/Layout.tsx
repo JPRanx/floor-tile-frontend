@@ -14,6 +14,7 @@ const navItems = [
   { path: '/customers', labelKey: 'nav.customers' },
   { path: '/data-hub', labelKey: 'nav.dataHub' },
   { path: '/products', labelKey: 'nav.products' },
+  { path: '/users', labelKey: 'nav.users' },
 ];
 
 export function Layout({ children }: LayoutProps) {
@@ -29,7 +30,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers', '/data-hub'].includes(location.pathname);
+  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers', '/data-hub', '/users'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
@@ -93,7 +94,7 @@ export function Layout({ children }: LayoutProps) {
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                {t('nav.signOut', 'Cerrar sesión')}
+                {t('nav.signOut')}
               </button>
             </div>
 
@@ -155,7 +156,7 @@ export function Layout({ children }: LayoutProps) {
                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                 }`}
               >
-                {t('nav.signOut', 'Cerrar sesión')}
+                {t('nav.signOut')}
               </button>
             </nav>
           </div>

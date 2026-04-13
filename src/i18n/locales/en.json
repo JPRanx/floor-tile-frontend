@@ -46,6 +46,8 @@
     "intelligence": "Intelligence",
     "customers": "Customers",
     "products": "Products",
+    "users": "Users",
+    "signOut": "Sign out",
     "config": "Configuration"
   },
   "dashboard": {

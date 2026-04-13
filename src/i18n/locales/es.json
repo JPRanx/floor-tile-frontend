@@ -46,6 +46,8 @@
     "intelligence": "Inteligencia",
     "customers": "Clientes",
     "products": "Productos",
+    "users": "Usuarios",
+    "signOut": "Cerrar sesión",
     "config": "Configuración"
   },
   "dashboard": {
