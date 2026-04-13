@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { LanguageToggle } from './LanguageToggle';
+import { useAuthStore } from '../state/authStore';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,7 +19,14 @@ const navItems = [
 export function Layout({ children }: LayoutProps) {
   const { t } = useTranslation();
   const location = useLocation();
+  const navigate = useNavigate();
+  const signOut = useAuthStore((s) => s.signOut);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login', { replace: true });
+  };
 
   // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
   const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers', '/data-hub'].includes(location.pathname);
@@ -73,9 +81,20 @@ export function Layout({ children }: LayoutProps) {
               })}
             </nav>
 
-            {/* Language Toggle (Desktop) */}
-            <div className="hidden md:flex items-center">
+            {/* Language Toggle + Logout (Desktop) */}
+            <div className="hidden md:flex items-center gap-3">
               <LanguageToggle />
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className={`text-sm px-3 py-1.5 rounded-md transition-colors ${
+                  isDarkPage
+                    ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                {t('nav.signOut', 'Cerrar sesión')}
+              </button>
             </div>
 
             {/* Mobile Hamburger Button */}
@@ -127,6 +146,17 @@ export function Layout({ children }: LayoutProps) {
               <div className="px-3 py-2">
                 <LanguageToggle />
               </div>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
+                  isDarkPage
+                    ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                {t('nav.signOut', 'Cerrar sesión')}
+              </button>
             </nav>
           </div>
         )}
