@@ -1,8 +1,10 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import './i18n';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { Login } from './pages/Login';
+import { SetPassword } from './pages/SetPassword';
 import { Dashboard } from './pages/Dashboard';
 import { DataHub } from './pages/DataHub';
 import { Boats } from './pages/Boats';
@@ -17,11 +19,30 @@ import { HorizonBoat } from './pages/HorizonBoat';
 import { CustomerProfiles } from './pages/CustomerProfiles';
 import { Users } from './pages/Users';
 
+// Detects Supabase auth callbacks landing in the URL hash and routes them
+// to the right page. Invites/recoveries → /set-password.
+function AuthCallbackHandler() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash) return;
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    const type = params.get('type');
+    if (type === 'invite' || type === 'recovery') {
+      // Strip the hash so we don't re-trigger, then go to set-password
+      navigate('/set-password' + window.location.search, { replace: true });
+    }
+  }, [navigate]);
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <AuthCallbackHandler />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/set-password" element={<SetPassword />} />
         <Route
           path="/*"
           element={
