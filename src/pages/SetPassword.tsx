@@ -60,7 +60,7 @@ export function SetPassword() {
             className="text-lg font-medium tracking-[0.15em] uppercase"
             style={{ color: "var(--color-text-primary)" }}
           >
-            tarragona
+            cm tarragona
           </h1>
           <p
             className="text-xs mt-2 tracking-widest uppercase"
