@@ -27,7 +27,7 @@ const predictLabels: Record<string, { text: string; color: string }> = {
   ERRATIC: { text: 'Erratico', color: 'text-red-400' },
 };
 
-type SortKey = 'revenue' | 'tier' | 'last_order' | 'overdue' | 'orders' | 'name' | 'country';
+type SortKey = 'revenue' | 'tier' | 'last_order' | 'overdue' | 'orders' | 'name';
 
 const COUNTRY_LABELS: Record<string, { flag: string; name: string }> = {
   GT: { flag: '🇬🇹', name: 'Guatemala' },
@@ -253,9 +253,6 @@ export function CustomerProfiles() {
       overdue: (a, b) => b.days_overdue - a.days_overdue,
       orders: (a, b) => b.order_count - a.order_count,
       name: (a, b) => a.customer_normalized.localeCompare(b.customer_normalized),
-      country: (a, b) =>
-        countryLabel(a.country_code).name.localeCompare(countryLabel(b.country_code).name) ||
-        b.total_revenue_usd - a.total_revenue_usd,
     };
     list.sort(sortFns[sortBy]);
     return list;
@@ -264,6 +261,26 @@ export function CustomerProfiles() {
   const fmtUsd = (n: number) => `$${n.toLocaleString('es', { maximumFractionDigits: 0 })}`;
   const fmtDate = (d: string | null) =>
     d ? new Date(d + 'T00:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' }) : '-';
+
+  // Group filtered customers by country code; sort groups by total revenue desc.
+  const countryGroups = useMemo(() => {
+    const byCode = new Map<string, CustomerTrend[]>();
+    for (const c of filtered) {
+      const key = c.country_code || 'UNKNOWN';
+      const arr = byCode.get(key);
+      if (arr) arr.push(c);
+      else byCode.set(key, [c]);
+    }
+    return Array.from(byCode.entries())
+      .map(([code, customers]) => ({
+        code,
+        customers,
+        totalRevenue: customers.reduce((s, c) => s + c.total_revenue_usd, 0),
+        tierA: customers.filter(c => c.tier === 'A').length,
+        active: customers.filter(c => c.status === 'ACTIVE').length,
+      }))
+      .sort((a, b) => b.totalRevenue - a.totalRevenue);
+  }, [filtered]);
 
   // Summary stats
   const stats = useMemo(() => ({
@@ -365,7 +382,6 @@ export function CustomerProfiles() {
         >
           <option value="revenue">Mayor ingreso</option>
           <option value="tier">Tier</option>
-          <option value="country">País</option>
           <option value="overdue">Mas atrasado</option>
           <option value="last_order">Ultimo pedido</option>
           <option value="orders">Mas pedidos</option>
@@ -373,72 +389,103 @@ export function CustomerProfiles() {
         </select>
       </div>
 
-      {/* Table */}
-      <div className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-700 text-xs text-slate-500 uppercase">
-              <th className="text-left px-4 py-2.5">Cliente</th>
-              <th className="text-left px-2 py-2.5">País</th>
-              <th className="text-center px-2 py-2.5">Tier</th>
-              <th className="text-center px-2 py-2.5">Estado</th>
-              <th className="text-right px-3 py-2.5">Ingresos</th>
-              <th className="text-right px-3 py-2.5">Pedidos</th>
-              <th className="text-right px-3 py-2.5">Ultimo</th>
-              <th className="text-center px-2 py-2.5">Tendencia</th>
-              <th className="text-right px-3 py-2.5 hidden md:table-cell">Atrasado</th>
-              <th className="text-center px-2 py-2.5 hidden lg:table-cell">Actividad</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c) => {
-              const trend = trendArrow[c.trend_direction] || trendArrow.STABLE;
-              const overdueClass = c.days_overdue > 30 ? 'text-red-400' : c.days_overdue > 0 ? 'text-amber-400' : 'text-slate-600';
+      {/* Country-grouped cards */}
+      {filtered.length === 0 ? (
+        <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-8 text-center text-slate-600">
+          Sin resultados
+        </div>
+      ) : (
+        <div className="space-y-5">
+          {countryGroups.map((g) => {
+            const label = countryLabel(g.code === 'UNKNOWN' ? null : g.code);
+            return (
+              <div
+                key={g.code}
+                className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden"
+              >
+                {/* Country header */}
+                <div className="flex items-center justify-between px-4 py-3 bg-slate-900/60 border-b border-slate-700">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl leading-none">{label.flag}</span>
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-100">{label.name}</h2>
+                      <p className="text-xs text-slate-500">
+                        {g.customers.length} cliente{g.customers.length === 1 ? '' : 's'}
+                        &nbsp;&middot;&nbsp;
+                        {g.tierA} Tier A
+                        &nbsp;&middot;&nbsp;
+                        {g.active} activo{g.active === 1 ? '' : 's'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500 uppercase tracking-wide">Ingresos</p>
+                    <p className="text-base font-bold text-slate-100">{fmtUsd(g.totalRevenue)}</p>
+                  </div>
+                </div>
 
-              return (
-                <tr
-                  key={c.customer_normalized}
-                  onClick={() => setSelected(c)}
-                  className="border-b border-slate-700/50 hover:bg-slate-700/30 cursor-pointer transition-colors"
-                >
-                  <td className="px-4 py-2.5">
-                    <span className="text-slate-200 font-medium">{c.customer_normalized}</span>
-                  </td>
-                  <td className="px-2 py-2.5">
-                    <span className="text-sm text-slate-300" title={countryLabel(c.country_code).name}>
-                      <span className="mr-1.5">{countryLabel(c.country_code).flag}</span>
-                      <span className="text-xs text-slate-400">{countryLabel(c.country_code).name}</span>
-                    </span>
-                  </td>
-                  <td className="px-2 py-2.5 text-center">
-                    <span className={`text-xs font-medium px-1.5 py-0.5 rounded border ${tierColors[c.tier]}`}>
-                      {c.tier}
-                    </span>
-                  </td>
-                  <td className="px-2 py-2.5 text-center">
-                    <span className={`w-2 h-2 rounded-full inline-block ${statusColors[c.status]?.dot}`} />
-                  </td>
-                  <td className="px-3 py-2.5 text-right text-slate-300 font-medium">{fmtUsd(c.total_revenue_usd)}</td>
-                  <td className="px-3 py-2.5 text-right text-slate-400">{c.order_count}</td>
-                  <td className="px-3 py-2.5 text-right text-slate-400">{fmtDate(c.last_order_date)}</td>
-                  <td className="px-2 py-2.5 text-center">
-                    <span className={`text-sm ${trend.color}`}>{trend.icon}</span>
-                  </td>
-                  <td className={`px-3 py-2.5 text-right hidden md:table-cell ${overdueClass}`}>
-                    {c.days_overdue > 0 ? `${c.days_overdue}d` : '-'}
-                  </td>
-                  <td className="px-2 py-2.5 text-center hidden lg:table-cell text-slate-500">
-                    <MiniSparkline data={c.sparkline} />
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {filtered.length === 0 && (
-          <p className="text-center text-slate-600 py-8">Sin resultados</p>
-        )}
-      </div>
+                {/* Customers table for this country */}
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-700 text-xs text-slate-500 uppercase">
+                      <th className="text-left px-4 py-2">Cliente</th>
+                      <th className="text-center px-2 py-2">Tier</th>
+                      <th className="text-center px-2 py-2">Estado</th>
+                      <th className="text-right px-3 py-2">Ingresos</th>
+                      <th className="text-right px-3 py-2">Pedidos</th>
+                      <th className="text-right px-3 py-2">Ultimo</th>
+                      <th className="text-center px-2 py-2">Tendencia</th>
+                      <th className="text-right px-3 py-2 hidden md:table-cell">Atrasado</th>
+                      <th className="text-center px-2 py-2 hidden lg:table-cell">Actividad</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {g.customers.map((c) => {
+                      const trend = trendArrow[c.trend_direction] || trendArrow.STABLE;
+                      const overdueClass =
+                        c.days_overdue > 30 ? 'text-red-400'
+                          : c.days_overdue > 0 ? 'text-amber-400'
+                          : 'text-slate-600';
+
+                      return (
+                        <tr
+                          key={c.customer_normalized}
+                          onClick={() => setSelected(c)}
+                          className="border-b border-slate-700/50 hover:bg-slate-700/30 cursor-pointer transition-colors"
+                        >
+                          <td className="px-4 py-2">
+                            <span className="text-slate-200 font-medium">{c.customer_normalized}</span>
+                          </td>
+                          <td className="px-2 py-2 text-center">
+                            <span className={`text-xs font-medium px-1.5 py-0.5 rounded border ${tierColors[c.tier]}`}>
+                              {c.tier}
+                            </span>
+                          </td>
+                          <td className="px-2 py-2 text-center">
+                            <span className={`w-2 h-2 rounded-full inline-block ${statusColors[c.status]?.dot}`} />
+                          </td>
+                          <td className="px-3 py-2 text-right text-slate-300 font-medium">{fmtUsd(c.total_revenue_usd)}</td>
+                          <td className="px-3 py-2 text-right text-slate-400">{c.order_count}</td>
+                          <td className="px-3 py-2 text-right text-slate-400">{fmtDate(c.last_order_date)}</td>
+                          <td className="px-2 py-2 text-center">
+                            <span className={`text-sm ${trend.color}`}>{trend.icon}</span>
+                          </td>
+                          <td className={`px-3 py-2 text-right hidden md:table-cell ${overdueClass}`}>
+                            {c.days_overdue > 0 ? `${c.days_overdue}d` : '-'}
+                          </td>
+                          <td className="px-2 py-2 text-center hidden lg:table-cell text-slate-500">
+                            <MiniSparkline data={c.sparkline} />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Slide-out panel */}
       {selected && <SlideOut customer={selected} onClose={() => setSelected(null)} />}
