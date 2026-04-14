@@ -30,6 +30,18 @@ interface ProductRow extends HorizonProduct {
   user_m2: number;
 }
 
+type SortField =
+  | 'sku'
+  | 'daily_velocity_m2'
+  | 'current_stock_m2'
+  | 'running_stock_m2'
+  | 'days_of_stock'
+  | 'coverage_gap_m2'
+  | 'suggested_pallets'
+  | 'factory_available_m2';
+
+type SortDir = 'asc' | 'desc';
+
 export function HorizonBoat() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -44,6 +56,31 @@ export function HorizonBoat() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [skipDismissed, setSkipDismissed] = useState(false);
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      // Default direction: numeric cols desc (biggest first), sku asc
+      setSortDir(field === 'sku' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedProducts = useMemo(() => {
+    if (!sortField) return products;
+    const list = [...products];
+    const dir = sortDir === 'asc' ? 1 : -1;
+    list.sort((a, b) => {
+      const av = a[sortField] as string | number;
+      const bv = b[sortField] as string | number;
+      if (typeof av === 'string' && typeof bv === 'string') return av.localeCompare(bv) * dir;
+      return ((av as number) - (bv as number)) * dir;
+    });
+    return list;
+  }, [products, sortField, sortDir]);
 
   useEffect(() => {
     if (!factoryId || !boatId) return;
@@ -353,20 +390,37 @@ export function HorizonBoat() {
       <div className="bg-slate-800/50 rounded-lg border border-slate-700 overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-700 text-left text-xs text-slate-500 uppercase">
-              <th className="px-4 py-2">SKU</th>
-              <th className="px-3 py-2 text-right">Vel/dia <span className="text-emerald-600" title="Real: promedio 90 dias de ventas">●</span></th>
-              <th className="px-3 py-2 text-right">Stock <span className="text-emerald-600" title="Real: ultimo inventario SIESA">●</span></th>
-              <th className="px-3 py-2 text-right">Disponible <span className="text-violet-500" title="Proyectado: bodega + en transito">◆</span></th>
-              <th className="px-3 py-2 text-right">Dias <span className="text-emerald-600" title="Real: stock actual / velocidad">●</span></th>
-              <th className="px-3 py-2 text-right">Brecha <span className="text-violet-500" title="Proyectado: stock simulado vs colchon de seguridad">◆</span></th>
-              <th className="px-3 py-2 text-right">Sugerido <span className="text-violet-500" title="Proyectado: pallets para cerrar brecha">◆</span></th>
-              <th className="px-3 py-2 text-right">Fabrica <span className="text-violet-500" title="Proyectado: SIESA menos barcos anteriores">◆</span></th>
+            <tr className="border-b border-slate-700 text-left text-xs text-slate-500 uppercase select-none">
+              {([
+                { field: 'sku' as const, label: 'SKU', align: 'left', marker: null, title: '' },
+                { field: 'daily_velocity_m2' as const, label: 'Vel/dia', align: 'right', marker: '●', markerColor: 'text-emerald-600', title: 'Real: promedio 90 dias de ventas' },
+                { field: 'current_stock_m2' as const, label: 'Stock', align: 'right', marker: '●', markerColor: 'text-emerald-600', title: 'Real: ultimo inventario SIESA' },
+                { field: 'running_stock_m2' as const, label: 'Disponible', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: bodega + en transito' },
+                { field: 'days_of_stock' as const, label: 'Dias', align: 'right', marker: '●', markerColor: 'text-emerald-600', title: 'Real: stock actual / velocidad' },
+                { field: 'coverage_gap_m2' as const, label: 'Brecha', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: stock simulado vs colchon de seguridad' },
+                { field: 'suggested_pallets' as const, label: 'Sugerido', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: pallets para cerrar brecha' },
+                { field: 'factory_available_m2' as const, label: 'Fabrica', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: SIESA menos barcos anteriores' },
+              ]).map((col) => {
+                const active = sortField === col.field;
+                const arrow = active ? (sortDir === 'asc' ? '↑' : '↓') : '';
+                const alignCls = col.align === 'right' ? 'text-right' : '';
+                return (
+                  <th
+                    key={col.field}
+                    onClick={() => toggleSort(col.field)}
+                    className={`px-3 py-2 cursor-pointer hover:text-slate-300 transition-colors ${alignCls} ${active ? 'text-slate-200' : ''}`}
+                  >
+                    {col.label}
+                    {col.marker && <span className={`ml-1 ${col.markerColor}`} title={col.title}>{col.marker}</span>}
+                    {arrow && <span className="ml-1 text-blue-400">{arrow}</span>}
+                  </th>
+                );
+              })}
               <th className="px-3 py-2 text-center">Pallets / m²</th>
             </tr>
           </thead>
           <tbody>
-            {products.map((p) => {
+            {sortedProducts.map((p) => {
               const over = p.user_pallets > p.factory_max_pallets;
               const borderClass = over
                 ? 'border-amber-500 text-amber-300 focus:border-amber-400'
