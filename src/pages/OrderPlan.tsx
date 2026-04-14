@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { boatsApi, type BoatSchedule } from '../requests/boats';
 import {
   orderPlanApi,
   type PlanResponse,
   type AdjustedBoat,
   type AdjustedLine,
+  type AvailableBoat,
 } from '../requests/orderPlan';
 
 const M2_PER_PALLET = 134.4;
@@ -38,7 +38,7 @@ const fmtDate = (iso: string) => {
 
 export function OrderPlan() {
   // Setup state
-  const [availableBoats, setAvailableBoats] = useState<BoatSchedule[]>([]);
+  const [availableBoats, setAvailableBoats] = useState<AvailableBoat[]>([]);
   const [selectedBoatIds, setSelectedBoatIds] = useState<Set<string>>(new Set());
   const [maxContainers, setMaxContainers] = useState(10);
   const [bufferPct, setBufferPct] = useState(15);
@@ -52,13 +52,9 @@ export function OrderPlan() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    boatsApi
-      .getAvailable()
-      .then((res) => {
-        // Backend returns a plain array; boats.ts types it as wrapped. Guard both.
-        const boats = Array.isArray(res) ? res : (res as { data?: BoatSchedule[] }).data || [];
-        setAvailableBoats(boats);
-      })
+    orderPlanApi
+      .listBoats()
+      .then(setAvailableBoats)
       .catch(() => setError('No se pudieron cargar los buques'));
   }, []);
 
@@ -301,31 +297,64 @@ export function OrderPlan() {
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-48 overflow-y-auto">
               {availableBoats.map((b) => {
-                const checked = selectedBoatIds.has(b.id);
+                const checked = selectedBoatIds.has(b.boat_id);
+                const disabled = b.status !== 'available';
+                const borderColor = disabled
+                  ? 'var(--color-border-subtle)'
+                  : checked
+                  ? 'var(--color-accent)'
+                  : 'var(--color-border)';
+                const bg = disabled
+                  ? 'var(--color-bg-base)'
+                  : checked
+                  ? 'var(--color-accent-glow)'
+                  : 'var(--color-bg-elevated)';
                 return (
                   <label
-                    key={b.id}
-                    className="flex items-center gap-3 p-2 cursor-pointer transition-colors hover:brightness-125"
+                    key={b.boat_id}
+                    className={`flex items-center gap-3 p-2 transition-colors ${
+                      disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer hover:brightness-125'
+                    }`}
                     style={{
                       borderRadius: 'var(--radius-sm)',
-                      border: checked ? '1px solid var(--color-accent)' : '1px solid var(--color-border)',
-                      backgroundColor: checked
-                        ? 'var(--color-accent-glow)'
-                        : 'var(--color-bg-elevated)',
+                      border: `1px solid ${borderColor}`,
+                      backgroundColor: bg,
                     }}
+                    title={b.reason || undefined}
                   >
                     <input
                       type="checkbox"
                       checked={checked}
-                      onChange={() => toggleBoat(b.id)}
+                      disabled={disabled}
+                      onChange={() => !disabled && toggleBoat(b.boat_id)}
                       className="w-4 h-4"
                     />
                     <div className="flex-1">
-                      <div className="text-sm" style={{ color: 'var(--color-text-primary)' }}>
-                        {b.vessel_name}
+                      <div
+                        className="text-sm flex items-center gap-2"
+                        style={{ color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}
+                      >
+                        <span>{b.vessel_name}</span>
+                        {b.status === 'committed' && (
+                          <span
+                            className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
+                            style={{ backgroundColor: 'var(--color-accent-glow)', color: 'var(--color-accent-hover)' }}
+                          >
+                            ordenado
+                          </span>
+                        )}
+                        {b.status === 'before_committed' && (
+                          <span
+                            className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
+                            style={{ backgroundColor: 'rgba(120,53,15,0.2)', color: '#fbbf24' }}
+                          >
+                            anterior
+                          </span>
+                        )}
                       </div>
                       <div className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
                         Sale {fmtDate(b.departure_date)} · Llega {fmtDate(b.arrival_date)}
+                        {b.reason && <span className="ml-2">· {b.reason}</span>}
                       </div>
                     </div>
                   </label>

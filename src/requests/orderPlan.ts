@@ -78,7 +78,24 @@ export interface AdjustedBoat {
   lines: AdjustedLine[];
 }
 
+export type BoatStatus = 'available' | 'committed' | 'before_committed';
+
+export interface AvailableBoat {
+  boat_id: string;
+  vessel_name: string;
+  departure_date: string;
+  arrival_date: string;
+  committed_pallets: number;
+  status: BoatStatus;
+  reason: string | null;
+}
+
 export const orderPlanApi = {
+  listBoats: async (): Promise<AvailableBoat[]> => {
+    const { data } = await api.get<AvailableBoat[]>('/order-plan/available-boats');
+    return data;
+  },
+
   generate: async (
     boat_ids: string[],
     max_containers: number,
