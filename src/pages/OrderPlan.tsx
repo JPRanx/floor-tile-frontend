@@ -54,7 +54,11 @@ export function OrderPlan() {
   useEffect(() => {
     boatsApi
       .getAvailable()
-      .then((res) => setAvailableBoats(res.data || []))
+      .then((res) => {
+        // Backend returns a plain array; boats.ts types it as wrapped. Guard both.
+        const boats = Array.isArray(res) ? res : (res as { data?: BoatSchedule[] }).data || [];
+        setAvailableBoats(boats);
+      })
       .catch(() => setError('No se pudieron cargar los buques'));
   }, []);
 
