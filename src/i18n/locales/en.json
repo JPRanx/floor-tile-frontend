@@ -46,6 +46,7 @@
     "intelligence": "Intelligence",
     "customers": "Customers",
     "products": "Products",
+    "plan": "Plan",
     "users": "Users",
     "signOut": "Sign out",
     "config": "Configuration"

@@ -18,6 +18,7 @@ import { HorizonView } from './pages/HorizonView';
 import { HorizonBoat } from './pages/HorizonBoat';
 import { CustomerProfiles } from './pages/CustomerProfiles';
 import { Users } from './pages/Users';
+import { OrderPlan } from './pages/OrderPlan';
 
 // Detects Supabase auth callbacks landing in the URL hash and routes them
 // to the right page. Invites/recoveries → /set-password.
@@ -63,6 +64,7 @@ function App() {
                   <Route path="/products" element={<ProductManagement />} />
                   <Route path="/config" element={<ConfigPage />} />
                   <Route path="/users" element={<Users />} />
+                  <Route path="/plan" element={<OrderPlan />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

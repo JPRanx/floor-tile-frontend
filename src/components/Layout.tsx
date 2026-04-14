@@ -10,6 +10,7 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', labelKey: 'nav.horizon' },
+  { path: '/plan', labelKey: 'nav.plan' },
   { path: '/dashboard', labelKey: 'nav.inventory' },
   { path: '/customers', labelKey: 'nav.customers' },
   { path: '/data-hub', labelKey: 'nav.dataHub' },
@@ -30,7 +31,7 @@ export function Layout({ children }: LayoutProps) {
   };
 
   // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers', '/data-hub', '/users'].includes(location.pathname);
+  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers', '/data-hub', '/users', '/plan'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
