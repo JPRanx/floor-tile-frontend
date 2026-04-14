@@ -27,7 +27,19 @@ const predictLabels: Record<string, { text: string; color: string }> = {
   ERRATIC: { text: 'Erratico', color: 'text-red-400' },
 };
 
-type SortKey = 'revenue' | 'tier' | 'last_order' | 'overdue' | 'orders' | 'name';
+type SortKey = 'revenue' | 'tier' | 'last_order' | 'overdue' | 'orders' | 'name' | 'country';
+
+const COUNTRY_LABELS: Record<string, { flag: string; name: string }> = {
+  GT: { flag: '🇬🇹', name: 'Guatemala' },
+  SV: { flag: '🇸🇻', name: 'El Salvador' },
+  HN: { flag: '🇭🇳', name: 'Honduras' },
+  NI: { flag: '🇳🇮', name: 'Nicaragua' },
+  CR: { flag: '🇨🇷', name: 'Costa Rica' },
+  PA: { flag: '🇵🇦', name: 'Panamá' },
+  OTHER: { flag: '🌎', name: 'Otro' },
+};
+const countryLabel = (code: string | null | undefined) =>
+  (code && COUNTRY_LABELS[code]) || { flag: '—', name: 'Desconocido' };
 
 function MiniSparkline({ data }: { data: { value: number }[] }) {
   if (!data.length) return null;
@@ -73,6 +85,9 @@ function SlideOut({ customer, onClose }: { customer: CustomerTrend; onClose: () 
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-lg font-bold text-slate-100">{customer.customer_normalized}</h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {countryLabel(customer.country_code).flag} {countryLabel(customer.country_code).name}
+              </p>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-xs font-medium px-2 py-0.5 rounded border ${tierColors[customer.tier]}`}>
                   Tier {customer.tier}
@@ -238,6 +253,9 @@ export function CustomerProfiles() {
       overdue: (a, b) => b.days_overdue - a.days_overdue,
       orders: (a, b) => b.order_count - a.order_count,
       name: (a, b) => a.customer_normalized.localeCompare(b.customer_normalized),
+      country: (a, b) =>
+        countryLabel(a.country_code).name.localeCompare(countryLabel(b.country_code).name) ||
+        b.total_revenue_usd - a.total_revenue_usd,
     };
     list.sort(sortFns[sortBy]);
     return list;
@@ -347,6 +365,7 @@ export function CustomerProfiles() {
         >
           <option value="revenue">Mayor ingreso</option>
           <option value="tier">Tier</option>
+          <option value="country">País</option>
           <option value="overdue">Mas atrasado</option>
           <option value="last_order">Ultimo pedido</option>
           <option value="orders">Mas pedidos</option>
@@ -360,6 +379,7 @@ export function CustomerProfiles() {
           <thead>
             <tr className="border-b border-slate-700 text-xs text-slate-500 uppercase">
               <th className="text-left px-4 py-2.5">Cliente</th>
+              <th className="text-left px-2 py-2.5">País</th>
               <th className="text-center px-2 py-2.5">Tier</th>
               <th className="text-center px-2 py-2.5">Estado</th>
               <th className="text-right px-3 py-2.5">Ingresos</th>
@@ -383,9 +403,12 @@ export function CustomerProfiles() {
                 >
                   <td className="px-4 py-2.5">
                     <span className="text-slate-200 font-medium">{c.customer_normalized}</span>
-                    {c.country_code && (
-                      <span className="ml-2 text-xs text-slate-600">{c.country_code}</span>
-                    )}
+                  </td>
+                  <td className="px-2 py-2.5">
+                    <span className="text-sm text-slate-300" title={countryLabel(c.country_code).name}>
+                      <span className="mr-1.5">{countryLabel(c.country_code).flag}</span>
+                      <span className="text-xs text-slate-400">{countryLabel(c.country_code).name}</span>
+                    </span>
                   </td>
                   <td className="px-2 py-2.5 text-center">
                     <span className={`text-xs font-medium px-1.5 py-0.5 rounded border ${tierColors[c.tier]}`}>
