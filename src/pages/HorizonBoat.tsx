@@ -141,7 +141,9 @@ export function HorizonBoat() {
 
   const updateM2 = (productId: string, value: number) => {
     const m2 = Math.max(0, value);
-    const pallets = Math.floor(m2 / M2_PER_PALLET);
+    // Snap to half-pallet precision (0, 0.5, 1, 1.5, …) — matches the
+    // pallets input which now allows halves.
+    const pallets = Math.round((m2 / M2_PER_PALLET) * 2) / 2;
     setProducts((prev) =>
       prev.map((p) => p.product_id === productId
         ? { ...p, user_pallets: pallets, user_m2: m2 }
@@ -481,8 +483,9 @@ export function HorizonBoat() {
                         <input
                           type="number"
                           min={0}
+                          step={0.5}
                           value={p.user_pallets}
-                          onChange={(e) => updatePallets(p.product_id, parseInt(e.target.value) || 0)}
+                          onChange={(e) => updatePallets(p.product_id, parseFloat(e.target.value) || 0)}
                           className={`w-14 bg-slate-900 border rounded px-1.5 py-0.5 text-center text-sm focus:outline-none ${borderClass}`}
                         />
                         <span className="text-[10px] text-slate-600">p</span>
