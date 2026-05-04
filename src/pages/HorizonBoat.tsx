@@ -32,13 +32,15 @@ interface ProductRow extends HorizonProduct {
 
 type SortField =
   | 'sku'
+  | 'tier'
   | 'daily_velocity_m2'
   | 'current_stock_m2'
   | 'running_stock_m2'
   | 'days_of_stock'
   | 'coverage_gap_m2'
   | 'suggested_pallets'
-  | 'factory_available_m2';
+  | 'factory_available_m2'
+  | 'buffer_pallets';
 
 type SortDir = 'asc' | 'desc';
 
@@ -393,11 +395,13 @@ export function HorizonBoat() {
             <tr className="border-b border-slate-700 text-left text-xs text-slate-500 uppercase select-none">
               {([
                 { field: 'sku' as const, label: 'SKU', align: 'left', marker: null, title: '' },
+                { field: 'tier' as const, label: 'Tier', align: 'center', marker: null, title: 'A=top 25% velocidad, B=medio 50%, C=bottom 25%' },
+                { field: 'buffer_pallets' as const, label: 'Buffer', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Stock minimo objetivo (semanas × velocidad, según tier)' },
                 { field: 'daily_velocity_m2' as const, label: 'Vel/dia', align: 'right', marker: '●', markerColor: 'text-emerald-600', title: 'Real: promedio 90 dias de ventas' },
                 { field: 'current_stock_m2' as const, label: 'Stock', align: 'right', marker: '●', markerColor: 'text-emerald-600', title: 'Real: ultimo inventario SIESA' },
                 { field: 'running_stock_m2' as const, label: 'Disponible', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: bodega + en transito' },
                 { field: 'days_of_stock' as const, label: 'Dias', align: 'right', marker: '●', markerColor: 'text-emerald-600', title: 'Real: stock actual / velocidad' },
-                { field: 'coverage_gap_m2' as const, label: 'Brecha', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: stock simulado vs colchon de seguridad' },
+                { field: 'coverage_gap_m2' as const, label: 'Brecha', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: deficit vs buffer (cuanto falta para alcanzar buffer al siguiente reabasto)' },
                 { field: 'suggested_pallets' as const, label: 'Sugerido', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: pallets para cerrar brecha' },
                 { field: 'factory_available_m2' as const, label: 'Fabrica', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: SIESA menos barcos anteriores' },
               ]).map((col) => {
@@ -429,6 +433,33 @@ export function HorizonBoat() {
                 <tr key={p.product_id} className={`border-b border-slate-700/50 ${urgencyBg(p.urgency)}`}>
                   <td className="px-4 py-2">
                     <span className={`font-medium ${urgencyColor(p.urgency)}`}>{p.sku}</span>
+                  </td>
+                  <td className="px-2 py-2 text-center">
+                    <span
+                      className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                        p.tier === 'A'
+                          ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          : p.tier === 'B'
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                          : 'bg-slate-700/40 text-slate-400 border border-slate-600/40'
+                      }`}
+                    >
+                      {p.tier}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    {(() => {
+                      const belowBuffer = p.current_stock_m2 < p.buffer_m2;
+                      const dotColor = belowBuffer ? 'bg-red-500' : 'bg-emerald-500';
+                      return (
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+                          <span className={belowBuffer ? 'text-red-400' : 'text-slate-300'}>
+                            {p.buffer_pallets}p
+                          </span>
+                        </span>
+                      );
+                    })()}
                   </td>
                   <td className="px-3 py-2 text-right text-slate-300">{p.daily_velocity_m2.toFixed(1)}</td>
                   <td className="px-3 py-2 text-right text-slate-300">{Math.round(p.current_stock_m2).toLocaleString()}</td>

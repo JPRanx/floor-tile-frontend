@@ -18,6 +18,9 @@ export interface HorizonProduct {
   allocated_pallets: number;
   factory_available_m2: number;
   factory_max_pallets: number;
+  buffer_m2: number;
+  buffer_pallets: number;
+  tier: 'A' | 'B' | 'C';
   is_draft_committed: boolean;
 }
 
