@@ -386,7 +386,7 @@ export function HorizonBoat() {
         <button onClick={() => navigate('/horizon')} className="text-xs text-slate-500 hover:text-slate-300 mb-1">&larr; Volver</button>
         <div className="flex justify-between items-start mb-6">
           <div>
-            <h1 className="text-xl font-bold text-slate-100">{boat.boat_name}</h1>
+            <h1 className="text-xl font-bold text-slate-100" translate="no">{boat.boat_name}</h1>
             <p className="text-sm text-slate-400">{fmtDate} &middot; {boat.days_until_departure}d &middot; {boat.carrier}</p>
           </div>
           <div className="text-right">
@@ -445,7 +445,7 @@ export function HorizonBoat() {
 
         {data.next_boat && (
           <p className="mt-4 text-xs text-slate-600">
-            Siguiente: {data.next_boat.boat_name} ({data.next_boat.departure_date})
+            Siguiente: <span translate="no">{data.next_boat.boat_name}</span> ({data.next_boat.departure_date})
           </p>
         )}
       </div>
@@ -459,7 +459,7 @@ export function HorizonBoat() {
       <div className="flex justify-between items-start mb-4">
         <div>
           <button onClick={() => navigate('/horizon')} className="text-xs text-slate-500 hover:text-slate-300 mb-1">&larr; {t('common.back', 'Volver')}</button>
-          <h1 className="text-xl font-bold text-slate-100">{boat.boat_name}</h1>
+          <h1 className="text-xl font-bold text-slate-100" translate="no">{boat.boat_name}</h1>
           <p className="text-sm text-slate-400">{fmtDate} &middot; {boat.days_until_departure} dias &middot; {boat.carrier}</p>
         </div>
         <div className="text-right">

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './i18n';
 import { Layout } from './components/Layout';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -34,9 +35,20 @@ function AuthCallbackHandler() {
   return null;
 }
 
+// Keeps <html lang="..."> in sync with i18n.language so browsers don't
+// trigger auto-translate (which renames proper nouns like boat names).
+function HtmlLangSync() {
+  const { i18n } = useTranslation();
+  useEffect(() => {
+    document.documentElement.lang = i18n.language;
+  }, [i18n.language]);
+  return null;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <HtmlLangSync />
       <AuthCallbackHandler />
       <Routes>
         <Route path="/login" element={<Login />} />

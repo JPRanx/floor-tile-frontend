@@ -30,95 +30,96 @@ export function Layout({ children }: LayoutProps) {
     navigate('/login', { replace: true });
   };
 
-  // Dark theme for Dashboard, Intelligence, and Products pages
-  const isDarkPage = ['/', '/dashboard', '/intelligence', '/products', '/config', '/horizon', '/horizon/boat', '/customers', '/data-hub', '/users', '/plan'].includes(location.pathname);
-
   const handleNavClick = () => {
     setMobileMenuOpen(false);
   };
 
-  // Get nav link classes based on theme and active state
-  const getNavLinkClasses = (isActive: boolean) => {
-    if (isDarkPage) {
-      return isActive
-        ? 'bg-slate-800 text-white'
-        : 'text-slate-300 hover:bg-slate-800 hover:text-white';
-    }
-    return isActive
-      ? 'bg-blue-100 text-blue-700'
-      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
-  };
+  const isActivePath = (path: string) =>
+    location.pathname === path
+    || (path === '/' && ['/horizon', '/horizon/boat'].includes(location.pathname));
 
   return (
-    <div className={`min-h-screen ${isDarkPage ? 'bg-slate-900' : 'bg-gray-50'}`}>
-      {/* Header */}
-      <header className={`shadow-sm border-b ${
-        isDarkPage
-          ? 'bg-slate-900 border-slate-700'
-          : 'bg-white border-gray-200'
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center">
-              <span className={`text-xl font-bold ${isDarkPage ? 'text-white' : 'text-gray-900'}`}>
-                {t('nav.appName')}
-              </span>
-            </div>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+      {/* Header — editorial top bar matching Horizon / Plan */}
+      <header
+        style={{
+          backgroundColor: 'var(--color-bg-base)',
+          borderBottom: '1px solid var(--color-border-subtle)',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex justify-between items-center h-14">
+            {/* Logo — tracked uppercase, restrained */}
+            <Link
+              to="/"
+              className="text-xs font-medium tracking-[0.2em] uppercase transition-colors"
+              style={{ color: 'var(--color-text-primary)' }}
+              translate="no"
+            >
+              {t('nav.appName')}
+            </Link>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-4">
+            {/* Desktop Navigation — small caps, no pills */}
+            <nav className="hidden md:flex items-center gap-7">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.path
-                  || (item.path === '/' && ['/horizon', '/horizon/boat'].includes(location.pathname));
+                const active = isActivePath(item.path);
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${getNavLinkClasses(isActive)}`}
+                    className="relative text-[11px] tracking-widest uppercase transition-colors py-3"
+                    style={{
+                      color: active ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!active) (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-secondary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!active) (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-muted)';
+                    }}
                   >
                     {t(item.labelKey)}
+                    {active && (
+                      <span
+                        className="absolute left-0 right-0 -bottom-px h-px"
+                        style={{ backgroundColor: 'var(--color-accent)' }}
+                      />
+                    )}
                   </Link>
                 );
               })}
             </nav>
 
-            {/* Language Toggle + Logout (Desktop) */}
-            <div className="hidden md:flex items-center gap-3">
+            {/* Trailing controls — Desktop */}
+            <div className="hidden md:flex items-center gap-4">
               <LanguageToggle />
               <button
                 type="button"
                 onClick={handleSignOut}
-                className={`text-sm px-3 py-1.5 rounded-md transition-colors ${
-                  isDarkPage
-                    ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
+                className="text-[11px] tracking-widest uppercase transition-colors"
+                style={{ color: 'var(--color-text-muted)' }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-secondary)'; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--color-text-muted)'; }}
               >
                 {t('nav.signOut')}
               </button>
             </div>
 
-            {/* Mobile Hamburger Button */}
+            {/* Mobile Hamburger */}
             <button
               type="button"
-              className={`md:hidden inline-flex items-center justify-center p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 ${
-                isDarkPage
-                  ? 'text-slate-300 hover:text-white hover:bg-slate-800'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+              className="md:hidden inline-flex items-center justify-center p-2 focus:outline-none"
+              style={{ color: 'var(--color-text-secondary)' }}
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
               aria-label="Toggle navigation menu"
             >
               {mobileMenuOpen ? (
-                // X icon (close)
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               ) : (
-                // Hamburger icon
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               )}
@@ -128,46 +129,42 @@ export function Layout({ children }: LayoutProps) {
 
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
-          <div className={`md:hidden border-t ${isDarkPage ? 'border-slate-700' : 'border-gray-200'}`}>
-            <nav className="px-2 pt-2 pb-3 space-y-1">
+          <div
+            className="md:hidden"
+            style={{ borderTop: '1px solid var(--color-border-subtle)' }}
+          >
+            <nav className="px-6 py-3 space-y-1">
               {navItems.map((item) => {
-                const isActive = location.pathname === item.path
-                  || (item.path === '/' && ['/horizon', '/horizon/boat'].includes(location.pathname));
+                const active = isActivePath(item.path);
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
                     onClick={handleNavClick}
-                    className={`block px-3 py-2 rounded-md text-base font-medium ${getNavLinkClasses(isActive)}`}
+                    className="block px-2 py-2 text-[11px] tracking-widest uppercase transition-colors"
+                    style={{ color: active ? 'var(--color-text-primary)' : 'var(--color-text-muted)' }}
                   >
                     {t(item.labelKey)}
                   </Link>
                 );
               })}
-              {/* Language Toggle (Mobile) */}
-              <div className="px-3 py-2">
+              <div className="px-2 py-2 flex items-center justify-between">
                 <LanguageToggle />
+                <button
+                  type="button"
+                  onClick={handleSignOut}
+                  className="text-[11px] tracking-widest uppercase"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  {t('nav.signOut')}
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  isDarkPage
-                    ? 'text-slate-300 hover:bg-slate-800 hover:text-white'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                {t('nav.signOut')}
-              </button>
             </nav>
           </div>
         )}
       </header>
 
-      {/* Main Content */}
-      <main className={isDarkPage ? '' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8'}>
-        {children}
-      </main>
+      <main>{children}</main>
     </div>
   );
 }

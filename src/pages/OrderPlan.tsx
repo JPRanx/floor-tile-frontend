@@ -334,7 +334,7 @@ export function OrderPlan() {
                         className="text-sm flex items-center gap-2"
                         style={{ color: disabled ? 'var(--color-text-muted)' : 'var(--color-text-primary)' }}
                       >
-                        <span>{b.vessel_name}</span>
+                        <span translate="no">{b.vessel_name}</span>
                         {b.status === 'committed' && (
                           <span
                             className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
@@ -451,7 +451,7 @@ export function OrderPlan() {
                     }}
                   >
                     <div>
-                      <h3 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }}>
+                      <h3 className="text-sm font-bold" style={{ color: 'var(--color-text-primary)' }} translate="no">
                         {boat.vessel_name}
                       </h3>
                       <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>

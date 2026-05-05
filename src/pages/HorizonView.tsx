@@ -67,7 +67,7 @@ function BoatCard({ boat, onClick, onIgnore }: { boat: BoatProjection; onClick: 
       >
         <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="text-sm font-medium tracking-wide" style={{ color: 'var(--color-text-primary)' }}>
+            <h3 className="text-sm font-medium tracking-wide" style={{ color: 'var(--color-text-primary)' }} translate="no">
               {boat.boat_name}
             </h3>
             <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
