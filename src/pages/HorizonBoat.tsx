@@ -524,7 +524,7 @@ export function HorizonBoat() {
                 { field: 'running_stock_m2' as const, label: 'Disponible', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: bodega + en transito' },
                 { field: 'days_of_stock' as const, label: 'Dias', align: 'right', marker: '●', markerColor: 'text-emerald-600', title: 'Real: stock actual / velocidad' },
                 { field: 'coverage_gap_m2' as const, label: 'Brecha', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: deficit vs buffer (cuanto falta para alcanzar buffer al siguiente reabasto)' },
-                { field: 'suggested_pallets' as const, label: 'Sugerido', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: pallets para cerrar brecha' },
+                { field: 'suggested_pallets' as const, label: 'Sugerido', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: m² para cerrar brecha (sugerido_pallets × 134.4)' },
                 { field: 'factory_available_m2' as const, label: 'Fabrica', align: 'right', marker: '◆', markerColor: 'text-violet-500', title: 'Proyectado: SIESA menos barcos anteriores' },
               ]).map((col) => {
                 const active = sortField === col.field;
@@ -577,7 +577,7 @@ export function HorizonBoat() {
                         <span className="inline-flex items-center gap-1.5">
                           <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
                           <span className={belowBuffer ? 'text-red-400' : 'text-slate-300'}>
-                            {p.buffer_pallets}p
+                            {Math.round(p.buffer_m2).toLocaleString()}
                           </span>
                         </span>
                       );
@@ -595,7 +595,11 @@ export function HorizonBoat() {
                     <span className={urgencyColor(p.urgency)}>{p.days_of_stock === 999 ? '-' : p.days_of_stock.toFixed(0)}</span>
                   </td>
                   <td className="px-3 py-2 text-right text-slate-300">{p.coverage_gap_m2 > 0 ? Math.round(p.coverage_gap_m2).toLocaleString() : '-'}</td>
-                  <td className="px-3 py-2 text-right text-slate-300">{p.suggested_pallets || '-'}</td>
+                  <td className="px-3 py-2 text-right text-slate-300">
+                    {p.suggested_pallets
+                      ? Math.round(p.suggested_pallets * M2_PER_PALLET).toLocaleString()
+                      : '-'}
+                  </td>
                   <td className="px-3 py-2 text-right text-slate-500">{Math.round(p.factory_available_m2).toLocaleString()}</td>
                   <td className="px-3 py-1.5 text-center">
                     <div className="inline-flex flex-col items-center gap-0.5">
