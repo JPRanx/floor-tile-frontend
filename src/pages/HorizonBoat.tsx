@@ -246,13 +246,14 @@ export function HorizonBoat() {
   };
 
   const updateM2 = (productId: string, value: number) => {
-    const m2 = Math.max(0, value);
-    // Snap to half-pallet precision (0, 0.5, 1, 1.5, …) — matches the
-    // pallets input which now allows halves.
-    const pallets = Math.round((m2 / M2_PER_PALLET) * 2) / 2;
+    const m2In = Math.max(0, value);
+    // Snap to half-pallet precision (0, 0.5, 1, 1.5, …). Recompute m² from
+    // the snapped pallet count so the row's two numbers stay consistent —
+    // otherwise the user sees e.g. "7.5 pallets, 500 m²" while 7.5 × 134.4 = 1008.
+    const pallets = Math.round((m2In / M2_PER_PALLET) * 2) / 2;
     setProducts((prev) =>
       prev.map((p) => p.product_id === productId
-        ? { ...p, user_pallets: pallets, user_m2: m2 }
+        ? { ...p, user_pallets: pallets, user_m2: pallets * M2_PER_PALLET }
         : p)
     );
     setSaved(false);
