@@ -6,33 +6,37 @@ import { factoriesApi } from '../requests/factories';
 import { ReconciliationBadge } from '../components/horizon/ReconciliationBadge';
 
 function UrgencyDots({ breakdown }: { breakdown: BoatProjection['urgency_breakdown'] }) {
+  const dots = [
+    { key: 'critical', count: breakdown.critical, color: '#f87171' },
+    { key: 'urgent',   count: breakdown.urgent,   color: '#fb923c' },
+    { key: 'soon',     count: breakdown.soon,     color: '#facc15' },
+    { key: 'ok',       count: breakdown.ok,       color: '#4ade80' },
+  ];
   return (
-    <div className="flex gap-1.5 items-center">
-      {breakdown.critical > 0 && (
-        <span className="flex items-center gap-0.5 text-xs text-red-400">
-          <span className="w-2 h-2 rounded-full bg-red-500" />
-          {breakdown.critical}
+    <div className="flex gap-2 items-center">
+      {dots.map((d) => d.count > 0 && (
+        <span key={d.key} className="flex items-center gap-1 text-[11px]" style={{ color: d.color }}>
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: d.color }} />
+          {d.count}
         </span>
-      )}
-      {breakdown.urgent > 0 && (
-        <span className="flex items-center gap-0.5 text-xs text-orange-400">
-          <span className="w-2 h-2 rounded-full bg-orange-500" />
-          {breakdown.urgent}
-        </span>
-      )}
-      {breakdown.soon > 0 && (
-        <span className="flex items-center gap-0.5 text-xs text-yellow-400">
-          <span className="w-2 h-2 rounded-full bg-yellow-500" />
-          {breakdown.soon}
-        </span>
-      )}
-      {breakdown.ok > 0 && (
-        <span className="flex items-center gap-0.5 text-xs text-green-400">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
-          {breakdown.ok}
-        </span>
-      )}
+      ))}
     </div>
+  );
+}
+
+function StatePill({ label, tone }: { label: string; tone: 'accent' | 'planning' | 'neutral' }) {
+  const styles = {
+    accent: { bg: 'var(--color-accent-glow)', fg: 'var(--color-accent-hover)' },
+    planning: { bg: 'rgba(120, 53, 15, 0.2)', fg: '#fbbf24' },
+    neutral: { bg: 'var(--color-bg-elevated)', fg: 'var(--color-text-secondary)' },
+  }[tone];
+  return (
+    <span
+      className="text-[9px] uppercase tracking-widest px-1.5 py-0.5"
+      style={{ backgroundColor: styles.bg, color: styles.fg, borderRadius: 'var(--radius-sm)' }}
+    >
+      {label}
+    </span>
   );
 }
 
@@ -40,58 +44,116 @@ function BoatCard({ boat, onClick, onIgnore }: { boat: BoatProjection; onClick: 
   const dep = new Date(boat.departure_date + 'T00:00:00');
   const fmtDate = dep.toLocaleDateString('es', { day: 'numeric', month: 'short' });
 
-  const stateColors: Record<string, string> = {
-    ORDERED: 'border-blue-500 bg-blue-500/10',
-    PLANNING: 'border-yellow-500 bg-yellow-500/10',
-    FUTURE: 'border-slate-600 bg-slate-800',
+  // State-driven ambient treatment — quiet by default, accent only when meaningful.
+  const stateStyle: Record<string, { border: string; bg: string }> = {
+    ORDERED:  { border: 'var(--color-accent)',         bg: 'var(--color-bg-surface)' },
+    PLANNING: { border: 'rgba(251, 191, 36, 0.4)',     bg: 'var(--color-bg-surface)' },
+    FUTURE:   { border: 'var(--color-border)',         bg: 'var(--color-bg-surface)' },
   };
-
-  const borderClass = stateColors[boat.state] || stateColors.FUTURE;
+  const style = stateStyle[boat.state] || stateStyle.FUTURE;
 
   return (
-    <div className={`relative border rounded-lg p-4 transition ${borderClass} ${boat.skip_recommended ? 'opacity-50' : ''}`}>
+    <div
+      className={`relative p-4 transition ${boat.skip_recommended ? 'opacity-50' : ''}`}
+      style={{
+        border: `1px solid ${style.border}`,
+        backgroundColor: style.bg,
+        borderRadius: 'var(--radius-md)',
+      }}
+    >
       <button
         onClick={onClick}
-        className="w-full text-left hover:brightness-110 transition"
+        className="w-full text-left transition hover:brightness-110"
       >
-        <div className="flex justify-between items-start mb-2">
+        <div className="flex justify-between items-start mb-3">
           <div>
-            <h3 className="font-semibold text-slate-100 text-sm">{boat.boat_name}</h3>
-            <p className="text-xs text-slate-400">{fmtDate} &middot; {boat.days_until_departure}d</p>
+            <h3 className="text-sm font-medium tracking-wide" style={{ color: 'var(--color-text-primary)' }}>
+              {boat.boat_name}
+            </h3>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+              {fmtDate} &middot; {boat.days_until_departure}d
+            </p>
           </div>
           <div className="flex gap-1.5 items-center">
             {boat.draft_status && boat.draft_status !== 'ordered' && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">
-                BORRADOR
-              </span>
+              <StatePill label="borrador" tone="planning" />
             )}
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
-              {boat.state === 'ORDERED' ? 'CONFIRMADO' : boat.state}
-            </span>
+            <StatePill
+              label={boat.state === 'ORDERED' ? 'confirmado' : boat.state.toLowerCase()}
+              tone={boat.state === 'ORDERED' ? 'accent' : boat.state === 'PLANNING' ? 'planning' : 'neutral'}
+            />
           </div>
         </div>
 
         <div className="flex justify-between items-end">
           <div>
-            <p className="text-lg font-bold text-slate-100">{boat.total_pallets} <span className="text-xs font-normal text-slate-400">pallets</span></p>
-            <p className="text-xs text-slate-500">{boat.total_containers} cont &middot; {boat.product_count} prod</p>
+            <p className="text-xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+              {boat.total_pallets}
+              <span className="text-[10px] uppercase tracking-widest ml-1.5" style={{ color: 'var(--color-text-muted)' }}>
+                pallets
+              </span>
+            </p>
+            <p className="text-[11px] mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+              {boat.total_containers} cont &middot; {boat.product_count} prod
+            </p>
           </div>
           <UrgencyDots breakdown={boat.urgency_breakdown} />
         </div>
 
         {boat.skip_recommended && (
-          <p className="mt-2 text-xs text-red-400 italic">{boat.skip_reason}</p>
+          <p className="mt-2 text-[11px] italic" style={{ color: 'var(--color-error)' }}>
+            {boat.skip_reason}
+          </p>
         )}
       </button>
       {boat.state !== 'ORDERED' && (
         <button
           onClick={(e) => { e.stopPropagation(); onIgnore(boat.boat_id); }}
-          className="absolute top-2 right-2 text-xs text-slate-600 hover:text-red-400 transition-colors px-1.5 py-0.5 rounded hover:bg-slate-700/50"
+          className="absolute top-2 right-2 text-xs px-1.5 py-0.5 transition-colors"
+          style={{ color: 'var(--color-text-muted)', borderRadius: 'var(--radius-sm)' }}
           title="Ignorar barco"
         >
           &times;
         </button>
       )}
+    </div>
+  );
+}
+
+function SectionPanel({
+  title,
+  count,
+  children,
+  tone = 'neutral',
+}: {
+  title: string;
+  count?: number;
+  children: React.ReactNode;
+  tone?: 'neutral' | 'info' | 'warning';
+}) {
+  const accent = {
+    neutral: 'var(--color-text-secondary)',
+    info: '#60a5fa',
+    warning: '#fb923c',
+  }[tone];
+  return (
+    <div
+      className="p-5"
+      style={{
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--color-border-subtle)',
+        backgroundColor: 'var(--color-bg-surface)',
+      }}
+    >
+      <h2 className="text-xs tracking-widest uppercase font-medium mb-3 flex items-baseline gap-2" style={{ color: accent }}>
+        {title}
+        {count !== undefined && (
+          <span className="text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+            ({count})
+          </span>
+        )}
+      </h2>
+      {children}
     </div>
   );
 }
@@ -144,7 +206,7 @@ export function HorizonView() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: 'var(--color-accent)' }} />
       </div>
     );
   }
@@ -152,7 +214,15 @@ export function HorizonView() {
   if (error) {
     return (
       <div className="p-6">
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
+        <div
+          className="p-4 text-sm"
+          style={{
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            color: 'var(--color-error)',
+          }}
+        >
           {error}
         </div>
       </div>
@@ -164,18 +234,34 @@ export function HorizonView() {
   const signal = data.factory_order_signal;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-6 max-w-6xl mx-auto" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+      {/* Header — editorial title + tagline */}
+      <div className="flex justify-between items-end mb-6">
         <div>
-          <h1 className="text-xl font-bold text-slate-100">{t('common.planning', 'Horizonte')}</h1>
-          <p className="text-sm text-slate-400">{data.factory_name}</p>
+          <h1
+            className="text-lg font-medium tracking-[0.15em] uppercase"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {t('common.planning', 'horizonte')}
+          </h1>
+          <p
+            className="text-xs mt-1 tracking-widest uppercase"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            {data.factory_name} &middot; barcos · producción · brecha
+          </p>
         </div>
         {factories.length > 1 && (
           <select
             value={factoryId || ''}
             onChange={(e) => setFactoryId(e.target.value)}
-            className="bg-slate-800 border border-slate-600 rounded px-3 py-1.5 text-sm text-slate-200"
+            className="text-sm px-3 py-2 focus:outline-none"
+            style={{
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
+            }}
           >
             {factories.map((f) => (
               <option key={f.id} value={f.id}>{f.name}</option>
@@ -189,14 +275,21 @@ export function HorizonView() {
         <ReconciliationBadge factoryId={factoryId} />
       </div>
 
-      {/* Factory order signal */}
+      {/* Factory order signal — quiet alert */}
       {signal && signal.needs_scheduling && (
-        <div className="mb-4 bg-orange-500/10 border border-orange-500/30 rounded-lg p-3">
-          <p className="text-sm text-orange-400 font-medium">
-            {signal.product_count} productos necesitan programacion
+        <div
+          className="mb-5 p-4"
+          style={{
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(251, 146, 60, 0.25)',
+            backgroundColor: 'rgba(251, 146, 60, 0.08)',
+          }}
+        >
+          <p className="text-[11px] uppercase tracking-widest font-medium" style={{ color: '#fb923c' }}>
+            {signal.product_count} productos requieren programación
           </p>
           {signal.piggyback_count > 0 && (
-            <p className="text-xs text-orange-400/70">
+            <p className="text-[11px] mt-1" style={{ color: 'rgba(251, 146, 60, 0.7)' }}>
               {signal.piggyback_count} agregar a corrida &middot; {signal.new_count} orden nueva
             </p>
           )}
@@ -204,7 +297,7 @@ export function HorizonView() {
       )}
 
       {/* Boat grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
         {data.projections.map((boat) => (
           <BoatCard
             key={boat.boat_id}
@@ -217,51 +310,53 @@ export function HorizonView() {
 
       {/* Production section */}
       {(data.production_pipeline.length > 0 || data.production_requests.length > 0) && (
-        <div className="mt-6 space-y-4">
+        <div className="space-y-4">
           {/* In production — one line per product */}
           {data.production_pipeline.length > 0 && (
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-              <h2 className="text-sm font-semibold text-blue-400 mb-2">
-                En produccion ({data.production_pipeline.length})
-              </h2>
-              <div className="space-y-1.5">
+            <SectionPanel title="En producción" count={data.production_pipeline.length} tone="info">
+              <div className="space-y-2">
                 {data.production_pipeline.map((p: ProductionPipelineItem) => (
                   <div key={p.product_id} className="flex justify-between items-center text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-200">{p.sku}</span>
-                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                        p.status === 'in_progress'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-slate-700 text-slate-400'
-                      }`}>
-                        {p.status === 'in_progress' ? 'EN CURSO' : 'PROGRAMADO'}
+                      <span style={{ color: 'var(--color-text-primary)' }}>{p.sku}</span>
+                      <span
+                        className="px-1.5 py-0.5 text-[9px] uppercase tracking-widest"
+                        style={{
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: p.status === 'in_progress' ? 'rgba(74, 222, 128, 0.15)' : 'var(--color-bg-elevated)',
+                          color: p.status === 'in_progress' ? '#4ade80' : 'var(--color-text-secondary)',
+                        }}
+                      >
+                        {p.status === 'in_progress' ? 'en curso' : 'programado'}
                       </span>
                       {p.covers_gap && (
-                        <span className="text-[10px] text-green-500/70">cubre brecha</span>
+                        <span className="text-[10px]" style={{ color: 'rgba(74, 222, 128, 0.7)' }}>
+                          cubre brecha
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       {p.status === 'in_progress' ? (
                         <div className="flex items-center gap-2">
-                          <div className="w-16 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                          <div className="w-16 h-1.5 overflow-hidden" style={{ backgroundColor: 'var(--color-bg-elevated)', borderRadius: 'var(--radius-sm)' }}>
                             <div
-                              className="h-full bg-green-500 rounded-full"
-                              style={{ width: `${Math.min(100, p.progress_pct)}%` }}
+                              className="h-full"
+                              style={{ width: `${Math.min(100, p.progress_pct)}%`, backgroundColor: '#4ade80' }}
                             />
                           </div>
-                          <span className="text-green-400 w-8 text-right">{p.progress_pct}%</span>
+                          <span className="w-8 text-right" style={{ color: '#4ade80' }}>{p.progress_pct}%</span>
                         </div>
                       ) : (
-                        <span className="text-slate-500">{p.earliest_date}</span>
+                        <span style={{ color: 'var(--color-text-muted)' }}>{p.earliest_date}</span>
                       )}
-                      <span className="text-slate-400 w-24 text-right">
-                        {Math.round(p.total_m2).toLocaleString()} m2
+                      <span className="w-24 text-right" style={{ color: 'var(--color-text-secondary)' }}>
+                        {Math.round(p.total_m2).toLocaleString()} m²
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
+            </SectionPanel>
           )}
 
           {/* Need to schedule */}
@@ -269,21 +364,24 @@ export function HorizonView() {
             const piggyback = data.production_requests.filter((r) => r.is_piggyback);
             const newOrders = data.production_requests.filter((r) => !r.is_piggyback);
             return (
-              <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
-                <h2 className="text-sm font-semibold text-orange-400 mb-2">
-                  Programar produccion ({data.production_requests.length})
-                </h2>
-
+              <SectionPanel title="Programar producción" count={data.production_requests.length} tone="warning">
                 {piggyback.length > 0 && (
-                  <div className="mb-2">
-                    <p className="text-[10px] text-yellow-400/70 uppercase tracking-wide mb-1">Agregar a corrida existente</p>
-                    <div className="space-y-1">
+                  <div className="mb-3">
+                    <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: 'rgba(250, 204, 21, 0.7)' }}>
+                      Agregar a corrida existente
+                    </p>
+                    <div className="space-y-1.5">
                       {piggyback.map((r) => {
                         const so = r.stockout_date ? new Date(r.stockout_date + 'T00:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' }) : null;
                         return (
                           <div key={r.product_id} className="flex justify-between text-xs">
-                            <span className="text-yellow-400">{r.sku} {so && <span className="text-slate-600">· se agota {so}</span>}</span>
-                            <span className="text-slate-500">+{Math.round(r.additional_m2).toLocaleString()} m2</span>
+                            <span style={{ color: '#facc15' }}>
+                              {r.sku}
+                              {so && <span className="ml-1" style={{ color: 'var(--color-text-muted)' }}>· se agota {so}</span>}
+                            </span>
+                            <span style={{ color: 'var(--color-text-muted)' }}>
+                              +{Math.round(r.additional_m2).toLocaleString()} m²
+                            </span>
                           </div>
                         );
                       })}
@@ -294,32 +392,39 @@ export function HorizonView() {
                 {newOrders.length > 0 && (
                   <div>
                     {piggyback.length > 0 && (
-                      <p className="text-[10px] text-orange-400/70 uppercase tracking-wide mb-1">Orden nueva</p>
+                      <p className="text-[10px] uppercase tracking-widest mb-2" style={{ color: 'rgba(251, 146, 60, 0.7)' }}>
+                        Orden nueva
+                      </p>
                     )}
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {newOrders.map((r) => {
                         const so = r.stockout_date ? new Date(r.stockout_date + 'T00:00:00').toLocaleDateString('es', { day: 'numeric', month: 'short' }) : null;
                         return (
                           <div key={r.product_id} className="flex justify-between text-xs">
-                            <span className={r.urgency === 'critical' ? 'text-red-400' : 'text-orange-400'}>{r.sku} {so && <span className="text-slate-600">· se agota {so}</span>}</span>
-                            <span className="text-slate-500">{Math.round(r.additional_m2).toLocaleString()} m2</span>
+                            <span style={{ color: r.urgency === 'critical' ? '#f87171' : '#fb923c' }}>
+                              {r.sku}
+                              {so && <span className="ml-1" style={{ color: 'var(--color-text-muted)' }}>· se agota {so}</span>}
+                            </span>
+                            <span style={{ color: 'var(--color-text-muted)' }}>
+                              {Math.round(r.additional_m2).toLocaleString()} m²
+                            </span>
                           </div>
                         );
                       })}
                     </div>
                   </div>
                 )}
-              </div>
+              </SectionPanel>
             );
           })()}
         </div>
       )}
 
       {/* Data freshness footer */}
-      <div className="mt-6 text-xs text-slate-600">
+      <div className="mt-6 text-[10px] tracking-widest uppercase" style={{ color: 'var(--color-text-muted)' }}>
         {t('common.generatedAt', 'Generado')}: {data.generated_at}
         {data.data_as_of && typeof data.data_as_of === 'object' && (
-          <span> &middot; Bodega: {String(data.data_as_of.warehouse_snapshot_date || '?')} &middot; Fabrica: {String(data.data_as_of.factory_snapshot_date || '?')}</span>
+          <span> &middot; Bodega: {String(data.data_as_of.warehouse_snapshot_date || '?')} &middot; Fábrica: {String(data.data_as_of.factory_snapshot_date || '?')}</span>
         )}
       </div>
     </div>
