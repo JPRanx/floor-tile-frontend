@@ -234,7 +234,8 @@ export function HorizonView() {
   const signal = data.factory_order_signal;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+    <div className="min-h-screen px-6 py-8" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+      <div className="max-w-6xl mx-auto">
       {/* Header — editorial title + tagline */}
       <div className="flex justify-between items-end mb-6">
         <div>
@@ -426,6 +427,7 @@ export function HorizonView() {
         {data.data_as_of && typeof data.data_as_of === 'object' && (
           <span> &middot; Bodega: {String(data.data_as_of.warehouse_snapshot_date || '?')} &middot; Fábrica: {String(data.data_as_of.factory_snapshot_date || '?')}</span>
         )}
+      </div>
       </div>
     </div>
   );
