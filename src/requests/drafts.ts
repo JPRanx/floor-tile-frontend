@@ -10,6 +10,9 @@ export interface DraftItem {
   bl_number: number | null;
   notes: string | null;
   snapshot_data: Record<string, unknown> | null;
+  suggested_pallets: number | null;
+  actual_loaded_pallets: number | null;
+  cut_reason: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -33,6 +36,12 @@ export interface DraftItemCreate {
   bl_number?: number | null;
   notes?: string | null;
   snapshot_data?: Record<string, unknown> | null;
+  suggested_pallets?: number | null;
+}
+
+export interface DraftItemAuditUpdate {
+  actual_loaded_pallets?: number | null;
+  cut_reason?: string | null;
 }
 
 export interface DraftSaveRequest {
@@ -71,5 +80,16 @@ export const draftsApi = {
 
   delete: async (draftId: string): Promise<void> => {
     await api.delete(`/drafts/${draftId}`);
+  },
+
+  updateItemAudit: async (
+    draftItemId: string,
+    body: DraftItemAuditUpdate
+  ): Promise<DraftItem> => {
+    const response = await api.patch<DraftItem>(
+      `/drafts/items/${draftItemId}/audit`,
+      body
+    );
+    return response.data;
   },
 };

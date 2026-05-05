@@ -14,6 +14,7 @@ import { FactoryLane } from '../components/planning/FactoryLane';
 import type { ProductionStatus } from '../components/planning/FactoryLane';
 import { BoatCard } from '../components/planning/BoatCard';
 import { Briefing } from '../components/planning/Briefing';
+import { ReconciliationBadge } from '../components/planning/ReconciliationBadge';
 import { PipelineStrip } from '../components/planning/PipelineStrip';
 import { ProjectedBoatPreview } from '../components/planning/ProjectedBoatPreview';
 import { LoadingSpinner } from '../components/LoadingSpinner';
@@ -497,6 +498,9 @@ export function PlanningView() {
           horizon={selectedHorizon ?? null}
           loading={selectedFactoryId != null && horizonLoading.has(selectedFactoryId)}
         />
+
+        {/* Reconciliation: gaps between our drafts and factory's Cant. comprometida */}
+        <ReconciliationBadge factoryId={selectedFactoryId ?? null} />
 
         {/* Inline notification (4a) */}
         {notification && (

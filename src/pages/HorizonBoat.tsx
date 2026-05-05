@@ -28,6 +28,92 @@ const M2_PER_PALLET = 134.4;
 interface ProductRow extends HorizonProduct {
   user_pallets: number;
   user_m2: number;
+  // Audit fields — populated only when a saved draft exists for this product.
+  draft_item_id?: string;
+  actual_loaded_pallets?: number | null;
+  cut_reason?: string | null;
+}
+
+const CUT_REASONS = [
+  { value: '', label: '—' },
+  { value: 'weight', label: 'Peso' },
+  { value: 'lot_mix', label: 'Mezcla de lotes' },
+  { value: 'deferred', label: 'Diferido' },
+  { value: 'other', label: 'Otro' },
+];
+
+function AuditCells({
+  row,
+  onSaved,
+}: {
+  row: ProductRow;
+  onSaved: (updated: { actual_loaded_pallets: number | null; cut_reason: string | null }) => void;
+}) {
+  const [actual, setActual] = useState<string>(
+    row.actual_loaded_pallets != null ? String(row.actual_loaded_pallets) : ''
+  );
+  const [reason, setReason] = useState<string>(row.cut_reason ?? '');
+  const [busy, setBusy] = useState(false);
+
+  if (!row.draft_item_id) {
+    return (
+      <>
+        <td className="px-3 py-2.5 text-right text-slate-600 italic text-xs">—</td>
+        <td className="px-3 py-2.5 text-slate-600 italic text-xs">—</td>
+      </>
+    );
+  }
+
+  const save = async () => {
+    if (!row.draft_item_id) return;
+    setBusy(true);
+    try {
+      const parsed = actual === '' ? null : Number(actual);
+      await draftsApi.updateItemAudit(row.draft_item_id, {
+        actual_loaded_pallets: parsed,
+        cut_reason: reason || null,
+      });
+      onSaved({
+        actual_loaded_pallets: parsed,
+        cut_reason: reason || null,
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <td className="px-3 py-2.5 text-right">
+        <input
+          type="number"
+          step={0.5}
+          min={0}
+          value={actual}
+          onChange={(e) => setActual(e.target.value)}
+          onBlur={save}
+          disabled={busy}
+          placeholder={String(row.user_pallets)}
+          className="w-16 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-right text-slate-200 text-sm focus:border-blue-500 focus:outline-none"
+        />
+      </td>
+      <td className="px-3 py-2.5">
+        <select
+          value={reason}
+          onChange={(e) => {
+            setReason(e.target.value);
+          }}
+          onBlur={save}
+          disabled={busy}
+          className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-sm focus:border-blue-500 focus:outline-none"
+        >
+          {CUT_REASONS.map((r) => (
+            <option key={r.value} value={r.value}>{r.label}</option>
+          ))}
+        </select>
+      </td>
+    </>
+  );
 }
 
 type SortField =
@@ -99,9 +185,21 @@ export function HorizonBoat() {
 
         // Build pallet map from user's draft (if she saved one)
         const draftPallets: Record<string, number> = {};
-        if (draft && draft.status !== 'ordered' && draft.status !== 'confirmed' && draft.items) {
+        // Audit-trail data per product (only present once a draft exists)
+        const draftAudit: Record<
+          string,
+          { id: string; actual_loaded_pallets: number | null; cut_reason: string | null }
+        > = {};
+        if (draft && draft.items) {
           for (const item of draft.items) {
-            draftPallets[item.product_id] = item.selected_pallets;
+            if (draft.status !== 'ordered' && draft.status !== 'confirmed') {
+              draftPallets[item.product_id] = item.selected_pallets;
+            }
+            draftAudit[item.product_id] = {
+              id: item.id,
+              actual_loaded_pallets: item.actual_loaded_pallets,
+              cut_reason: item.cut_reason,
+            };
           }
         }
         const hasDraft = Object.keys(draftPallets).length > 0;
@@ -112,7 +210,15 @@ export function HorizonBoat() {
             : hasDraft
               ? (draftPallets[p.product_id] ?? 0)
               : p.can_ship_pallets;
-          return { ...p, user_pallets: pallets, user_m2: pallets * M2_PER_PALLET };
+          const audit = draftAudit[p.product_id];
+          return {
+            ...p,
+            user_pallets: pallets,
+            user_m2: pallets * M2_PER_PALLET,
+            draft_item_id: audit?.id,
+            actual_loaded_pallets: audit?.actual_loaded_pallets,
+            cut_reason: audit?.cut_reason,
+          };
         });
 
         // Sort: critical first, then by days_of_stock
@@ -193,6 +299,9 @@ export function HorizonBoat() {
         .map((p) => ({
           product_id: p.product_id,
           selected_pallets: p.user_pallets,
+          // Audit trail: capture brain's suggestion so we can observe how
+          // often Ashley's actual orders diverge and on which products.
+          suggested_pallets: p.suggested_pallets,
         }));
       await draftsApi.save({
         boat_id: boatId,
@@ -299,6 +408,8 @@ export function HorizonBoat() {
                 <th className="px-4 py-2">SKU</th>
                 <th className="px-3 py-2 text-right">Pallets</th>
                 <th className="px-3 py-2 text-right">m²</th>
+                <th className="px-3 py-2 text-right" title="Pallets que realmente se cargaron al contenedor">Cargados</th>
+                <th className="px-3 py-2 text-left">Razón</th>
               </tr>
             </thead>
             <tbody>
@@ -307,6 +418,13 @@ export function HorizonBoat() {
                   <td className="px-4 py-2.5 text-slate-200 font-medium">{p.sku}</td>
                   <td className="px-3 py-2.5 text-right text-slate-300">{p.user_pallets}</td>
                   <td className="px-3 py-2.5 text-right text-slate-400">{p.user_m2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <AuditCells row={p} onSaved={(updated) => {
+                    setProducts((prev) => prev.map((x) =>
+                      x.product_id === p.product_id
+                        ? { ...x, actual_loaded_pallets: updated.actual_loaded_pallets, cut_reason: updated.cut_reason }
+                        : x
+                    ));
+                  }} />
                 </tr>
               ))}
             </tbody>
@@ -315,6 +433,7 @@ export function HorizonBoat() {
                 <td className="px-4 py-2.5 text-slate-300">Total</td>
                 <td className="px-3 py-2.5 text-right text-slate-200">{totals.pallets}</td>
                 <td className="px-3 py-2.5 text-right text-slate-300">{totals.m2.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td colSpan={2} />
               </tr>
             </tfoot>
           </table>
