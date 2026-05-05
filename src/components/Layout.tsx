@@ -30,8 +30,8 @@ export function Layout({ children }: LayoutProps) {
     navigate('/login', { replace: true });
   };
 
-  // Dark theme for Dashboard, Intelligence, Order Builder, and Products pages
-  const isDarkPage = ['/', '/planning', '/dashboard', '/intelligence', '/order-builder', '/products', '/config', '/factory-requests', '/horizon', '/horizon/boat', '/customers', '/data-hub', '/users', '/plan'].includes(location.pathname);
+  // Dark theme for Dashboard, Intelligence, and Products pages
+  const isDarkPage = ['/', '/dashboard', '/intelligence', '/products', '/config', '/horizon', '/horizon/boat', '/customers', '/data-hub', '/users', '/plan'].includes(location.pathname);
 
   const handleNavClick = () => {
     setMobileMenuOpen(false);
@@ -70,7 +70,7 @@ export function Layout({ children }: LayoutProps) {
             <nav className="hidden md:flex space-x-4">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path
-                  || (item.path === '/' && ['/horizon', '/horizon/boat', '/order-builder', '/planning', '/factory-requests'].includes(location.pathname));
+                  || (item.path === '/' && ['/horizon', '/horizon/boat'].includes(location.pathname));
                 return (
                   <Link
                     key={item.path}
@@ -132,7 +132,7 @@ export function Layout({ children }: LayoutProps) {
             <nav className="px-2 pt-2 pb-3 space-y-1">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path
-                  || (item.path === '/' && ['/horizon', '/horizon/boat', '/order-builder', '/planning', '/factory-requests'].includes(location.pathname));
+                  || (item.path === '/' && ['/horizon', '/horizon/boat'].includes(location.pathname));
                 return (
                   <Link
                     key={item.path}

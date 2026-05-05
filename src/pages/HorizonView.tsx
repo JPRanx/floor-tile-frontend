@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { horizonApi, type HorizonResponse, type BoatProjection, type ProductionPipelineItem } from '../requests/horizon';
 import { factoriesApi } from '../requests/factories';
+import { ReconciliationBadge } from '../components/horizon/ReconciliationBadge';
 
 function UrgencyDots({ breakdown }: { breakdown: BoatProjection['urgency_breakdown'] }) {
   return (
@@ -181,6 +182,11 @@ export function HorizonView() {
             ))}
           </select>
         )}
+      </div>
+
+      {/* Reconciliation: gaps between our drafts and factory's Cant. comprometida */}
+      <div className="mb-4">
+        <ReconciliationBadge factoryId={factoryId} />
       </div>
 
       {/* Factory order signal */}
