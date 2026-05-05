@@ -340,7 +340,7 @@ export function OrderPlan() {
                             className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
                             style={{ backgroundColor: 'var(--color-accent-glow)', color: 'var(--color-accent-hover)' }}
                           >
-                            ordenado
+                            ordered
                           </span>
                         )}
                         {b.status === 'before_committed' && (
@@ -348,7 +348,7 @@ export function OrderPlan() {
                             className="text-[9px] uppercase tracking-widest px-1.5 py-0.5 rounded"
                             style={{ backgroundColor: 'rgba(120,53,15,0.2)', color: '#fbbf24' }}
                           >
-                            anterior
+                            previous
                           </span>
                         )}
                       </div>

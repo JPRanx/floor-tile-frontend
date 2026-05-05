@@ -76,10 +76,10 @@ function BoatCard({ boat, onClick, onIgnore }: { boat: BoatProjection; onClick: 
           </div>
           <div className="flex gap-1.5 items-center">
             {boat.draft_status && boat.draft_status !== 'ordered' && (
-              <StatePill label="borrador" tone="planning" />
+              <StatePill label="draft" tone="planning" />
             )}
             <StatePill
-              label={boat.state === 'ORDERED' ? 'confirmado' : boat.state.toLowerCase()}
+              label={boat.state.toLowerCase()}
               tone={boat.state === 'ORDERED' ? 'accent' : boat.state === 'PLANNING' ? 'planning' : 'neutral'}
             />
           </div>

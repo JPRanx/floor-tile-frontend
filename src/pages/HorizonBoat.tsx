@@ -369,10 +369,13 @@ export function HorizonBoat() {
   const dep = new Date(boat.departure_date + 'T00:00:00');
   const fmtDate = dep.toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' });
 
+  // Keep state labels in English — they match what Ashley reads on
+  // BL forms and TIBA documents. Translating to Spanish creates
+  // friction when reconciling boat info across surfaces.
   const stateLabel: Record<string, string> = {
-    DISPATCHED: 'Despachado',
-    CONFIRMED: 'Confirmado',
-    ORDERED: 'Ordenado',
+    DISPATCHED: 'Dispatched',
+    CONFIRMED: 'Confirmed',
+    ORDERED: 'Ordered',
   };
 
   // Receipt view for locked boats — minimal, read-only
