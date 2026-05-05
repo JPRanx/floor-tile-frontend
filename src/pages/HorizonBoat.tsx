@@ -356,8 +356,18 @@ export function HorizonBoat() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">{error}</div>
+      <div className="min-h-screen p-6" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+        <div
+          className="p-4 text-sm"
+          style={{
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            color: 'var(--color-error)',
+          }}
+        >
+          {error}
+        </div>
       </div>
     );
   }
@@ -382,8 +392,15 @@ export function HorizonBoat() {
   if (isLocked) {
     const shippedProducts = products.filter((p) => p.user_pallets > 0);
     return (
-      <div className="p-6 max-w-3xl mx-auto">
-        <button onClick={() => navigate('/horizon')} className="text-xs text-slate-500 hover:text-slate-300 mb-1">&larr; Volver</button>
+      <div className="min-h-screen px-6 py-8" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+      <div className="max-w-3xl mx-auto">
+        <button
+          onClick={() => navigate('/horizon')}
+          className="text-[10px] uppercase tracking-widest mb-3"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
+          &larr; Volver
+        </button>
         <div className="flex justify-between items-start mb-6">
           <div>
             <h1 className="text-xl font-bold text-slate-100" translate="no">{boat.boat_name}</h1>
@@ -444,17 +461,19 @@ export function HorizonBoat() {
         </div>
 
         {data.next_boat && (
-          <p className="mt-4 text-xs text-slate-600">
+          <p className="mt-4 text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
             Siguiente: <span translate="no">{data.next_boat.boat_name}</span> ({data.next_boat.departure_date})
           </p>
         )}
+      </div>
       </div>
     );
   }
 
   // Order Builder view for actionable boats
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="min-h-screen px-6 py-8" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+      <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div>
@@ -652,10 +671,11 @@ export function HorizonBoat() {
 
       {/* Next boat context */}
       {data.next_boat && (
-        <p className="mt-4 text-xs text-slate-600">
-          Siguiente: {data.next_boat.boat_name} ({data.next_boat.departure_date})
+        <p className="mt-4 text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+          Siguiente: <span translate="no">{data.next_boat.boat_name}</span> ({data.next_boat.departure_date})
         </p>
       )}
+      </div>
     </div>
   );
 }

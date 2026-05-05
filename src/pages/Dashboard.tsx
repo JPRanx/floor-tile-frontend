@@ -41,12 +41,11 @@ export function Dashboard() {
       setError(null);
       const stockoutData = await dashboardApi.getStockoutList();
       setData(stockoutData);
-      // Also fetch last inventory update timestamp
       try {
         const inventoryData = await inventoryApi.getLatest();
         setLastInventoryUpdate(inventoryData.as_of);
       } catch {
-        // Non-critical - just don't show timestamp
+        // Non-critical
       }
     } catch (err) {
       setError(t('dashboard.loadError'));
@@ -66,14 +65,25 @@ export function Dashboard() {
 
   if (error) {
     return (
-      <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4">
-        <p className="text-rose-400">{error}</p>
-        <button
-          onClick={loadData}
-          className="mt-2 text-rose-400 hover:text-rose-300 underline"
+      <div className="p-6">
+        <div
+          className="p-4 text-sm"
+          style={{
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            color: 'var(--color-error)',
+          }}
         >
-          {t('common.tryAgain')}
-        </button>
+          <p>{error}</p>
+          <button
+            onClick={loadData}
+            className="mt-2 underline text-xs uppercase tracking-widest"
+            style={{ color: 'var(--color-error)' }}
+          >
+            {t('common.tryAgain')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -85,308 +95,406 @@ export function Dashboard() {
     (a, b) => (tierOrder[a.tier ?? ''] ?? 3) - (tierOrder[b.tier ?? ''] ?? 3)
   );
 
-  // Calculate warehouse totals from products (convert from string/Decimal to number)
   const totalWarehouseM2 = products.reduce((sum, p) => sum + Number(p.warehouse_qty), 0);
   const totalInTransitM2 = products.reduce((sum, p) => sum + Number(p.in_transit_qty), 0);
   const utilizationPct = Math.round((totalWarehouseM2 / WAREHOUSE_MAX_M2) * 100);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">{t('dashboard.title')}</h1>
-        <p className="text-slate-400">{t('dashboard.subtitle')}</p>
-      </div>
-
-      {/* Status Cards - Boat-based Priority */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatusCard
-          label={t('dashboard.highPriority')}
-          count={data.high_priority_count}
-          color="orange"
-        />
-        <StatusCard
-          label={t('dashboard.consider')}
-          count={data.consider_count}
-          color="amber"
-        />
-        <StatusCard
-          label={t('dashboard.wellCovered')}
-          count={data.well_covered_count}
-          color="emerald"
-        />
-        <StatusCard
-          label={t('dashboard.yourCall')}
-          count={data.your_call_count}
-          color="slate"
-        />
-      </div>
-
-      {/* No Boat Schedule Warning */}
-      {!data.next_boat_departure && (
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-amber-400 text-lg">⚠️</span>
-            <span className="text-amber-300 font-medium">{t('dashboard.noBoatWarning')}</span>
-          </div>
-          <Link
-            to="/boats"
-            className="text-amber-400 hover:text-amber-300 font-medium underline text-sm"
+    <div className="min-h-screen px-6 py-8" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Page Title — editorial */}
+        <div>
+          <h1
+            className="text-lg font-medium tracking-[0.15em] uppercase"
+            style={{ color: 'var(--color-text-primary)' }}
           >
-            {t('dashboard.uploadTiba')}
-          </Link>
-        </div>
-      )}
-
-      {/* Boat Departure Info */}
-      {data.next_boat_departure && (
-        <div className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-sky-400 mb-2">{t('dashboard.boatDepartures')}</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span className="text-slate-400">{t('dashboard.nextBoat')}</span>{' '}
-              <span className="font-medium text-white">
-                {formatDateUTC(data.next_boat_departure)} ({t('dashboard.daysLabel', { days: data.days_to_next_boat_departure })})
-              </span>
-            </div>
-            {data.second_boat_departure && (
-              <div>
-                <span className="text-slate-400">{t('dashboard.secondBoat')}</span>{' '}
-                <span className="font-medium text-white">
-                  {formatDateUTC(data.second_boat_departure)} ({t('dashboard.daysLabel', { days: data.days_to_second_boat_departure })})
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Warehouse Utilization */}
-      <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-700/50 p-5 shadow-[0_0_30px_rgba(99,102,241,0.1)]">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-white font-semibold flex items-center gap-2">
-            <span className="text-lg">📦</span>
-            {t('dashboard.warehouseStatus')}
-          </h2>
-          <Link
-            to="/data-hub"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 rounded-lg hover:bg-indigo-500/20 transition-colors"
+            {t('dashboard.title')}
+          </h1>
+          <p
+            className="text-xs mt-1 tracking-widest uppercase"
+            style={{ color: 'var(--color-text-muted)' }}
           >
-            {t('inventory.uploadTitle')} →
-          </Link>
+            {t('dashboard.subtitle')}
+          </p>
         </div>
-        <div className="flex flex-col md:flex-row md:items-center gap-4">
-          <div className="flex-1">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-slate-400">{t('dashboard.warehouseStock')}</span>
-              <span className="font-medium text-white">
-                {totalWarehouseM2.toLocaleString()} m²
-              </span>
-            </div>
-            <div className="w-full bg-slate-700/50 rounded-full h-3 overflow-hidden">
-              <div
-                className="h-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
-                style={{
-                  width: `${Math.min(utilizationPct, 100)}%`,
-                }}
-              />
-            </div>
-            <div className="text-xs text-slate-500 mt-1">
-              {t('dashboard.ofCapacity')}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold text-white">
-              {utilizationPct}%
-            </div>
-            <div className="text-xs text-slate-500">{t('dashboard.utilization')}</div>
-          </div>
+
+        {/* Status KPI cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatusCard label={t('dashboard.highPriority')} count={data.high_priority_count} tone="critical" />
+          <StatusCard label={t('dashboard.consider')}     count={data.consider_count}      tone="warning" />
+          <StatusCard label={t('dashboard.wellCovered')}  count={data.well_covered_count}  tone="ok" />
+          <StatusCard label={t('dashboard.yourCall')}     count={data.your_call_count}     tone="neutral" />
         </div>
-        {totalInTransitM2 > 0 && (
-          <div className="mt-3 flex items-center gap-2 text-sm">
-            <span className="text-sky-400">🚢</span>
-            <span className="text-slate-400">
-              {t('dashboard.inTransit', { amount: totalInTransitM2.toLocaleString() })}
+
+        {/* No Boat Schedule Warning */}
+        {!data.next_boat_departure && (
+          <div
+            className="p-4 flex items-center justify-between"
+            style={{
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid rgba(251, 191, 36, 0.25)',
+              backgroundColor: 'rgba(251, 191, 36, 0.08)',
+            }}
+          >
+            <span className="text-[11px] uppercase tracking-widest font-medium" style={{ color: '#fbbf24' }}>
+              {t('dashboard.noBoatWarning')}
             </span>
+            <Link
+              to="/data-hub"
+              className="text-[11px] uppercase tracking-widest underline"
+              style={{ color: '#fbbf24' }}
+            >
+              {t('dashboard.uploadTiba')}
+            </Link>
           </div>
         )}
-        {/* Last Updated Timestamp */}
-        <div className="mt-4 pt-4 border-t border-slate-700/50 flex items-center justify-between text-xs">
-          <span className="text-slate-500">
-            {t('inventory.lastUpdated')}: {' '}
-            {lastInventoryUpdate ? (
-              <span className="font-medium text-slate-300">{lastInventoryUpdate}</span>
-            ) : (
-              <span className="text-amber-500">{t('inventory.neverUpdated')}</span>
-            )}
-          </span>
-          {lastInventoryUpdate && (() => {
-            const updateDate = new Date(lastInventoryUpdate);
-            const now = new Date();
-            const hoursDiff = (now.getTime() - updateDate.getTime()) / (1000 * 60 * 60);
-            return hoursDiff > 24 ? (
-              <span className="inline-flex items-center gap-1 text-amber-500" title={t('inventory.dataStale')}>
-                ⚠️ {t('inventory.dataStale')}
-              </span>
-            ) : null;
-          })()}
-        </div>
-      </div>
 
-      {/* Product Table */}
-      <div className="bg-slate-900/95 backdrop-blur-xl rounded-xl border border-slate-700/50 overflow-hidden shadow-[0_0_30px_rgba(99,102,241,0.1)]">
-        <div className="px-5 py-4 border-b border-slate-700/50">
-          <h2 className="text-white font-semibold flex items-center gap-2">
-            <span className="text-lg">📊</span>
-            {t('dashboard.productsByStatus')}
-          </h2>
-        </div>
-        <div className="overflow-auto max-h-[500px]">
-          <table className="min-w-full">
-            <thead className="bg-slate-800/50 sticky top-0 z-10">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider sticky left-0 z-20 bg-slate-800/50">
-                  {t('dashboard.columns.sku')}
-                </th>
-                <th className="px-4 py-3 text-center text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  Tier
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  {t('dashboard.columns.daysLeft')}
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  {t('dashboard.columns.velocity')}
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  {t('dashboard.columns.stock')}
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  {t('dashboard.columns.inTransit')}
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">
-                  {t('dashboard.columns.siesa', 'SIESA')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-700/30">
-              {products.map((product) => (
-                <tr
-                  key={product.product_id}
-                  className={`hover:bg-slate-800/30 group transition-colors ${!product.active ? 'opacity-60' : ''}`}
-                >
-                  <td className="px-4 py-3 whitespace-nowrap sticky left-0 bg-slate-900/95 group-hover:bg-slate-800/30 transition-colors">
-                    <div className="text-sm font-medium text-white flex items-center gap-2">
-                      {product.sku}
-                      {!product.active && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-slate-600/50 text-slate-400 border border-slate-500/30">
-                          {t('dashboard.inactive', 'INACTIVO')}
-                        </span>
-                      )}
-                      {liquidationIds.has(product.product_id) && (
-                        <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                          {t('products.liquidation', 'LIQUIDACIÓN')}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      {product.rotation}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-center">
-                    {product.tier ? (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${
-                        product.tier === 'A' ? 'bg-amber-900/50 text-amber-400 border border-amber-500/30'
-                        : product.tier === 'B' ? 'bg-blue-900/50 text-blue-400 border border-blue-500/30'
-                        : 'bg-slate-700/50 text-slate-400 border border-slate-500/30'
-                      }`}>
-                        {product.tier}
-                      </span>
-                    ) : (
-                      <span className="text-slate-600 text-xs">-</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <StockCoverage
-                      variant="compact"
-                      warehouseDays={product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout))
-                        ? Number(product.days_to_stockout)
-                        : null}
-                      withTransitDays={
-                        product.days_to_stockout != null && Number(product.avg_daily_sales) > 0
-                          ? Number(product.days_to_stockout) + (Number(product.in_transit_qty) / Number(product.avg_daily_sales))
-                          : null
-                      }
-                      inTransitDays={
-                        Number(product.in_transit_qty) > 0 && Number(product.avg_daily_sales) > 0
-                          ? Number(product.in_transit_qty) / Number(product.avg_daily_sales)
-                          : null
-                      }
-                      hasGap={
-                        product.days_to_stockout != null &&
-                        data.days_to_next_boat != null &&
-                        Number(product.days_to_stockout) < data.days_to_next_boat
-                      }
-                    />
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-slate-400">
-                    {Number(product.avg_daily_sales) > 0
-                      ? t('dashboard.velocityText', { count: Math.round(Number(product.avg_daily_sales)) })
-                      : '—'}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-white">
-                    {Number(product.warehouse_qty).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
-                    {Number(product.in_transit_qty) > 0 ? (
-                      <span className="text-sky-400 font-medium">
-                        🚢 {Number(product.in_transit_qty).toLocaleString()}
-                      </span>
-                    ) : (
-                      <span className="text-slate-600">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
-                    {Number(product.factory_available_m2) > 0 ? (
-                      <span className="text-purple-400 font-medium" title={t('dashboard.factoryLots', { count: product.factory_lot_count || 0 })}>
-                        🏭 {Number(product.factory_available_m2).toLocaleString()}
-                      </span>
-                    ) : (
-                      <span className="text-slate-600">—</span>
-                    )}
-                  </td>
+        {/* Boat Departure Info */}
+        {data.next_boat_departure && (
+          <SectionPanel title={t('dashboard.boatDepartures')} tone="info">
+            <div className="grid grid-cols-2 gap-6 text-xs">
+              <div>
+                <p className="uppercase tracking-widest text-[10px] mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                  {t('dashboard.nextBoat')}
+                </p>
+                <p style={{ color: 'var(--color-text-primary)' }}>
+                  {formatDateUTC(data.next_boat_departure)} · {t('dashboard.daysLabel', { days: data.days_to_next_boat_departure })}
+                </p>
+              </div>
+              {data.second_boat_departure && (
+                <div>
+                  <p className="uppercase tracking-widest text-[10px] mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                    {t('dashboard.secondBoat')}
+                  </p>
+                  <p style={{ color: 'var(--color-text-primary)' }}>
+                    {formatDateUTC(data.second_boat_departure)} · {t('dashboard.daysLabel', { days: data.days_to_second_boat_departure })}
+                  </p>
+                </div>
+              )}
+            </div>
+          </SectionPanel>
+        )}
+
+        {/* Warehouse Utilization */}
+        <SectionPanel
+          title={t('dashboard.warehouseStatus')}
+          tone="neutral"
+          action={
+            <Link
+              to="/data-hub"
+              className="text-[10px] uppercase tracking-widest"
+              style={{ color: 'var(--color-accent-hover)' }}
+            >
+              {t('inventory.uploadTitle')} →
+            </Link>
+          }
+        >
+          <div className="flex flex-col md:flex-row md:items-center gap-6">
+            <div className="flex-1">
+              <div className="flex justify-between text-xs mb-2">
+                <span className="uppercase tracking-widest text-[10px]" style={{ color: 'var(--color-text-muted)' }}>
+                  {t('dashboard.warehouseStock')}
+                </span>
+                <span className="font-medium" style={{ color: 'var(--color-text-primary)' }}>
+                  {totalWarehouseM2.toLocaleString()} m²
+                </span>
+              </div>
+              <div
+                className="w-full h-1.5 overflow-hidden"
+                style={{ backgroundColor: 'var(--color-bg-elevated)', borderRadius: 'var(--radius-sm)' }}
+              >
+                <div
+                  className="h-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(utilizationPct, 100)}%`,
+                    backgroundColor: 'var(--color-accent)',
+                    borderRadius: 'var(--radius-sm)',
+                  }}
+                />
+              </div>
+              <p className="text-[10px] uppercase tracking-widest mt-2" style={{ color: 'var(--color-text-muted)' }}>
+                {t('dashboard.ofCapacity')}
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-3xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+                {utilizationPct}%
+              </div>
+              <div className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                {t('dashboard.utilization')}
+              </div>
+            </div>
+          </div>
+          {totalInTransitM2 > 0 && (
+            <p className="mt-4 text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+              {t('dashboard.inTransit', { amount: totalInTransitM2.toLocaleString() })}
+            </p>
+          )}
+          <div
+            className="mt-4 pt-4 flex items-center justify-between text-[10px] uppercase tracking-widest"
+            style={{ borderTop: '1px solid var(--color-border-subtle)' }}
+          >
+            <span style={{ color: 'var(--color-text-muted)' }}>
+              {t('inventory.lastUpdated')}:{' '}
+              {lastInventoryUpdate ? (
+                <span style={{ color: 'var(--color-text-secondary)' }}>{lastInventoryUpdate}</span>
+              ) : (
+                <span style={{ color: '#fbbf24' }}>{t('inventory.neverUpdated')}</span>
+              )}
+            </span>
+            {lastInventoryUpdate && (() => {
+              const updateDate = new Date(lastInventoryUpdate);
+              const now = new Date();
+              const hoursDiff = (now.getTime() - updateDate.getTime()) / (1000 * 60 * 60);
+              return hoursDiff > 24 ? (
+                <span style={{ color: '#fbbf24' }} title={t('inventory.dataStale')}>
+                  {t('inventory.dataStale')}
+                </span>
+              ) : null;
+            })()}
+          </div>
+        </SectionPanel>
+
+        {/* Product Table */}
+        <div
+          className="overflow-hidden"
+          style={{
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border-subtle)',
+            backgroundColor: 'var(--color-bg-surface)',
+          }}
+        >
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--color-border-subtle)' }}>
+            <h2 className="text-xs tracking-widest uppercase font-medium" style={{ color: 'var(--color-text-secondary)' }}>
+              {t('dashboard.productsByStatus')}
+            </h2>
+          </div>
+          <div className="overflow-auto max-h-[500px]">
+            <table className="min-w-full text-sm">
+              <thead className="sticky top-0 z-10" style={{ backgroundColor: 'var(--color-bg-elevated)' }}>
+                <tr>
+                  <th
+                    className="px-4 py-3 text-left text-[10px] uppercase tracking-widest sticky left-0 z-20"
+                    style={{ color: 'var(--color-text-muted)', backgroundColor: 'var(--color-bg-elevated)' }}
+                  >
+                    {t('dashboard.columns.sku')}
+                  </th>
+                  <th className="px-4 py-3 text-center text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    Tier
+                  </th>
+                  <th className="px-4 py-3 text-right text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    {t('dashboard.columns.daysLeft')}
+                  </th>
+                  <th className="px-4 py-3 text-right text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    {t('dashboard.columns.velocity')}
+                  </th>
+                  <th className="px-4 py-3 text-right text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    {t('dashboard.columns.stock')}
+                  </th>
+                  <th className="px-4 py-3 text-right text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    {t('dashboard.columns.inTransit')}
+                  </th>
+                  <th className="px-4 py-3 text-right text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-muted)' }}>
+                    {t('dashboard.columns.siesa', 'SIESA')}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {products.map((product) => (
+                  <tr
+                    key={product.product_id}
+                    className={`group transition-colors ${!product.active ? 'opacity-60' : ''}`}
+                    style={{ borderTop: '1px solid var(--color-border-subtle)' }}
+                  >
+                    <td
+                      className="px-4 py-3 whitespace-nowrap sticky left-0 transition-colors"
+                      style={{ backgroundColor: 'var(--color-bg-surface)' }}
+                    >
+                      <div className="text-sm font-medium flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
+                        <span translate="no">{product.sku}</span>
+                        {!product.active && (
+                          <span
+                            className="px-1.5 py-0.5 text-[9px] uppercase tracking-widest"
+                            style={{
+                              backgroundColor: 'var(--color-bg-elevated)',
+                              color: 'var(--color-text-muted)',
+                              borderRadius: 'var(--radius-sm)',
+                            }}
+                          >
+                            {t('dashboard.inactive', 'INACTIVO')}
+                          </span>
+                        )}
+                        {liquidationIds.has(product.product_id) && (
+                          <span
+                            className="px-1.5 py-0.5 text-[9px] uppercase tracking-widest"
+                            style={{
+                              backgroundColor: 'rgba(251, 191, 36, 0.12)',
+                              color: '#fbbf24',
+                              borderRadius: 'var(--radius-sm)',
+                            }}
+                          >
+                            {t('products.liquidation', 'LIQUIDACIÓN')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] uppercase tracking-widest mt-0.5" style={{ color: 'var(--color-text-muted)' }}>
+                        {product.rotation}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-center">
+                      {product.tier ? (
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest"
+                          style={{
+                            borderRadius: 'var(--radius-sm)',
+                            backgroundColor:
+                              product.tier === 'A' ? 'rgba(251, 191, 36, 0.12)' :
+                              product.tier === 'B' ? 'rgba(96, 165, 250, 0.12)' :
+                              'var(--color-bg-elevated)',
+                            color:
+                              product.tier === 'A' ? '#fbbf24' :
+                              product.tier === 'B' ? '#60a5fa' :
+                              'var(--color-text-muted)',
+                          }}
+                        >
+                          {product.tier}
+                        </span>
+                      ) : (
+                        <span className="text-xs" style={{ color: 'var(--color-text-muted)' }}>-</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      <StockCoverage
+                        variant="compact"
+                        warehouseDays={product.days_to_stockout != null && !isNaN(Number(product.days_to_stockout))
+                          ? Number(product.days_to_stockout)
+                          : null}
+                        withTransitDays={
+                          product.days_to_stockout != null && Number(product.avg_daily_sales) > 0
+                            ? Number(product.days_to_stockout) + (Number(product.in_transit_qty) / Number(product.avg_daily_sales))
+                            : null
+                        }
+                        inTransitDays={
+                          Number(product.in_transit_qty) > 0 && Number(product.avg_daily_sales) > 0
+                            ? Number(product.in_transit_qty) / Number(product.avg_daily_sales)
+                            : null
+                        }
+                        hasGap={
+                          product.days_to_stockout != null &&
+                          data.days_to_next_boat != null &&
+                          Number(product.days_to_stockout) < data.days_to_next_boat
+                        }
+                      />
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                      {Number(product.avg_daily_sales) > 0
+                        ? t('dashboard.velocityText', { count: Math.round(Number(product.avg_daily_sales)) })
+                        : '—'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm" style={{ color: 'var(--color-text-primary)' }}>
+                      {Number(product.warehouse_qty).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                      {Number(product.in_transit_qty) > 0 ? (
+                        <span style={{ color: '#60a5fa' }}>
+                          {Number(product.in_transit_qty).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right text-sm">
+                      {Number(product.factory_available_m2) > 0 ? (
+                        <span
+                          style={{ color: 'var(--color-accent-hover)' }}
+                          title={t('dashboard.factoryLots', { count: product.factory_lot_count || 0 })}
+                        >
+                          {Number(product.factory_available_m2).toLocaleString()}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--color-text-muted)' }}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-
     </div>
   );
 }
 
-// Status Card Component - Dark Theme
+// ─── Building blocks ─────────────────────────────────────────────────────
+
+function SectionPanel({
+  title,
+  tone = 'neutral',
+  action,
+  children,
+}: {
+  title: string;
+  tone?: 'neutral' | 'info' | 'warning';
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  const accent = {
+    neutral: 'var(--color-text-secondary)',
+    info: '#60a5fa',
+    warning: '#fb923c',
+  }[tone];
+  return (
+    <div
+      className="p-5"
+      style={{
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--color-border-subtle)',
+        backgroundColor: 'var(--color-bg-surface)',
+      }}
+    >
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xs tracking-widest uppercase font-medium" style={{ color: accent }}>
+          {title}
+        </h2>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 interface StatusCardProps {
   label: string;
   count: number;
-  color: 'orange' | 'amber' | 'emerald' | 'slate' | 'rose' | 'sky';
+  tone: 'critical' | 'warning' | 'ok' | 'neutral';
 }
 
-const cardColorClasses = {
-  orange: 'bg-orange-500/10 border-orange-500/20 text-orange-400',
-  amber: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
-  emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-  slate: 'bg-slate-700/30 border-slate-600/30 text-slate-300',
-  rose: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
-  sky: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
-};
-
-function StatusCard({ label, count, color }: StatusCardProps) {
+function StatusCard({ label, count, tone }: StatusCardProps) {
+  const dotColor = {
+    critical: '#f87171',
+    warning: '#fbbf24',
+    ok: '#4ade80',
+    neutral: 'var(--color-text-muted)',
+  }[tone];
   return (
-    <div className={`rounded-xl border p-4 ${cardColorClasses[color]} transition-all hover:scale-[1.02]`}>
-      <div className="text-3xl font-bold">{count}</div>
-      <div className="text-sm font-medium opacity-80">{label}</div>
+    <div
+      className="p-4"
+      style={{
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--color-border-subtle)',
+        backgroundColor: 'var(--color-bg-surface)',
+      }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: dotColor }} />
+        <p className="text-[10px] uppercase tracking-widest" style={{ color: 'var(--color-text-secondary)' }}>
+          {label}
+        </p>
+      </div>
+      <p className="text-2xl font-semibold" style={{ color: 'var(--color-text-primary)' }}>
+        {count}
+      </p>
     </div>
   );
 }
-

@@ -34,20 +34,29 @@ export function DataHub() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+    <div className="min-h-screen px-6 py-8" style={{ backgroundColor: 'var(--color-bg-base)' }}>
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">{t('dataHub.title')}</h1>
-          <p className="text-slate-400">{t('dataHub.subtitle')}</p>
+          <h1
+            className="text-lg font-medium tracking-[0.15em] uppercase"
+            style={{ color: 'var(--color-text-primary)' }}
+          >
+            {t('dataHub.title')}
+          </h1>
+          <p
+            className="text-xs mt-1 tracking-widest uppercase"
+            style={{ color: 'var(--color-text-muted)' }}
+          >
+            {t('dataHub.subtitle')}
+          </p>
         </div>
 
         {/* System Health Bar */}
         <DataFreshnessBar key={refreshKey} />
 
         {/* Sales Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-slate-200 mb-3">{t('dataHub.sections.sales')}</h2>
+        <Section label={t('dataHub.sections.sales')}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SACUploadCard
               lastUpdated={freshness?.sales.last_updated}
@@ -55,11 +64,10 @@ export function DataHub() {
               onUploadSuccess={handleUploadSuccess}
             />
           </div>
-        </div>
+        </Section>
 
         {/* Inventory Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-slate-200 mb-3">{t('dataHub.sections.inventory')}</h2>
+        <Section label={t('dataHub.sections.inventory')}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <InventoryUploadCard
               lastUpdated={freshness?.inventory.last_updated}
@@ -71,46 +79,67 @@ export function DataHub() {
               recordCount={freshness?.inventory.record_count}
               onUploadSuccess={handleUploadSuccess}
             />
-            <InTransitUploadCard
-              onUploadSuccess={handleUploadSuccess}
-            />
+            <InTransitUploadCard onUploadSuccess={handleUploadSuccess} />
           </div>
-        </div>
+        </Section>
 
         {/* Logistics Section */}
-        <div>
-          <h2 className="text-lg font-semibold text-slate-200 mb-3">{t('dataHub.sections.logistics')}</h2>
+        <Section label={t('dataHub.sections.logistics')}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <BoatUploadCard
               lastUpdated={freshness?.boats.last_updated}
               recordCount={freshness?.boats.record_count}
               onUploadSuccess={handleUploadSuccess}
             />
-            <ProductionUploadCard
-              onUploadSuccess={handleUploadSuccess}
-            />
+            <ProductionUploadCard onUploadSuccess={handleUploadSuccess} />
           </div>
-        </div>
+        </Section>
 
         {/* Upload History */}
         <UploadHistory refreshKey={refreshKey} />
 
         {/* Help Section */}
-        <div className="bg-slate-800/50 rounded-lg border border-slate-700 p-6">
-          <h3 className="font-medium text-slate-200">{t('dataHub.help.title')}</h3>
-          <div className="mt-3 space-y-2 text-sm text-slate-400">
+        <div
+          className="p-6"
+          style={{
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border-subtle)',
+            backgroundColor: 'var(--color-bg-surface)',
+          }}
+        >
+          <h3
+            className="text-xs tracking-widest uppercase font-medium"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            {t('dataHub.help.title')}
+          </h3>
+          <div className="mt-3 space-y-2 text-sm" style={{ color: 'var(--color-text-secondary)' }}>
             <p>
-              <strong className="text-slate-300">{t('dataHub.sales.title')}:</strong> {t('dataHub.help.sacDescription')}
+              <strong style={{ color: 'var(--color-text-primary)' }}>{t('dataHub.sales.title')}:</strong> {t('dataHub.help.sacDescription')}
             </p>
             <p>
-              <strong className="text-slate-300">{t('dataHub.inventory.title')}:</strong> {t('dataHub.help.siesaDescription')}
+              <strong style={{ color: 'var(--color-text-primary)' }}>{t('dataHub.inventory.title')}:</strong> {t('dataHub.help.siesaDescription')}
             </p>
             <p>
-              <strong className="text-slate-300">{t('dataHub.sections.logistics')}:</strong> {t('dataHub.help.productionDescription')}
+              <strong style={{ color: 'var(--color-text-primary)' }}>{t('dataHub.sections.logistics')}:</strong> {t('dataHub.help.productionDescription')}
             </p>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <h2
+        className="text-xs tracking-widest uppercase font-medium mb-3"
+        style={{ color: 'var(--color-text-secondary)' }}
+      >
+        {label}
+      </h2>
+      {children}
     </div>
   );
 }
