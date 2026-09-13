@@ -1,35 +1,23 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+let client: SupabaseClient | null = null;
 
-if (!url || !key) {
-  throw new Error(
-    "Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in environment"
-  );
-}
-
-// If the URL hash carries an invite or recovery token, clear any existing
-// Supabase session from localStorage BEFORE createClient runs. This prevents
-// the race where the in-tab session briefly swaps between the logged-in
-// user and the invitee — which caused password-updates to land on the wrong
-// account. Must happen before createClient (detectSessionInUrl is synchronous).
-if (typeof window !== "undefined" && window.location.hash) {
-  const params = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-  const type = params.get("type");
-  if (type === "invite" || type === "recovery") {
-    for (const k of Object.keys(localStorage)) {
-      if (k.startsWith("sb-") && k.includes("-auth-token")) {
-        localStorage.removeItem(k);
-      }
-    }
+function configuredClient(): SupabaseClient {
+  if (client) return client;
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !supabasePublishableKey) {
+    throw new Error("Supabase Auth requires VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.");
   }
+  client = createClient(supabaseUrl, supabasePublishableKey, {
+    auth: { detectSessionInUrl: false, persistSession: true, autoRefreshToken: true, flowType: "pkce" },
+  });
+  return client;
 }
 
-export const supabase = createClient(url, key, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, property) {
+    const value = Reflect.get(configuredClient(), property);
+    return typeof value === "function" ? value.bind(configuredClient()) : value;
   },
 });

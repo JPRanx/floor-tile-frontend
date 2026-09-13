@@ -1,147 +1,57 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { FormEvent, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../state/authStore";
 
 export function Login() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const signIn = useAuthStore((s) => s.signIn);
-  const loading = useAuthStore((s) => s.loading);
-
+  const signIn = useAuthStore((state) => state.signIn);
+  const requestPasswordEstablishment = useAuthStore((state) => state.requestPasswordEstablishment);
+  const storeError = useAuthStore((state) => state.error);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [recoveryRequested, setRecoveryRequested] = useState(false);
 
-  const from = (location.state as { from?: string } | null)?.from ?? "/";
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    const { error: signInError } = await signIn(email, password);
-    if (signInError) {
-      setError(signInError);
-      return;
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    try {
+      await signIn(email.trim(), password);
+      navigate("/", { replace: true });
+    } catch {
+      // The store exposes the provider-safe error in the form.
+    } finally {
+      setBusy(false);
     }
-    navigate(from, { replace: true });
-  };
+  }
 
-  return (
-    <div
-      className="min-h-screen flex items-center justify-center px-4"
-      style={{ backgroundColor: "var(--color-bg-base)" }}
-    >
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-10">
-          <h1
-            className="text-lg font-medium tracking-[0.15em] uppercase"
-            style={{ color: "var(--color-text-primary)" }}
-          >
-            cm tarragona
-          </h1>
-          <p
-            className="text-xs mt-2 tracking-widest uppercase"
-            style={{ color: "var(--color-text-muted)" }}
-          >
-            operations
-          </p>
-        </div>
+  async function requestPassword() {
+    setBusy(true);
+    setRecoveryRequested(false);
+    try {
+      await requestPasswordEstablishment(email.trim());
+      setRecoveryRequested(true);
+    } catch {
+      // The store exposes the provider-safe error in the form.
+    } finally {
+      setBusy(false);
+    }
+  }
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-xs mb-2 tracking-wide uppercase"
-              style={{ color: "var(--color-text-muted)" }}
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full min-h-[44px] px-4 py-3 text-sm focus:outline-none transition-all duration-200"
-              style={{
-                borderRadius: "var(--radius-md)",
-                backgroundColor: "var(--color-bg-surface)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-accent)";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px var(--color-accent-glow)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-border)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-xs mb-2 tracking-wide uppercase"
-              style={{ color: "var(--color-text-muted)" }}
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full min-h-[44px] px-4 py-3 text-sm focus:outline-none transition-all duration-200"
-              style={{
-                borderRadius: "var(--radius-md)",
-                backgroundColor: "var(--color-bg-surface)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-accent)";
-                e.currentTarget.style.boxShadow =
-                  "0 0 0 3px var(--color-accent-glow)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-border)";
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            />
-          </div>
-
-          {error && (
-            <p className="text-sm" style={{ color: "var(--color-error)" }}>
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full min-h-[44px] text-white text-sm font-medium px-4 py-3 cursor-pointer transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-            style={{
-              borderRadius: "var(--radius-md)",
-              backgroundColor: "var(--color-accent)",
-            }}
-            onMouseEnter={(e) => {
-              if (!loading)
-                e.currentTarget.style.backgroundColor =
-                  "var(--color-accent-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--color-accent)";
-            }}
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
+  return <main className="auth-shell">
+    <section className="auth-card" aria-labelledby="login-title">
+      <div className="brandmark">FT</div>
+      <p className="auth-kicker">Acceso privado</p>
+      <h1 id="login-title">Iniciar sesión</h1>
+      <p className="auth-copy">Ingresa con la cuenta que recibió acceso al espacio de planeación.</p>
+      {storeError && <p className="auth-error" role="alert">{storeError}</p>}
+      {recoveryRequested && <p role="status">Revisa tu correo para establecer la contraseña.</p>}
+      <form onSubmit={submit} className="auth-form">
+        <label>Correo electrónico<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+        <label>Contraseña<input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+        <button type="submit" disabled={busy}>{busy ? "Ingresando…" : "Iniciar sesión"}</button>
+        <button type="button" disabled={busy || !email.trim()} onClick={requestPassword}>Establecer contraseña</button>
+      </form>
+    </section>
+  </main>;
 }

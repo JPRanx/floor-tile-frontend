@@ -1,31 +1,15 @@
-import { useEffect } from "react";
+import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "../state/authStore";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const session = useAuthStore((s) => s.session);
-  const initialized = useAuthStore((s) => s.initialized);
-  const init = useAuthStore((s) => s.init);
+export function ProtectedRoute({ children }: { children: ReactNode }) {
+  const initialized = useAuthStore((state) => state.initialized);
+  const session = useAuthStore((state) => state.session);
   const location = useLocation();
 
-  useEffect(() => {
-    if (!initialized) {
-      void init();
-    }
-  }, [initialized, init]);
-
   if (!initialized) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ backgroundColor: "var(--color-bg-base)" }}
-      />
-    );
+    return <main className="loading-shell"><div className="brandmark">FT</div><p>Comprobando sesión…</p></main>;
   }
-
-  if (!session) {
-    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
-  }
-
+  if (!session) return <Navigate to="/login" replace state={{ from: location }} />;
   return <>{children}</>;
 }

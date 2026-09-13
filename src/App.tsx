@@ -1,84 +1,129 @@
-import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import './i18n';
-import { Layout } from './components/Layout';
-import { ProtectedRoute } from './components/ProtectedRoute';
-import { Login } from './pages/Login';
-import { SetPassword } from './pages/SetPassword';
-import { Dashboard } from './pages/Dashboard';
-import { DataHub } from './pages/DataHub';
-import { Boats } from './pages/Boats';
-import { Intelligence } from './pages/Intelligence';
-import { ProductManagement } from './pages/ProductManagement';
-import { ConfigPage } from './pages/ConfigPage';
-import { HorizonView } from './pages/HorizonView';
-import { HorizonBoat } from './pages/HorizonBoat';
-import { CustomerProfiles } from './pages/CustomerProfiles';
-import { Users } from './pages/Users';
-import { OrderPlan } from './pages/OrderPlan';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Composer } from "./Composer";
+import { getSources, getWorkspace, runCommand } from "./api";
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import type { PlanningContext, SourceHub, Workspace } from "./contracts";
+import { Login } from "./pages/Login";
+import { SetPassword } from "./pages/SetPassword";
+import { useAuthStore } from "./state/authStore";
 
-// Detects Supabase auth callbacks landing in the URL hash and routes them
-// to the right page. Invites/recoveries → /set-password.
-function AuthCallbackHandler() {
+function AuthInitializer() {
+  const initialize = useAuthStore((state) => state.initialize);
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void initialize();
+  }, [initialize]);
+  return null;
+}
+
+function PasswordEstablishmentRoute() {
+  const initialized = useAuthStore((state) => state.initialized);
+  const allowed = useAuthStore((state) => state.passwordEstablishmentAllowed);
+  const session = useAuthStore((state) => state.session);
+  if (!initialized) return <main className="loading-shell"><p>Comprobando sesión…</p></main>;
+  if (!allowed) return <Navigate to={session ? "/" : "/login"} replace />;
+  return <SetPassword />;
+}
+
+function ComposerApp() {
   const navigate = useNavigate();
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (!hash) return;
-    const params = new URLSearchParams(hash.replace(/^#/, ''));
-    const type = params.get('type');
-    if (type === 'invite' || type === 'recovery') {
-      // Strip the hash so we don't re-trigger, then go to set-password
-      navigate('/set-password' + window.location.search, { replace: true });
+  const signOut = useAuthStore((state) => state.signOut);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [sourceHub, setSourceHub] = useState<SourceHub | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [planningContext, setPlanningContext] = useState<PlanningContext | null>(null);
+
+  const load = useCallback(async (focusSailingId?: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const [nextWorkspace, nextSources] = await Promise.all([getWorkspace(focusSailingId), getSources()]);
+      setWorkspace(nextWorkspace); setSourceHub(nextSources);
+    } catch (caught) { setError(caught instanceof Error ? caught.message : String(caught)); }
+    finally { setBusy(false); }
+  }, []);
+
+  const calculate = useCallback(async ({ focusSailingId, productionAnchorSailingId, factoryOrderDate }: {
+    focusSailingId: string; productionAnchorSailingId: string; factoryOrderDate: string;
+  }) => {
+    setBusy(true); setError(null);
+    try {
+      const nextWorkspace = await getWorkspace(focusSailingId, productionAnchorSailingId, factoryOrderDate);
+      const serverPlanning = nextWorkspace.factory_planning;
+      const serverPlanId = serverPlanning?.plan_id ?? nextWorkspace.plan?.plan_id;
+      if (!serverPlanning || !serverPlanId) throw new Error("El servidor no devolvió un contexto de planeación completo.");
+      setPlanningContext({
+        plan_id: serverPlanId,
+        production_anchor_sailing_id: serverPlanning.production_anchor_sailing_id,
+        factory_order_date: serverPlanning.factory_order_date,
+      });
+      setWorkspace(nextWorkspace);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : String(caught);
+      setError(message); throw caught;
+    } finally { setBusy(false); }
+  }, []);
+
+  const orderAction = useCallback(async (command: string, params: Record<string, unknown>) => {
+    if (!workspace || workspace.head_seq === undefined || !planningContext) {
+      throw new Error("Actualiza la planeación antes de continuar.");
     }
-  }, [navigate]);
-  return null;
+    setBusy(true); setError(null);
+    try {
+      await runCommand(command, params, workspace.head_seq);
+      const authoritative = await getWorkspace(planningContext);
+      setWorkspace(authoritative);
+    } catch (caught) {
+      const nextError = caught instanceof Error ? caught.message : String(caught);
+      setError(nextError);
+      throw caught;
+    } finally { setBusy(false); }
+  }, [planningContext, workspace]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  async function leave() {
+    try { await signOut(); } finally { navigate("/login", { replace: true }); }
+  }
+
+  if (!workspace) return <main className="loading-shell">
+    <div className="brandmark">FT</div>
+    {error ? <p role="alert">{error}</p> : <p>Cargando planeación…</p>}
+  </main>;
+
+  return <div className="app-shell">
+    <div className="truth-banner">
+      <span>{workspace.demo_banner}</span>
+      <span className="session-actions">{busy ? "Actualizando contexto…" : "Contexto del servidor listo"}<button type="button" onClick={() => void leave()}>Cerrar sesión</button></span>
+    </div>
+    {error && <div className="error-bar" role="alert">{error}</div>}
+    <Composer
+      workspace={workspace}
+      sourceHub={sourceHub ?? { sources: [] }}
+      onFocusChange={(id) => { setPlanningContext(null); void load(id); }}
+      onCalculate={calculate}
+      onSourcesApplied={() => { setPlanningContext(null); void load(); }}
+      onOrderAction={orderAction}
+      onResolve={async (command, params) => {
+        if (workspace.head_seq === undefined) throw new Error("Actualiza la vista antes de continuar.");
+        await runCommand(command, params, workspace.head_seq);
+        await load();
+      }}
+    />
+  </div>;
 }
 
-// Keeps <html lang="..."> in sync with i18n.language so browsers don't
-// trigger auto-translate (which renames proper nouns like boat names).
-function HtmlLangSync() {
-  const { i18n } = useTranslation();
-  useEffect(() => {
-    document.documentElement.lang = i18n.language;
-  }, [i18n.language]);
-  return null;
+export default function App() {
+  return <BrowserRouter>
+    <AuthInitializer />
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/set-password" element={<PasswordEstablishmentRoute />} />
+      <Route path="*" element={<ProtectedRoute><ComposerApp /></ProtectedRoute>} />
+    </Routes>
+  </BrowserRouter>;
 }
-
-function App() {
-  return (
-    <BrowserRouter>
-      <HtmlLangSync />
-      <AuthCallbackHandler />
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/set-password" element={<SetPassword />} />
-        <Route
-          path="/*"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Routes>
-                  <Route path="/" element={<HorizonView />} />
-                  <Route path="/horizon" element={<HorizonView />} />
-                  <Route path="/horizon/boat" element={<HorizonBoat />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/data-hub" element={<DataHub />} />
-                  <Route path="/boats" element={<Boats />} />
-                  <Route path="/intelligence" element={<Intelligence />} />
-                  <Route path="/customers" element={<CustomerProfiles />} />
-                  <Route path="/products" element={<ProductManagement />} />
-                  <Route path="/config" element={<ConfigPage />} />
-                  <Route path="/users" element={<Users />} />
-                  <Route path="/plan" element={<OrderPlan />} />
-                </Routes>
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </BrowserRouter>
-  );
-}
-
-export default App;
