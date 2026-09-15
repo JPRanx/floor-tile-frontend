@@ -17,8 +17,17 @@ export interface ProductRosterRow {
 
 export interface Sailing {
   sailing_id: string;
+  carrier?: string;
   name: string;
-  departure: string;
+  departure: string | null;
+  voyage?: string | null;
+  loading_terminal_eta?: string | null;
+  eta?: string | null;
+  bl_vgm_close?: string | null;
+  saes_reception?: string | null;
+  terminal?: string | null;
+  planning_basis?: string;
+  planning_anchor?: string;
   timing_state: string;
   decision: string;
 }

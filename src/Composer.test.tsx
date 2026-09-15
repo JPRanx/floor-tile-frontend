@@ -337,6 +337,30 @@ describe("three-anchor composer", () => {
     await waitFor(() => expect(onOrderAction).toHaveBeenLastCalledWith("FinalizeProductionOrder", { production_order_id: "PROD-1" }));
   });
 
+  it("shows the five real vessel-voyage entries with ETA, B/L-VGM and SAES without calling ETA departure", () => {
+    const rosterWorkspace = {
+      ...workspace,
+      sailing_rail: [
+        { sailing_id: "R1", carrier: "SEABOARD MARINE", name: "SEABOARD PIONEER", voyage: "195", departure: null, loading_terminal_eta: "2026-09-13", bl_vgm_close: "2026-09-10T09:00:00", saes_reception: "2026-09-11T09:00:00", terminal: "COMPAS/CCTO", planning_basis: "bl_vgm_close", planning_anchor: "2026-09-10", timing_state: "arrived", decision: "watch" },
+        { sailing_id: "R2", carrier: "SEABOARD MARINE", name: "SEABOARD PRIDE", voyage: "194", departure: null, loading_terminal_eta: "2026-09-20", bl_vgm_close: "2026-09-17T09:00:00", saes_reception: "2026-09-18T09:00:00", terminal: "COMPAS/CCTO", planning_basis: "bl_vgm_close", planning_anchor: "2026-09-17", timing_state: "normal", decision: "use" },
+        { sailing_id: "R3", carrier: "SEABOARD MARINE", name: "SEABOARD GALAXY", voyage: "52", departure: null, loading_terminal_eta: "2026-09-27", bl_vgm_close: "2026-09-24T09:00:00", saes_reception: "2026-09-25T09:00:00", terminal: "COMPAS/CCTO", planning_basis: "bl_vgm_close", planning_anchor: "2026-09-24", timing_state: "normal", decision: "watch" },
+        { sailing_id: "R4", carrier: "SEABOARD MARINE", name: "SEABOARD PIONEER", voyage: "196", departure: null, loading_terminal_eta: "2026-10-04", bl_vgm_close: "2026-10-01T09:00:00", saes_reception: "2026-10-02T09:00:00", terminal: "COMPAS/CCTO", planning_basis: "bl_vgm_close", planning_anchor: "2026-10-01", timing_state: "normal", decision: "watch" },
+        { sailing_id: "R5", carrier: "SEABOARD MARINE", name: "SEABOARD PRIDE", voyage: "195", departure: null, loading_terminal_eta: "2026-10-11", bl_vgm_close: "2026-10-08T09:00:00", saes_reception: "2026-10-09T09:00:00", terminal: "COMPAS/CCTO", planning_basis: "bl_vgm_close", planning_anchor: "2026-10-08", timing_state: "normal", decision: "watch" },
+      ],
+      factory_planning: undefined,
+    } as Workspace;
+
+    render(<Composer workspace={rosterWorkspace} />);
+    const focus = screen.getByLabelText("Barco foco");
+    const options = within(focus).getAllByRole("option");
+    expect(options).toHaveLength(5);
+    expect(options.map((option) => option.textContent)).toContain(
+      "SEABOARD PRIDE · V.194 · ETA COMPAS/CCTO 2026-09-20 · B/L-VGM 2026-09-17 09:00 · SAES 2026-09-18 09:00",
+    );
+    expect(options.map((option) => option.textContent).join(" ").toLowerCase()).not.toContain("departure");
+    expect(screen.getByText(/La fecha B\/L-VGM es el ancla de planificación/)).toBeTruthy();
+  });
+
   it("shows the settled implication contract and requires confirmation before resolution", () => {
     const onResolve = vi.fn().mockResolvedValue(undefined);
     render(<Composer workspace={workspace} onResolve={onResolve} />);
@@ -346,5 +370,31 @@ describe("three-anchor composer", () => {
     expect(onResolve).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Confirmar resolución" }));
     expect(onResolve).toHaveBeenCalledWith("ResolveImplication", expect.objectContaining({ implication_id: "I1", action: "note_for_monthly" }));
+  });
+
+  it("keeps risk decisions visible and collapses repeated product identity cases", () => {
+    const productCase = (id: string, rawRef: string) => ({
+      implication_id: id,
+      family: "product_match",
+      severity: "consequential",
+      consequence: `${rawRef} tiene demanda pero no está en el roster actual.`,
+      recommendation: "Asignarla al producto correcto o descartar la referencia.",
+      evidence: [{ raw_reference: rawRef, daily_velocity: "3.23", peak_weekly_m2: "145.44" }],
+      shipment_effect: { peak_weekly_m2: "145.44" },
+      owner: "ashley",
+      typed_actions: ["map", "discard"],
+      legal_actions: [{ command: "ResolveImplication", params: { implication_id: id, action: "discard", params: {} }, label: "Descartar fila" }],
+    });
+    const grouped: Workspace = {
+      ...workspace,
+      attention: [workspace.attention[0], productCase("I2", "HD 4001"), productCase("I3", "HD 4050")],
+    };
+
+    const { container } = render(<Composer workspace={grouped} />);
+    expect(screen.getByText("MALAMBO GRIS puede quedar sin inventario.")).toBeTruthy();
+    const summary = screen.getByText("2 identidades de producto por revisar");
+    const details = summary.closest("details");
+    expect(details?.open).toBe(false);
+    expect(details?.querySelectorAll("article")).toHaveLength(2);
   });
 });

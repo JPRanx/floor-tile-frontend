@@ -51,10 +51,15 @@ function OrderSummary({ kind, title, rows, values, onChange, onReview, reviewLab
 type Confirmation = "shipment-save" | "shipment-finalize" | "production-open" | "production-save" | "production-finalize";
 
 export function Composer({ workspace, sourceHub = { sources: [] }, onFocusChange, onCalculate, onSourcesApplied, onResolve, onOrderAction }: { workspace: Workspace; sourceHub?: SourceHub; onFocusChange?: (id: string) => void; onCalculate?: (inputs: { focusSailingId: string; productionAnchorSailingId: string; factoryOrderDate: string }) => Promise<void>; onSourcesApplied?: () => void; onResolve?: (command: string, params: Record<string, unknown>) => Promise<void>; onOrderAction?: (command: string, params: Record<string, unknown>) => Promise<void> }) {
-  const sailings = useMemo(() => [...workspace.sailing_rail].filter((boat) => boat.timing_state !== "departed").sort((a, b) => a.departure.localeCompare(b.departure)), [workspace.sailing_rail]);
+  const scheduleDate = (boat: typeof workspace.sailing_rail[number]) => boat.planning_anchor ?? boat.departure ?? "";
+  const boatLabel = (boat: typeof workspace.sailing_rail[number]) => boat.voyage ? `${boat.name} · V.${boat.voyage}` : boat.name;
+  const scheduleLabel = (boat: typeof workspace.sailing_rail[number]) => boat.planning_basis === "bl_vgm_close"
+    ? `${boatLabel(boat)} · ETA ${boat.terminal ?? "terminal de embarque"} ${boat.loading_terminal_eta ?? boat.eta} · B/L-VGM ${boat.bl_vgm_close?.slice(0, 16).replace("T", " ")} · SAES ${boat.saes_reception?.slice(0, 16).replace("T", " ")}`
+    : `${boatLabel(boat)} · ${boat.departure}`;
+  const sailings = useMemo(() => [...workspace.sailing_rail].filter((boat) => boat.timing_state !== "departed").sort((a, b) => scheduleDate(a).localeCompare(scheduleDate(b))), [workspace.sailing_rail]);
   const initialFocus = sailings.find((boat) => boat.decision === "use")?.sailing_id ?? sailings[0]?.sailing_id ?? "";
-  const initialFocusDate = sailings.find((boat) => boat.sailing_id === initialFocus)?.departure ?? "";
-  const initialAnchor = sailings.find((boat) => boat.departure > initialFocusDate)?.sailing_id ?? initialFocus;
+  const initialFocusDate = scheduleDate(sailings.find((boat) => boat.sailing_id === initialFocus) ?? sailings[0]);
+  const initialAnchor = sailings.find((boat) => scheduleDate(boat) > initialFocusDate)?.sailing_id ?? initialFocus;
   const [view, setView] = useState<"planning" | "manual">("planning");
   const [focus, setFocus] = useState(initialFocus);
   const [anchor, setAnchor] = useState(initialAnchor);
@@ -165,11 +170,12 @@ export function Composer({ workspace, sourceHub = { sources: [] }, onFocusChange
       <section className="composer" role="region" aria-label="Compositor del ciclo">
         <div className="section-head"><div><span className="section-kicker">ANCLAS DEL CÁLCULO</span><h2>Configurar ciclo</h2></div><span>3 entradas · 1 frontera derivada</span></div>
         <div className="cycle-map" aria-label="Anclas del ciclo">
-          <label><b>01</b><span>Barco foco</span><select aria-label="Barco foco" value={focus} onChange={(e) => { const nextFocus = e.target.value; const nextDate = sailings.find((boat) => boat.sailing_id === nextFocus)?.departure ?? ""; setFocus(nextFocus); setAnchor(sailings.find((boat) => boat.departure > nextDate)?.sailing_id ?? nextFocus); setCalculated(false); setCalculationError(null); onFocusChange?.(nextFocus); }}>{sailings.map((boat) => <option value={boat.sailing_id} key={boat.sailing_id}>{boat.name} · {boat.departure}</option>)}</select></label>
-          <label><b>02</b><span>Barco ancla de producción</span><select aria-label="Barco ancla de producción" value={anchor} onChange={(e) => { setAnchor(e.target.value); setCalculated(false); setCalculationError(null); }}>{sailings.filter((boat) => boat.departure > (sailings.find((item) => item.sailing_id === focus)?.departure ?? "") && sailings.some((candidate) => candidate.departure > boat.departure)).map((boat) => <option value={boat.sailing_id} key={boat.sailing_id}>{boat.name} · {boat.departure}</option>)}</select></label>
+          <label><b>01</b><span>Barco foco</span><select aria-label="Barco foco" value={focus} onChange={(e) => { const nextFocus = e.target.value; const selected = sailings.find((boat) => boat.sailing_id === nextFocus); const nextDate = selected ? scheduleDate(selected) : ""; setFocus(nextFocus); setAnchor(sailings.find((boat) => scheduleDate(boat) > nextDate)?.sailing_id ?? nextFocus); setCalculated(false); setCalculationError(null); onFocusChange?.(nextFocus); }}>{sailings.map((boat) => <option value={boat.sailing_id} key={boat.sailing_id}>{scheduleLabel(boat)}</option>)}</select></label>
+          <label><b>02</b><span>Barco ancla de producción</span><select aria-label="Barco ancla de producción" value={anchor} onChange={(e) => { setAnchor(e.target.value); setCalculated(false); setCalculationError(null); }}>{sailings.filter((boat) => scheduleDate(boat) > scheduleDate(sailings.find((item) => item.sailing_id === focus) ?? boat) && sailings.some((candidate) => scheduleDate(candidate) > scheduleDate(boat))).map((boat) => <option value={boat.sailing_id} key={boat.sailing_id}>{scheduleLabel(boat)}</option>)}</select></label>
           <label><b>03</b><span>Fecha de orden a fábrica</span><input aria-label="Fecha de colocación de producción" type="date" value={productionDate} onChange={(e) => { setProductionDate(e.target.value); setCalculated(false); setCalculationError(null); }} /></label>
-          <div className="boundary" data-testid="derived-boundary"><b>DERIVADA POR SERVIDOR</b><span>{serverBoundary?.name ?? "Se confirma al calcular"}</span><small>{serverBoundary ? `Cubre hasta ${serverBoundary.departure}` : "La interfaz no calcula esta frontera"}</small></div>
+          <div className="boundary" data-testid="derived-boundary"><b>DERIVADA POR SERVIDOR</b><span>{serverBoundary ? boatLabel(serverBoundary) : "Se confirma al calcular"}</span><small>{serverBoundary ? `Cubre hasta ${scheduleDate(serverBoundary)}` : "La interfaz no calcula esta frontera"}</small></div>
         </div>
+        {sailings.some((boat) => boat.planning_basis === "bl_vgm_close") && <p className="empty">La fecha B/L-VGM es el ancla de planificación. ETA corresponde al terminal de embarque y SAES se conserva como cierre separado.</p>}
         {!calculated && <button className="calculate" type="button" disabled={!focus || !anchor || !productionDate || !workspace.plan || calculating} onClick={() => {
           if (!onCalculate) { setCalculated(true); return; }
           setCalculating(true); setCalculationError(null);

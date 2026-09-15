@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { AssistantChat } from "./AssistantChat";
 import { Composer } from "./Composer";
-import { getSources, getWorkspace, runCommand } from "./api";
+import { askAssistant, getSources, getWorkspace, runCommand } from "./api";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import type { PlanningContext, SourceHub, Workspace } from "./contracts";
 import { Login } from "./pages/Login";
@@ -114,6 +115,7 @@ function ComposerApp() {
         await load();
       }}
     />
+    <AssistantChat onAsk={(question, history) => askAssistant(question, history, workspace, planningContext)} />
   </div>;
 }
 

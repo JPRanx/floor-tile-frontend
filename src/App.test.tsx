@@ -54,10 +54,16 @@ beforeEach(() => {
 });
 
 function stubWorkspace() {
-  const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+  const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url.endsWith("/api/workspace")) return new Response(JSON.stringify(workspace), { status: 200 });
     if (url.endsWith("/api/sources")) return new Response(JSON.stringify({ sources: [] }), { status: 200 });
+    if (url.endsWith("/api/assistant/chat") && init?.method === "POST") return new Response(JSON.stringify({
+      answer: "La cantidad usa velocidad histórica, inventario y buffer.",
+      grounded_head_seq: 12,
+      grounding_as_of: "2026-09-15",
+      mutated: false,
+    }), { status: 200 });
     return new Response("not found", { status: 404 });
   });
   vi.stubGlobal("fetch", fetchMock);
@@ -214,6 +220,31 @@ describe("protected Composer shell", () => {
       headers: { Authorization: "Bearer user-access-token" },
     });
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/api/session"))).toBe(false);
+  });
+
+  it("lets Ashley ask a grounded question without changing the planning workspace", async () => {
+    const fetchMock = stubWorkspace();
+    render(<App />);
+    await screen.findByRole("heading", { name: "Planeación de pedidos" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Consultar al asistente" }));
+    fireEvent.change(screen.getByLabelText("Pregunta para el asistente"), {
+      target: { value: "¿Por qué recomienda esta cantidad?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Enviar pregunta" }));
+
+    expect(await screen.findByText("La cantidad usa velocidad histórica, inventario y buffer.")).toBeTruthy();
+    expect(screen.getByText("Base: 2026-09-15 · revisión 12")).toBeTruthy();
+    const call = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/api/assistant/chat"));
+    expect(call?.[1]).toMatchObject({
+      method: "POST",
+      headers: { Authorization: "Bearer user-access-token", "Content-Type": "application/json" },
+    });
+    expect(JSON.parse(String(call?.[1]?.body))).toMatchObject({
+      question: "¿Por qué recomienda esta cantidad?",
+      plan_id: "P1",
+    });
+    expect(screen.getByRole("heading", { name: "Planeación de pedidos" })).toBeTruthy();
   });
 
   it("signs out from the protected shell", async () => {

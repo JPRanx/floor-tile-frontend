@@ -51,7 +51,9 @@ export function ManualInput({ workspace, sourceHub, onApplied }: { workspace: Wo
   const config = sources.find((item) => item.key === active)!;
   const state = sourceHub.sources.find((item) => item.feed === config.feed);
   const currentRows = state?.current_rows ?? [];
-  const sailings = useMemo(() => [...workspace.sailing_rail].sort((a, b) => a.departure.localeCompare(b.departure)), [workspace.sailing_rail]);
+  const sailings = useMemo(() => [...workspace.sailing_rail].sort((a, b) =>
+    (a.planning_anchor ?? a.departure ?? "").localeCompare(b.planning_anchor ?? b.departure ?? "")
+  ), [workspace.sailing_rail]);
   const productOptions = useMemo(() => {
     const found = new Map<string, { id: string; productId: string; name: string }>();
     for (const row of workspace.product_roster ?? []) {
@@ -344,8 +346,8 @@ export function ManualInput({ workspace, sourceHub, onApplied }: { workspace: Wo
         </>}
 
         {active !== "sailings" && !editing && <section className="file-update">
-          <div><strong>Actualizar desde archivo</strong><span>{active === "transit" ? "Sube PROGRAMACIÓN DE DESPACHO DE TARRAGONA.xlsx o una tabla CSV/TXT. El Excel se carga como programación tentativa; no se convierte silenciosamente en tránsito." : active === "production" ? "Sube PLAN_DE_PRODUCCION.pdf. Primero verás la previsualización normalizada; nada cambia hasta aplicar." : "Sube el Excel XLSX operativo o una tabla CSV/TXT. Primero verás altas, cambios, omisiones y filas por corregir."}</span></div>
-          <label className="file-button">{busy ? "Leyendo archivo…" : "Seleccionar archivo"}<input aria-label={`Actualizar archivo de ${config.title}`} type="file" accept={active === "transit" ? ".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain" : active === "production" ? ".pdf,application/pdf" : ".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain"} onChange={(event) => void stageFile(event.target.files?.[0])} /></label>
+          <div><strong>Actualizar desde archivo</strong><span>{active === "transit" ? "Sube PROGRAMACIÓN DE DESPACHO DE TARRAGONA.xlsx o una tabla CSV/TXT. El Excel se carga como programación tentativa; no se convierte silenciosamente en tránsito." : active === "production" ? "Sube PLAN_DE_PRODUCCION.pdf. Primero verás la previsualización normalizada; nada cambia hasta aplicar." : active === "siesa" ? "Sube el Excel XLSX operativo o una tabla CSV/TXT; para SIESA también puedes usar el XLS legado. Primero verás altas, cambios, omisiones y filas por corregir." : "Sube el Excel XLSX operativo o una tabla CSV/TXT. Primero verás altas, cambios, omisiones y filas por corregir."}</span></div>
+          <label className="file-button">{busy ? "Leyendo archivo…" : "Seleccionar archivo"}<input aria-label={`Actualizar archivo de ${config.title}`} type="file" accept={active === "transit" ? ".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain" : active === "production" ? ".pdf,application/pdf" : active === "siesa" ? ".xls,.xlsx,.csv,.txt,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain" : ".xlsx,.csv,.txt,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv,text/plain"} onChange={(event) => void stageFile(event.target.files?.[0])} /></label>
         </section>}
 
         {preview && <section className={`preview-box ${preview.can_apply ? "preview-ready" : "preview-blocked"}`} aria-live="polite">
