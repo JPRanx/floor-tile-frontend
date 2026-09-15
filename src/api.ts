@@ -147,3 +147,44 @@ export async function applyPreview(applyToken: string): Promise<void> {
   const body = await json(response);
   if (!response.ok) throw new Error(message(body, "No pudimos aplicar la actualización."));
 }
+
+export type ChatMessage = { role: "user" | "assistant"; content: string };
+export type AssistantReply = {
+  answer: string;
+  grounded_head_seq: number;
+  grounding_as_of: string | null;
+};
+
+export async function askAssistant(
+  question: string,
+  history: ChatMessage[],
+  workspace: Workspace,
+  planningContext: PlanningContext | null,
+): Promise<AssistantReply> {
+  const body: Record<string, unknown> = {
+    question,
+    history,
+    plan_id: planningContext?.plan_id ?? workspace.plan?.plan_id,
+  };
+  if (planningContext) {
+    body.production_anchor_sailing_id = planningContext.production_anchor_sailing_id;
+    body.factory_order_date = planningContext.factory_order_date;
+  }
+  const response = await authenticatedFetch("/api/assistant/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const payload = await json(response);
+  if (!response.ok) throw new Error(message(payload, "El asistente no pudo responder en este momento."));
+  if (!payload || typeof payload !== "object" || typeof (payload as { answer?: unknown }).answer !== "string") {
+    throw new Error("El asistente devolvió una respuesta inválida.");
+  }
+  const reply = payload as Partial<AssistantReply>;
+  if (typeof reply.grounded_head_seq !== "number") throw new Error("El asistente no indicó la revisión utilizada.");
+  return {
+    answer: reply.answer as string,
+    grounded_head_seq: reply.grounded_head_seq,
+    grounding_as_of: typeof reply.grounding_as_of === "string" ? reply.grounding_as_of : null,
+  };
+}

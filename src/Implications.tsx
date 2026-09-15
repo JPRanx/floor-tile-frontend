@@ -53,17 +53,25 @@ export function Implications({ cases, onResolve }: { cases: AttentionCase[]; onR
     finally { setBusy(false); }
   }
 
+  const identityCases = cases.filter((caseItem) => caseItem.family === "product_match");
+  const priorityCases = cases.filter((caseItem) => caseItem.family !== "product_match");
+  const renderCase = (caseItem: AttentionCase) => <article className={`implication-card implication-${caseItem.severity}`} key={caseItem.implication_id}>
+    <header><span>{FAMILY_LABEL[caseItem.family ?? ""] ?? "Implicación operativa"}</span><small>Responsable · {caseItem.owner === "ashley" ? "Ashley" : "Elicio / agente"}</small></header>
+    <h3>{caseItem.consequence}</h3>
+    {caseItem.why_stopped && <p><b>Por qué se detuvo:</b> {caseItem.why_stopped}</p>}
+    {caseItem.recommendation && <p><b>Recomendación:</b> {caseItem.recommendation}</p>}
+    {caseItem.shipment_effect && <div className="implication-effect"><strong>Efecto en el embarque</strong>{Object.entries(caseItem.shipment_effect).map(([key, value]) => <span key={key}>{FIELD_LABEL[key] ?? "Efecto"}: {displayValue(key, value)}</span>)}</div>}
+    {!!caseItem.evidence?.length && <details><summary>Ver evidencia utilizada</summary>{caseItem.evidence.map((evidence, index) => <dl key={index}>{Object.entries(evidence).map(([key, value]) => <div key={key}><dt>{FIELD_LABEL[key] ?? key.replaceAll("_", " ")}</dt><dd>{displayValue(key, value)}</dd></div>)}</dl>)}</details>}
+    <div className="implication-actions">{(caseItem.legal_actions ?? []).map((action) => <button type="button" key={`${caseItem.implication_id}-${action.command}-${action.label}`} onClick={() => { setSelected({ caseItem, action }); setNote(""); setError(null); }}>{action.label}</button>)}</div>
+  </article>;
+
   return <section className="implications" aria-labelledby="implications-title">
     <div className="result-heading"><div><span className="section-kicker">ATENCIÓN MATERIAL</span><h2 id="implications-title">Implicaciones por resolver</h2><p>El sistema detuvo la automatización donde hace falta una decisión responsable.</p></div><span className="review-pill">{cases.length} abiertas</span></div>
-    <div className="implication-list">{cases.map((caseItem) => <article className={`implication-card implication-${caseItem.severity}`} key={caseItem.implication_id}>
-      <header><span>{FAMILY_LABEL[caseItem.family ?? ""] ?? "Implicación operativa"}</span><small>Responsable · {caseItem.owner === "ashley" ? "Ashley" : "Elicio / agente"}</small></header>
-      <h3>{caseItem.consequence}</h3>
-      {caseItem.why_stopped && <p><b>Por qué se detuvo:</b> {caseItem.why_stopped}</p>}
-      {caseItem.recommendation && <p><b>Recomendación:</b> {caseItem.recommendation}</p>}
-      {caseItem.shipment_effect && <div className="implication-effect"><strong>Efecto en el embarque</strong>{Object.entries(caseItem.shipment_effect).map(([key, value]) => <span key={key}>{FIELD_LABEL[key] ?? "Efecto"}: {displayValue(key, value)}</span>)}</div>}
-      {!!caseItem.evidence?.length && <details><summary>Ver evidencia utilizada</summary>{caseItem.evidence.map((evidence, index) => <dl key={index}>{Object.entries(evidence).map(([key, value]) => <div key={key}><dt>{FIELD_LABEL[key] ?? key.replaceAll("_", " ")}</dt><dd>{displayValue(key, value)}</dd></div>)}</dl>)}</details>}
-      <div className="implication-actions">{(caseItem.legal_actions ?? []).map((action) => <button type="button" key={`${caseItem.implication_id}-${action.command}-${action.label}`} onClick={() => { setSelected({ caseItem, action }); setNote(""); setError(null); }}>{action.label}</button>)}</div>
-    </article>)}</div>
+    <div className="implication-list">{priorityCases.map(renderCase)}</div>
+    {!!identityCases.length && <details className="identity-review-group">
+      <summary><strong>{identityCases.length} {identityCases.length === 1 ? "identidad de producto por revisar" : "identidades de producto por revisar"}</strong><span>Conservadas para reconciliación; abre el detalle cuando vayas a resolverlas.</span></summary>
+      <div className="implication-list">{identityCases.map(renderCase)}</div>
+    </details>}
     {selected && <section className="implication-confirm" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
       <span className="section-kicker">CONFIRMACIÓN</span><h3 id="confirm-title">Vas a resolver esta implicación</h3>
       <p><strong>{selected.action.label}</strong></p><p>{selected.caseItem.consequence}</p>

@@ -267,6 +267,24 @@ describe("Ashley manual intake workspace", () => {
     ]), expect.any(String)));
   });
 
+  it("admits legacy XLS only for SIESA and explains that exception", () => {
+    render(<ManualInput workspace={workspace} sourceHub={sources} />);
+    fireEvent.click(screen.getByRole("button", { name: "Disponibilidad SIESA" }));
+    const siesa = screen.getByLabelText("Actualizar archivo de Disponibilidad SIESA") as HTMLInputElement;
+    expect(siesa.accept.split(",")).toContain(".xls");
+    expect(screen.getByText(/SIESA.*XLS/i)).toBeTruthy();
+
+    for (const [source, label] of [
+      ["Inventario de bodega", "Actualizar archivo de Inventario de bodega"],
+      ["Ventas / rotación", "Actualizar archivo de Ventas / rotación"],
+      ["En tránsito", "Actualizar archivo de En tránsito"],
+      ["Producción en fábrica", "Actualizar archivo de Producción en fábrica"],
+    ]) {
+      fireEvent.click(screen.getByRole("button", { name: source }));
+      expect((screen.getByLabelText(label) as HTMLInputElement).accept.split(",")).not.toContain(".xls");
+    }
+  });
+
   it("shows PLAN_DE_PRODUCCION rows and stages direct production changes through preview", async () => {
     previewRowsMock.mockResolvedValue({
       preview_id: "preview-production", summary: { received: 1, valid: 1, held: 0, invalid: 0 },
