@@ -222,28 +222,18 @@ describe("protected Composer shell", () => {
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes("/api/session"))).toBe(false);
   });
 
-  it("lets Ashley ask a grounded question without changing the planning workspace", async () => {
+  it("presents the assistant as an unbuilt future capability without accepting questions", async () => {
     const fetchMock = stubWorkspace();
     render(<App />);
     await screen.findByRole("heading", { name: "Planeación de pedidos" });
 
     fireEvent.click(screen.getByRole("button", { name: "Consultar al asistente" }));
-    fireEvent.change(screen.getByLabelText("Pregunta para el asistente"), {
-      target: { value: "¿Por qué recomienda esta cantidad?" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Enviar pregunta" }));
 
-    expect(await screen.findByText("La cantidad usa velocidad histórica, inventario y buffer.")).toBeTruthy();
-    expect(screen.getByText("Base: 2026-09-15 · revisión 12")).toBeTruthy();
-    const call = fetchMock.mock.calls.find(([url]) => String(url).endsWith("/api/assistant/chat"));
-    expect(call?.[1]).toMatchObject({
-      method: "POST",
-      headers: { Authorization: "Bearer user-access-token", "Content-Type": "application/json" },
-    });
-    expect(JSON.parse(String(call?.[1]?.body))).toMatchObject({
-      question: "¿Por qué recomienda esta cantidad?",
-      plan_id: "P1",
-    });
+    expect(screen.getByText("Posibilidad futura")).toBeTruthy();
+    expect(screen.getByText(/Esta capacidad aún no está construida ni activa/)).toBeTruthy();
+    expect(screen.queryByLabelText("Pregunta para el asistente")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar pregunta" })).toBeNull();
+    expect(fetchMock.mock.calls.some(([url]) => String(url).endsWith("/api/assistant/chat"))).toBe(false);
     expect(screen.getByRole("heading", { name: "Planeación de pedidos" })).toBeTruthy();
   });
 
